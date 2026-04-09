@@ -79,6 +79,36 @@ mission-control/
 - **Build before deploy:** `npm run build` must pass
 
 
+
+
+## Git Workflow
+
+**Always work on `dev` branch. Never commit to `main`.**
+
+```bash
+# Before starting work
+cd ~/mission-control
+git checkout dev
+git pull origin dev
+
+# After making changes
+git add -A
+git commit -m "type: description"
+git push origin dev
+
+# Create PR for review
+curl -X POST https://api.github.com/repos/Daniel-Parke/mission-control/pulls \
+  -H "Authorization: Bearer $GITHUB_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"title":"description","body":"what changed","head":"dev","base":"main"}'
+```
+
+**Rules:**
+- Use conventional commits: `feat:`, `fix:`, `refactor:`, `docs:`, `test:`, `chore:`
+- Always `npm run build` before pushing
+- Never merge your own PRs
+- If merge conflict: stop and report to user
+
 ## Deployment
 
 ```bash
