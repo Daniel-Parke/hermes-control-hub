@@ -1,0 +1,17 @@
+name: Branch Guard
+on:
+  push:
+    branches: [main]
+
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Allow merge commits only
+        if: github.event.head_commit.message != 'Merge pull request'
+        run: |
+          MSG="${{ github.event.head_commit.message }}"
+          if [[ "$MSG" != Merge* ]] && [[ "$MSG" != ci:* ]]; then
+            echo "::warning::Direct push to main detected: $MSG"
+            echo "Please use PRs for changes to main."
+          fi
