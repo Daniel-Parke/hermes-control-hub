@@ -82,7 +82,7 @@ mission-control/
 
 ## Shared Utilities
 
-- `src/lib/utils.ts` — `parseSchedule()`, `CronJobData`, `getMissionProgressSteps()`, `messageSummary()`, `validateSessionCompletion()`, `timeAgo()`, `timeUntil()`, `formatBytes()`
+- `src/lib/utils.ts` — `parseSchedule()`, `CronJobData`, `messageSummary()`, `timeAgo()`, `timeUntil()`, `formatBytes()`
 - `src/lib/api-logger.ts` — `logApiError()`, `safeJsonParse()`, `safeReadJsonFile()`
 - `src/lib/hermes.ts` — `PATHS`, `HERMES_HOME`, `getDefaultModelConfig()`, `getDiscordHomeChannel()`
 

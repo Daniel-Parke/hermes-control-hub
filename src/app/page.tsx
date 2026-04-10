@@ -58,7 +58,7 @@ interface AgentRun {
 interface MissionBrief {
   id: string;
   name: string;
-  status: string;
+  status: "queued" | "dispatched" | "successful" | "failed";
   dispatchMode: string;
   createdAt: string;
   goals: string[];
@@ -66,70 +66,19 @@ interface MissionBrief {
   cronJob?: { state: string; enabled: boolean; lastRun: string | null; lastStatus: string | null };
 }
 
-// ── Simple 3-Step Progress Indicator ─────────────────────────
-// States: Queued → Working → Done
-function MissionProgress({
-  status,
-  cronState,
-  dispatchMode,
-}: {
-  status: string;
-  cronState?: string;
-  dispatchMode?: string;
-}) {
-  const steps: Array<{ label: string; state: "done" | "active" | "pending" | "failed" }> = [
-    { label: dispatchMode === "cron" ? "Queued" : "Dispatched", state: "pending" },
-    { label: "Processing", state: "pending" },
-    { label: "Done", state: "pending" },
-  ];
-
-  if (status === "completed") {
-    steps[0].state = "done";
-    steps[1].state = "done";
-    steps[2].state = "done";
-  } else if (status === "failed") {
-    steps[0].state = "done";
-    steps[1].state = "failed";
-    steps[2].state = "failed";
-  } else if (status === "running" || cronState === "active" || cronState === "running") {
-    steps[0].state = "done";
-    steps[1].state = "active";
-  } else {
-    // dispatched / queued / scheduled
-    steps[0].state = "active";
-  }
-
+// ── Status Badge ──────────────────────────────────────────────
+function MissionStatusBadge({ status }: { status: string }) {
+  const styles: Record<string, { bg: string; text: string; icon: React.ReactNode }> = {
+    queued: { bg: "bg-orange-500/10", text: "text-neon-orange", icon: <Clock className="w-3 h-3" /> },
+    dispatched: { bg: "bg-blue-500/10", text: "text-blue-400", icon: <Loader2 className="w-3 h-3 animate-spin" /> },
+    successful: { bg: "bg-green-500/10", text: "text-neon-green", icon: <CheckCircle2 className="w-3 h-3" /> },
+    failed: { bg: "bg-red-500/10", text: "text-red-400", icon: <XCircle className="w-3 h-3" /> },
+  };
+  const s = styles[status] || styles.queued;
   return (
-    <div className="flex items-center gap-1.5">
-      {steps.map((step, i) => (
-        <div key={i} className="flex items-center gap-1.5">
-          {i > 0 && (
-            <div className={`w-4 h-px ${
-              steps[i - 1].state === "done" ? "bg-white/25" :
-              steps[i - 1].state === "active" ? "bg-neon-cyan/30" :
-              steps[i - 1].state === "failed" ? "bg-red-400/30" :
-              "bg-white/10"
-            }`} />
-          )}
-          <div
-            className={`w-3 h-3 rounded-full flex items-center justify-center ${
-              step.state === "done"
-                ? "bg-neon-green/20 border border-neon-green/50"
-                : step.state === "active"
-                ? "bg-neon-cyan/20 border border-neon-cyan/50 animate-pulse"
-                : step.state === "failed"
-                ? "bg-red-500/20 border border-red-500/50"
-                : "bg-white/5 border border-white/10"
-            }`}
-            title={step.label}
-          >
-            {step.state === "done" && <div className="w-1.5 h-1.5 rounded-full bg-neon-green" />}
-            {step.state === "active" && <div className="w-1.5 h-1.5 rounded-full bg-neon-cyan animate-pulse" />}
-            {step.state === "failed" && <div className="w-1.5 h-1.5 rounded-full bg-red-400" />}
-          </div>
-        </div>
-      ))}
-    </div>
+    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono ${s.bg} ${s.text}`}>
+      {s.icon} {status.charAt(0).toUpperCase() + status.slice(1)}
+    </span>
   );
 }
 
@@ -161,10 +110,38 @@ function CronStatusBadge({ state, enabled }: { state: string; enabled: boolean }
       </span>
     );
   }
+  if (state === "running") {
+    return (
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono bg-green-500/10 text-neon-green">
+        <Loader2 className="w-2.5 h-2.5 animate-spin" /> Running
+      </span>
+    );
+  }
   if (state === "scheduled") {
     return (
       <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono bg-green-500/10 text-neon-green">
         <Play className="w-2.5 h-2.5" /> Active
+      </span>
+    );
+  }
+  if (state === "queued") {
+    return (
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono bg-orange-500/10 text-neon-orange">
+        <Clock className="w-2.5 h-2.5" /> Queued
+      </span>
+    );
+  }
+  if (state === "completed") {
+    return (
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono bg-green-500/10 text-neon-green">
+        <CheckCircle2 className="w-2.5 h-2.5" /> Done
+      </span>
+    );
+  }
+  if (state === "failed") {
+    return (
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono bg-red-500/10 text-red-400">
+        <XCircle className="w-2.5 h-2.5" /> Failed
       </span>
     );
   }
@@ -228,7 +205,7 @@ export default function Dashboard() {
       fetch("/api/missions").then((r) => r.json()).then((d) => setMissions(d.data?.missions || [])).catch(() => setMissions([]));
     };
     refreshMonitor();
-    const monitorInterval = setInterval(refreshMonitor, 15000);
+    const monitorInterval = setInterval(refreshMonitor, 10000);
 
     return () => {
       clearInterval(clockInterval);
@@ -351,14 +328,14 @@ export default function Dashboard() {
         </div>
 
         {/* ═══ Active Missions ═══ */}
-        {missions.filter((m) => m.status === "dispatched" || m.status === "running").length > 0 && (
+        {missions.filter((m) => m.status === "queued" || m.status === "dispatched").length > 0 && (
           <div className="rounded-xl border border-cyan-500/20 bg-dark-900/50 overflow-hidden">
             <div className="flex items-center justify-between px-4 py-2 border-b border-white/10 bg-dark-800/50">
               <div className="flex items-center gap-2">
                 <Rocket className="w-3.5 h-3.5 text-neon-cyan" />
                 <span className="text-xs font-mono text-white/60">Active Missions</span>
                 <span className="text-[10px] font-mono text-white/25">
-                  ({missions.filter((m) => m.status === "dispatched" || m.status === "running").length})
+                  ({missions.filter((m) => m.status === "queued" || m.status === "dispatched").length})
                 </span>
               </div>
               <Link href="/missions" className="text-[10px] font-mono text-neon-cyan hover:underline flex items-center gap-1">
@@ -367,26 +344,20 @@ export default function Dashboard() {
             </div>
             <div className="divide-y divide-white/5">
               {missions
-                .filter((m) => m.status === "dispatched" || m.status === "running")
+                .filter((m) => m.status === "queued" || m.status === "dispatched")
                 .map((m) => (
                   <Link key={m.id} href="/missions" className="flex items-center justify-between px-4 py-2.5 hover:bg-white/[0.02] transition-colors">
                     <div className="flex items-center gap-2 min-w-0">
                       <StatusDot
-                        status={m.status === "running" ? "online" : "warning"}
-                        pulse={m.status === "running"}
+                        status={m.status === "dispatched" ? "online" : "warning"}
+                        pulse={m.status === "dispatched"}
                       />
                       <span className="text-xs text-white/80 truncate">{m.name}</span>
                       <span className="text-[10px] font-mono text-white/30 capitalize">{m.dispatchMode}</span>
                     </div>
                     <div className="flex items-center gap-3 flex-shrink-0">
-                      <MissionProgress
-                        status={m.status}
-                        cronState={m.cronJob?.state}
-                        dispatchMode={m.dispatchMode}
-                      />
-                      {m.cronJob?.lastRun && (
-                        <span className="text-[10px] font-mono text-white/25">{timeAgo(m.cronJob.lastRun)}</span>
-                      )}
+                      <MissionStatusBadge status={m.status} />
+                      <span className="text-[10px] font-mono text-white/25">{timeAgo(m.createdAt)}</span>
                     </div>
                   </Link>
                 ))}

@@ -4,7 +4,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -38,6 +38,10 @@ import {
   MessageSquare,
   Lock,
   Code,
+  RefreshCw,
+  AlertTriangle,
+  Check,
+  Download,
 } from "lucide-react";
 import type { AccentColor } from "@/types/hermes";
 import { iconColorMap } from "@/lib/theme";
@@ -147,6 +151,209 @@ const configGroups: ConfigGroup[] = [
 function isActive(pathname: string, href: string): boolean {
   if (href === "/") return pathname === "/";
   return pathname.startsWith(href);
+}
+
+// ── Version Check & Update ───────────────────────────────────
+
+interface VersionInfo {
+  localHash: string;
+  remoteHash: string;
+  updateAvailable: boolean;
+  commitMessage: string;
+  behind: number;
+  branch: string;
+  lastChecked: string;
+}
+
+function VersionFooter({ collapsed }: { collapsed: boolean }) {
+  const [version, setVersion] = useState<VersionInfo | null>(null);
+  const [checking, setChecking] = useState(false);
+  const [updating, setUpdating] = useState(false);
+  const [restarting, setRestarting] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+
+  const checkVersion = useCallback(async () => {
+    setChecking(true);
+    setMessage(null);
+    try {
+      const res = await fetch("/api/update");
+      const d = await res.json();
+      if (d.data) setVersion(d.data);
+    } catch {
+      setMessage("Check failed");
+    } finally {
+      setChecking(false);
+    }
+  }, []);
+
+  // Auto-check on mount
+  useEffect(() => {
+    checkVersion();
+  }, [checkVersion]);
+
+  const handleUpdate = async () => {
+    if (updating) return;
+    setUpdating(true);
+    setMessage("Updating...");
+    try {
+      const res = await fetch("/api/update", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "update" }),
+      });
+      const d = await res.json();
+      if (d.error) {
+        setMessage(d.error);
+        setUpdating(false);
+        return;
+      }
+      // Poll for server return
+      setMessage("Restarting...");
+      pollForReturn();
+    } catch {
+      setMessage("Update failed");
+      setUpdating(false);
+    }
+  };
+
+  const handleRestart = async () => {
+    if (restarting) return;
+    setRestarting(true);
+    setMessage("Restarting...");
+    try {
+      await fetch("/api/update", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "restart" }),
+      });
+      pollForReturn();
+    } catch {
+      setMessage("Restart failed");
+      setRestarting(false);
+    }
+  };
+
+  const pollForReturn = () => {
+    let attempts = 0;
+    const maxAttempts = 30;
+    const interval = setInterval(async () => {
+      attempts++;
+      try {
+        const res = await fetch("/api/update", { signal: AbortSignal.timeout(3000) });
+        if (res.ok) {
+          clearInterval(interval);
+          const d = await res.json();
+          if (d.data) setVersion(d.data);
+          setUpdating(false);
+          setRestarting(false);
+          setMessage("Done!");
+          setTimeout(() => setMessage(null), 3000);
+        }
+      } catch {
+        if (attempts >= maxAttempts) {
+          clearInterval(interval);
+          setUpdating(false);
+          setRestarting(false);
+          setMessage("Timeout — check server");
+        }
+      }
+    }, 2000);
+  };
+
+  if (collapsed) {
+    return (
+      <div className="flex flex-col items-center gap-2">
+        {version?.updateAvailable && (
+          <button
+            onClick={handleUpdate}
+            disabled={updating}
+            className="p-1.5 rounded-lg bg-orange-500/10 text-neon-orange hover:bg-orange-500/20 transition-colors"
+            title={`Update available (${version.behind} behind)`}
+          >
+            {updating ? (
+              <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <AlertTriangle className="w-3.5 h-3.5" />
+            )}
+          </button>
+        )}
+        <button
+          onClick={handleRestart}
+          disabled={restarting}
+          className="p-1.5 rounded-lg text-white/30 hover:text-white/60 hover:bg-white/5 transition-colors"
+          title="Restart App"
+        >
+          <RefreshCw className={`w-3.5 h-3.5 ${restarting ? "animate-spin" : ""}`} />
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-2">
+      {/* Version status */}
+      <div className="rounded-lg bg-white/5 border border-white/5 p-2.5">
+        <div className="flex items-center justify-between mb-1.5">
+          <span className="text-[9px] font-mono text-white/30 uppercase tracking-wider">
+            Mission Control
+          </span>
+          {version && !version.updateAvailable && (
+            <span className="text-[9px] font-mono text-neon-green flex items-center gap-1">
+              <Check className="w-2.5 h-2.5" /> {version.localHash}
+            </span>
+          )}
+          {version?.updateAvailable && (
+            <span className="text-[9px] font-mono text-neon-orange flex items-center gap-1">
+              <AlertTriangle className="w-2.5 h-2.5" /> {version.behind} behind
+            </span>
+          )}
+        </div>
+
+        {/* Update available banner */}
+        {version?.updateAvailable && (
+          <button
+            onClick={handleUpdate}
+            disabled={updating || restarting}
+            className="w-full flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-md bg-orange-500/10 border border-orange-500/20 text-[10px] font-mono text-neon-orange hover:bg-orange-500/20 transition-colors disabled:opacity-50 mb-1.5"
+          >
+            {updating ? (
+              <RefreshCw className="w-3 h-3 animate-spin" />
+            ) : (
+              <Download className="w-3 h-3" />
+            )}
+            {updating ? "Updating..." : "Update Now"}
+          </button>
+        )}
+
+        {/* Status message */}
+        {message && (
+          <div className="text-[9px] font-mono text-white/40 text-center mb-1">
+            {message}
+          </div>
+        )}
+
+        {/* Action buttons */}
+        <div className="flex gap-1.5">
+          <button
+            onClick={checkVersion}
+            disabled={checking || updating || restarting}
+            className="flex-1 flex items-center justify-center gap-1 px-2 py-1 rounded-md text-[10px] font-mono text-white/40 hover:text-white/60 hover:bg-white/5 transition-colors disabled:opacity-50"
+          >
+            <RefreshCw className={`w-2.5 h-2.5 ${checking ? "animate-spin" : ""}`} />
+            {checking ? "..." : "Check"}
+          </button>
+          <button
+            onClick={handleRestart}
+            disabled={updating || restarting}
+            className="flex-1 flex items-center justify-center gap-1 px-2 py-1 rounded-md text-[10px] font-mono text-white/40 hover:text-white/60 hover:bg-white/5 transition-colors disabled:opacity-50"
+          >
+            <RefreshCw className={`w-2.5 h-2.5 ${restarting ? "animate-spin" : ""}`} />
+            {restarting ? "..." : "Restart"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 function ConfigGroupSection({
@@ -279,7 +486,8 @@ export default function Sidebar() {
       </nav>
 
       {/* Footer */}
-      <div className="px-3 py-3 border-t border-white/10">
+      <div className="px-3 py-3 border-t border-white/10 space-y-2">
+        <VersionFooter collapsed={collapsed} />
         <button
           onClick={() => setCollapsed(!collapsed)}
           className="hidden lg:flex items-center gap-2 w-full px-3 py-2 rounded-lg text-xs text-white/30 hover:text-white/60 hover:bg-white/5 transition-colors font-mono"

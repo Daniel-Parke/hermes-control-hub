@@ -67,7 +67,7 @@ interface MissionRecord {
   goals: string[];
   skills: string[];
   model: string;
-  status: "draft" | "dispatched" | "running" | "completed" | "failed";
+  status: "queued" | "dispatched" | "successful" | "failed";
   dispatchMode: "save" | "now" | "cron";
   createdAt: string;
   updatedAt: string;
@@ -114,10 +114,9 @@ interface MissionDetail {
 // Template icons resolved at render time via name lookup
 
 const statusColors: Record<string, { dot: "online" | "warning" | "error" | "idle"; bg: string; text: string }> = {
-  draft: { dot: "idle", bg: "bg-white/5", text: "text-white/40" },
-  dispatched: { dot: "warning", bg: "bg-orange-500/10", text: "text-neon-orange" },
-  running: { dot: "online", bg: "bg-green-500/10", text: "text-neon-green" },
-  completed: { dot: "online", bg: "bg-green-500/10", text: "text-neon-green" },
+  queued: { dot: "warning", bg: "bg-orange-500/10", text: "text-neon-orange" },
+  dispatched: { dot: "online", bg: "bg-blue-500/10", text: "text-blue-400" },
+  successful: { dot: "online", bg: "bg-green-500/10", text: "text-neon-green" },
   failed: { dot: "error", bg: "bg-red-500/10", text: "text-red-400" },
 };
 
@@ -210,7 +209,7 @@ export default function MissionsPage() {
       fetchData();
       // Also silently refresh expanded detail
       if (expandedId) fetchDetail(expandedId, false);
-    }, 10000);
+    }, 5000);
     return () => clearInterval(interval);
   }, [fetchData, expandedId, fetchDetail]);
 
@@ -227,7 +226,11 @@ export default function MissionsPage() {
   const buildPrompt = () => {
     const parts = [newInstruction.trim()];
     if (newContext.trim()) {
-      parts.push("", "---", "", "## Additional Context", "", newContext.trim());
+      // Strip any existing header from context (defense against round-trip duplication)
+      const cleanContext = newContext.trim().replace(/(?:## Additional Context\n\n?)+/g, "").trim();
+      if (cleanContext) {
+        parts.push("", "---", "", "## Additional Context", "", cleanContext);
+      }
     }
     return parts.join("\n");
   };
@@ -242,7 +245,7 @@ export default function MissionsPage() {
     // Update existing mission (only for active missions with a live cron job)
     if (editingId) {
       const existingMission = missions.find(m => m.id === editingId);
-      const isActive = existingMission && (existingMission.status === "dispatched" || existingMission.status === "running");
+      const isActive = existingMission && (existingMission.status === "queued" || existingMission.status === "dispatched");
 
       if (isActive) {
         // Active mission — update and sync to cron job
@@ -354,10 +357,14 @@ export default function MissionsPage() {
 
     const parts = rawPrompt.split("\n---\n");
     setNewInstruction(parts[0]?.trim() || rawPrompt);
-    setNewContext(parts.length > 1 ? parts[parts.length - 1].replace(/^## Additional Context\n\n?/, "").trim() : "");
+    setNewContext(
+      parts.length > 1
+        ? parts[parts.length - 1].replace(/(?:## Additional Context\n\n?)+/g, "").trim()
+        : ""
+    );
     setNewGoals(m.goals.join("\n"));
     // Auto-set dispatch mode to "now" for completed/failed missions (re-dispatch)
-    if (m.status === "completed" || m.status === "failed") {
+    if (m.status === "successful" || m.status === "failed") {
       setNewDispatch("now");
     }
     setShowCreate(true);
@@ -481,8 +488,8 @@ export default function MissionsPage() {
     return true;
   });
 
-  const activeCount = missions.filter((m) => m.status === "running" || m.status === "dispatched").length;
-  const completedCount = missions.filter((m) => m.status === "completed").length;
+  const activeCount = missions.filter((m) => m.status === "queued" || m.status === "dispatched").length;
+  const completedCount = missions.filter((m) => m.status === "successful").length;
   const failedCount = missions.filter((m) => m.status === "failed").length;
 
   if (loading) {
@@ -602,7 +609,7 @@ export default function MissionsPage() {
               <h3 className="text-sm font-mono text-neon-cyan uppercase tracking-widest">
                 {(() => {
                   const existing = editingId ? missions.find(m => m.id === editingId) : null;
-                  if (existing && (existing.status === "completed" || existing.status === "failed")) {
+                  if (existing && (existing.status === "successful" || existing.status === "failed")) {
                     return `Re-Dispatch: ${existing.name}`;
                   }
                   if (editingId) return "Edit Mission";
@@ -616,7 +623,7 @@ export default function MissionsPage() {
             <div className="space-y-3">
               {editingId && (() => {
                 const existing = missions.find(m => m.id === editingId);
-                if (existing && (existing.status === "completed" || existing.status === "failed")) {
+                  if (existing && (existing.status === "successful" || existing.status === "failed")) {
                   return (
                     <div className="rounded-lg bg-neon-cyan/5 border border-neon-cyan/20 p-3 text-xs text-neon-cyan/80 font-mono">
                       A new mission will be created and dispatched immediately with your changes.
@@ -726,7 +733,7 @@ export default function MissionsPage() {
                   <Send className="w-3.5 h-3.5" />
                   {(() => {
                     const existing = editingId ? missions.find(m => m.id === editingId) : null;
-                    const isReDispatch = existing && (existing.status === "completed" || existing.status === "failed");
+                    const isReDispatch = existing && (existing.status === "successful" || existing.status === "failed");
                     if (isReDispatch) return "Re-Dispatch Now";
                     if (newDispatch === "save") return "Save Mission";
                     if (newDispatch === "now") return "Dispatch Now";
@@ -747,7 +754,7 @@ export default function MissionsPage() {
         {/* Filter & Search */}
         <div className="flex flex-wrap items-center gap-3 mb-4">
           <div className="flex items-center gap-1 bg-dark-900/50 rounded-lg border border-white/10 p-1">
-            {["all", "draft", "dispatched", "running", "completed", "failed"].map((f) => (
+            {["all", "queued", "dispatched", "successful", "failed"].map((f) => (
               <button
                 key={f}
                 onClick={() => setFilter(f)}
@@ -793,7 +800,7 @@ export default function MissionsPage() {
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2 mb-1">
-                          <StatusDot status={sc.dot} pulse={mission.status === "running"} />
+                          <StatusDot status={sc.dot} pulse={mission.status === "dispatched"} />
                           <span className="text-sm font-semibold text-white truncate">{mission.name}</span>
                           <span className={`text-[10px] font-mono px-2 py-0.5 rounded-full ${sc.bg} ${sc.text}`}>
                             {titleCase(mission.status)}
@@ -824,10 +831,10 @@ export default function MissionsPage() {
                         </div>
                       </div>
                       <div className="flex items-center gap-1 flex-shrink-0">
-                        {mission.status === "completed" && <CheckCircle2 className="w-4 h-4 text-neon-green" />}
+                        {mission.status === "successful" && <CheckCircle2 className="w-4 h-4 text-neon-green" />}
                         {mission.status === "failed" && <XCircle className="w-4 h-4 text-red-400" />}
-                        {mission.status === "running" && <Loader2 className="w-4 h-4 text-neon-green animate-spin" />}
-                        {mission.status === "dispatched" && <Loader2 className="w-4 h-4 text-neon-orange animate-spin" />}
+                        {mission.status === "dispatched" && <Loader2 className="w-4 h-4 text-blue-400 animate-spin" />}
+                        {mission.status === "queued" && <Clock className="w-4 h-4 text-neon-orange" />}
                         <ChevronRight className={`w-4 h-4 text-white/20 transition-transform ${isExpanded ? "rotate-90" : ""}`} />
                       </div>
                     </div>
@@ -971,12 +978,12 @@ export default function MissionsPage() {
 
                           {/* Actions */}
                           <div className="flex gap-2 pt-1">
-                            {(mission.status === "draft" || mission.status === "completed" || mission.status === "failed") && (
+                            {(mission.status === "queued" || mission.status === "successful" || mission.status === "failed") && (
                               <Button variant="secondary" size="sm" onClick={() => handleEdit(mission)}>
                                 <Edit3 className="w-3.5 h-3.5" /> Edit & Re-Dispatch
                               </Button>
                             )}
-                            {(mission.status === "dispatched" || mission.status === "running") && (
+                            {(mission.status === "queued" || mission.status === "dispatched") && (
                               <Button variant="danger" size="sm" onClick={() => handleCancel(mission.id)}>
                                 <StopCircle className="w-3.5 h-3.5" /> Cancel Mission
                               </Button>

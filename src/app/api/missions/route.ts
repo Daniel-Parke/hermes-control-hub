@@ -5,12 +5,10 @@ import { NextResponse } from "next/server";
 
 import { HERMES_HOME, PATHS, getDefaultModelConfig } from "@/lib/hermes";
 import { existsSync, mkdirSync, readFileSync, writeFileSync, readdirSync, unlinkSync, statSync } from "fs";
-import { validateSessionCompletion, SessionMessage } from "@/lib/utils";
 import { logApiError } from "@/lib/api-logger";
 
 const DATA_DIR = PATHS.missions;
 const CRON_PATH = PATHS.cronJobs;
-const SESSIONS_DIR = PATHS.sessions;
 
 // Resolve delivery target from .env or config
 function getDeliverTarget(): string {
@@ -56,7 +54,7 @@ interface MissionRecord {
   goals: string[];
   skills: string[];
   model: string;
-  status: "draft" | "dispatched" | "running" | "completed" | "failed";
+  status: "queued" | "dispatched" | "successful" | "failed";
   dispatchMode: "save" | "now" | "cron";
   createdAt: string;
   updatedAt: string;
@@ -117,15 +115,15 @@ function findCronJobForMission(missionId: string): CronJobData | null {
 // instead of reading every file's content. O(directory listing) vs O(N file reads).
 
 function findSessionsForCronJob(cronJobId: string): Array<{ id: string; modified: string; size: number }> {
-  if (!existsSync(SESSIONS_DIR)) return [];
+  const sessionsDir = PATHS.sessions;
+  if (!existsSync(sessionsDir)) return [];
   try {
-    const files = readdirSync(SESSIONS_DIR);
+    const files = readdirSync(sessionsDir);
     const results: Array<{ id: string; modified: string; size: number }> = [];
     for (const file of files) {
       if (!file.endsWith(".json") && !file.endsWith(".jsonl")) continue;
-      // Match by filename pattern — cron sessions contain the job ID in the filename
       if (!file.includes(cronJobId)) continue;
-      const filePath = SESSIONS_DIR + "/" + file;
+      const filePath = sessionsDir + "/" + file;
       try {
         const stat = statSync(filePath);
         results.push({
@@ -327,67 +325,39 @@ export async function GET(request: Request) {
       return NextResponse.json({ data: { templates: [...builtIn, ...custom] } });
     }
 
-    // Derive mission status from cron job state
-    function deriveMissionStatus(m: MissionRecord, job: CronJobData | null): MissionRecord {
-      if (!job || m.status === "completed" || m.status === "failed" || m.status === "draft") return m;
-
-      // Cron job explicitly paused by user (cancel action)
+    // ── Status Mapper ─────────────────────────────────────────────
+    // Maps cron job state directly to mission status.
+    // Source of truth: cron job file. No session reading, no heuristics.
+    function getMissionStatus(
+      job: CronJobData | null,
+      currentStatus: string,
+    ): { status: string; error?: string } {
+      if (!job) {
+        // Cron job deleted — for one-shot dispatches this means it completed
+        if (currentStatus === "dispatched") return { status: "successful" };
+        return { status: currentStatus };
+      }
+      // User cancelled the job
       if (job.state === "paused" && !job.enabled) {
-        m.status = "failed";
-        m.error = "Cancelled by user";
-        m.updatedAt = new Date().toISOString();
-        return m;
+        return { status: "failed", error: "Cancelled by user" };
       }
-
-      // Scheduler is actively executing — highest priority state
+      // Scheduler is actively executing — highest priority
       if (job.state === "running") {
-        m.status = "running";
-        m.updatedAt = new Date().toISOString();
-        return m;
+        return { status: "dispatched" };
       }
-
-      // Check session completion if the job has run
-      if (job.last_run_at) {
-        // Find the most recent session for this cron job
-        const sessions = findSessionsForCronJob(job.id);
-        if (sessions.length > 0) {
-          const latestSessionId = sessions[0].id;
-          const sessionPath = SESSIONS_DIR + "/" + latestSessionId + ".json";
-          try {
-            const sessionData = JSON.parse(readFileSync(sessionPath, "utf-8"));
-            const messages: SessionMessage[] = sessionData.messages || [];
-            const validation = validateSessionCompletion(messages);
-
-            if (!validation.completed) {
-              // Session did NOT complete successfully — this is a failure
-              m.status = "failed";
-              m.error = `Session ${validation.reason}${validation.timedOut ? " (timed out)" : ""}`;
-              m.updatedAt = new Date().toISOString();
-              return m;
-            }
-          } catch {}
-        }
-
-        // Fall back to cron job status
-        if (job.last_status) {
-          if (job.last_status === "ok") {
-            const repeat = job.repeat;
-            const isOneShot = typeof repeat === "object" && repeat.times === 1;
-            if (isOneShot) {
-              m.status = "completed";
-            } else {
-              // Recurring job — not currently running (checked above),
-              // so it is waiting for next scheduled run
-              m.status = "dispatched";
-            }
-          } else {
-            m.status = "failed";
-            m.error = `Cron job status: ${job.last_status}`;
-          }
-          m.updatedAt = new Date().toISOString();
-        }
+      // Job has never run
+      if (!job.last_run_at) {
+        return { status: "queued" };
       }
-      return m;
+      // Job has run — check result
+      if (job.last_status === "ok") {
+        return { status: "successful" };
+      }
+      if (job.last_status === "error") {
+        return { status: "failed" };
+      }
+      // Job ran but no status yet (still executing or status not recorded)
+      return { status: "dispatched" };
     }
 
     // Get single mission with linked cron job + sessions
@@ -402,27 +372,16 @@ export async function GET(request: Request) {
 
       if (mission.cronJobId) {
         const job = findCronJobForMission(missionId);
-        if (job) {
-          // Derive display state from actual job state and timing
-          let derivedState = job.state || "unknown";
-          // If the scheduler explicitly set "running", respect it
-          if (derivedState !== "running") {
-            if (job.enabled !== false && job.next_run_at) {
-              const nextRun = new Date(job.next_run_at).getTime();
-              if (nextRun <= Date.now()) {
-                if (job.last_run_at) {
-                  derivedState = "active";
-                } else if (derivedState === "scheduled") {
-                  derivedState = "queued";
-                }
-              }
-            }
-          }
+        const mapped = getMissionStatus(job, mission.status);
+        mission.status = mapped.status as MissionRecord["status"];
+        if (mapped.error) mission.error = mapped.error;
+        mission.updatedAt = new Date().toISOString();
 
+        if (job) {
           cronJob = {
             id: job.id,
             name: job.name,
-            state: derivedState,
+            state: job.state || "unknown",
             enabled: job.enabled !== false,
             lastRun: job.last_run_at || null,
             nextRun: job.next_run_at || null,
@@ -430,37 +389,6 @@ export async function GET(request: Request) {
             schedule: typeof job.schedule === "object" ? job.schedule.display || "" : String(job.schedule || ""),
           };
           sessions = findSessionsForCronJob(job.id);
-
-          // Sync mission status with cron
-          deriveMissionStatus(mission, job);
-          // Sync cronJob.state with derived mission status
-          const syncState = mission.status === "running" ? "running"
-            : mission.status === "completed" ? "completed"
-            : mission.status === "failed" ? "failed"
-            : derivedState;
-          cronJob.state = syncState;
-        } else if (mission.dispatchMode === "now" && mission.status === "dispatched") {
-          // One-shot cron job was deleted after completion — validate session before marking completed
-          const sessions = findSessionsForCronJob(mission.cronJobId || "");
-          if (sessions.length > 0) {
-            const sessionPath = SESSIONS_DIR + "/" + sessions[0].id + ".json";
-            try {
-              const sessionData = JSON.parse(readFileSync(sessionPath, "utf-8"));
-              const messages: SessionMessage[] = sessionData.messages || [];
-              const validation = validateSessionCompletion(messages);
-              if (!validation.completed) {
-                mission.status = "failed";
-                mission.error = `Session ${validation.reason}${validation.timedOut ? " (timed out)" : ""}`;
-              } else {
-                mission.status = "completed";
-              }
-            } catch {
-              mission.status = "completed"; // fallback if session can't be read
-            }
-          } else {
-            mission.status = "completed"; // no session found, assume completed
-          }
-          mission.updatedAt = new Date().toISOString();
         }
       }
 
@@ -470,7 +398,7 @@ export async function GET(request: Request) {
     // List all missions with linked cron status
     ensureDir();
     const files = existsSync(DATA_DIR) ? readdirSync(DATA_DIR).filter((f) => f.endsWith(".json")) : [];
-    const missions: Array<MissionRecord & { cronJob?: { state: string; lastRun: string | null; lastStatus: string | null } }> = [];
+    const missions: Array<MissionRecord & { cronJob?: { state: string; enabled: boolean; lastRun: string | null; lastStatus: string | null } }> = [];
 
     // PERFORMANCE: Read cron jobs once, build lookup map instead of re-reading per mission
     const allCronJobs = readCronJobs();
@@ -481,63 +409,25 @@ export async function GET(request: Request) {
         const content = readFileSync(DATA_DIR + "/" + file, "utf-8");
         const m: MissionRecord = JSON.parse(content);
 
-        // Attach cron job status if linked, and derive mission status
+        // Derive status from cron job
         if (m.cronJobId) {
           const job = cronJobMap.get(m.id) || null;
+          const mapped = getMissionStatus(job, m.status);
+          m.status = mapped.status as MissionRecord["status"];
+          if (mapped.error) m.error = mapped.error;
+          m.updatedAt = new Date().toISOString();
+
           if (job) {
-            // Derive display state
-            let derivedState = job.state || "unknown";
-            if (derivedState !== "running") {
-              if (job.enabled !== false && job.next_run_at) {
-                const nextRun = new Date(job.next_run_at).getTime();
-                if (nextRun <= Date.now()) {
-                  if (job.last_run_at) {
-                    derivedState = "active";
-                  } else if (derivedState === "scheduled") {
-                    derivedState = "queued";
-                  }
-                }
-              }
-            }
-            // Sync mission status from cron job state
-            deriveMissionStatus(m, job);
-            // After deriveMissionStatus, sync cronJob.state with derived mission status
-            const syncState = m.status === "running" ? "running"
-              : m.status === "completed" ? "completed"
-              : m.status === "failed" ? "failed"
-              : derivedState;
             (m as MissionRecord & { cronJob: unknown }).cronJob = {
-              state: syncState,
+              state: job.state || "unknown",
               enabled: job.enabled !== false,
               lastRun: job.last_run_at || null,
               lastStatus: job.last_status || null,
             };
-          } else if (m.dispatchMode === "now" && m.status === "dispatched") {
-            // One-shot cron job was deleted — validate session before marking completed
-            const sessions = findSessionsForCronJob(m.cronJobId || "");
-            if (sessions.length > 0) {
-              const sessionPath = SESSIONS_DIR + "/" + sessions[0].id + ".json";
-              try {
-                const sessionData = JSON.parse(readFileSync(sessionPath, "utf-8"));
-                const messages: SessionMessage[] = sessionData.messages || [];
-                const validation = validateSessionCompletion(messages);
-                if (!validation.completed) {
-                  m.status = "failed";
-                  m.error = `Session ${validation.reason}${validation.timedOut ? " (timed out)" : ""}`;
-                } else {
-                  m.status = "completed";
-                }
-              } catch {
-                m.status = "completed";
-              }
-            } else {
-              m.status = "completed";
-            }
-            m.updatedAt = new Date().toISOString();
           }
         }
 
-        missions.push(m as MissionRecord & { cronJob?: { state: string; lastRun: string | null; lastStatus: string | null } });
+        missions.push(m as MissionRecord & { cronJob?: { state: string; enabled: boolean; lastRun: string | null; lastStatus: string | null } });
       } catch {}
     }
 
@@ -547,8 +437,8 @@ export async function GET(request: Request) {
       data: {
         missions,
         total: missions.length,
-        active: missions.filter((m) => m.status === "running" || m.status === "dispatched").length,
-        completed: missions.filter((m) => m.status === "completed").length,
+        active: missions.filter((m) => m.status === "queued" || m.status === "dispatched").length,
+        completed: missions.filter((m) => m.status === "successful").length,
       },
     });
   } catch (err) {
@@ -576,7 +466,7 @@ export async function POST(request: Request) {
         goals: body.goals || [],
         skills: body.skills || [],
         model: body.model || "",
-        status: "draft",
+        status: "queued",
         dispatchMode,
         createdAt: now,
         updatedAt: now,
