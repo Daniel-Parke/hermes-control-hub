@@ -224,18 +224,21 @@ const TEMPLATES = [
     instruction: [
       "You are a senior code reviewer. Examine the codebase systematically and provide actionable feedback.",
       "",
-      "Steps:",
-      "1. Understand the project structure — read key files, entry points, and config",
-      "2. Scan for bugs — logic errors, null references, race conditions, unhandled edge cases",
-      "3. Security audit — injection risks, auth issues, exposed secrets, unsafe inputs",
-      "4. Performance — unnecessary re-renders, N+1 queries, missing indexes, memory leaks",
-      "5. Code quality — naming, DRY violations, dead code, missing error handling",
+      "CRITICAL: You have 15 minutes maximum. Focus on HIGH-IMPACT issues only.",
+      "Do NOT delegate to subagents — work directly. Read files yourself.",
       "",
-      "For each finding, report: file path, line number, severity (critical/warning/info), description, and suggested fix.",
-      "Group findings by severity. Lead with the most impactful issues.",
+      "Steps:",
+      "1. Map the project structure (2 min max) — entry points, key config, main modules",
+      "2. Scan for critical bugs (5 min) — logic errors, null refs, race conditions, unhandled errors",
+      "3. Security audit (5 min) — injection risks, exposed secrets, unsafe inputs, auth gaps",
+      "4. Report findings — file path, line number, severity, description, suggested fix",
+      "",
+      "Prioritise: Security > Critical Bugs > Performance > Code Quality",
+      "Skip low-severity items if time is short. A focused report of 3-5 critical findings",
+      "is more valuable than a superficial scan of everything.",
     ].join("\n"),
-    context: "Focus area or specific files to review:\n",
-    goals: ["Map project structure", "Bug & logic scan", "Security audit", "Performance & quality review"],
+    context: "Focus area or specific files to review (leave blank for full scan):\n",
+    goals: ["Map structure", "Critical bug scan", "Security audit", "Report findings"],
     suggestedSkills: ["systematic-debugging"],
     defaultModel: "",
     timeoutMinutes: 15,
@@ -599,14 +602,35 @@ export async function POST(request: Request) {
       if (dispatchMode !== "save") {
         const cronId = "mission-" + id;
 
-        // Build enhanced prompt with goal tracking if goals are defined
+        // Build enhanced prompt with goal tracking, time budget, and scope constraints
         let missionPrompt = record.prompt;
+
+        // Look up template timeout if applicable
+        const templateDef = record.templateId ? TEMPLATES.find(t => t.id === record.templateId) : null;
+        const timeoutMinutes = templateDef?.timeoutMinutes || 10;
+
+        // Add time budget warning — cron jobs have ~10 min inactivity timeout
+        const timeBudgetSection =
+          `## TIME BUDGET\n` +
+          `You have approximately ${timeoutMinutes} minutes. This is a HARD LIMIT — the session will be killed after ${timeoutMinutes} minutes of inactivity.\n` +
+          `Plan accordingly. Do NOT attempt work that cannot be completed in this window.\n\n`;
+
+        // Add delegation constraints
+        const delegationSection =
+          `## DELEGATION RULES\n` +
+          `- You may delegate UP TO 3 subtasks in ONE round. Do NOT delegate multiple rounds.\n` +
+          `- After receiving delegation results, SYNTHESIZE and produce your final report.\n` +
+          `- If time is running short, skip delegation and work directly.\n` +
+          `- Set max_iterations to 30 for each delegated subtask to prevent runaway execution.\n\n`;
+
         if (record.goals.length > 0) {
           missionPrompt =
             `## Goals (complete each in order)\n` +
             record.goals.map((g, i) => `${i + 1}. [ ] ${g}`).join("\n") +
             `\n\nMark each goal as done by including "GOAL_DONE: <goal text>" in your response when you finish each one.\n\n` +
-            `---\n\n${record.prompt}`;
+            `---\n\n${timeBudgetSection}${delegationSection}${record.prompt}`;
+        } else {
+          missionPrompt = `---\n\n${timeBudgetSection}${delegationSection}${record.prompt}`;
         }
 
         const parsed = dispatchMode === "cron"
@@ -716,12 +740,26 @@ export async function POST(request: Request) {
         if (idx !== -1) {
           if (body.prompt !== undefined || body.goals !== undefined) {
             let missionPrompt = mission.prompt;
+            const templateDef = mission.templateId ? TEMPLATES.find(t => t.id === mission.templateId) : null;
+            const timeoutMinutes = templateDef?.timeoutMinutes || 10;
+            const timeBudgetSection =
+              `## TIME BUDGET\n` +
+              `You have approximately ${timeoutMinutes} minutes. This is a HARD LIMIT — the session will be killed after ${timeoutMinutes} minutes of inactivity.\n` +
+              `Plan accordingly. Do NOT attempt work that cannot be completed in this window.\n\n`;
+            const delegationSection =
+              `## DELEGATION RULES\n` +
+              `- You may delegate UP TO 3 subtasks in ONE round. Do NOT delegate multiple rounds.\n` +
+              `- After receiving delegation results, SYNTHESIZE and produce your final report.\n` +
+              `- If time is running short, skip delegation and work directly.\n` +
+              `- Set max_iterations to 30 for each delegated subtask to prevent runaway execution.\n\n`;
             if (mission.goals.length > 0) {
               missionPrompt =
                 `## Goals (complete each in order)\n` +
                 mission.goals.map((g: string, i: number) => `${i + 1}. [ ] ${g}`).join("\n") +
                 `\n\nMark each goal as done by including "GOAL_DONE: <goal text>" in your response when you finish each one.\n\n` +
-                `---\n\n${mission.prompt}`;
+                `---\n\n${timeBudgetSection}${delegationSection}${mission.prompt}`;
+            } else {
+              missionPrompt = `---\n\n${timeBudgetSection}${delegationSection}${mission.prompt}`;
             }
             jobs[idx].prompt = missionPrompt;
           }
