@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { existsSync, readFileSync } from "fs";
 
 import { HERMES_HOME, PATHS } from "@/lib/hermes";
+import { ApiResponse } from "@/types/hermes";
+import { logApiError } from "@/lib/api-logger";
 
 export async function GET() {
   try {
@@ -24,7 +26,7 @@ export async function GET() {
             inGateway = false;
           }
         }
-      } catch {}
+      } catch (err) { logApiError("GET /api/gateway", "parsing config for gateway settings", err); }
     }
 
     // Check for gateway log
@@ -35,7 +37,7 @@ export async function GET() {
         const content = readFileSync(logPath, "utf-8");
         const lines = content.split("\n").filter((l) => l.trim());
         lastLogLines = lines.slice(-20);
-      } catch {}
+      } catch (err) { logApiError("GET /api/gateway", "reading gateway log", err); }
     }
 
     // Check platform status from .env
@@ -59,15 +61,18 @@ export async function GET() {
         platforms.discord = !!envVars.DISCORD_BOT_TOKEN;
         platforms.slack = !!envVars.SLACK_BOT_TOKEN;
         platforms.whatsapp = !!envVars.WHATSAPP_API_KEY || !!envVars.WHATSAPP_PHONE_ID;
-      } catch {}
+      } catch (err) { logApiError("GET /api/gateway", "reading .env for platform status", err); }
     }
 
     return NextResponse.json({
-      platforms,
-      recentLogs: lastLogLines,
-      logAvailable: existsSync(logPath),
+      data: {
+        platforms,
+        recentLogs: lastLogLines,
+        logAvailable: existsSync(logPath),
+      },
     });
-  } catch {
+  } catch (err) {
+    logApiError("GET /api/gateway", "reading gateway status", err);
     return NextResponse.json(
       { error: "Failed to read gateway status" },
       { status: 500 }

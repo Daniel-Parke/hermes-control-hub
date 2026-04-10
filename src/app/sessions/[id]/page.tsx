@@ -196,8 +196,8 @@ export default function SessionDetailPage() {
         const body = await res.json().catch(() => null);
         throw new Error(body?.error || `Failed to load session`);
       }
-      const sessionData = await res.json();
-      setData(sessionData);
+      const json = await res.json();
+      setData(json.data || json);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unknown error");
     } finally {

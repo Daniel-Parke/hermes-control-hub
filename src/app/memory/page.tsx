@@ -238,13 +238,13 @@ export default function MemoryPage() {
   const [editingFact, setEditingFact] = useState<EditingFact | null>(null);
   const [deletingFactId, setDeletingFactId] = useState<number | null>(null);
 
-  const toast = useToast();
+  const { showToast, toastElement } = useToast();
 
   const loadData = useCallback(() => {
     setLoading(true);
     fetch("/api/memory")
       .then((res) => res.json())
-      .then(setData)
+      .then((d) => setData(d.data || d))
       .finally(() => setLoading(false));
   }, []);
 
@@ -281,7 +281,7 @@ export default function MemoryPage() {
           }),
         });
         if (!res.ok) throw new Error("Failed to add fact");
-        toast.showToast("Fact added successfully", "success");
+        showToast("Fact added successfully", "success");
       } else {
         // Update
         const res = await fetch("/api/memory", {
@@ -296,12 +296,12 @@ export default function MemoryPage() {
           }),
         });
         if (!res.ok) throw new Error("Failed to update fact");
-        toast.showToast("Fact updated successfully", "success");
+        showToast("Fact updated successfully", "success");
       }
       setEditingFact(null);
       loadData();
     } catch {
-      toast.showToast("Failed to save fact", "error");
+      showToast("Failed to save fact", "error");
     }
   };
 
@@ -310,11 +310,11 @@ export default function MemoryPage() {
     try {
       const res = await fetch(`/api/memory?id=${deletingFactId}`, { method: "DELETE" });
       if (!res.ok) throw new Error("Failed to delete fact");
-      toast.showToast("Fact deleted", "success");
+      showToast("Fact deleted", "success");
       setDeletingFactId(null);
       loadData();
     } catch {
-      toast.showToast("Failed to delete fact", "error");
+      showToast("Failed to delete fact", "error");
     }
   };
 
@@ -322,7 +322,7 @@ export default function MemoryPage() {
   const categories = useMemo(() => {
     if (!data?.facts) return [];
     const cats = new Set<string>();
-    for (const f of data.facts) {
+    for (const f of data?.facts || []) {
       cats.add(f.category || "uncategorized");
     }
     return Array.from(cats).sort();
@@ -343,6 +343,32 @@ export default function MemoryPage() {
       }
       return true;
     }) || [];
+
+  // Show notice when holographic memory is not installed
+  if (!loading && data && data.available === false) {
+    return (
+      <div className="min-h-screen bg-dark-950 grid-bg">
+        <PageHeader
+          icon={Brain}
+          title="Holographic Memory"
+          subtitle="Memory Provider"
+          color="pink"
+        />
+        <div className="px-6 py-12">
+          <div className="max-w-lg mx-auto text-center rounded-xl border border-pink-500/20 bg-dark-900/50 p-8">
+            <Brain className="w-12 h-12 text-pink-400/40 mx-auto mb-4" />
+            <h2 className="text-lg font-semibold text-white mb-2">Holographic Memory Not Installed</h2>
+            <p className="text-sm text-white/50 mb-4">
+              {data.message || "This feature requires the hermes-memory-store plugin with the holographic memory provider."}
+            </p>
+            <p className="text-xs text-white/30 font-mono">
+              Install via: hermes plugins install hermes-memory-store
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-dark-950 grid-bg">
@@ -448,6 +474,8 @@ export default function MemoryPage() {
           onClose={() => setDeletingFactId(null)}
         />
       )}
+
+      {toastElement}
     </div>
   );
 }

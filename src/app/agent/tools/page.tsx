@@ -57,7 +57,7 @@ export default function ToolsPage() {
   useEffect(() => {
     fetch("/api/tools")
       .then((res) => res.json())
-      .then(setData)
+      .then((d) => setData(d.data))
       .finally(() => setLoading(false));
   }, []);
 
@@ -95,7 +95,7 @@ export default function ToolsPage() {
       setPendingChanges({});
       // Reload
       const fresh = await fetch("/api/tools").then((r) => r.json());
-      setData(fresh);
+      setData(fresh.data);
       setTimeout(() => setSaveStatus("idle"), 2000);
     } catch {
       setSaveStatus("error");

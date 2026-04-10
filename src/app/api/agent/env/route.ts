@@ -5,6 +5,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from "fs";
 import { PATHS } from "@/lib/hermes";
+import { logApiError } from "@/lib/api-logger";
 
 // Keys whose values are safe to show (non-sensitive)
 const SAFE_KEYS = new Set([
@@ -84,18 +85,21 @@ function parseEnv(content: string): EnvEntry[] {
 export async function GET() {
   try {
     if (!existsSync(PATHS.env)) {
-      return NextResponse.json({ entries: [], total: 0, exists: false });
+      return NextResponse.json({ data: { entries: [], total: 0, exists: false } });
     }
 
     const content = readFileSync(PATHS.env, "utf-8");
     const entries = parseEnv(content);
 
     return NextResponse.json({
-      entries,
-      total: entries.filter((e) => !e.isComment && !e.isEmpty).length,
-      exists: true,
+      data: {
+        entries,
+        total: entries.filter((e) => !e.isComment && !e.isEmpty).length,
+        exists: true,
+      },
     });
   } catch (error) {
+    logApiError("GET /api/agent/env", "reading .env", error);
     return NextResponse.json(
       { error: "Failed to read .env" },
       { status: 500 }
@@ -117,7 +121,7 @@ export async function PUT(request: NextRequest) {
       const dir = PATHS.env.substring(0, PATHS.env.lastIndexOf("/"));
       mkdirSync(dir, { recursive: true });
       writeFileSync(PATHS.env, `# Hermes Agent Environment Configuration\n\n${key}=${value}\n`, "utf-8");
-      return NextResponse.json({ success: true, key, action: "created" });
+      return NextResponse.json({ data: { success: true, key, action: "created" } });
     }
 
     const content = readFileSync(PATHS.env, "utf-8");
@@ -150,8 +154,9 @@ export async function PUT(request: NextRequest) {
 
     writeFileSync(PATHS.env, newLines.join("\n"), "utf-8");
 
-    return NextResponse.json({ success: true, key, action: found ? "updated" : "added" });
+    return NextResponse.json({ data: { success: true, key, action: found ? "updated" : "added" } });
   } catch (error) {
+    logApiError("PUT /api/agent/env", "updating .env", error);
     return NextResponse.json(
       { error: "Failed to update .env" },
       { status: 500 }

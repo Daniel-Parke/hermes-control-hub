@@ -1,4 +1,4 @@
-import { getMissionProgressSteps, messageSummary, validateSessionCompletion, parseSchedule, SessionMessage } from "@/lib/utils";
+import { getMissionProgressSteps, messageSummary, validateSessionCompletion, parseSchedule, titleCase, SessionMessage } from "@/lib/utils";
 
 describe("getMissionProgressSteps", () => {
   describe("labels", () => {
@@ -257,5 +257,82 @@ describe("validateSessionCompletion", () => {
       expect(result.completed).toBe(false);
       expect(result.reason).toContain("unexpected");
     });
+  });
+});
+
+describe("titleCase", () => {
+  it("should capitalise the first letter of a string", () => {
+    expect(titleCase("running")).toBe("Running");
+    expect(titleCase("completed")).toBe("Completed");
+    expect(titleCase("queued")).toBe("Queued");
+  });
+
+  it("should return empty string unchanged", () => {
+    expect(titleCase("")).toBe("");
+  });
+
+  it("should handle single character strings", () => {
+    expect(titleCase("a")).toBe("A");
+    expect(titleCase("Z")).toBe("Z");
+  });
+
+  it("should not change already capitalised strings", () => {
+    expect(titleCase("Running")).toBe("Running");
+    expect(titleCase("OK")).toBe("OK");
+  });
+
+  it("should handle status values from cron jobs", () => {
+    expect(titleCase("scheduled")).toBe("Scheduled");
+    expect(titleCase("paused")).toBe("Paused");
+    expect(titleCase("failed")).toBe("Failed");
+    expect(titleCase("ok")).toBe("Ok");
+  });
+
+  it("should handle special status values", () => {
+    expect(titleCase("active")).toBe("Active");
+    expect(titleCase("idle")).toBe("Idle");
+    expect(titleCase("disabled")).toBe("Disabled");
+    expect(titleCase("connected")).toBe("Connected");
+  });
+});
+
+describe("getMissionProgressSteps — edge cases", () => {
+  it("should show 'Dispatched' state for recurring job between runs", () => {
+    // Recurring job that completed, now waiting for next run
+    const steps = getMissionProgressSteps("dispatched", "cron");
+    expect(steps[0].state).toBe("active");
+    expect(steps[1].state).toBe("pending");
+    expect(steps[2].state).toBe("pending");
+  });
+
+  it("should show 'Running' state with correct progress", () => {
+    const steps = getMissionProgressSteps("running", "now");
+    expect(steps[0].label).toBe("Dispatched");
+    expect(steps[0].state).toBe("done");
+    expect(steps[1].label).toBe("Processing");
+    expect(steps[1].state).toBe("active");
+    expect(steps[2].label).toBe("Done");
+    expect(steps[2].state).toBe("pending");
+  });
+
+  it("should handle completed state with all steps done", () => {
+    const steps = getMissionProgressSteps("completed", "cron");
+    expect(steps[0].label).toBe("Queued");
+    expect(steps[0].state).toBe("done");
+    expect(steps[1].state).toBe("done");
+    expect(steps[2].state).toBe("done");
+  });
+
+  it("should handle failed state correctly", () => {
+    const steps = getMissionProgressSteps("failed", "now");
+    expect(steps[0].state).toBe("done");
+    expect(steps[1].state).toBe("failed");
+    expect(steps[2].state).toBe("failed");
+  });
+
+  it("should not crash with unknown status values", () => {
+    const steps = getMissionProgressSteps("unknown-status");
+    expect(steps).toHaveLength(3);
+    expect(steps[0].state).toBe("active");
   });
 });

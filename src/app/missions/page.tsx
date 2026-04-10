@@ -45,7 +45,7 @@ import Button from "@/components/ui/Button";
 import Toast, { useToast } from "@/components/ui/Toast";
 import AutoTextarea from "@/components/ui/AutoTextarea";
 import Modal from "@/components/ui/Modal";
-import { timeAgo, timeUntil } from "@/lib/utils";
+import { timeAgo, timeUntil, titleCase } from "@/lib/utils";
 import { iconColorMap } from "@/lib/theme";
 import type { AccentColor } from "@/types/hermes";
 
@@ -272,8 +272,8 @@ export default function MissionsPage() {
       }
 
       // Completed/failed mission — create a NEW dispatch (re-dispatch)
-      showToast("Re-dispatching mission...", "info");
       setEditingId(null); // Clear so we fall through to create path
+      // Don't show info toast here — the create path below handles it
 
       const res = await fetch("/api/missions", {
         method: "POST",
@@ -288,8 +288,8 @@ export default function MissionsPage() {
       });
 
       if (res.ok) {
-        showToast("Mission re-dispatched! Redirecting to dashboard...", "success");
-        setTimeout(() => router.push("/"), 800);
+        showToast("Mission re-dispatched! Returning to dashboard...", "success");
+        setTimeout(() => router.push("/"), 2000);
       } else {
         showToast("Failed to re-dispatch mission", "error");
         setDispatching(false);
@@ -325,11 +325,11 @@ export default function MissionsPage() {
         fetchData();
         setDispatching(false);
       } else if (newDispatch === "now") {
-        showToast("Mission dispatched! Redirecting to dashboard...", "success");
-        setTimeout(() => router.push("/"), 500);
+        showToast("Mission dispatched! Returning to dashboard...", "success");
+        setTimeout(() => router.push("/"), 2000);
       } else {
         showToast(`Mission scheduled — ${newSchedule}`, "success");
-        setTimeout(() => router.push("/"), 500);
+        setTimeout(() => router.push("/"), 2000);
       }
     } else {
       showToast("Failed to create mission", "error");
@@ -796,13 +796,13 @@ export default function MissionsPage() {
                           <StatusDot status={sc.dot} pulse={mission.status === "running"} />
                           <span className="text-sm font-semibold text-white truncate">{mission.name}</span>
                           <span className={`text-[10px] font-mono px-2 py-0.5 rounded-full ${sc.bg} ${sc.text}`}>
-                            {mission.status}
+                            {titleCase(mission.status)}
                           </span>
                           {mission.cronJob && (
                             <span className={`text-[10px] font-mono px-2 py-0.5 rounded-full ${
                               mission.cronJob.enabled ? "bg-green-500/10 text-neon-green" : "bg-white/5 text-white/30"
                             }`}>
-                              cron: {mission.cronJob.enabled ? mission.cronJob.state : "disabled"}
+                              cron: {mission.cronJob.enabled ? (titleCase(mission.cronJob.state)) : "Disabled"}
                             </span>
                           )}
                         </div>
@@ -887,7 +887,7 @@ export default function MissionsPage() {
                                 <div className="flex justify-between">
                                   <span className="text-white/30">State</span>
                                   <span className={detail.cronJob.enabled ? "text-neon-green" : "text-white/40"}>
-                                    {detail.cronJob.enabled ? detail.cronJob.state : "disabled"}
+                                    {detail.cronJob.enabled ? (titleCase(detail.cronJob.state)) : "Disabled"}
                                   </span>
                                 </div>
                                 <div className="flex justify-between">
@@ -896,7 +896,7 @@ export default function MissionsPage() {
                                 </div>
                                 <div className="flex justify-between">
                                   <span className="text-white/30">Last run</span>
-                                  <span className="text-white/60">{detail.cronJob.lastRun ? timeAgo(detail.cronJob.lastRun) : "never"}</span>
+                                  <span className="text-white/60">{detail.cronJob.lastRun ? timeAgo(detail.cronJob.lastRun) : "Never"}</span>
                                 </div>
                                 <div className="flex justify-between">
                                   <span className="text-white/30">Status</span>
@@ -910,21 +910,21 @@ export default function MissionsPage() {
                                       : "text-neon-orange"
                                   }>
                                     {detail.cronJob.state === "running"
-                                      ? "executing..."
+                                      ? "Executing..."
                                       : detail.cronJob.lastRun && !detail.cronJob.nextRun
-                                      ? `${detail.cronJob.lastStatus || "done"} ${timeAgo(detail.cronJob.lastRun)}`
+                                      ? `${titleCase(detail.cronJob.lastStatus || "Ok")} ${timeAgo(detail.cronJob.lastRun)}`
                                       : detail.cronJob.nextRun && new Date(detail.cronJob.nextRun).getTime() > Date.now()
-                                      ? "next " + timeUntil(detail.cronJob.nextRun)
+                                      ? "Next " + timeUntil(detail.cronJob.nextRun)
                                       : detail.cronJob.lastRun
-                                      ? `active · ran ${timeAgo(detail.cronJob.lastRun)}`
-                                      : "queued"}
+                                      ? `Active · Ran ${timeAgo(detail.cronJob.lastRun)}`
+                                      : "Queued"}
                                   </span>
                                 </div>
                                 {detail.cronJob.lastStatus && (
                                   <div className="flex justify-between">
                                     <span className="text-white/30">Last status</span>
                                     <span className={detail.cronJob.lastStatus === "ok" ? "text-neon-green" : "text-red-400"}>
-                                      {detail.cronJob.lastStatus}
+                                      {titleCase(detail.cronJob.lastStatus)}
                                     </span>
                                   </div>
                                 )}
@@ -1223,7 +1223,6 @@ export default function MissionsPage() {
         </Modal>
       )}
 
-      {toastElement}
     </div>
   );
 }

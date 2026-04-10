@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { readFileSync, readdirSync, existsSync, statSync } from "fs";
 
 import { HERMES_HOME, PATHS } from "@/lib/hermes";
+import { ApiResponse } from "@/types/hermes";
+import { logApiError } from "@/lib/api-logger";
 
 interface Skill {
   name: string;
@@ -58,7 +60,7 @@ function scanSkills(dir: string, category: string = ""): Skill[] {
               size: stats.size,
               lastModified: stats.mtime.toISOString(),
             });
-          } catch {}
+          } catch (err) { logApiError("GET /api/skills", "reading SKILL.md " + skillPath, err); }
         }
 
         // Recurse into subdirectories
@@ -66,7 +68,7 @@ function scanSkills(dir: string, category: string = ""): Skill[] {
         skills.push(...scanSkills(fullPath, subCategory));
       }
     }
-  } catch {}
+  } catch (err) { logApiError("GET /api/skills", "scanning directory " + dir, err); }
 
   return skills;
 }
@@ -86,9 +88,11 @@ export async function GET() {
   }
 
   return NextResponse.json({
-    skills,
-    categories,
-    total: skills.length,
-    categoryCount: Object.keys(categories).length,
+    data: {
+      skills,
+      categories,
+      total: skills.length,
+      categoryCount: Object.keys(categories).length,
+    },
   });
 }

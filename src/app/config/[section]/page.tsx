@@ -33,7 +33,8 @@ export default function ConfigSectionPage() {
     try {
       const res = await fetch("/api/config");
       if (!res.ok) throw new Error("Failed to load config");
-      const config = await res.json();
+      const json = await res.json();
+      const config = json.data || json;
       const sectionValues = (config[sectionId] as Record<string, unknown>) || {};
       setValues(sectionValues);
       setOriginalValues({ ...sectionValues });

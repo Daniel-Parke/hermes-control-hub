@@ -3,6 +3,7 @@ import { readFileSync, writeFileSync, existsSync, mkdirSync } from "fs";
 import yaml from "js-yaml";
 
 import { HERMES_HOME, PATHS } from "@/lib/hermes";
+import { logApiError } from "@/lib/api-logger";
 const CONFIG_PATH = PATHS.config;
 
 function parseConfig(): Record<string, unknown> {
@@ -17,8 +18,9 @@ function parseConfig(): Record<string, unknown> {
 export async function GET() {
   try {
     const config = parseConfig();
-    return NextResponse.json(config);
-  } catch {
+    return NextResponse.json({ data: config });
+  } catch (error) {
+    logApiError("GET /api/config", "reading config.yaml", error);
     return NextResponse.json(
       { error: "Failed to read config.yaml" },
       { status: 500 }
@@ -58,8 +60,9 @@ export async function PUT(request: NextRequest) {
     const content = yaml.dump(config, { lineWidth: -1, noRefs: true });
     writeFileSync(CONFIG_PATH, content, "utf-8");
 
-    return NextResponse.json({ success: true, section, values });
-  } catch {
+    return NextResponse.json({ data: { success: true, section, values } });
+  } catch (error) {
+    logApiError("PUT /api/config", "updating config", error);
     return NextResponse.json(
       { error: "Failed to update config" },
       { status: 500 }

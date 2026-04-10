@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { readFileSync, writeFileSync, existsSync } from "fs";
 
 import { HERMES_HOME, PATHS } from "@/lib/hermes";
+import { logApiError } from "@/lib/api-logger";
 const CONFIG_PATH = PATHS.config;
 
 // All known toolsets from the Hermes toolsets reference
@@ -73,11 +74,14 @@ export async function GET() {
     }
 
     return NextResponse.json({
-      available: AVAILABLE_TOOLSETS,
-      platformToolsets,
-      activeToolsets,
+      data: {
+        available: AVAILABLE_TOOLSETS,
+        platformToolsets,
+        activeToolsets,
+      },
     });
   } catch (error) {
+    logApiError("GET /api/tools", "reading toolset configuration", error);
     return NextResponse.json(
       { error: "Failed to read toolset configuration" },
       { status: 500 }
@@ -186,11 +190,14 @@ export async function PUT(request: NextRequest) {
     writeFileSync(CONFIG_PATH, newLines.join("\n"), "utf-8");
 
     return NextResponse.json({
-      success: true,
-      platform,
-      toolsets,
+      data: {
+        success: true,
+        platform,
+        toolsets,
+      },
     });
   } catch (error) {
+    logApiError("PUT /api/tools", "updating toolset configuration", error);
     return NextResponse.json(
       { error: "Failed to update toolset configuration" },
       { status: 500 }

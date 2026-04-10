@@ -3,16 +3,22 @@ import { existsSync, statSync } from "fs";
 
 // Use string concatenation to avoid Turbopack NFT tracing issues
 import { HERMES_HOME, PATHS } from "@/lib/hermes";
+import { logApiError } from "@/lib/api-logger";
 
 export async function GET() {
   const dbPath = PATHS.memoryDb;
 
   if (!existsSync(dbPath)) {
     return NextResponse.json({
-      facts: [],
-      total: 0,
-      dbSize: 0,
-      error: "Memory database not found",
+      data: {
+        facts: [],
+        total: 0,
+        dbSize: 0,
+        entities: 0,
+        banks: [],
+        available: false,
+        message: "Holographic memory is not installed. Install the hermes-memory-store plugin to enable persistent memory.",
+      },
     });
   }
 
@@ -64,31 +70,32 @@ export async function GET() {
       }>;
 
       return NextResponse.json({
-        facts: facts.map((f) => ({
-          id: f.fact_id,
-          content: f.content,
-          category: f.category || "general",
-          tags: f.tags || "",
-          trust: f.trust_score ?? 0.5,
-          createdAt: f.created_at,
-          updatedAt: f.updated_at,
-        })),
-        total: countRow.count,
-        dbSize: stats.size,
-        dbPath: "memory_store.db",
-        entities: entityCount,
-        banks: bankRows,
+        data: {
+          facts: facts.map((f) => ({
+            id: f.fact_id,
+            content: f.content,
+            category: f.category || "general",
+            tags: f.tags || "",
+            trust: f.trust_score ?? 0.5,
+            createdAt: f.created_at,
+            updatedAt: f.updated_at,
+          })),
+          total: countRow.count,
+          dbSize: stats.size,
+          dbPath: "memory_store.db",
+          entities: entityCount,
+          banks: bankRows,
+        },
       });
     } finally {
       db.close();
     }
   } catch (error) {
-    return NextResponse.json({
-      facts: [],
-      total: 0,
-      dbSize: statSync(dbPath).size,
-      error: `Could not read memory database: ${error instanceof Error ? error.message : "Unknown error"}`,
-    });
+    logApiError("GET /api/memory", "reading memory database", error);
+    return NextResponse.json(
+      { error: `Could not read memory database: ${error instanceof Error ? error.message : "Unknown error"}` },
+      { status: 500 }
+    );
   }
 }
 
@@ -97,7 +104,7 @@ export async function POST(request: NextRequest) {
   const dbPath = PATHS.memoryDb;
 
   if (!existsSync(dbPath)) {
-    return NextResponse.json({ error: "Memory database not found" }, { status: 404 });
+    return NextResponse.json({ error: "Holographic memory is not installed" }, { status: 404 });
   }
 
   try {
@@ -119,15 +126,17 @@ export async function POST(request: NextRequest) {
       ).run(content.trim(), category, tags, trust_score, now, now);
 
       return NextResponse.json({
-        success: true,
-        fact: {
-          id: result.lastInsertRowid,
-          content: content.trim(),
-          category,
-          tags,
-          trust: trust_score,
-          createdAt: now,
-          updatedAt: now,
+        data: {
+          success: true,
+          fact: {
+            id: result.lastInsertRowid,
+            content: content.trim(),
+            category,
+            tags,
+            trust: trust_score,
+            createdAt: now,
+            updatedAt: now,
+          },
         },
       });
     } finally {
@@ -146,7 +155,7 @@ export async function PUT(request: NextRequest) {
   const dbPath = PATHS.memoryDb;
 
   if (!existsSync(dbPath)) {
-    return NextResponse.json({ error: "Memory database not found" }, { status: 404 });
+    return NextResponse.json({ error: "Holographic memory is not installed" }, { status: 404 });
   }
 
   try {
@@ -198,7 +207,7 @@ export async function PUT(request: NextRequest) {
 
       db.prepare(`UPDATE facts SET ${updates.join(", ")} WHERE fact_id = ?`).run(...values);
 
-      return NextResponse.json({ success: true, id });
+      return NextResponse.json({ data: { success: true, id } });
     } finally {
       db.close();
     }
@@ -215,7 +224,7 @@ export async function DELETE(request: NextRequest) {
   const dbPath = PATHS.memoryDb;
 
   if (!existsSync(dbPath)) {
-    return NextResponse.json({ error: "Memory database not found" }, { status: 404 });
+    return NextResponse.json({ error: "Holographic memory is not installed" }, { status: 404 });
   }
 
   try {
@@ -233,7 +242,7 @@ export async function DELETE(request: NextRequest) {
       // Cascade: delete from fact_entities first (foreign key constraint)
       db.prepare("DELETE FROM fact_entities WHERE fact_id = ?").run(id);
       // Delete from FTS index
-      try { db.prepare("DELETE FROM facts_fts WHERE rowid = ?").run(id); } catch {}
+      try { db.prepare("DELETE FROM facts_fts WHERE rowid = ?").run(id); } catch (error) { logApiError("DELETE /api/memory", "deleting from FTS index", error); }
       // Delete the fact
       const result = db.prepare("DELETE FROM facts WHERE fact_id = ?").run(id);
 
@@ -241,7 +250,7 @@ export async function DELETE(request: NextRequest) {
         return NextResponse.json({ error: "Fact not found" }, { status: 404 });
       }
 
-      return NextResponse.json({ success: true, id });
+      return NextResponse.json({ data: { success: true, id } });
     } finally {
       db.close();
     }

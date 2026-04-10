@@ -6,6 +6,7 @@ import { NextResponse } from "next/server";
 import { readFileSync, existsSync, statSync } from "fs";
 
 import { HERMES_HOME } from "@/lib/hermes";
+import { logApiError } from "@/lib/api-logger";
 
 // Static behavior files — each defines a different aspect of agent personality
 import { BEHAVIOR_FILES } from "@/lib/behavior-files";
@@ -24,7 +25,7 @@ export async function GET() {
           size = stats.size;
           lastModified = stats.mtime.toISOString();
           content = readFileSync(config.path, "utf-8");
-        } catch {}
+        } catch (error) { logApiError("GET /api/agent/files", `reading ${config.path}`, error); }
       }
 
       return {
@@ -40,8 +41,9 @@ export async function GET() {
       };
     });
 
-    return NextResponse.json({ files, total: files.length });
+    return NextResponse.json({ data: { files, total: files.length } });
   } catch (error) {
+    logApiError("GET /api/agent/files", "listing behavior files", error);
     return NextResponse.json(
       { error: "Failed to list behavior files" },
       { status: 500 }

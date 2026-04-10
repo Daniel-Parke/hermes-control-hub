@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { readFileSync, writeFileSync, existsSync } from "fs";
 
 import { HERMES_HOME, PATHS } from "@/lib/hermes";
+import { logApiError } from "@/lib/api-logger";
 const CONFIG_PATH = PATHS.config;
 
 interface PersonalityData {
@@ -142,10 +143,10 @@ export async function GET() {
       prompt,
     }));
     return NextResponse.json({
-      personalities: list,
-      total: list.length,
+      data: { personalities: list, total: list.length },
     });
-  } catch {
+  } catch (error) {
+    logApiError("GET /api/personalities", "reading personalities", error);
     return NextResponse.json(
       { error: "Failed to read personalities" },
       { status: 500 }
@@ -191,8 +192,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    return NextResponse.json({ success: true, name: slug, prompt });
-  } catch {
+    return NextResponse.json({ data: { success: true, name: slug, prompt } });
+  } catch (error) {
+    logApiError("POST /api/personalities", "creating personality", error);
     return NextResponse.json(
       { error: "Failed to create personality" },
       { status: 500 }
@@ -251,8 +253,9 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    return NextResponse.json({ success: true, name: slug, prompt });
-  } catch {
+    return NextResponse.json({ data: { success: true, name: slug, prompt } });
+  } catch (error) {
+    logApiError("PUT /api/personalities", "updating personality", error);
     return NextResponse.json(
       { error: "Failed to update personality" },
       { status: 500 }
@@ -290,8 +293,9 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    return NextResponse.json({ success: true, deleted: name });
-  } catch {
+    return NextResponse.json({ data: { success: true, deleted: name } });
+  } catch (error) {
+    logApiError("DELETE /api/personalities", "deleting personality", error);
     return NextResponse.json(
       { error: "Failed to delete personality" },
       { status: 500 }

@@ -69,7 +69,8 @@ mission-control/
 ## Key Conventions
 
 - **TypeScript strict** — no `any`, no `@ts-ignore`
-- **API routes return `{ data?, error? }`**
+- **API routes return `{ data?, error? }`** — all routes use `ApiResponse<T>` from `@/types/hermes`
+- **Error logging** — all catch blocks call `logApiError(route, context, error)` from `@/lib/api-logger`
 - **Loading + error states** for every async operation
 - **Destructive actions need confirmation**
 - **NEVER write to `~/.hermes/` directly** — always through API endpoints
@@ -77,6 +78,13 @@ mission-control/
 - **Use `js-yaml` for YAML parsing**
 - **String concatenation for paths, NOT `path.join`** (Turbopack NFT tracing issue)
 - **Build before deploy:** `npm run build` must pass
+- **Security** — whitelist body fields in PUT handlers (no mass assignment), validate paths with `path.resolve()` + `startsWith()`
+
+## Shared Utilities
+
+- `src/lib/utils.ts` — `parseSchedule()`, `CronJobData`, `getMissionProgressSteps()`, `messageSummary()`, `validateSessionCompletion()`, `timeAgo()`, `timeUntil()`, `formatBytes()`
+- `src/lib/api-logger.ts` — `logApiError()`, `safeJsonParse()`, `safeReadJsonFile()`
+- `src/lib/hermes.ts` — `PATHS`, `HERMES_HOME`, `getDefaultModelConfig()`, `getDiscordHomeChannel()`
 
 
 

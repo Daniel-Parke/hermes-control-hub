@@ -4,8 +4,9 @@ import { NextResponse } from "next/server";
 // ═══════════════════════════════════════════════════════════════
 
 import { HERMES_HOME, PATHS, getDefaultModelConfig } from "@/lib/hermes";
-import { existsSync, mkdirSync, readFileSync, writeFileSync, readdirSync, unlinkSync } from "fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync, readdirSync, unlinkSync, statSync } from "fs";
 import { validateSessionCompletion, SessionMessage } from "@/lib/utils";
+import { logApiError } from "@/lib/api-logger";
 
 const DATA_DIR = PATHS.missions;
 const CRON_PATH = PATHS.cronJobs;
@@ -94,7 +95,8 @@ function readCronJobs(): CronJobData[] {
   try {
     const data = JSON.parse(readFileSync(CRON_PATH, "utf-8"));
     return Array.isArray(data.jobs) ? data.jobs : [];
-  } catch {
+  } catch (err) {
+    logApiError("missions/findSessionsForCronJob", "scanning session files", err);
     return [];
   }
 }
@@ -111,6 +113,8 @@ function findCronJobForMission(missionId: string): CronJobData | null {
 }
 
 // ── Find sessions that ran a specific cron job ────────────────
+// PERFORMANCE: Match by filename pattern (session_cron_<jobId>_*.json)
+// instead of reading every file's content. O(directory listing) vs O(N file reads).
 
 function findSessionsForCronJob(cronJobId: string): Array<{ id: string; modified: string; size: number }> {
   if (!existsSync(SESSIONS_DIR)) return [];
@@ -119,18 +123,16 @@ function findSessionsForCronJob(cronJobId: string): Array<{ id: string; modified
     const results: Array<{ id: string; modified: string; size: number }> = [];
     for (const file of files) {
       if (!file.endsWith(".json") && !file.endsWith(".jsonl")) continue;
+      // Match by filename pattern — cron sessions contain the job ID in the filename
+      if (!file.includes(cronJobId)) continue;
       const filePath = SESSIONS_DIR + "/" + file;
       try {
-        const content = readFileSync(filePath, "utf-8");
-        // Check if session references this cron job
-        if (content.includes(cronJobId)) {
-          const stat = existsSync(filePath) ? { mtime: new Date(), size: content.length } : null;
-          results.push({
-            id: file.replace(/\.(json|jsonl)$/, ""),
-            modified: stat ? stat.mtime.toISOString() : "",
-            size: stat ? stat.size : 0,
-          });
-        }
+        const stat = statSync(filePath);
+        results.push({
+          id: file.replace(/\.(json|jsonl)$/, ""),
+          modified: stat.mtime.toISOString(),
+          size: stat.size,
+        });
       } catch {}
     }
     return results.sort((a, b) => new Date(b.modified).getTime() - new Date(a.modified).getTime()).slice(0, 5);
@@ -337,6 +339,13 @@ export async function GET(request: Request) {
         return m;
       }
 
+      // Scheduler is actively executing — highest priority state
+      if (job.state === "running") {
+        m.status = "running";
+        m.updatedAt = new Date().toISOString();
+        return m;
+      }
+
       // Check session completion if the job has run
       if (job.last_run_at) {
         // Find the most recent session for this cron job
@@ -359,19 +368,23 @@ export async function GET(request: Request) {
           } catch {}
         }
 
-        // Fall back to cron job status if session validation passes or no session found
+        // Fall back to cron job status
         if (job.last_status) {
           if (job.last_status === "ok") {
             const repeat = job.repeat;
             const isOneShot = typeof repeat === "object" && repeat.times === 1;
-            m.status = isOneShot ? "completed" : "running";
+            if (isOneShot) {
+              m.status = "completed";
+            } else {
+              // Recurring job — not currently running (checked above),
+              // so it is waiting for next scheduled run
+              m.status = "dispatched";
+            }
           } else {
             m.status = "failed";
             m.error = `Cron job status: ${job.last_status}`;
           }
           m.updatedAt = new Date().toISOString();
-        } else if (job.state === "running") {
-          m.status = "running";
         }
       }
       return m;
@@ -420,6 +433,12 @@ export async function GET(request: Request) {
 
           // Sync mission status with cron
           deriveMissionStatus(mission, job);
+          // Sync cronJob.state with derived mission status
+          const syncState = mission.status === "running" ? "running"
+            : mission.status === "completed" ? "completed"
+            : mission.status === "failed" ? "failed"
+            : derivedState;
+          cronJob.state = syncState;
         } else if (mission.dispatchMode === "now" && mission.status === "dispatched") {
           // One-shot cron job was deleted after completion — validate session before marking completed
           const sessions = findSessionsForCronJob(mission.cronJobId || "");
@@ -453,6 +472,10 @@ export async function GET(request: Request) {
     const files = existsSync(DATA_DIR) ? readdirSync(DATA_DIR).filter((f) => f.endsWith(".json")) : [];
     const missions: Array<MissionRecord & { cronJob?: { state: string; lastRun: string | null; lastStatus: string | null } }> = [];
 
+    // PERFORMANCE: Read cron jobs once, build lookup map instead of re-reading per mission
+    const allCronJobs = readCronJobs();
+    const cronJobMap = new Map(allCronJobs.map((j) => [j.mission_id, j]));
+
     for (const file of files) {
       try {
         const content = readFileSync(DATA_DIR + "/" + file, "utf-8");
@@ -460,7 +483,7 @@ export async function GET(request: Request) {
 
         // Attach cron job status if linked, and derive mission status
         if (m.cronJobId) {
-          const job = findCronJobForMission(m.id);
+          const job = cronJobMap.get(m.id) || null;
           if (job) {
             // Derive display state
             let derivedState = job.state || "unknown";
@@ -476,14 +499,19 @@ export async function GET(request: Request) {
                 }
               }
             }
+            // Sync mission status from cron job state
+            deriveMissionStatus(m, job);
+            // After deriveMissionStatus, sync cronJob.state with derived mission status
+            const syncState = m.status === "running" ? "running"
+              : m.status === "completed" ? "completed"
+              : m.status === "failed" ? "failed"
+              : derivedState;
             (m as MissionRecord & { cronJob: unknown }).cronJob = {
-              state: derivedState,
+              state: syncState,
               enabled: job.enabled !== false,
               lastRun: job.last_run_at || null,
               lastStatus: job.last_status || null,
             };
-            // Sync mission status
-            deriveMissionStatus(m, job);
           } else if (m.dispatchMode === "now" && m.status === "dispatched") {
             // One-shot cron job was deleted — validate session before marking completed
             const sessions = findSessionsForCronJob(m.cronJobId || "");
@@ -524,6 +552,7 @@ export async function GET(request: Request) {
       },
     });
   } catch (err) {
+    logApiError("GET /api/missions", "listing missions", err);
     return NextResponse.json({ error: "Failed to list missions" }, { status: 500 });
   }
 }
@@ -774,7 +803,8 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json({ error: "Unknown action" }, { status: 400 });
-  } catch {
+  } catch (err) {
+    logApiError("POST /api/missions", "processing request", err);
     return NextResponse.json({ error: "Failed to process request" }, { status: 500 });
   }
 }

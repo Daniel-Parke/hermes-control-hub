@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
 import { existsSync, readFileSync, readdirSync, statSync } from "fs";
+import { resolve } from "path";
 
 import { HERMES_HOME, PATHS } from "@/lib/hermes";
+import { ApiResponse } from "@/types/hermes";
+import { logApiError } from "@/lib/api-logger";
 
 export async function GET(request: Request) {
   try {
@@ -29,18 +32,26 @@ export async function GET(request: Request) {
           });
         }
       }
-    } catch {}
+    } catch (err) { logApiError("GET /api/logs", "listing available logs", err); }
 
     // Read requested log file
     const safeName = logName.replace(/[^a-zA-Z_-]/g, "");
-    const logPath = logsDir + "/" + safeName + ".log";
+    const logPath = resolve(logsDir, safeName + ".log");
+    const resolvedLogsDir = resolve(logsDir);
+
+    // Prevent path traversal: ensure resolved path stays within logs directory
+    if (!logPath.startsWith(resolvedLogsDir + "/") && logPath !== resolvedLogsDir) {
+      return NextResponse.json(
+        { error: "Invalid log path" },
+        { status: 400 }
+      );
+    }
 
     if (!existsSync(logPath)) {
-      return NextResponse.json({
-        availableLogs,
-        lines: [],
-        error: `Log file '${safeName}.log' not found`,
-      });
+      return NextResponse.json(
+        { error: `Log file '${safeName}.log' not found` },
+        { status: 404 }
+      );
     }
 
     const stats = statSync(logPath);
@@ -50,15 +61,18 @@ export async function GET(request: Request) {
     const lines = allLines.slice(-maxLines).reverse();
 
     return NextResponse.json({
-      name: safeName,
-      totalLines: allLines.length,
-      showingLines: lines.length,
-      size: stats.size,
-      modified: stats.mtime.toISOString(),
-      lines,
-      availableLogs,
+      data: {
+        name: safeName,
+        totalLines: allLines.length,
+        showingLines: lines.length,
+        size: stats.size,
+        modified: stats.mtime.toISOString(),
+        lines,
+        availableLogs,
+      },
     });
   } catch (error) {
+    logApiError("GET /api/logs", "reading logs", error);
     return NextResponse.json(
       { error: "Failed to read logs" },
       { status: 500 }

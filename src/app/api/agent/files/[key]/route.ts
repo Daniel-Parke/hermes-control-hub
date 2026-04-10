@@ -8,6 +8,7 @@ import { readFileSync, writeFileSync, existsSync, mkdirSync, statSync } from "fs
 import { HERMES_HOME, PATHS } from "@/lib/hermes";
 
 import { BEHAVIOR_FILES } from "@/lib/behavior-files";
+import { logApiError } from "@/lib/api-logger";
 
 export async function GET(
   request: NextRequest,
@@ -26,27 +27,32 @@ export async function GET(
   try {
     if (!existsSync(fileConfig.path)) {
       return NextResponse.json({
-        key,
-        content: "",
-        name: fileConfig.name,
-        description: fileConfig.description,
-        exists: false,
-        size: 0,
+        data: {
+          key,
+          content: "",
+          name: fileConfig.name,
+          description: fileConfig.description,
+          exists: false,
+          size: 0,
+        },
       });
     }
 
     const content = readFileSync(fileConfig.path, "utf-8");
     const stats = statSync(fileConfig.path);
     return NextResponse.json({
-      key,
-      content,
-      name: fileConfig.name,
-      description: fileConfig.description,
-      exists: true,
-      size: stats.size,
-      lastModified: stats.mtime.toISOString(),
+      data: {
+        key,
+        content,
+        name: fileConfig.name,
+        description: fileConfig.description,
+        exists: true,
+        size: stats.size,
+        lastModified: stats.mtime.toISOString(),
+      },
     });
   } catch {
+    logApiError("GET /api/agent/files/[key]", `reading ${fileConfig.name}`, undefined);
     return NextResponse.json(
       { error: `Failed to read ${fileConfig.name}` },
       { status: 500 }
@@ -99,12 +105,15 @@ export async function PUT(
     writeFileSync(fileConfig.path, content, "utf-8");
 
     return NextResponse.json({
-      success: true,
-      key,
-      name: fileConfig.name,
-      size: Buffer.byteLength(content, "utf-8"),
+      data: {
+        success: true,
+        key,
+        name: fileConfig.name,
+        size: Buffer.byteLength(content, "utf-8"),
+      },
     });
   } catch {
+    logApiError("PUT /api/agent/files/[key]", `writing ${fileConfig.name}`, undefined);
     return NextResponse.json(
       { error: `Failed to write ${fileConfig.name}` },
       { status: 500 }

@@ -107,7 +107,7 @@ export default function LogsPage() {
         `/api/logs?name=${activeLog}&lines=${lineCount}`
       );
       const json = await res.json();
-      setData(json);
+      setData(json.data);
     } catch {
       setData(null);
     } finally {

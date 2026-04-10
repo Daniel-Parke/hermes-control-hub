@@ -3,6 +3,8 @@ import { readFileSync, readdirSync, existsSync, statSync } from "fs";
 import { execSync } from "child_process";
 
 import { HERMES_HOME, PATHS } from "@/lib/hermes";
+import { ApiResponse } from "@/types/hermes";
+import { logApiError } from "@/lib/api-logger";
 
 interface AgentRun {
   id: string;
@@ -51,7 +53,7 @@ export async function GET() {
               if (envContent.includes("TELEGRAM_BOT_TOKEN=") && !envContent.match(/^#\s*TELEGRAM_BOT_TOKEN/m)) platforms.push("Telegram");
               if (envContent.includes("SLACK_BOT_TOKEN=") && !envContent.match(/^#\s*SLACK_BOT_TOKEN/m)) platforms.push("Slack");
             }
-          } catch {}
+          } catch (err) { logApiError("GET /api/agents", "reading .env for platforms", err); }
           const platformLabel = platforms.length > 0 ? platforms.join(" + ") : "Gateway";
 
           agents.push({
@@ -68,8 +70,8 @@ export async function GET() {
           break; // Only show one gateway
         }
       }
-    } catch {
-      // No gateway running — that's fine
+    } catch (err) {
+      logApiError("GET /api/agents", "checking gateway process", err);
     }
 
     // ── Cron job runs (from session files) ───────────────────
@@ -110,8 +112,8 @@ export async function GET() {
                 jobName = job.name || jobName;
                 jobModel = job.model || "unknown";
               }
-            } catch {
-              /* ignore */
+            } catch (err) {
+              logApiError("GET /api/agents", "reading cron config for job " + jobId, err);
             }
           }
 
@@ -124,8 +126,8 @@ export async function GET() {
                 (m: { role: string }) => m.role === "assistant"
               ).length;
             }
-          } catch {
-            /* ignore */
+          } catch (err) {
+            logApiError("GET /api/agents", "counting turns for session " + file, err);
           }
 
           // Is this session recent (within 15 min)?
@@ -144,8 +146,8 @@ export async function GET() {
             turns,
           });
         }
-      } catch {
-        /* ignore */
+      } catch (err) {
+        logApiError("GET /api/agents", "reading cron session files", err);
       }
     }
 
@@ -174,8 +176,8 @@ export async function GET() {
           });
         }
       }
-    } catch {
-      /* No subagents running */
+    } catch (err) {
+      logApiError("GET /api/agents", "checking subagent processes", err);
     }
 
     // Sort: running first, then by type
@@ -189,12 +191,15 @@ export async function GET() {
     const idleCount = agents.filter((a) => a.status === "idle").length;
 
     return NextResponse.json({
-      agents,
-      total: agents.length,
-      running: runningCount,
-      idle: idleCount,
+      data: {
+        agents,
+        total: agents.length,
+        running: runningCount,
+        idle: idleCount,
+      },
     });
   } catch (err) {
+    logApiError("GET /api/agents", "querying agents", err);
     return NextResponse.json(
       { error: "Failed to query agents: " + String(err) },
       { status: 500 }

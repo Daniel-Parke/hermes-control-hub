@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { existsSync, statSync, readdirSync } from "fs";
 
 import { HERMES_HOME, PATHS } from "@/lib/hermes";
+import { ApiResponse } from "@/types/hermes";
+import { logApiError } from "@/lib/api-logger";
 
 export async function GET() {
   try {
@@ -28,7 +30,7 @@ export async function GET() {
               count++;
             }
           }
-        } catch {}
+        } catch (err) { logApiError("GET /api/status", "counting skills in " + dir, err); }
         return count;
       };
       skillsCount = countSkills(skillsPath);
@@ -41,7 +43,7 @@ export async function GET() {
       try {
         const files = readdirSync(sessionsPath);
         sessionsCount = files.filter((f) => f.endsWith(".json") || f.endsWith(".jsonl")).length;
-      } catch {}
+      } catch (err) { logApiError("GET /api/status", "counting sessions", err); }
     }
 
     // Memory DB size
@@ -52,18 +54,21 @@ export async function GET() {
         const stats = statSync(memoryPath);
         const sizeKB = Math.round(stats.size / 1024);
         memorySize = sizeKB > 1024 ? (sizeKB / 1024).toFixed(1) + " MB" : sizeKB + " KB";
-      } catch {}
+      } catch (err) { logApiError("GET /api/status", "reading memory db stats", err); }
     }
 
     return NextResponse.json({
-      soulFile,
-      configFile,
-      skillsCount,
-      sessionsCount,
-      memorySize,
-      timestamp: new Date().toISOString(),
+      data: {
+        soulFile,
+        configFile,
+        skillsCount,
+        sessionsCount,
+        memorySize,
+        timestamp: new Date().toISOString(),
+      },
     });
   } catch (error) {
+    logApiError("GET /api/status", "reading system status", error);
     return NextResponse.json(
       { error: "Failed to read system status" },
       { status: 500 }

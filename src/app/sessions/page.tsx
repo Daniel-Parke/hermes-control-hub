@@ -52,10 +52,12 @@ function SessionCard({ session }: { session: Session }) {
                 <Clock className="w-3 h-3" />
                 {formatDate(session.modified)}
               </span>
-              <span className="flex items-center gap-1">
-                <MessageSquare className="w-3 h-3" />
-                {session.messageCount} msgs
-              </span>
+              {session.messageCount > 0 && (
+                <span className="flex items-center gap-1">
+                  <MessageSquare className="w-3 h-3" />
+                  {session.messageCount} msgs
+                </span>
+              )}
               <span className="flex items-center gap-1">
                 <HardDrive className="w-3 h-3" />
                 {(session.size / 1024).toFixed(1)} KB
@@ -84,7 +86,7 @@ export default function SessionsPage() {
   useEffect(() => {
     fetch("/api/sessions")
       .then((res) => res.json())
-      .then(setData)
+      .then((d) => setData(d.data))
       .finally(() => setLoading(false));
   }, []);
 

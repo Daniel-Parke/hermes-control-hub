@@ -3,6 +3,7 @@ import { existsSync, readFileSync, readdirSync, statSync } from "fs";
 
 // Use string concatenation to avoid Turbopack NFT tracing issues
 import { HERMES_HOME, PATHS } from "@/lib/hermes";
+import { logApiError } from "@/lib/api-logger";
 
 interface MonitorData {
   cron: {
@@ -56,7 +57,7 @@ export async function GET() {
       cron: { total: 0, active: 0, paused: 0, jobs: [] },
       sessions: { total: 0, recent: [] },
       gateway: { platforms: {}, connectedCount: 0 },
-      memory: { factCount: 0, dbSize: "N/A", provider: "unknown" },
+      memory: { factCount: 0, dbSize: "N/A", provider: "Not Installed" },
       errors: [],
       system: { uptime: "N/A", lastCronRun: null, lastCronStatus: null },
     };
@@ -111,7 +112,7 @@ export async function GET() {
           data.system.lastCronRun = ran[0].last_run_at;
           data.system.lastCronStatus = ran[0].last_status || null;
         }
-      } catch {}
+      } catch (error) { logApiError("GET /api/monitor", "reading cron jobs", error); }
     }
 
     // ── Sessions (recent 10) ───────────────────────────────────
@@ -137,7 +138,7 @@ export async function GET() {
           size: s.size,
           model: "",
         }));
-      } catch {}
+      } catch (error) { logApiError("GET /api/monitor", "reading sessions", error); }
     }
 
     // ── Gateway Platforms ──────────────────────────────────────
@@ -167,7 +168,7 @@ export async function GET() {
         data.gateway.connectedCount = Object.values(platforms).filter(
           Boolean
         ).length;
-      } catch {}
+      } catch (error) { logApiError("GET /api/monitor", "reading gateway platforms", error); }
     }
 
     // ── Memory (SQLite query) ──────────────────────────────────
@@ -192,7 +193,7 @@ export async function GET() {
         } finally {
           db.close();
         }
-      } catch {}
+      } catch (error) { logApiError("GET /api/monitor", "reading memory stats", error); }
     }
 
     // Read memory provider from config
@@ -214,7 +215,7 @@ export async function GET() {
             break;
           }
         }
-      } catch {}
+      } catch (error) { logApiError("GET /api/monitor", "reading memory provider", error); }
     }
 
     // ── Recent Errors (from gateway.log) ───────────────────────
@@ -240,7 +241,7 @@ export async function GET() {
             timestamp: tsMatch ? tsMatch[1] : "",
           };
         });
-      } catch {}
+      } catch (error) { logApiError("GET /api/monitor", "reading gateway.log", error); }
     }
 
     // Also check errors.log
@@ -262,7 +263,7 @@ export async function GET() {
             timestamp: tsMatch ? tsMatch[1] : "",
           });
         }
-      } catch {}
+      } catch (error) { logApiError("GET /api/monitor", "reading errors.log", error); }
     }
 
     // Sort errors newest first
@@ -275,8 +276,9 @@ export async function GET() {
     // Keep only most recent 10
     data.errors = data.errors.slice(0, 10);
 
-    return NextResponse.json(data);
+    return NextResponse.json({ data });
   } catch (error) {
+    logApiError("GET /api/monitor", "aggregating monitor data", error);
     return NextResponse.json(
       { error: "Failed to read system monitor data" },
       { status: 500 }

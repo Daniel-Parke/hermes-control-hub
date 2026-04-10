@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { readFileSync, existsSync, statSync } from "fs";
 
 import { HERMES_HOME, PATHS } from "@/lib/hermes";
+import { ApiResponse } from "@/types/hermes";
+import { logApiError } from "@/lib/api-logger";
 
 export async function GET(
   request: NextRequest,
@@ -39,18 +41,21 @@ export async function GET(
           try {
             const msg = JSON.parse(line);
             return { index, ...msg };
-          } catch {
+          } catch (err) {
+            logApiError("GET /api/sessions/[id]", "parsing JSONL line " + index + " in session " + id, err);
             return { index, raw: line };
           }
         });
 
       return NextResponse.json({
-        id,
-        filename: filePath.split("/").pop(),
-        format: "jsonl",
-        messages,
-        messageCount: messages.length,
-        size: stats.size,
+        data: {
+          id,
+          filename: filePath.split("/").pop(),
+          format: "jsonl",
+          messages,
+          messageCount: messages.length,
+          size: stats.size,
+        },
       });
     } else {
       // Parse JSON
@@ -58,19 +63,22 @@ export async function GET(
       const messages = data.messages || data.conversation || data.turns || [];
 
       return NextResponse.json({
-        id,
-        filename: filePath.split("/").pop(),
-        format: "json",
-        title: data.title || data.name || "",
-        model: data.model || "",
-        source: data.source || "",
-        messages,
-        messageCount: messages.length,
-        size: stats.size,
-        created: data.created || stats.birthtime.toISOString(),
+        data: {
+          id,
+          filename: filePath.split("/").pop(),
+          format: "json",
+          title: data.title || data.name || "",
+          model: data.model || "",
+          source: data.source || "",
+          messages,
+          messageCount: messages.length,
+          size: stats.size,
+          created: data.created || stats.birthtime.toISOString(),
+        },
       });
     }
   } catch (error) {
+    logApiError("GET /api/sessions/[id]", "reading session " + id, error);
     return NextResponse.json(
       { error: `Failed to read session "${id}"` },
       { status: 500 }

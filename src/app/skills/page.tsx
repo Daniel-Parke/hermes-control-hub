@@ -27,7 +27,7 @@ export default function SkillsPage() {
   useEffect(() => {
     fetch("/api/skills")
       .then((res) => res.json())
-      .then(setData)
+      .then((d) => setData(d.data))
       .finally(() => setLoading(false));
   }, []);
 

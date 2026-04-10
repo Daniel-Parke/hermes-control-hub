@@ -14,6 +14,7 @@ import {
 import { join } from "path";
 
 import { HOME, HERMES_HOME, PATHS } from "@/lib/hermes";
+import { logApiError } from "@/lib/api-logger";
 
 // Search roots for AGENTS.md files
 const SEARCH_ROOTS = [
@@ -62,8 +63,9 @@ function scanForAgentsMd(
         }
       }
     }
-  } catch {
+  } catch (error) {
     // Permission denied or other error — skip
+    logApiError("scanForAgentsMd", `scanning directory ${dir}`, error);
   }
 
   return results;
@@ -90,12 +92,13 @@ export async function GET() {
         try {
           const content = readFileSync(file.path, "utf-8");
           allFiles.push({ ...file, content });
-        } catch {}
+        } catch (error) { logApiError("GET /api/agent/agents-md", "reading AGENTS.md file", error); }
       }
     }
 
-    return NextResponse.json({ files: allFiles, total: allFiles.length });
+    return NextResponse.json({ data: { files: allFiles, total: allFiles.length } });
   } catch (error) {
+    logApiError("GET /api/agent/agents-md", "scanning for AGENTS.md files", error);
     return NextResponse.json(
       { error: "Failed to scan for AGENTS.md files" },
       { status: 500 }
@@ -143,11 +146,10 @@ export async function PUT(request: NextRequest) {
     writeFileSync(resolvedPath, content, "utf-8");
 
     return NextResponse.json({
-      success: true,
-      path: resolvedPath,
-      size: Buffer.byteLength(content, "utf-8"),
+      data: { success: true, path: resolvedPath, size: Buffer.byteLength(content, "utf-8") },
     });
-  } catch {
+  } catch (error) {
+    logApiError("PUT /api/agent/agents-md", "writing AGENTS.md file", error);
     return NextResponse.json(
       { error: "Failed to save AGENTS.md" },
       { status: 500 }

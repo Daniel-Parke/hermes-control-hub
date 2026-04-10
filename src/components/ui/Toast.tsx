@@ -40,7 +40,7 @@ const typeConfig = {
 export default function Toast({
   message,
   type = "success",
-  duration = 3000,
+  duration = 4000,
   onClose,
 }: ToastProps) {
   const [visible, setVisible] = useState(true);
@@ -84,7 +84,7 @@ interface ToastState {
   id: number;
 }
 
-export function useToast(duration = 3000) {
+export function useToast(duration = 4000) {
   const [toast, setToast] = useState<ToastState | null>(null);
   const durationRef = useRef(duration);
   durationRef.current = duration;

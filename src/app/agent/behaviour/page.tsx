@@ -96,9 +96,9 @@ export default function BehaviourPage() {
       const filesData = await filesRes.json();
       const agentsData = await agentsRes.json();
       const envData = await envRes.json();
-      setFiles(filesData.files || []);
-      setAgentsMdFiles(agentsData.files || []);
-      setEnvEntries(envData.entries || []);
+      setFiles(filesData.data?.files || filesData.files || []);
+      setAgentsMdFiles(agentsData.data?.files || agentsData.files || []);
+      setEnvEntries(envData.data?.entries || envData.entries || []);
     } catch {
       // ignore
     } finally {

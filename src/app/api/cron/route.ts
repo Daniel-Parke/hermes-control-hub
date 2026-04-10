@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from "fs";
 
 import { HERMES_HOME, PATHS, getDefaultModelConfig } from "@/lib/hermes";
+import { logApiError } from "@/lib/api-logger";
 const CRON_PATH = PATHS.cronJobs;
 
 interface CronJobData {
@@ -35,7 +36,8 @@ function readJobsFile(): { jobs: CronJobData[]; updated_at?: string } {
     if (Array.isArray(data.jobs)) return data;
     if (Array.isArray(data)) return { jobs: data };
     return { jobs: [] };
-  } catch {
+  } catch (error) {
+    logApiError("GET /api/cron", "reading cron jobs file", error);
     return { jobs: [] };
   }
 }
@@ -110,10 +112,10 @@ export async function GET() {
     });
 
     return NextResponse.json({
-      jobs: jobList,
-      total: jobList.length,
+      data: { jobs: jobList, total: jobList.length },
     });
-  } catch {
+  } catch (error) {
+    logApiError("GET /api/cron", "listing cron jobs", error);
     return NextResponse.json(
       { error: "Failed to read cron jobs" },
       { status: 500 }
@@ -166,8 +168,9 @@ export async function POST(request: NextRequest) {
 
     data.jobs.push(newJob);
     writeJobsFile(data);
-    return NextResponse.json({ success: true, id, job: newJob });
-  } catch {
+    return NextResponse.json({ data: { success: true, id, job: newJob } });
+  } catch (error) {
+    logApiError("POST /api/cron", "creating cron job", error);
     return NextResponse.json(
       { error: "Failed to create cron job" },
       { status: 500 }
@@ -216,17 +219,25 @@ export async function PUT(request: NextRequest) {
       job.enabled = true;
       job.paused_at = null;
     } else {
-      // Merge updates — but parse schedule if it's a string
-      if (typeof updates.schedule === "string") {
-        updates.schedule = parseSchedule(updates.schedule);
+      // Whitelist allowed fields to prevent mass assignment
+      const ALLOWED_FIELDS = ["name", "prompt", "skills", "model", "deliver", "enabled", "schedule"] as const;
+      for (const field of ALLOWED_FIELDS) {
+        if (field in updates) {
+          const value = (updates as Record<string, unknown>)[field];
+          if (field === "schedule" && typeof value === "string") {
+            (job as Record<string, unknown>)[field] = parseSchedule(value);
+          } else {
+            (job as Record<string, unknown>)[field] = value;
+          }
+        }
       }
-      Object.assign(job, updates);
     }
 
     data.jobs[jobIndex] = job;
     writeJobsFile(data);
-    return NextResponse.json({ success: true, id, job });
-  } catch {
+    return NextResponse.json({ data: { success: true, id, job } });
+  } catch (error) {
+    logApiError("PUT /api/cron", "updating cron job", error);
     return NextResponse.json(
       { error: "Failed to update cron job" },
       { status: 500 }
@@ -258,8 +269,9 @@ export async function DELETE(request: NextRequest) {
 
     data.jobs.splice(jobIndex, 1);
     writeJobsFile(data);
-    return NextResponse.json({ success: true, deleted: id });
-  } catch {
+    return NextResponse.json({ data: { success: true, deleted: id } });
+  } catch (error) {
+    logApiError("DELETE /api/cron", "deleting cron job", error);
     return NextResponse.json(
       { error: "Failed to delete cron job" },
       { status: 500 }

@@ -567,12 +567,12 @@ export default function CronPage() {
   const [search, setSearch] = useState("");
   const [showCreate, setShowCreate] = useState(false);
   const [editingJob, setEditingJob] = useState<CronJob | null>(null);
-  const { showToast, toastElement } = useToast(2000);
+  const { showToast, toastElement } = useToast();
 
   const loadJobs = useCallback(() => {
     fetch("/api/cron")
       .then((res) => res.json())
-      .then(setData)
+      .then((d) => setData(d.data))
       .finally(() => setLoading(false));
   }, []);
 
@@ -589,7 +589,7 @@ export default function CronPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id, action }),
     });
-    showToast(`Job ${action === "pause" ? "paused" : "resumed"}`);
+        showToast(`Job ${action === "pause" ? "Paused" : "Resumed"}`);
     loadJobs();
   };
 
@@ -631,7 +631,7 @@ export default function CronPage() {
         title="Cron Jobs"
         subtitle={
           data
-            ? `${enabledCount} active / ${data.total} total`
+            ? `${enabledCount} Active / ${data.total} Total`
             : "Scheduled tasks"
         }
         color="orange"

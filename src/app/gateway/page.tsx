@@ -47,7 +47,7 @@ export default function GatewayPage() {
       const res = await fetch("/api/gateway");
       if (!res.ok) throw new Error("Failed to load gateway data");
       const json = await res.json();
-      setData(json);
+      setData(json.data);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unknown error");
     } finally {

@@ -91,7 +91,7 @@ export default function ConfigIndexPage() {
   useEffect(() => {
     fetch("/api/config")
       .then((res) => res.json())
-      .then(setConfig)
+      .then((d) => setConfig(d.data))
       .catch(() => setConfig(null));
   }, []);
 

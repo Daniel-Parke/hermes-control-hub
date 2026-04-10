@@ -215,8 +215,8 @@ export default function SkillDetailPage() {
         const body = await res.json().catch(() => null);
         throw new Error(body?.error || "Failed to load skill");
       }
-      const skillData = await res.json();
-      setData(skillData);
+      const json = await res.json();
+      setData(json.data || json);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unknown error");
     } finally {
