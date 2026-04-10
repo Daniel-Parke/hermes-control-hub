@@ -36,7 +36,7 @@ Simply clone the repo, run the install script, and you are ready to control your
 ```bash
 git clone https://github.com/Daniel-Parke/hermes-mission-control.git ~/mission-control
 cd ~/mission-control
-bash setup.sh
+bash scripts/setup.sh
 npm run start
 ```
 

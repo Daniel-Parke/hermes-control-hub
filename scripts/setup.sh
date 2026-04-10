@@ -6,7 +6,7 @@
 #
 # Usage:
 #   cd mission-control
-#   bash setup.sh
+#   bash scripts/setup.sh
 #
 # Prerequisites:
 #   - Node.js 18+
