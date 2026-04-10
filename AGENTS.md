@@ -115,10 +115,11 @@ curl -X POST https://api.github.com/repos/Daniel-Parke/hermes-mission-control/pu
 cd ~/mission-control
 npm run build
 fuser -k 3000/tcp 2>/dev/null; sleep 1
-nohup npx next start -p 3000 -H 0.0.0.0 > /tmp/mc.log 2>&1 &
+nohup npm run start:network > /tmp/mc.log 2>&1 &
+sleep 3 && curl -s -o /dev/null -w "%{http_code}" http://localhost:3000
 ```
 
-**Critical:** `-H 0.0.0.0` required for network access. `fuser -k` is more reliable than `kill`.
+**Critical:** `-H 0.0.0.0` required for network access. `fuser -k` is more reliable than `kill`. The trailing `&` is MANDATORY — without it, nohup does not background and the terminal freezes. See `npm-service-restart` skill for full details.
 
 
 ## Design Philosophy
