@@ -802,7 +802,7 @@ export default function MissionsPage() {
                             <span className={`text-[10px] font-mono px-2 py-0.5 rounded-full ${
                               mission.cronJob.enabled ? "bg-green-500/10 text-neon-green" : "bg-white/5 text-white/30"
                             }`}>
-                              cron: {mission.cronJob.enabled ? mission.cronJob.state : "disabled"}
+                              cron: {mission.cronJob.enabled ? (mission.cronJob.state.charAt(0).toUpperCase() + mission.cronJob.state.slice(1)) : "Disabled"}
                             </span>
                           )}
                         </div>

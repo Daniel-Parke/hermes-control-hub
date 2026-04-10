@@ -422,6 +422,12 @@ export async function GET(request: Request) {
 
           // Sync mission status with cron
           deriveMissionStatus(mission, job);
+          // Sync cronJob.state with derived mission status
+          const syncState = mission.status === "running" ? "running"
+            : mission.status === "completed" ? "completed"
+            : mission.status === "failed" ? "failed"
+            : derivedState;
+          cronJob.state = syncState;
         } else if (mission.dispatchMode === "now" && mission.status === "dispatched") {
           // One-shot cron job was deleted after completion — validate session before marking completed
           const sessions = findSessionsForCronJob(mission.cronJobId || "");
@@ -482,14 +488,19 @@ export async function GET(request: Request) {
                 }
               }
             }
+            // Sync mission status from cron job state
+            deriveMissionStatus(m, job);
+            // After deriveMissionStatus, sync cronJob.state with derived mission status
+            const syncState = m.status === "running" ? "running"
+              : m.status === "completed" ? "completed"
+              : m.status === "failed" ? "failed"
+              : derivedState;
             (m as MissionRecord & { cronJob: unknown }).cronJob = {
-              state: derivedState,
+              state: syncState,
               enabled: job.enabled !== false,
               lastRun: job.last_run_at || null,
               lastStatus: job.last_status || null,
             };
-            // Sync mission status
-            deriveMissionStatus(m, job);
           } else if (m.dispatchMode === "now" && m.status === "dispatched") {
             // One-shot cron job was deleted — validate session before marking completed
             const sessions = findSessionsForCronJob(m.cronJobId || "");

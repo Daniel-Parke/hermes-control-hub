@@ -157,20 +157,20 @@ function CronStatusBadge({ state, enabled }: { state: string; enabled: boolean }
   if (!enabled) {
     return (
       <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono bg-white/5 text-white/40">
-        <Pause className="w-2.5 h-2.5" /> paused
+        <Pause className="w-2.5 h-2.5" /> Paused
       </span>
     );
   }
   if (state === "scheduled") {
     return (
       <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono bg-green-500/10 text-neon-green">
-        <Play className="w-2.5 h-2.5" /> active
+        <Play className="w-2.5 h-2.5" /> Active
       </span>
     );
   }
   return (
     <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono bg-white/5 text-white/40">
-      {state}
+      {state.charAt(0).toUpperCase() + state.slice(1)}
     </span>
   );
 }
@@ -279,13 +279,13 @@ export default function Dashboard() {
           <StatPill
             icon={Bot}
             label="Agents"
-            value={activeAgents.length > 0 ? `${activeAgents.length} active` : status?.soulFile ? "idle" : "offline"}
+            value={activeAgents.length > 0 ? `${activeAgents.length} Active` : status?.soulFile ? "Idle" : "Offline"}
             color={activeAgents.length > 0 ? "green" : status?.soulFile ? "cyan" : "pink"}
           />
           <StatPill
             icon={ListTodo}
             label="Cron Jobs"
-            value={monitor ? `${monitor.cron.active} active` : "..."}
+            value={monitor ? `${monitor.cron.active} Active` : "..."}
             color="orange"
           />
           <StatPill
@@ -466,7 +466,7 @@ export default function Dashboard() {
                         <span className="text-xs text-white/70 capitalize">{platform}</span>
                       </div>
                       <span className={`text-[10px] font-mono ${connected ? "text-neon-green" : "text-white/25"}`}>
-                        {connected ? "connected" : "disabled"}
+                        {connected ? "Connected" : "Disabled"}
                       </span>
                     </div>
                   ))
@@ -534,7 +534,7 @@ export default function Dashboard() {
             <h2 className="text-sm font-mono text-white/40 uppercase tracking-widest flex items-center gap-2">
               <Bot className="w-3 h-3 text-neon-purple" />
               Running Agents
-              <span className="text-[10px] text-white/25 ml-1">({activeAgents.length} active)</span>
+              <span className="text-[10px] text-white/25 ml-1">({activeAgents.length} Active)</span>
             </h2>
             <RefreshCw
               className="w-3 h-3 text-white/20 hover:text-white/50 cursor-pointer"
@@ -544,7 +544,7 @@ export default function Dashboard() {
           {agents.length === 0 ? (
             <div className="rounded-xl border border-purple-500/20 bg-dark-900/50 p-6 text-center">
               <Bot className="w-8 h-8 text-white/20 mx-auto mb-2" />
-              <div className="text-xs text-white/30">No active agents detected</div>
+              <div className="text-xs text-white/30">No Active Agents Detected</div>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
