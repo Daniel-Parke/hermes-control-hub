@@ -96,7 +96,9 @@ fi
 # ── Clone Repository ─────────────────────────────────────────
 echo ""
 info "Cloning Mission Control..."
-git clone --branch "$BRANCH" --single-branch "$REPO_URL" "$INSTALL_DIR" 2>/dev/null
+if ! git clone --branch "$BRANCH" --single-branch "$REPO_URL" "$INSTALL_DIR" 2>&1; then
+    fail "Clone failed. Check your internet connection and try again."
+fi
 ok "Cloned to $INSTALL_DIR"
 
 # ── Run Setup ────────────────────────────────────────────────

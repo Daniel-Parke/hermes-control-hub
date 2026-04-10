@@ -63,9 +63,9 @@ mkdir -p "$HERMES_HOME/mission-control/data/templates"
 mkdir -p "$HERMES_HOME/logs"
 echo "✓ Data directories created at $HERMES_HOME/mission-control/data/"
 
-# ── Ensure deploy script is executable ────────────────────────
-chmod +x scripts/update.sh
-echo "✓ Deploy script ready"
+# ── Ensure scripts are executable ─────────────────────────────
+chmod +x scripts/*.sh
+echo "✓ Scripts ready"
 
 # ── Install dependencies ──────────────────────────────────────
 echo ""
