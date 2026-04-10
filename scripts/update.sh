@@ -5,7 +5,7 @@
 # Safely pulls latest code from main, rebuilds, and restarts.
 #
 # Usage:
-#   bash scripts/deploy.sh [--restart-only]
+#   bash scripts/update.sh [--restart-only]
 #
 # This script is designed to be called by the update API endpoint.
 # It handles: git pull, npm install, build, and restart.
@@ -21,7 +21,7 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 APP_DIR="$(dirname "$SCRIPT_DIR")"
 LOCK_FILE="/tmp/mc-deploy.lock"
-LOG_FILE="$HOME/.hermes/logs/mc-deploy.log"
+LOG_FILE="$HOME/.hermes/logs/mc-update.log"
 
 # Ensure log directory exists
 mkdir -p "$(dirname "$LOG_FILE")"
@@ -86,26 +86,7 @@ if [ "$RESTART_ONLY" = false ]; then
     log "Build successful"
 fi
 
-# ── Stop Existing Server ─────────────────────────────────────
-log "Stopping existing server on port 3000..."
-fuser -k 3000/tcp 2>/dev/null || true
-sleep 2
-
-# ── Start Server ─────────────────────────────────────────────
-log "Starting server on port 3000..."
-nohup node node_modules/next/dist/bin/next start -p 3000 -H 0.0.0.0 \
-    >>"$LOG_FILE" 2>&1 &
-SERVER_PID=$!
-log "Server started (PID $SERVER_PID)"
-
-# Wait for server to be ready
-for i in $(seq 1 15); do
-    if curl -s -o /dev/null -w '' http://localhost:3000 2>/dev/null; then
-        log "Server is ready on http://localhost:3000"
-        exit 0
-    fi
-    sleep 1
-done
-
-log "WARNING: Server may not be ready yet (timeout after 15s)"
-exit 0
+# ── Restart Server ────────────────────────────────────────────
+log "Restarting server..."
+bash "$SCRIPT_DIR/restart.sh"
+log "Update complete"

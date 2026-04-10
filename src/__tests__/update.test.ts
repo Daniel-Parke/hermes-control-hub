@@ -94,19 +94,44 @@ describe("Update API — Lock File", () => {
   });
 });
 
-describe("Update API — Deploy Script", () => {
-  it("should exist and be readable", () => {
-    const scriptPath = process.cwd() + "/scripts/deploy.sh";
-    expect(existsSync(scriptPath)).toBe(true);
+describe("Update API — Scripts", () => {
+  it("update.sh should exist and have valid syntax", () => {
+    const path = process.cwd() + "/scripts/update.sh";
+    expect(existsSync(path)).toBe(true);
+    try {
+      execSync(`bash -n "${path}"`, { encoding: "utf-8", timeout: 5000 });
+    } catch (error) {
+      fail(`update.sh has syntax errors: ${error}`);
+    }
   });
 
-  it("should have valid bash syntax", () => {
-    const scriptPath = process.cwd() + "/scripts/deploy.sh";
+  it("restart.sh should exist and have valid syntax", () => {
+    const path = process.cwd() + "/scripts/restart.sh";
+    expect(existsSync(path)).toBe(true);
     try {
-      execSync(`bash -n "${scriptPath}"`, { encoding: "utf-8", timeout: 5000 });
-      // No error = valid syntax
+      execSync(`bash -n "${path}"`, { encoding: "utf-8", timeout: 5000 });
     } catch (error) {
-      fail(`deploy.sh has syntax errors: ${error}`);
+      fail(`restart.sh has syntax errors: ${error}`);
+    }
+  });
+
+  it("install.sh should exist and have valid syntax", () => {
+    const path = process.cwd() + "/scripts/install.sh";
+    expect(existsSync(path)).toBe(true);
+    try {
+      execSync(`bash -n "${path}"`, { encoding: "utf-8", timeout: 5000 });
+    } catch (error) {
+      fail(`install.sh has syntax errors: ${error}`);
+    }
+  });
+
+  it("setup.sh should exist and have valid syntax", () => {
+    const path = process.cwd() + "/scripts/setup.sh";
+    expect(existsSync(path)).toBe(true);
+    try {
+      execSync(`bash -n "${path}"`, { encoding: "utf-8", timeout: 5000 });
+    } catch (error) {
+      fail(`setup.sh has syntax errors: ${error}`);
     }
   });
 });

@@ -186,10 +186,7 @@ function VersionFooter({ collapsed }: { collapsed: boolean }) {
     }
   }, []);
 
-  // Auto-check on mount
-  useEffect(() => {
-    checkVersion();
-  }, [checkVersion]);
+  // No auto-check — user clicks "Check" to trigger
 
   const handleUpdate = async () => {
     if (updating) return;
@@ -291,7 +288,6 @@ function VersionFooter({ collapsed }: { collapsed: boolean }) {
 
   return (
     <div className="space-y-2">
-      {/* Version status */}
       <div className="rounded-lg bg-white/5 border border-white/5 p-2.5">
         <div className="flex items-center justify-between mb-1.5">
           <span className="text-[9px] font-mono text-white/30 uppercase tracking-wider">
@@ -309,7 +305,34 @@ function VersionFooter({ collapsed }: { collapsed: boolean }) {
           )}
         </div>
 
-        {/* Update available banner */}
+        {/* State 1: Unknown — no check yet */}
+        {!version && !checking && (
+          <button
+            onClick={checkVersion}
+            className="w-full flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-md bg-blue-500/10 border border-blue-500/20 text-[10px] font-mono text-blue-400 hover:bg-blue-500/20 transition-colors mb-1.5"
+          >
+            <RefreshCw className="w-3 h-3" />
+            Check for Update
+          </button>
+        )}
+
+        {/* Checking spinner */}
+        {checking && (
+          <div className="w-full flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-md bg-white/5 text-[10px] font-mono text-white/40 mb-1.5">
+            <RefreshCw className="w-3 h-3 animate-spin" />
+            Checking...
+          </div>
+        )}
+
+        {/* State 2: Up to date */}
+        {version && !version.updateAvailable && (
+          <div className="w-full flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-md bg-green-500/10 border border-green-500/20 text-[10px] font-mono text-neon-green mb-1.5">
+            <Check className="w-3 h-3" />
+            Up to date
+          </div>
+        )}
+
+        {/* State 3: Update available */}
         {version?.updateAvailable && (
           <button
             onClick={handleUpdate}
@@ -332,7 +355,7 @@ function VersionFooter({ collapsed }: { collapsed: boolean }) {
           </div>
         )}
 
-        {/* Action buttons */}
+        {/* Check + Restart buttons */}
         <div className="flex gap-1.5">
           <button
             onClick={checkVersion}

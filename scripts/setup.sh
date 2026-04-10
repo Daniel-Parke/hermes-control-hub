@@ -64,7 +64,7 @@ mkdir -p "$HERMES_HOME/logs"
 echo "✓ Data directories created at $HERMES_HOME/mission-control/data/"
 
 # ── Ensure deploy script is executable ────────────────────────
-chmod +x scripts/deploy.sh
+chmod +x scripts/update.sh
 echo "✓ Deploy script ready"
 
 # ── Install dependencies ──────────────────────────────────────
@@ -103,5 +103,5 @@ echo "  npm run dev            # hot reload on localhost:3000"
 echo ""
 echo "Update from main branch (from the app):"
 echo "  Use the 'Check' and 'Update' buttons in the sidebar"
-echo "  Or manually: bash scripts/deploy.sh"
+echo "  Or manually: bash scripts/update.sh"
 echo ""
