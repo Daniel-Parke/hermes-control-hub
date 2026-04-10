@@ -4,7 +4,7 @@
 
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import {
@@ -22,6 +22,7 @@ import {
   MessageSquare,
 } from "lucide-react";
 import { LoadingSpinner, ErrorBanner } from "@/components/ui/LoadingSpinner";
+import { messageSummary } from "@/lib/utils";
 
 interface SessionMessage {
   index: number;
@@ -47,11 +48,12 @@ interface SessionData {
   created: string;
 }
 
-function MessageBubble({ msg }: { msg: SessionMessage }) {
-  const [expanded, setExpanded] = useState(true);
+function MessageBubble({ msg, index, messageRefs }: { msg: SessionMessage; index: number; messageRefs: React.MutableRefObject<Map<number, HTMLDivElement>> }) {
+  const [expanded, setExpanded] = useState(false);
   const [copied, setCopied] = useState(false);
   const role = (msg.role || "unknown").toLowerCase();
   const content = typeof msg.content === "string" ? msg.content : JSON.stringify(msg.content, null, 2);
+  const summary = useMemo(() => messageSummary(content), [content]);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(content || "");
@@ -88,13 +90,16 @@ function MessageBubble({ msg }: { msg: SessionMessage }) {
   };
 
   const config = roleConfig[role] || roleConfig.system;
-  const isLong = content && content.length > 500;
-  const displayContent = isLong && !expanded ? content.slice(0, 500) + "..." : content;
+  const isLong = content && content.length > 200;
+  const displayContent = expanded ? content : "";
 
   return (
-    <div className={`rounded-xl border ${config.bg} overflow-hidden`}>
-      <div className="flex items-center justify-between px-4 py-2 border-b border-white/5">
-        <div className="flex items-center gap-2">
+    <div ref={(el) => { if (el) messageRefs.current.set(index, el); else messageRefs.current.delete(index); }} className={`rounded-xl border ${config.bg} overflow-hidden`}>
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="w-full flex items-center justify-between px-4 py-2 border-b border-white/5 hover:bg-white/[0.02] transition-colors text-left"
+      >
+        <div className="flex items-center gap-2 min-w-0 flex-1">
           <span className={config.color}>{config.icon}</span>
           <span className={`text-xs font-mono font-bold ${config.color}`}>
             {config.label}
@@ -109,37 +114,43 @@ function MessageBubble({ msg }: { msg: SessionMessage }) {
               {String(msg.name)}
             </span>
           )}
+          {!expanded && (
+            <span className="text-xs text-white/30 font-mono truncate ml-1">
+              {summary}
+            </span>
+          )}
         </div>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1 flex-shrink-0 ml-2">
           {isLong && (
+            <span className="text-[10px] font-mono text-white/20 mr-1">
+              {(content.length / 1024).toFixed(1)}KB
+            </span>
+          )}
+          {expanded ? (
+            <ChevronDown className="w-3.5 h-3.5 text-white/30" />
+          ) : (
+            <ChevronRight className="w-3.5 h-3.5 text-white/30" />
+          )}
+        </div>
+      </button>
+      {expanded && (
+        <div className="px-4 py-3">
+          <div className="flex justify-end mb-2">
             <button
-              onClick={() => setExpanded(!expanded)}
+              onClick={handleCopy}
               className="p-1 rounded text-white/30 hover:text-white/60 transition-colors"
+              title="Copy"
             >
-              {expanded ? (
-                <ChevronDown className="w-3.5 h-3.5" />
+              {copied ? (
+                <Check className="w-3.5 h-3.5 text-neon-green" />
               ) : (
-                <ChevronRight className="w-3.5 h-3.5" />
+                <Copy className="w-3.5 h-3.5" />
               )}
             </button>
-          )}
-          <button
-            onClick={handleCopy}
-            className="p-1 rounded text-white/30 hover:text-white/60 transition-colors"
-            title="Copy"
-          >
-            {copied ? (
-              <Check className="w-3.5 h-3.5 text-neon-green" />
-            ) : (
-              <Copy className="w-3.5 h-3.5" />
-            )}
-          </button>
-        </div>
-      </div>
-      <div className="px-4 py-3">
-        <pre className="text-sm text-white/80 font-mono whitespace-pre-wrap break-words">
-          {displayContent || "(no content)"}
-        </pre>
+          </div>
+          <pre className="text-sm text-white/80 font-mono whitespace-pre-wrap break-words">
+            {displayContent || "(no content)"}
+          </pre>
         {Array.isArray(msg.tool_calls) && msg.tool_calls.length > 0 && (
           <div className="mt-3 pt-3 border-t border-white/5 space-y-2">
             <div className="text-[10px] font-mono text-white/30 uppercase tracking-widest">
@@ -161,7 +172,8 @@ function MessageBubble({ msg }: { msg: SessionMessage }) {
             })}
           </div>
         )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -172,6 +184,8 @@ export default function SessionDetailPage() {
   const [data, setData] = useState<SessionData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [roleFilter, setRoleFilter] = useState<string | null>(null);
+  const messageRefs = useRef<Map<number, HTMLDivElement>>(new Map());
 
   const loadSession = useCallback(async () => {
     setLoading(true);
@@ -194,6 +208,57 @@ export default function SessionDetailPage() {
   useEffect(() => {
     loadSession();
   }, [loadSession]);
+
+  // Count messages by role
+  const roleCounts = useMemo(() => {
+    if (!data?.messages) return {};
+    return data.messages.reduce(
+      (acc, msg) => {
+        const role = msg.role || "unknown";
+        acc[role] = (acc[role] || 0) + 1;
+        return acc;
+      },
+      {} as Record<string, number>
+    );
+  }, [data?.messages]);
+
+  // Filtered messages
+  const filteredMessages = useMemo(() => {
+    if (!data?.messages) return [];
+    if (!roleFilter) return data.messages.map((msg, i) => ({ msg, originalIndex: i }));
+    return data.messages
+      .map((msg, i) => ({ msg, originalIndex: i }))
+      .filter(({ msg }) => (msg.role || "unknown").toLowerCase() === roleFilter);
+  }, [data?.messages, roleFilter]);
+
+  // Scroll to next message of a given role from current scroll position
+  const scrollToNextRole = useCallback((role: string) => {
+    if (!data?.messages) return;
+    const roleMessages = data.messages
+      .map((msg, i) => ({ msg, index: i }))
+      .filter(({ msg }) => (msg.role || "unknown").toLowerCase() === role);
+    if (roleMessages.length === 0) return;
+
+    // Find first message below current viewport
+    const viewportTop = window.scrollY + 120; // offset for sticky header
+    for (const { index } of roleMessages) {
+      const el = messageRefs.current.get(index);
+      if (el && el.offsetTop > viewportTop) {
+        el.scrollIntoView({ behavior: "smooth", block: "start" });
+        return;
+      }
+    }
+    // Wrap around — scroll to first message of this role
+    const firstEl = messageRefs.current.get(roleMessages[0].index);
+    if (firstEl) firstEl.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [data?.messages]);
+
+  const roleColors: Record<string, { bg: string; text: string }> = {
+    user: { bg: "bg-neon-cyan/10", text: "text-neon-cyan" },
+    assistant: { bg: "bg-neon-purple/10", text: "text-neon-purple" },
+    tool: { bg: "bg-neon-green/10", text: "text-neon-green" },
+    system: { bg: "bg-white/5", text: "text-white/40" },
+  };
 
   if (loading) {
     return (
@@ -219,16 +284,6 @@ export default function SessionDetailPage() {
       </div>
     );
   }
-
-  // Count messages by role
-  const roleCounts = data.messages.reduce(
-    (acc, msg) => {
-      const role = msg.role || "unknown";
-      acc[role] = (acc[role] || 0) + 1;
-      return acc;
-    },
-    {} as Record<string, number>
-  );
 
   return (
     <div className="min-h-screen bg-dark-950 grid-bg">
@@ -269,23 +324,34 @@ export default function SessionDetailPage() {
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
-              {Object.entries(roleCounts).map(([role, count]) => (
-                <span
-                  key={role}
-                  className={`text-xs font-mono px-2 py-1 rounded ${
-                    role === "user"
-                      ? "bg-neon-cyan/10 text-neon-cyan"
-                      : role === "assistant"
-                      ? "bg-neon-purple/10 text-neon-purple"
-                      : role === "tool"
-                      ? "bg-neon-green/10 text-neon-green"
-                      : "bg-white/5 text-white/40"
-                  }`}
+            <div className="flex items-center gap-2">
+              {Object.entries(roleCounts).map(([role, count]) => {
+                const colors = roleColors[role] || roleColors.system;
+                const isActive = roleFilter === role;
+                return (
+                  <button
+                    key={role}
+                    onClick={() => setRoleFilter(isActive ? null : role)}
+                    onDoubleClick={() => scrollToNextRole(role)}
+                    title={`Click to filter · Double-click to jump to next ${role}`}
+                    className={`text-xs font-mono px-2 py-1 rounded transition-colors cursor-pointer ${
+                      isActive
+                        ? `${colors.bg} ${colors.text} ring-1 ring-white/20`
+                        : `${colors.bg} ${colors.text} opacity-60 hover:opacity-100`
+                    }`}
+                  >
+                    {count} {role}
+                  </button>
+                );
+              })}
+              {roleFilter && (
+                <button
+                  onClick={() => setRoleFilter(null)}
+                  className="text-[10px] font-mono text-white/30 hover:text-white/60 px-1.5 py-1 rounded bg-white/5"
                 >
-                  {count} {role}
-                </span>
-              ))}
+                  clear
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -293,9 +359,14 @@ export default function SessionDetailPage() {
 
       {/* Messages */}
       <div className="max-w-4xl mx-auto px-6 py-6">
+        {roleFilter && (
+          <div className="text-xs text-white/30 font-mono mb-3">
+            Showing {filteredMessages.length} {roleFilter} messages of {data.messages.length} total
+          </div>
+        )}
         <div className="space-y-3">
-          {data.messages.map((msg, i) => (
-            <MessageBubble key={i} msg={msg} />
+          {filteredMessages.map(({ msg, originalIndex }) => (
+            <MessageBubble key={originalIndex} msg={msg} index={originalIndex} messageRefs={messageRefs} />
           ))}
         </div>
 
