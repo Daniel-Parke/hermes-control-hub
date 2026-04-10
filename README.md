@@ -2,7 +2,9 @@
 
 A command centre dashboard for [Hermes Agent](https://github.com/NousResearch/hermes-agent). Monitor your agent fleet, dispatch missions, manage configurations, and control everything from one place.
 
-![Dashboard](screenshots/dashboard.png)
+Simply clone the repo, run the install script, and you are ready to control your agent from the dashboard!
+
+![Dashboard](screenshots/Hermes_Dashboard.png)
 
 ## Features
 
@@ -23,8 +25,6 @@ A command centre dashboard for [Hermes Agent](https://github.com/NousResearch/he
 **Skills Browser** — Browse and view installed skills
 
 **Tools Manager** — Toggle toolsets per platform (Discord, Telegram, CLI, etc.)
-
-![Missions](screenshots/missions.png)
 
 ## Prerequisites
 
@@ -67,9 +67,26 @@ Mission Control reads from your existing Hermes installation. No additional conf
 
 ## Screenshots
 
-![Agent Behaviour](screenshots/agent-behaviour.png)
+![Dashboard](screenshots/Hermes_Dashboard.png)
 
-![Configuration](screenshots/config.png)
+![Mission Dispatch](screenshots/Mission_Dispatch.png)
+
+![Mission Template](screenshots/Mission_Template.png)
+
+![Mission Page](screenshots/Mission_Page.png)
+
+![Cron Job Config](screenshots/Cron_Job.png)
+
+![Agent Behaviour](screenshots/Agent_Behaviour.png)
+
+![Agent Personalities](screenshots/Agent_Personalities.png)
+
+![Agent Skills](screenshots/Agent_Skills.png)
+
+![Agent Tools](screenshots/Agent_Tools.png)
+
+![Agent Configuration](screenshots/Agent_Configuration.png)
+
 
 ## Architecture
 
