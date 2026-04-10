@@ -272,8 +272,8 @@ export default function MissionsPage() {
       }
 
       // Completed/failed mission — create a NEW dispatch (re-dispatch)
-      showToast("Re-dispatching mission...", "info");
       setEditingId(null); // Clear so we fall through to create path
+      // Don't show info toast here — the create path below handles it
 
       const res = await fetch("/api/missions", {
         method: "POST",
@@ -1223,7 +1223,6 @@ export default function MissionsPage() {
         </Modal>
       )}
 
-      {toastElement}
     </div>
   );
 }

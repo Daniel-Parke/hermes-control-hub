@@ -298,7 +298,7 @@ export default function PersonalitiesPage() {
   const [search, setSearch] = useState("");
   const [activePersonality, setActivePersonality] = useState<string>("");
   const [editing, setEditing] = useState<Personality | null | undefined>(undefined);
-  const toast = useToast();
+  const { showToast, toastElement } = useToast();
 
   const loadPersonalities = useCallback(async () => {
     setLoading(true);
@@ -315,11 +315,11 @@ export default function PersonalitiesPage() {
         ((configData.data?.display as Record<string, unknown>)?.personality as string) || ""
       );
     } catch {
-      toast.showToast("Failed to load personalities", "error");
+      showToast("Failed to load personalities", "error");
     } finally {
       setLoading(false);
     }
-  }, [toast]);
+  }, [showToast]);
 
   useEffect(() => {
     loadPersonalities();
@@ -334,7 +334,7 @@ export default function PersonalitiesPage() {
         const body = await res.json();
         throw new Error(body.error || "Failed to delete");
       }
-      toast.showToast(`Deleted personality: ${name}`, "success");
+      showToast(`Deleted personality: ${name}`, "success");
       if (activePersonality === name) {
         // Clear active if we deleted it
         await fetch("/api/config", {
@@ -345,7 +345,7 @@ export default function PersonalitiesPage() {
       }
       loadPersonalities();
     } catch (err) {
-      toast.showToast(err instanceof Error ? err.message : "Delete failed", "error");
+      showToast(err instanceof Error ? err.message : "Delete failed", "error");
     }
   };
 
@@ -361,21 +361,21 @@ export default function PersonalitiesPage() {
       });
       if (!res.ok) throw new Error("Failed to set active personality");
       setActivePersonality(activePersonality === name ? "" : name);
-      toast.showToast(
+      showToast(
         activePersonality === name
           ? "Cleared active personality"
           : `Activated: ${name}`,
         "success"
       );
     } catch (err) {
-      toast.showToast(err instanceof Error ? err.message : "Activation failed", "error");
+      showToast(err instanceof Error ? err.message : "Activation failed", "error");
     }
   };
 
   const handleSaved = () => {
     setEditing(undefined);
     loadPersonalities();
-    toast.showToast("Personality saved!", "success");
+    showToast("Personality saved!", "success");
   };
 
   const filtered = personalities.filter(
@@ -464,6 +464,8 @@ export default function PersonalitiesPage() {
           onSaved={handleSaved}
         />
       )}
+
+      {toastElement}
     </div>
   );
 }

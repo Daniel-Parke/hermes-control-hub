@@ -567,7 +567,7 @@ export default function CronPage() {
   const [search, setSearch] = useState("");
   const [showCreate, setShowCreate] = useState(false);
   const [editingJob, setEditingJob] = useState<CronJob | null>(null);
-  const { showToast, toastElement } = useToast(2000);
+  const { showToast, toastElement } = useToast();
 
   const loadJobs = useCallback(() => {
     fetch("/api/cron")

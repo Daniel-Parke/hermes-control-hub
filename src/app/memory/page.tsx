@@ -238,7 +238,7 @@ export default function MemoryPage() {
   const [editingFact, setEditingFact] = useState<EditingFact | null>(null);
   const [deletingFactId, setDeletingFactId] = useState<number | null>(null);
 
-  const toast = useToast();
+  const { showToast, toastElement } = useToast();
 
   const loadData = useCallback(() => {
     setLoading(true);
@@ -281,7 +281,7 @@ export default function MemoryPage() {
           }),
         });
         if (!res.ok) throw new Error("Failed to add fact");
-        toast.showToast("Fact added successfully", "success");
+        showToast("Fact added successfully", "success");
       } else {
         // Update
         const res = await fetch("/api/memory", {
@@ -296,12 +296,12 @@ export default function MemoryPage() {
           }),
         });
         if (!res.ok) throw new Error("Failed to update fact");
-        toast.showToast("Fact updated successfully", "success");
+        showToast("Fact updated successfully", "success");
       }
       setEditingFact(null);
       loadData();
     } catch {
-      toast.showToast("Failed to save fact", "error");
+      showToast("Failed to save fact", "error");
     }
   };
 
@@ -310,11 +310,11 @@ export default function MemoryPage() {
     try {
       const res = await fetch(`/api/memory?id=${deletingFactId}`, { method: "DELETE" });
       if (!res.ok) throw new Error("Failed to delete fact");
-      toast.showToast("Fact deleted", "success");
+      showToast("Fact deleted", "success");
       setDeletingFactId(null);
       loadData();
     } catch {
-      toast.showToast("Failed to delete fact", "error");
+      showToast("Failed to delete fact", "error");
     }
   };
 
@@ -448,6 +448,8 @@ export default function MemoryPage() {
           onClose={() => setDeletingFactId(null)}
         />
       )}
+
+      {toastElement}
     </div>
   );
 }
