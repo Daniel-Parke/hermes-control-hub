@@ -238,7 +238,7 @@ export interface MissionTemplate {
   timeoutMinutes: number;
 }
 
-export type MissionStatus = "draft" | "dispatched" | "running" | "completed" | "failed";
+export type MissionStatus = "queued" | "dispatched" | "successful" | "failed";
 export type DispatchMode = "save" | "now" | "cron";
 
 export interface Mission {

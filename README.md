@@ -22,6 +22,11 @@ A command centre dashboard for [Hermes Agent](https://github.com/NousResearch/he
   - [Gateway](#gateway)
   - [Skills & Tools](#skills--tools)
   - [Tips](#tips)
+- [Managing Mission Control](#managing-mission-control)
+  - [Install](#install)
+  - [Update](#update)
+  - [Restart](#restart)
+  - [Troubleshooting](#troubleshooting)
 - [Architecture](#architecture)
 - [Screenshots](#screenshots)
 - [Development](#development)
@@ -57,8 +62,13 @@ A command centre dashboard for [Hermes Agent](https://github.com/NousResearch/he
 ```bash
 git clone https://github.com/Daniel-Parke/hermes-mission-control.git ~/mission-control
 cd ~/mission-control
-bash scripts/setup.sh
-npm run start:network
+bash scripts/install.sh
+```
+
+Or install without cloning first:
+
+```bash
+bash <(curl -s https://raw.githubusercontent.com/Daniel-Parke/hermes-mission-control/main/scripts/install.sh)
 ```
 
 The dashboard will be available at `http://localhost:3000`.
@@ -88,7 +98,7 @@ Open the dashboard and you instantly know what is happening:
 └─────────────────────────────────────────────────────────────┘
 ```
 
-Everything auto-refreshes every 15 seconds.
+Everything auto-refreshes every 10 seconds.
 
 ---
 
@@ -121,16 +131,16 @@ You can also create your own templates and save them for reuse.
 | Run Now | Creates a one-shot cron job, executes within ~60 seconds |
 | Repeating | Creates a scheduled cron job on a repeating interval |
 
-When you dispatch, the mission appears under "Active Missions" with a 3-step progress indicator:
+When you dispatch, the mission appears under "Active Missions" with a status badge:
 
-```
-[Dispatched] ──→ [Processing] ──→ [Done]
-     ●                  ○               ○        ← waiting
-     ✓                  ●               ○        ← agent working
-     ✓                  ✓               ✓        ← complete
-```
+| Status | Colour | Meaning |
+|--------|--------|---------|
+| **Queued** | Orange | Cron job created, waiting for scheduler |
+| **Dispatched** | Blue | Agent is working |
+| **Successful** | Green | Completed successfully |
+| **Failed** | Red | Error or cancelled |
 
-Each step lights up as the agent progresses. Failed steps turn red.
+Status updates automatically as the agent progresses. No manual refresh needed.
 
 **Re-dispatching:** Completed or failed missions can be re-dispatched. Expand the mission detail panel and click "Edit & Re-Dispatch". A new mission is created with the same prompt — the original is preserved.
 
@@ -258,6 +268,103 @@ Connected platforms show a green indicator with pulse animation.
 
 ---
 
+## Managing Mission Control
+
+### Install
+
+Fresh install or reinstall:
+
+```bash
+# Standalone installer (auto-clones):
+bash <(curl -s https://raw.githubusercontent.com/Daniel-Parke/hermes-mission-control/main/scripts/install.sh)
+
+# Or from a clone:
+cd mission-control
+bash scripts/install.sh
+```
+
+The installer checks prerequisites (Node.js 18+, Hermes agent), detects existing installations, and prompts before overwriting.
+
+### Update
+
+Pull the latest version from the main branch:
+
+**From the sidebar:** Click "Check" to check for updates. If available, click "Update Now" (orange button). The app will pull, build, and restart automatically.
+
+**From the terminal:**
+
+```bash
+cd ~/mission-control
+bash scripts/update.sh
+```
+
+The update script fetches from `origin/main`, runs `npm install` if dependencies changed, builds, and restarts. If the build fails, the update aborts without restarting — the server keeps running the current version.
+
+### Restart
+
+Restart the web server without changing the code:
+
+**From the sidebar:** Click the "Restart" button.
+
+**From the terminal:**
+
+```bash
+cd ~/mission-control
+bash scripts/restart.sh
+```
+
+### Troubleshooting
+
+**Server won't start (port 3000 in use):**
+
+```bash
+fuser -k 3000/tcp
+npm run start:network
+```
+
+**Build fails after update:**
+
+The update script aborts on build failure without restarting. Check the error:
+
+```bash
+cat ~/.hermes/logs/mc-update.log
+```
+
+Fix the issue, then rebuild:
+
+```bash
+cd ~/mission-control
+npm run build
+bash scripts/restart.sh
+```
+
+**Gateway not running (no cron jobs executing):**
+
+```bash
+systemctl --user status hermes-gateway
+systemctl --user start hermes-gateway
+```
+
+**Reset to clean state:**
+
+```bash
+cd ~/mission-control
+git checkout main
+git reset --hard origin/main
+npm install
+npm run build
+bash scripts/restart.sh
+```
+
+**View deploy/update logs:**
+
+```bash
+cat ~/.hermes/logs/mc-update.log
+cat ~/.hermes/logs/mc-restart.log
+```
+
+---
+
 ## Architecture
 
 | Layer | Technology |
@@ -301,7 +408,7 @@ All API routes import paths from `src/lib/hermes.ts` for consistency. The app re
 ```bash
 npm run dev           # Start dev server with hot reload
 npm run build         # Production build
-npm run test          # Run test suite (63 tests)
+npm run test          # Run test suite
 npm run start         # Production server (localhost only)
 npm run start:network # Production server (accessible on LAN)
 ```

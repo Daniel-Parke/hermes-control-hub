@@ -176,8 +176,8 @@ export async function GET() {
           });
         }
       }
-    } catch (err) {
-      logApiError("GET /api/agents", "checking subagent processes", err);
+    } catch {
+      // grep returns exit code 1 when no matches found — expected, not an error
     }
 
     // Sort: running first, then by type

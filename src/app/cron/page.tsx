@@ -578,6 +578,8 @@ export default function CronPage() {
 
   useEffect(() => {
     loadJobs();
+    const interval = setInterval(loadJobs, 10000);
+    return () => clearInterval(interval);
   }, [loadJobs]);
 
   const handleToggle = async (id: string) => {

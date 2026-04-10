@@ -91,7 +91,7 @@ export async function GET() {
         ? (job.schedule.display || job.schedule.kind || "")
         : String(job.schedule || "");
       const repeatBool = typeof job.repeat === "object"
-        ? (job.repeat.times !== null ? job.repeat.times > 0 : true)
+        ? (job.repeat.times !== null ? job.repeat.times !== 1 : true)
         : Boolean(job.repeat);
 
       return {
