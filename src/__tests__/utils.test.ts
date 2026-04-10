@@ -1,4 +1,4 @@
-import { getMissionProgressSteps, messageSummary, validateSessionCompletion, SessionMessage } from "@/lib/utils";
+import { getMissionProgressSteps, messageSummary, validateSessionCompletion, parseSchedule, SessionMessage } from "@/lib/utils";
 
 describe("getMissionProgressSteps", () => {
   describe("labels", () => {

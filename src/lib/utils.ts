@@ -127,6 +127,67 @@ export function messageSummary(content: string | undefined): string {
   return trimmed + (firstNonEmpty.length > 120 || hasMoreContent ? "..." : "");
 }
 
+// ── Schedule Parsing ──────────────────────────────────────────
+
+/**
+ * Parse a schedule string into the structure the cron scheduler expects.
+ * - "every 15m" / "every 2h" → { kind: "interval", minutes: N, display }
+ * - "0 * /2 * * *" (cron expr) → { kind: "cron", expr, display }
+ * - "2026-04-09T12:00:00Z"   → { kind: "once", run_at: "...", display }
+ *
+ * Shared between cron/route.ts and missions/route.ts.
+ */
+export function parseSchedule(raw: string): { kind: string; minutes?: number; expr?: string; run_at?: string; display?: string } {
+  const s = (typeof raw === "string" ? raw : "").trim();
+
+  // Interval patterns: "every 15m", "every 2h", "30m", "1h"
+  const intervalMatch = s.match(/^(?:every\s+)?(\d+)\s*(m|min|minutes?|h|hr|hours?)$/i);
+  if (intervalMatch) {
+    const n = parseInt(intervalMatch[1], 10);
+    const unit = intervalMatch[2].toLowerCase();
+    const minutes = unit.startsWith("h") ? n * 60 : n;
+    return { kind: "interval", minutes, display: `every ${minutes}m` };
+  }
+
+  // Cron expression: 5 space-separated fields
+  const cronParts = s.split(/\s+/);
+  if (cronParts.length === 5 && cronParts.every((p) => /^[\d\*\/\-\,]+$/.test(p))) {
+    return { kind: "cron", expr: s, display: s };
+  }
+
+  // ISO timestamp → one-shot
+  if (/^\d{4}-\d{2}-\d{2}T/.test(s)) {
+    return { kind: "once", run_at: s, display: s };
+  }
+
+  // Fallback
+  return { kind: "interval", minutes: 15, display: s };
+}
+
+// ── Cron Job Types ────────────────────────────────────────────
+
+export interface CronJobData {
+  id: string;
+  name: string;
+  prompt: string;
+  skills: string[];
+  model: string;
+  provider?: string;
+  schedule: { kind: string; minutes?: number; expr?: string; run_at?: string; display?: string } | string;
+  schedule_display?: string;
+  repeat: { times: number | null; completed: number } | boolean;
+  enabled: boolean;
+  state?: string;
+  deliver?: string;
+  script?: string | null;
+  created_at?: string;
+  next_run_at?: string | null;
+  last_run_at?: string | null;
+  last_status?: string | null;
+  mission_id?: string;
+  [key: string]: unknown;
+}
+
 // ── Session Completion Validation ──────────────────────────────
 
 export interface SessionMessage {

@@ -47,9 +47,9 @@ export async function GET() {
             const envPath = PATHS.env;
             if (existsSync(envPath)) {
               const envContent = readFileSync(envPath, "utf-8");
-              if (envContent.includes("DISCORD_BOT_TOKEN=") && !envContent.match(/#\s*DISCORD_BOT_TOKEN/)) platforms.push("Discord");
-              if (envContent.includes("TELEGRAM_BOT_TOKEN=") && !envContent.match(/#\s*TELEGRAM_BOT_TOKEN/)) platforms.push("Telegram");
-              if (envContent.includes("SLACK_BOT_TOKEN=") && !envContent.match(/#\s*SLACK_BOT_TOKEN/)) platforms.push("Slack");
+              if (envContent.includes("DISCORD_BOT_TOKEN=") && !envContent.match(/^#\s*DISCORD_BOT_TOKEN/m)) platforms.push("Discord");
+              if (envContent.includes("TELEGRAM_BOT_TOKEN=") && !envContent.match(/^#\s*TELEGRAM_BOT_TOKEN/m)) platforms.push("Telegram");
+              if (envContent.includes("SLACK_BOT_TOKEN=") && !envContent.match(/^#\s*SLACK_BOT_TOKEN/m)) platforms.push("Slack");
             }
           } catch {}
           const platformLabel = platforms.length > 0 ? platforms.join(" + ") : "Gateway";
