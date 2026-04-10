@@ -112,14 +112,26 @@ curl -X POST https://api.github.com/repos/Daniel-Parke/hermes-mission-control/pu
 ## Deployment
 
 ```bash
-cd ~/mission-control
-npm run build
-fuser -k 3000/tcp 2>/dev/null; sleep 1
-nohup npm run start:network > /tmp/mc.log 2>&1 &
-sleep 3 && curl -s -o /dev/null -w "%{http_code}" http://localhost:3000
+# Step 1: Build (foreground, safe — exits when done)
+cd ~/mission-control && npm run build
+
+# Step 2: Kill existing server
+fuser -k 3000/tcp 2>/dev/null; sleep 2
+
+# Step 3: Start server (MUST use background=true, NOT &)
+# Use the terminal tool with background=true to start the server.
+# NEVER use nohup ... & — the hermes terminal tool's pipe inheritance
+# will cause the agent to freeze. See npm-service-restart skill.
 ```
 
-**Critical:** `-H 0.0.0.0` required for network access. `fuser -k` is more reliable than `kill`. The trailing `&` is MANDATORY — without it, nohup does not background and the terminal freezes. See `npm-service-restart` skill for full details.
+In code, deploy via:
+```
+terminal(command="cd ~/mission-control && node node_modules/next/dist/bin/next start -p 3000 -H 0.0.0.0", background=true)
+sleep 3
+curl -s -o /dev/null -w "%{http_code}" http://localhost:3000
+```
+
+**Critical:** `-H 0.0.0.0` required for network access. `fuser -k` is more reliable than `kill`. MUST use `background=true` on the terminal tool — never use `nohup ... &` which causes pipe inheritance deadlock. See `npm-service-restart` skill for full details.
 
 
 ## Design Philosophy
