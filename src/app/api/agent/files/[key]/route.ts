@@ -7,37 +7,7 @@ import { readFileSync, writeFileSync, existsSync, mkdirSync, statSync } from "fs
 
 import { HERMES_HOME, PATHS } from "@/lib/hermes";
 
-const BEHAVIOR_FILES: Record<
-  string,
-  { name: string; path: string; description: string }
-> = {
-  soul: {
-    name: "SOUL.md",
-    path: PATHS.soul,
-    description: "Agent persona — defines personality, tone, and behavior",
-  },
-  hermes: {
-    name: "HERMES.md",
-    path: PATHS.hermes,
-    description: "Priority project instructions (loaded every message)",
-  },
-  user: {
-    name: "USER.md",
-    path: PATHS.userMd,
-    description: "User priorities, preferences, and personal context",
-  },
-  memory_md: {
-    name: "MEMORY.md",
-    path: PATHS.memoryMd,
-    description: "Agent memory and persistent knowledge (loaded every message)",
-  },
-  persona: {
-    name: "AGENT.md",
-    path: PATHS.agent,
-    description: "Agent instructions and behavior guidelines",
-  },
-
-};
+import { BEHAVIOR_FILES } from "@/lib/behavior-files";
 
 export async function GET(
   request: NextRequest,

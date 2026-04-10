@@ -1,3 +1,4 @@
+import yaml from "js-yaml";
 // ═══════════════════════════════════════════════════════════════
 // Tools API — Read/write toolset configuration per platform
 // ═══════════════════════════════════════════════════════════════
@@ -40,44 +41,13 @@ const AVAILABLE_TOOLSETS: Record<
 };
 
 function parseYamlToolsets(content: string): Record<string, string[]> {
-  // Simple YAML parser for the platform_toolsets section
-  const result: Record<string, string[]> = {};
-  const lines = content.split("\n");
-  let inToolsets = false;
-  let currentPlatform = "";
-
-  for (const line of lines) {
-    const trimmed = line.trimEnd();
-
-    if (trimmed === "platform_toolsets:") {
-      inToolsets = true;
-      continue;
-    }
-
-    if (inToolsets) {
-      // Check if this is a top-level key (no leading spaces, ends with colon)
-      if (trimmed.length > 0 && !trimmed.startsWith(" ") && trimmed.endsWith(":") && trimmed !== "platform_toolsets:") {
-        inToolsets = false;
-        continue;
-      }
-
-      // Platform name (2-space indent, ends with colon)
-      const platformMatch = trimmed.match(/^  ([a-z_]+):$/);
-      if (platformMatch) {
-        currentPlatform = platformMatch[1];
-        result[currentPlatform] = [];
-        continue;
-      }
-
-      // Toolset entry (4-space indent, starts with dash)
-      const toolsetMatch = trimmed.match(/^  - (.+)$/);
-      if (toolsetMatch && currentPlatform) {
-        result[currentPlatform].push(toolsetMatch[1]);
-      }
-    }
+  try {
+    const parsed = yaml.load(content) as Record<string, unknown>;
+    const toolsets = parsed?.platform_toolsets as Record<string, string[]>;
+    return toolsets || {};
+  } catch {
+    return {};
   }
-
-  return result;
 }
 
 export async function GET() {

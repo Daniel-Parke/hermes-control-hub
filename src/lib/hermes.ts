@@ -1,3 +1,4 @@
+import yaml from "js-yaml";
 // ═══════════════════════════════════════════════════════════════
 // Shared Hermes Configuration — centralised paths and constants
 // ═══════════════════════════════════════════════════════════════
@@ -27,34 +28,20 @@ export const PATHS = {
   templates: MC_DATA_DIR + "/templates",
 } as const;
 
-// Read a config value from config.yaml (simple key lookup)
+// Read a config value from config.yaml using js-yaml
 export function getConfigValue(content: string, dottedKey: string): string {
-  const keys = dottedKey.split(".");
-  const lines = content.split("\n");
-  let currentPath: string[] = [];
-
-  for (const line of lines) {
-    const trimmed = line.trimEnd();
-    if (!trimmed || trimmed.startsWith("#")) continue;
-
-    const indent = line.search(/\S/);
-    const depth = indent / 2; // Assumes 2-space indentation
-    const match = trimmed.trimStart().match(/^(\w+):\s*(.*)/);
-    if (!match) continue;
-
-    const key = match[1];
-    const value = match[2].trim();
-
-    // Build path based on indent depth
-    currentPath = currentPath.slice(0, depth);
-    currentPath.push(key);
-
-    // Check if current path matches our target
-    if (currentPath.join(".") === dottedKey) {
-      return value.replace(/^['"]|['"]$/g, "");
+  try {
+    const parsed = yaml.load(content) as Record<string, unknown>;
+    const keys = dottedKey.split(".");
+    let current: unknown = parsed;
+    for (const key of keys) {
+      if (typeof current !== "object" || current === null) return "";
+      current = (current as Record<string, unknown>)[key];
     }
+    return typeof current === "string" ? current : current != null ? String(current) : "";
+  } catch {
+    return "";
   }
-  return "";
 }
 
 // Read Discord home channel from env or config

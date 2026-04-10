@@ -5,45 +5,10 @@
 import { NextResponse } from "next/server";
 import { readFileSync, existsSync, statSync } from "fs";
 
-import { HERMES_HOME, PATHS } from "@/lib/hermes";
+import { HERMES_HOME } from "@/lib/hermes";
 
 // Static behavior files — each defines a different aspect of agent personality
-const BEHAVIOR_FILES: Record<
-  string,
-  { name: string; path: string; description: string; category: string }
-> = {
-  soul: {
-    name: "SOUL.md",
-    path: PATHS.soul,
-    description: "Agent persona — defines personality, tone, and behavior",
-    category: "identity",
-  },
-  hermes: {
-    name: "HERMES.md",
-    path: PATHS.hermes,
-    description: "Priority project instructions (loaded every message)",
-    category: "identity",
-  },
-  user: {
-    name: "USER.md",
-    path: PATHS.userMd,
-    description: "User priorities, preferences, and personal context",
-    category: "user",
-  },
-  memory_md: {
-    name: "MEMORY.md",
-    path: PATHS.memoryMd,
-    description: "Agent memory and persistent knowledge (loaded every message)",
-    category: "user",
-  },
-  persona: {
-    name: "AGENT.md",
-    path: PATHS.agent,
-    description: "Agent instructions and behavior guidelines",
-    category: "identity",
-  },
-
-};
+import { BEHAVIOR_FILES } from "@/lib/behavior-files";
 
 export async function GET() {
   try {
