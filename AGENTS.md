@@ -97,7 +97,7 @@ git commit -m "type: description"
 git push origin dev
 
 # Create PR for review
-curl -X POST https://api.github.com/repos/Daniel-Parke/mission-control/pulls \
+curl -X POST https://api.github.com/repos/Daniel-Parke/hermes-mission-control/pulls \
   -H "Authorization: Bearer $GITHUB_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"title":"description","body":"what changed","head":"dev","base":"main"}'
