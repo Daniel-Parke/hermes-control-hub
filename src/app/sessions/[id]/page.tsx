@@ -235,14 +235,17 @@ export default function SessionDetailPage() {
   }
 
   // Count messages by role
-  const roleCounts = data.messages.reduce(
-    (acc, msg) => {
-      const role = msg.role || "unknown";
-      acc[role] = (acc[role] || 0) + 1;
-      return acc;
-    },
-    {} as Record<string, number>
-  );
+  const roleCounts = useMemo(() => {
+    if (!data?.messages) return {};
+    return data.messages.reduce(
+      (acc, msg) => {
+        const role = msg.role || "unknown";
+        acc[role] = (acc[role] || 0) + 1;
+        return acc;
+      },
+      {} as Record<string, number>
+    );
+  }, [data?.messages]);
 
   // Filtered messages
   const filteredMessages = useMemo(() => {
@@ -254,14 +257,15 @@ export default function SessionDetailPage() {
   }, [data?.messages, roleFilter]);
 
   // Scroll to next message of a given role from current scroll position
-  const scrollToNextRole = (role: string) => {
+  const scrollToNextRole = useCallback((role: string) => {
+    if (!data?.messages) return;
     const roleMessages = data.messages
       .map((msg, i) => ({ msg, index: i }))
       .filter(({ msg }) => (msg.role || "unknown").toLowerCase() === role);
     if (roleMessages.length === 0) return;
 
     // Find first message below current viewport
-    const viewportTop = window.scrollY + 120; // offset for sticky header
+    const viewportTop = window.scrollY + 120;
     for (const { index } of roleMessages) {
       const el = messageRefs.current.get(index);
       if (el && el.offsetTop > viewportTop) {
@@ -269,10 +273,10 @@ export default function SessionDetailPage() {
         return;
       }
     }
-    // Wrap around — scroll to first message of this role
+    // Wrap around
     const firstEl = messageRefs.current.get(roleMessages[0].index);
     if (firstEl) firstEl.scrollIntoView({ behavior: "smooth", block: "start" });
-  };
+  }, [data?.messages]);
 
   const roleColors: Record<string, { bg: string; text: string }> = {
     user: { bg: "bg-neon-cyan/10", text: "text-neon-cyan" },
