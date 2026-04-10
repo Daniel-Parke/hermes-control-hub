@@ -82,6 +82,10 @@ export interface MemoryData {
   total: number;
   dbSize: number;
   error?: string;
+  available?: boolean;
+  message?: string;
+  entities?: number;
+  banks?: Array<{ bank_name: string; fact_count: number; updated_at: string }>;
 }
 
 // ── Config Sections ────────────────────────────────────────────

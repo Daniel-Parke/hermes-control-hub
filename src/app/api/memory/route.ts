@@ -9,10 +9,17 @@ export async function GET() {
   const dbPath = PATHS.memoryDb;
 
   if (!existsSync(dbPath)) {
-    return NextResponse.json(
-      { error: "Memory database not found" },
-      { status: 404 }
-    );
+    return NextResponse.json({
+      data: {
+        facts: [],
+        total: 0,
+        dbSize: 0,
+        entities: 0,
+        banks: [],
+        available: false,
+        message: "Holographic memory is not installed. Install the hermes-memory-store plugin to enable persistent memory.",
+      },
+    });
   }
 
   try {
@@ -97,7 +104,7 @@ export async function POST(request: NextRequest) {
   const dbPath = PATHS.memoryDb;
 
   if (!existsSync(dbPath)) {
-    return NextResponse.json({ error: "Memory database not found" }, { status: 404 });
+    return NextResponse.json({ error: "Holographic memory is not installed" }, { status: 404 });
   }
 
   try {
@@ -148,7 +155,7 @@ export async function PUT(request: NextRequest) {
   const dbPath = PATHS.memoryDb;
 
   if (!existsSync(dbPath)) {
-    return NextResponse.json({ error: "Memory database not found" }, { status: 404 });
+    return NextResponse.json({ error: "Holographic memory is not installed" }, { status: 404 });
   }
 
   try {
@@ -217,7 +224,7 @@ export async function DELETE(request: NextRequest) {
   const dbPath = PATHS.memoryDb;
 
   if (!existsSync(dbPath)) {
-    return NextResponse.json({ error: "Memory database not found" }, { status: 404 });
+    return NextResponse.json({ error: "Holographic memory is not installed" }, { status: 404 });
   }
 
   try {

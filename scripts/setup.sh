@@ -33,6 +33,15 @@ if [ ! -f "$HERMES_HOME/config.yaml" ]; then
 fi
 echo "✓ Hermes config found"
 
+# Check for holographic memory (optional)
+echo ""
+if [ -f "$HERMES_HOME/memory_store.db" ]; then
+    echo "✓ Holographic memory detected"
+else
+    echo "ℹ  Holographic memory not found — Memory page will show an install notice."
+    echo "   To enable: hermes plugins install hermes-memory-store"
+fi
+
 # Create data directories
 echo ""
 echo "Creating data directories..."

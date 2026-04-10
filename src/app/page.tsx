@@ -296,8 +296,8 @@ export default function Dashboard() {
           />
           <StatPill
             icon={Layers}
-            label={`Memory · ${monitor?.memory.provider || "holographic"}`}
-            value={monitor ? `${monitor.memory.factCount} facts` : "..."}
+            label={`Memory · ${monitor?.memory.provider || "Not Installed"}`}
+            value={monitor ? (monitor.memory.factCount > 0 ? `${monitor.memory.factCount} facts` : monitor.memory.provider === "Not Installed" ? "Not Installed" : "0 facts") : "..."}
             color="pink"
           />
         </div>

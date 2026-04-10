@@ -57,7 +57,7 @@ export async function GET() {
       cron: { total: 0, active: 0, paused: 0, jobs: [] },
       sessions: { total: 0, recent: [] },
       gateway: { platforms: {}, connectedCount: 0 },
-      memory: { factCount: 0, dbSize: "N/A", provider: "unknown" },
+      memory: { factCount: 0, dbSize: "N/A", provider: "Not Installed" },
       errors: [],
       system: { uptime: "N/A", lastCronRun: null, lastCronStatus: null },
     };
