@@ -4,23 +4,23 @@ A command centre dashboard for [Hermes Agent](https://github.com/NousResearch/he
 
 Simply clone the repo, run the install script, and you are ready to control your agent from the dashboard!
 
-![Dashboard](screenshots/Hermes_Dashboard.png)
+![Dashboard](screenshots/Hermes_Dashboard_Resize.png)
 
 ## Features
 
-**Dashboard** — Live stats, active missions, system monitor, running agents
+**Dashboard** — Live stats, active missions, system & agent monitoring
 
-**Missions** — Dispatch and track agent missions with 6 built-in templates
+**Missions** — Dispatch and track agent missions with 6 built-in templates. Create + save new missions as you go!
 
 **Agent Behaviour** — Edit SOUL.md, HERMES.md, USER.md, MEMORY.md, AGENTS.md, and masked .env
 
-**Config Editor** — Full config.yaml editing with 27 sections and auto-backup
+**Config Editor** — Full config.yaml editing with 27 sections and auto-backup. Fully configure all aspects of your agent
 
-**Cron Manager** — Schedule and monitor recurring tasks
+**Cron Manager** — Schedule, edit and monitor recurring tasks, utilising Hermes pause/resume functionality
 
-**Session Browser** — View conversation transcripts
+**Session Browser** — View conversation transcripts across all gateways
 
-**Memory CRUD** — Manage holographic memory facts
+**Memory CRUD** — Manage holographic memory facts and view stored information
 
 **Skills Browser** — Browse and view installed skills
 
@@ -65,6 +65,18 @@ Mission Control reads from your existing Hermes installation. No additional conf
 | `HERMES_HOME` | `~/.hermes` | Path to Hermes home directory |
 | `PORT` | `3000` | Server port |
 
+
+## Architecture
+
+- **Framework:** Next.js 16 (App Router) + TypeScript + Tailwind CSS
+- **Data:** Direct file I/O on `~/.hermes/` + SQLite for memory
+- **API:** RESTful routes under `/api/`
+- **State:** React hooks (no external state management)
+- **YAML:** js-yaml for all config parsing
+
+All API routes import paths from `src/lib/hermes.ts` for consistency. The app reads from `~/.hermes/` but never writes to `config.yaml` directly.
+
+
 ## Screenshots
 
 ![Dashboard](screenshots/Hermes_Dashboard.png)
@@ -86,25 +98,6 @@ Mission Control reads from your existing Hermes installation. No additional conf
 ![Agent Tools](screenshots/Agent_Tools.png)
 
 ![Agent Configuration](screenshots/Agent_Configuration.png)
-
-
-## Architecture
-
-- **Framework:** Next.js 16 (App Router) + TypeScript + Tailwind CSS
-- **Data:** Direct file I/O on `~/.hermes/` + SQLite for memory
-- **API:** RESTful routes under `/api/`
-- **State:** React hooks (no external state management)
-- **YAML:** js-yaml for all config parsing
-
-All API routes import paths from `src/lib/hermes.ts` for consistency. The app reads from `~/.hermes/` but never writes to `config.yaml` directly.
-
-## Related Repositories
-
-| Repo | Purpose |
-|------|---------|
-| [hermes-mission-control](https://github.com/Daniel-Parke/hermes-mission-control) | This dashboard |
-| [hermes-agent](https://github.com/Daniel-Parke/hermes-agent) | Full agent backup (code + config + skills) |
-| [hermes-config](https://github.com/Daniel-Parke/hermes-config) | Agent identity backup (config, skills, memory) |
 
 ## License
 
