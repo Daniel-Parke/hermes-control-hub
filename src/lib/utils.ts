@@ -2,6 +2,12 @@
 // Shared Utility Functions
 // ═══════════════════════════════════════════════════════════════
 
+/** Capitalise the first letter of a string. */
+export function titleCase(s: string): string {
+  if (!s) return s;
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
 /**
  * Format an ISO timestamp as a relative time string ("5m ago", "2h ago", etc.)
  */

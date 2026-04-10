@@ -45,7 +45,7 @@ import Button from "@/components/ui/Button";
 import Toast, { useToast } from "@/components/ui/Toast";
 import AutoTextarea from "@/components/ui/AutoTextarea";
 import Modal from "@/components/ui/Modal";
-import { timeAgo, timeUntil } from "@/lib/utils";
+import { timeAgo, timeUntil, titleCase } from "@/lib/utils";
 import { iconColorMap } from "@/lib/theme";
 import type { AccentColor } from "@/types/hermes";
 
@@ -796,13 +796,13 @@ export default function MissionsPage() {
                           <StatusDot status={sc.dot} pulse={mission.status === "running"} />
                           <span className="text-sm font-semibold text-white truncate">{mission.name}</span>
                           <span className={`text-[10px] font-mono px-2 py-0.5 rounded-full ${sc.bg} ${sc.text}`}>
-                            {mission.status}
+                            {titleCase(mission.status)}
                           </span>
                           {mission.cronJob && (
                             <span className={`text-[10px] font-mono px-2 py-0.5 rounded-full ${
                               mission.cronJob.enabled ? "bg-green-500/10 text-neon-green" : "bg-white/5 text-white/30"
                             }`}>
-                              cron: {mission.cronJob.enabled ? (mission.cronJob.state.charAt(0).toUpperCase() + mission.cronJob.state.slice(1)) : "Disabled"}
+                              cron: {mission.cronJob.enabled ? (titleCase(mission.cronJob.state)) : "Disabled"}
                             </span>
                           )}
                         </div>
@@ -887,7 +887,7 @@ export default function MissionsPage() {
                                 <div className="flex justify-between">
                                   <span className="text-white/30">State</span>
                                   <span className={detail.cronJob.enabled ? "text-neon-green" : "text-white/40"}>
-                                    {detail.cronJob.enabled ? (detail.cronJob.state.charAt(0).toUpperCase() + detail.cronJob.state.slice(1)) : "Disabled"}
+                                    {detail.cronJob.enabled ? (titleCase(detail.cronJob.state)) : "Disabled"}
                                   </span>
                                 </div>
                                 <div className="flex justify-between">
@@ -912,7 +912,7 @@ export default function MissionsPage() {
                                     {detail.cronJob.state === "running"
                                       ? "Executing..."
                                       : detail.cronJob.lastRun && !detail.cronJob.nextRun
-                                      ? `${(detail.cronJob.lastStatus || "Ok").charAt(0).toUpperCase() + (detail.cronJob.lastStatus || "Ok").slice(1)} ${timeAgo(detail.cronJob.lastRun)}`
+                                      ? `${titleCase(detail.cronJob.lastStatus || "Ok")} ${timeAgo(detail.cronJob.lastRun)}`
                                       : detail.cronJob.nextRun && new Date(detail.cronJob.nextRun).getTime() > Date.now()
                                       ? "Next " + timeUntil(detail.cronJob.nextRun)
                                       : detail.cronJob.lastRun
@@ -924,7 +924,7 @@ export default function MissionsPage() {
                                   <div className="flex justify-between">
                                     <span className="text-white/30">Last status</span>
                                     <span className={detail.cronJob.lastStatus === "ok" ? "text-neon-green" : "text-red-400"}>
-                                      {detail.cronJob.lastStatus.charAt(0).toUpperCase() + detail.cronJob.lastStatus.slice(1)}
+                                      {titleCase(detail.cronJob.lastStatus)}
                                     </span>
                                   </div>
                                 )}

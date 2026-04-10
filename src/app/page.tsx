@@ -41,7 +41,7 @@ import {
 } from "lucide-react";
 import Card, { StatusDot } from "@/components/ui/Card";
 import type { SystemStatus, AccentColor } from "@/types/hermes";
-import { timeAgo, timeUntil } from "@/lib/utils";
+import { timeAgo, timeUntil, titleCase } from "@/lib/utils";
 
 interface AgentRun {
   id: string;
@@ -430,7 +430,7 @@ export default function Dashboard() {
                           {job.state === "running"
                             ? "Executing..."
                             : job.lastRun && !job.nextRun
-                            ? `${(job.lastStatus || "Ok").charAt(0).toUpperCase() + (job.lastStatus || "Ok").slice(1)} ${timeAgo(job.lastRun)}`
+                            ? `${titleCase(job.lastStatus || "Ok")} ${timeAgo(job.lastRun)}`
                             : job.nextRun && new Date(job.nextRun).getTime() > Date.now()
                             ? "Next " + timeUntil(job.nextRun)
                             : job.lastRun
@@ -558,7 +558,7 @@ export default function Dashboard() {
                     <span className={`text-[10px] font-mono px-2 py-0.5 rounded-full ${
                       agent.status === "running" ? "bg-green-500/10 text-neon-green" : "bg-white/5 text-white/30"
                     }`}>
-                      {agent.status}
+                      {titleCase(agent.status)}
                     </span>
                   </div>
                   <div className="space-y-1 text-[10px] font-mono text-white/40">
