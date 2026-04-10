@@ -236,28 +236,58 @@ export default function MissionsPage() {
 
     const fullPrompt = buildPrompt();
 
-    // Update existing mission
+    // Update existing mission (only for active missions with a live cron job)
     if (editingId) {
-      showToast("Updating mission...", "info");
+      const existingMission = missions.find(m => m.id === editingId);
+      const isActive = existingMission && (existingMission.status === "dispatched" || existingMission.status === "running");
+
+      if (isActive) {
+        // Active mission — update and sync to cron job
+        showToast("Updating mission...", "info");
+        const res = await fetch("/api/missions", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "update",
+            missionId: editingId,
+            name: newName,
+            prompt: fullPrompt,
+            goals: newGoals.split("\n").filter((g) => g.trim()),
+          }),
+        });
+        if (res.ok) {
+          showToast("Mission updated — cron job prompt synced", "success");
+          setEditingId(null);
+          setShowCreate(false);
+          fetchData();
+          if (expandedId === editingId) fetchDetail(editingId);
+        } else {
+          showToast("Failed to update mission", "error");
+        }
+        return;
+      }
+
+      // Completed/failed mission — create a NEW dispatch (re-dispatch)
+      showToast("Re-dispatching mission...", "info");
+      setEditingId(null); // Clear so we fall through to create path
+
       const res = await fetch("/api/missions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          action: "update",
-          missionId: editingId,
+          action: "create",
           name: newName,
           prompt: fullPrompt,
           goals: newGoals.split("\n").filter((g) => g.trim()),
+          dispatchMode: "now",
         }),
       });
+
       if (res.ok) {
-        showToast("Mission updated — cron job prompt synced", "success");
-        setEditingId(null);
-        setShowCreate(false);
-        fetchData();
-        if (expandedId === editingId) fetchDetail(editingId);
+        showToast("Mission re-dispatched! Redirecting to dashboard...", "success");
+        setTimeout(() => router.push("/"), 800);
       } else {
-        showToast("Failed to update mission", "error");
+        showToast("Failed to re-dispatch mission", "error");
       }
       return;
     }
@@ -304,10 +334,25 @@ export default function MissionsPage() {
     setEditingId(m.id);
     setNewName(m.name);
     // Split prompt back into instruction + context (best effort)
-    const parts = m.prompt.split("\n---\n");
-    setNewInstruction(parts[0] || m.prompt);
-    setNewContext(parts.length > 1 ? parts[parts.length - 1].replace(/^## Additional Context\n\n/, "").trim() : "");
+    // The stored prompt has injected sections: Goals header, TIME BUDGET, DELEGATION RULES
+    // We need to strip these and recover the original instruction
+    let rawPrompt = m.prompt;
+
+    // Remove ## Goals tracking header block
+    rawPrompt = rawPrompt.replace(/^## Goals \(complete each in order\)\n[\s\S]*?GOAL_DONE:.*\n\n---\n\n/m, "");
+    // Remove TIME BUDGET section
+    rawPrompt = rawPrompt.replace(/## TIME BUDGET\n[^\n]*\n[^\n]*\n\n/g, "");
+    // Remove DELEGATION RULES section
+    rawPrompt = rawPrompt.replace(/## DELEGATION RULES\n(?:- [^\n]*\n){4}\n/g, "");
+
+    const parts = rawPrompt.split("\n---\n");
+    setNewInstruction(parts[0]?.trim() || rawPrompt);
+    setNewContext(parts.length > 1 ? parts[parts.length - 1].replace(/^## Additional Context\n\n?/, "").trim() : "");
     setNewGoals(m.goals.join("\n"));
+    // Auto-set dispatch mode to "now" for completed/failed missions (re-dispatch)
+    if (m.status === "completed" || m.status === "failed") {
+      setNewDispatch("now");
+    }
     setShowCreate(true);
   };
 
@@ -548,13 +593,32 @@ export default function MissionsPage() {
           <Card className="mb-6 glow-cyan" padding="lg">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-mono text-neon-cyan uppercase tracking-widest">
-                {editingId ? "Edit Mission" : "New Mission"}
+                {(() => {
+                  const existing = editingId ? missions.find(m => m.id === editingId) : null;
+                  if (existing && (existing.status === "completed" || existing.status === "failed")) {
+                    return `Re-Dispatch: ${existing.name}`;
+                  }
+                  if (editingId) return "Edit Mission";
+                  return "New Mission";
+                })()}
               </h3>
               <button onClick={() => { setShowCreate(false); setEditingId(null); }} className="text-white/30 hover:text-white/60">
                 <X className="w-4 h-4" />
               </button>
             </div>
             <div className="space-y-3">
+              {editingId && (() => {
+                const existing = missions.find(m => m.id === editingId);
+                if (existing && (existing.status === "completed" || existing.status === "failed")) {
+                  return (
+                    <div className="rounded-lg bg-neon-cyan/5 border border-neon-cyan/20 p-3 text-xs text-neon-cyan/80 font-mono">
+                      A new mission will be created and dispatched immediately with your changes.
+                      The previous mission record will be kept for history.
+                    </div>
+                  );
+                }
+                return null;
+              })()}
               <div>
                 <label className="text-xs text-white/40 font-mono block mb-1">Mission Name</label>
                 <input
@@ -653,7 +717,14 @@ export default function MissionsPage() {
               <div className="flex gap-2 pt-1">
                 <Button onClick={handleCreate} disabled={!newName.trim() || !newInstruction.trim()}>
                   <Send className="w-3.5 h-3.5" />
-                  {newDispatch === "save" ? "Save Mission" : newDispatch === "now" ? "Dispatch Now" : "Schedule Mission"}
+                  {(() => {
+                    const existing = editingId ? missions.find(m => m.id === editingId) : null;
+                    const isReDispatch = existing && (existing.status === "completed" || existing.status === "failed");
+                    if (isReDispatch) return "Re-Dispatch Now";
+                    if (newDispatch === "save") return "Save Mission";
+                    if (newDispatch === "now") return "Dispatch Now";
+                    return "Schedule Mission";
+                  })()}
                 </Button>
                 {newInstruction.trim() && (
                   <Button variant="secondary" onClick={handleSaveAsTemplate}>
