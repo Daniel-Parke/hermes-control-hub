@@ -62,3 +62,67 @@ export function debounce<T extends (...args: unknown[]) => void>(
     timer = setTimeout(() => fn(...args), delay);
   };
 }
+
+// ── Mission Progress ───────────────────────────────────────────
+export type StepState = "done" | "active" | "pending" | "failed";
+
+export interface ProgressStep {
+  label: string;
+  state: StepState;
+}
+
+/**
+ * Calculate the 3-step progress indicator for a mission.
+ *
+ * Steps: [Queued/Dispatched] → [Processing] → [Done]
+ *
+ * - For cron jobs, step 1 is "Queued" (waiting for trigger time)
+ * - For one-shot dispatches, step 1 is "Dispatched" (sent immediately)
+ * - "Processing" replaces the old "Working" label for clarity
+ */
+export function getMissionProgressSteps(
+  status: string,
+  dispatchMode?: string,
+  cronState?: string
+): ProgressStep[] {
+  const firstLabel = dispatchMode === "cron" ? "Queued" : "Dispatched";
+  const steps: ProgressStep[] = [
+    { label: firstLabel, state: "pending" },
+    { label: "Processing", state: "pending" },
+    { label: "Done", state: "pending" },
+  ];
+
+  if (status === "completed") {
+    steps[0].state = "done";
+    steps[1].state = "done";
+    steps[2].state = "done";
+  } else if (status === "failed") {
+    steps[0].state = "done";
+    steps[1].state = "failed";
+    steps[2].state = "failed";
+  } else if (status === "running" || cronState === "active" || cronState === "running") {
+    steps[0].state = "done";
+    steps[1].state = "active";
+  } else {
+    // dispatched / queued / scheduled
+    steps[0].state = "active";
+  }
+
+  return steps;
+}
+
+// ── Session Message Summary ────────────────────────────────────
+
+/**
+ * Generate a short summary preview of message content.
+ * Returns the first meaningful line, truncated to 120 chars.
+ */
+export function messageSummary(content: string | undefined): string {
+  if (!content) return "(no content)";
+  const lines = content.split("\n");
+  const firstNonEmpty = lines.find((l) => l.trim().length > 0) || "";
+  const firstIndex = lines.findIndex((l) => l.trim().length > 0);
+  const hasMoreContent = firstIndex >= 0 && firstIndex < lines.length - 1;
+  const trimmed = firstNonEmpty.slice(0, 120);
+  return trimmed + (firstNonEmpty.length > 120 || hasMoreContent ? "..." : "");
+}

@@ -71,13 +71,15 @@ interface MissionBrief {
 function MissionProgress({
   status,
   cronState,
+  dispatchMode,
 }: {
   status: string;
   cronState?: string;
+  dispatchMode?: string;
 }) {
   const steps: Array<{ label: string; state: "done" | "active" | "pending" | "failed" }> = [
-    { label: "Queued", state: "pending" },
-    { label: "Working", state: "pending" },
+    { label: dispatchMode === "cron" ? "Queued" : "Dispatched", state: "pending" },
+    { label: "Processing", state: "pending" },
     { label: "Done", state: "pending" },
   ];
 
@@ -380,6 +382,7 @@ export default function Dashboard() {
                       <MissionProgress
                         status={m.status}
                         cronState={m.cronJob?.state}
+                        dispatchMode={m.dispatchMode}
                       />
                       {m.cronJob?.lastRun && (
                         <span className="text-[10px] font-mono text-white/25">{timeAgo(m.cronJob.lastRun)}</span>
