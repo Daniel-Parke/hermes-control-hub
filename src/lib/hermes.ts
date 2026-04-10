@@ -1,4 +1,5 @@
 import yaml from "js-yaml";
+import { readFileSync, existsSync } from "fs";
 // ═══════════════════════════════════════════════════════════════
 // Shared Hermes Configuration — centralised paths and constants
 // ═══════════════════════════════════════════════════════════════
@@ -50,4 +51,33 @@ export function getDiscordHomeChannel(envContent: string): string {
   const match = envContent.match(/^DISCORD_HOME_CHANNEL=(.+)$/m);
   if (match) return match[1].trim().replace(/^['"]|['"]$/g, "");
   return "";
+}
+
+// Default model config — reads from config.yaml `model:` section
+export interface DefaultModelConfig {
+  model: string;
+  provider: string;
+}
+
+export function getDefaultModelConfig(): DefaultModelConfig {
+  try {
+    if (!existsSync(PATHS.config)) return { model: "", provider: "" };
+    const content = readFileSync(PATHS.config, "utf-8");
+    const parsed = yaml.load(content) as Record<string, unknown>;
+    const modelSection = parsed?.model;
+
+    if (typeof modelSection === "string") {
+      return { model: modelSection, provider: "" };
+    }
+    if (typeof modelSection === "object" && modelSection !== null) {
+      const mc = modelSection as Record<string, unknown>;
+      return {
+        model: typeof mc.default === "string" ? mc.default : "",
+        provider: typeof mc.provider === "string" ? mc.provider : "",
+      };
+    }
+    return { model: "", provider: "" };
+  } catch {
+    return { model: "", provider: "" };
+  }
 }

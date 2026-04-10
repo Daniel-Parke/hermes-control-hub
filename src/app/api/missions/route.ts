@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 // Missions API — CRUD + Real Dispatch via Cron Jobs
 // ═══════════════════════════════════════════════════════════════
 
-import { HERMES_HOME, PATHS } from "@/lib/hermes";
+import { HERMES_HOME, PATHS, getDefaultModelConfig } from "@/lib/hermes";
 import { existsSync, mkdirSync, readFileSync, writeFileSync, readdirSync, unlinkSync } from "fs";
 
 const DATA_DIR = PATHS.missions;
@@ -561,12 +561,15 @@ export async function POST(request: Request) {
           ? parseSchedule(body.schedule || "every 15m")
           : { schedule: { kind: "once", run_at: now, display: "once (immediate)" }, schedule_display: "once (immediate)" };
 
+        const defaults = getDefaultModelConfig();
+
         const cronJob: CronJobData = {
           id: cronId,
           name: "Mission: " + record.name,
           prompt: missionPrompt,
           skills: record.skills,
-          model: record.model || "",
+          model: record.model || defaults.model,
+          provider: defaults.provider,
           schedule: parsed.schedule,
           schedule_display: parsed.schedule_display,
           repeat: dispatchMode === "now"

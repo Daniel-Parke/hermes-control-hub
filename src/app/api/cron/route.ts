@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from "fs";
 
-import { HERMES_HOME, PATHS } from "@/lib/hermes";
+import { HERMES_HOME, PATHS, getDefaultModelConfig } from "@/lib/hermes";
 const CRON_PATH = PATHS.cronJobs;
 
 interface CronJobData {
@@ -144,12 +144,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const defaults = getDefaultModelConfig();
+
     const newJob: CronJobData = {
       id,
       name,
       prompt,
       skills: skills || [],
-      model: model || "",
+      model: model || defaults.model,
+      provider: defaults.provider,
       schedule: parseSchedule(schedule),
       schedule_display: parseSchedule(schedule).display as string || schedule,
       repeat: { times: repeat ? -1 : 1, completed: 0 },
