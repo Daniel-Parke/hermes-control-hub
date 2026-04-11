@@ -2,7 +2,7 @@
 
 A command centre dashboard for [Hermes Agent](https://github.com/NousResearch/hermes-agent). Monitor your agent fleet, dispatch missions, manage configurations, and control everything from one place.
 
-![Dashboard](screenshots/Hermes_Dashboard_Resize.png)
+![Dashboard](screenshots/dashboard.png)
 
 ---
 
