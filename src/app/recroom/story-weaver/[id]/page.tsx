@@ -58,7 +58,7 @@ export default function StoryReaderPage() {
   }, [story?.chapters]);
 
   const generateNext = useCallback(async () => {
-    if (!story || generating) return;
+    if (!story) return;
     setGenerating(true);
     try {
       const res = await fetch("/api/stories", {
@@ -67,8 +67,10 @@ export default function StoryReaderPage() {
       });
       const d = await res.json();
       if (d.data?.story) setStory(d.data.story);
-    } catch {} finally { setGenerating(false); }
-  }, [story, storyId, generating]);
+      else if (d.error) console.error("Chapter generation error:", d.error);
+    } catch (e) { console.error("Chapter generation failed:", e); }
+    finally { setGenerating(false); }
+  }, [story, storyId]);
 
   // Mark chapter as read and move to next
   const handleNextChapter = useCallback(async () => {

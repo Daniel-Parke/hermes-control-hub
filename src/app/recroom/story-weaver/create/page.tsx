@@ -47,7 +47,8 @@ function Tags({ label, options, selected, onToggle, onAdd }: {
 export default function CreateStoryPage() {
   const router = useRouter();
   const [generating, setGenerating] = useState(false);
-  const [genChapters, setGenChapters] = useState<{number: number; status: string}[]>([]);
+  const [genDone, setGenDone] = useState(false);
+  const [genStoryId, setGenStoryId] = useState<string | null>(null);
   const [title, setTitle] = useState("");
   const [titleManuallyEdited, setTitleManuallyEdited] = useState(false);
   const [premise, setPremise] = useState(STORY_TEMPLATES[0].premise);
@@ -83,11 +84,8 @@ export default function CreateStoryPage() {
   const handleCreate = useCallback(async () => {
     if (!premise.trim()) return;
     setGenerating(true);
-    setGenChapters([
-      { number: -1, status: "writing" }, // Bible generation
-      { number: 0, status: "pending" },   // Chapter 1
-      { number: -2, status: "pending" },  // Summary
-    ]);
+    setGenDone(false);
+    setGenStoryId(null);
 
     try {
       const res = await fetch("/api/stories", {
@@ -101,27 +99,25 @@ export default function CreateStoryPage() {
       const d = await res.json();
       if (d.error) throw new Error(d.error);
 
-      // All steps complete
-      setGenChapters([
-        { number: -1, status: "complete" },
-        { number: 0, status: "complete" },
-        { number: -2, status: "complete" },
-        ...d.data.chapters.slice(1).map((c: Record<string, unknown>) => ({ number: c.number as number, status: "pending" })),
-      ]);
-
-      // Brief pause then redirect
-      await new Promise(r => setTimeout(r, 1000));
-      router.push("/recroom/story-weaver/" + d.data.id);
+      // Signal done — overlay will animate to 100%, show success, then navigate
+      setGenStoryId(d.data.id);
+      setGenDone(true);
     } catch (err) {
       setGenerating(false);
       alert("Failed to create story: " + (err instanceof Error ? err.message : "Unknown error"));
     }
-  }, [title, premise, genres, era, setting, moods, pov, length, characters, router]);
+  }, [title, premise, genres, era, setting, moods, pov, length, characters]);
+
+  const handleGenComplete = useCallback(() => {
+    if (genStoryId) {
+      router.push("/recroom/story-weaver/" + genStoryId);
+    }
+  }, [genStoryId, router]);
 
   return (
     <div className="min-h-screen bg-dark-950 grid-bg relative scanlines">
       {/* Generate overlay */}
-      <GenerateOverlay title={title || "Your Story"} visible={generating} />
+      <GenerateOverlay title={title || "Your Story"} visible={generating} done={genDone} onComplete={handleGenComplete} />
 
       {/* Header */}
       <div className="border-b border-white/10 bg-dark-900/50 px-6 py-4 backdrop-blur-xl">

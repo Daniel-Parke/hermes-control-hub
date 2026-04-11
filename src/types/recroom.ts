@@ -19,7 +19,7 @@ export interface StoryTemplate {
   pov: "first" | "third-limited" | "third-omniscient";
 }
 
-// ── Story Bible (immutable plot contract) ─────────────────────
+// ── Story Arc (immutable plot contract) ───────────────────────
 
 export interface FixedPlotPoint {
   chapter: number;
@@ -43,7 +43,7 @@ export interface ChapterOutline {
   setupForNext?: string;
 }
 
-export interface StoryBible {
+export interface StoryArc {
   storyArc: string;
   fixedPlotPoints: FixedPlotPoint[];
   characterArcs: CharacterArc[];

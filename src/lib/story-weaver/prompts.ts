@@ -3,49 +3,42 @@
 // ═══════════════════════════════════════════════════════════════
 
 /**
- * Story Bible prompt — generates the immutable plot contract.
- * This is the FIRST and most important LLM call.
- * Output: structured JSON with fixed plot points, character arcs, chapter outlines.
+ * Combined story arc + first chapter prompt.
+ * Generates the structured story arc AND Chapter 1 in a single LLM call.
+ * Output format: ===ARC=== JSON block, then ===CHAPTER 1=== prose block.
  */
-export const STORY_BIBLE_PROMPT = `You are a master story architect. Your job is to create a detailed story bible that will serve as the immutable contract for writing every chapter.
+export const STORY_ARC_AND_CHAPTER_PROMPT = `You are a skilled novelist and story architect. You will create a detailed story arc and write the first chapter.
 
-YOUR OUTPUT MUST BE VALID JSON. Nothing else. No commentary before or after.
+YOUR RESPONSE MUST HAVE TWO SECTIONS IN THIS EXACT FORMAT:
 
-WRITING QUALITY FOUNDATIONS (these apply to ALL chapters):
-- Vary sentence length and structure. Mix short, punchy sentences with longer descriptive ones.
-- Paragraphs: 2-6 sentences. Break at natural shifts in focus, speaker, or time.
+===ARC===
+{"storyArc":"...","fixedPlotPoints":[{"chapter":1,"event":"...","setup":"..."}],"characterArcs":[{"name":"...","startingState":"...","journey":"...","endingState":"..."}],"worldRules":["..."],"themes":["..."],"chapterOutlines":[{"number":1,"title":"...","purpose":"...","keyBeats":["..."],"emotionalTone":"...","setupForNext":"..."}]}
+
+===CHAPTER 1===
+[Your chapter prose here — pure narrative, no headers or meta-commentary]
+
+THE ARC SECTION:
+- Must be valid JSON on a single line after ===ARC===
+- fixedPlotPoints must be SPECIFIC events, not vague descriptions
+- Every chapter must have an outline with key beats
+- Character arcs must show clear transformation
+- World rules are immutable — once set, they cannot change
+- Plant foreshadowing for later chapters
+
+THE CHAPTER SECTION:
+- Pure prose only. No "Chapter 1:" header, no meta-commentary
+- Must follow the chapter 1 outline from the arc
+- Must establish the world, characters, and tone immediately
+
+WRITING QUALITY STANDARDS:
+- Vary sentence length and structure. Mix short punchy sentences with longer descriptive ones.
+- Paragraphs: 2-6 sentences. Never walls of text.
 - Dialogue: natural, character-specific voices. People interrupt, trail off, use contractions.
-- Show, don't tell. Emotion through action and sensory detail, not exposition.
+- Show, don't tell. Emotion through action and sensory detail.
 - Avoid clichés: "Little did they know", "Suddenly", "It was at that moment".
-- Each character must have a distinct voice matching their personality and role.
-
-OUTPUT THIS EXACT JSON STRUCTURE:
-{
-  "storyArc": "Act 1: [setup and inciting incident]. Act 2: [rising action, complications, midpoint shift]. Act 3: [climax, resolution].",
-  "fixedPlotPoints": [
-    {"chapter": 1, "event": "Specific event that MUST happen in this chapter", "setup": "What must be planted in earlier chapters (if applicable)"},
-    {"chapter": 3, "event": "Another specific fixed event"}
-  ],
-  "characterArcs": [
-    {"name": "Character Name", "startingState": "Who they are at the start", "journey": "How they change across the story", "endingState": "Who they become"}
-  ],
-  "worldRules": ["Immutable fact about the world", "Another rule"],
-  "themes": ["Central theme", "Secondary theme"],
-  "chapterOutlines": [
-    {"number": 1, "title": "Chapter Title", "purpose": "What this chapter accomplishes for the overall story", "keyBeats": ["Specific scene/event 1", "Specific scene/event 2"], "emotionalTone": "Feel of this chapter", "setupForNext": "What to plant for the next chapter"}
-  ]
-}
-
-CRITICAL RULES:
-- fixedPlotPoints must be SPECIFIC. Not "something happens" but "Captain Torres reveals he hired Vivian — the detective was set up from the start."
-- chapterOutlines must cover EVERY chapter in the story. Each chapter needs key beats.
-- Every fixed plot point must have a corresponding chapter outline entry.
-- Character arcs must show clear transformation — starting state, journey, ending state.
-- World rules are IMMUTABLE. Once established, they cannot be contradicted.
-- Themes should be woven through multiple chapters, not resolved in one.
-- The story must have a satisfying beginning, middle, and end.
-- Plant foreshadowing in early chapters for events in later chapters.
-- Ensure the story length matches the requested chapter count.`;
+- Specific, concrete details over vague generalities.
+- Each character's voice is distinct and consistent.
+- End paragraphs with weight.`;
 
 /**
  * Chapter generation prompt — used for ALL chapters.
@@ -117,11 +110,11 @@ Return ONLY the updated summary text. Nothing else.`;
 
 // ── Prompt Resolution ────────────────────────────────────────
 
-export type StoryPhase = "bible" | "chapter" | "summary";
+export type StoryPhase = "arc" | "chapter" | "summary";
 
 export function getStoryPrompt(phase: StoryPhase): string {
   const prompts: Record<StoryPhase, string> = {
-    bible: STORY_BIBLE_PROMPT,
+    arc: STORY_ARC_AND_CHAPTER_PROMPT,
     chapter: CHAPTER_PROMPT,
     summary: SUMMARY_PROMPT,
   };

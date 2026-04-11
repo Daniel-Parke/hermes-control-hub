@@ -1,9 +1,9 @@
-import { getStoryPrompt, STORY_BIBLE_PROMPT, CHAPTER_PROMPT, SUMMARY_PROMPT, LOADING_MESSAGES, CHAPTER_STATUSES } from "@/lib/story-weaver/prompts";
+import { getStoryPrompt, STORY_ARC_AND_CHAPTER_PROMPT, CHAPTER_PROMPT, SUMMARY_PROMPT, LOADING_MESSAGES, CHAPTER_STATUSES } from "@/lib/story-weaver/prompts";
 
-describe("Story Weaver — Story Bible Prompts", () => {
+describe("Story Weaver — Story Arc Prompts", () => {
   describe("getStoryPrompt", () => {
-    it("should return bible prompt for 'bible' phase", () => {
-      expect(getStoryPrompt("bible")).toBe(STORY_BIBLE_PROMPT);
+    it("should return arc+chapter prompt for 'arc' phase", () => {
+      expect(getStoryPrompt("arc")).toBe(STORY_ARC_AND_CHAPTER_PROMPT);
     });
 
     it("should return chapter prompt for 'chapter' phase", () => {
@@ -19,22 +19,26 @@ describe("Story Weaver — Story Bible Prompts", () => {
     });
   });
 
-  describe("Story Bible Prompt", () => {
-    it("should include JSON structure instructions", () => {
-      expect(STORY_BIBLE_PROMPT).toContain("storyArc");
-      expect(STORY_BIBLE_PROMPT).toContain("fixedPlotPoints");
-      expect(STORY_BIBLE_PROMPT).toContain("characterArcs");
-      expect(STORY_BIBLE_PROMPT).toContain("worldRules");
-      expect(STORY_BIBLE_PROMPT).toContain("chapterOutlines");
+  describe("Combined Arc + Chapter Prompt", () => {
+    it("should specify ===ARC=== and ===CHAPTER 1=== format", () => {
+      expect(STORY_ARC_AND_CHAPTER_PROMPT).toContain("===ARC===");
+      expect(STORY_ARC_AND_CHAPTER_PROMPT).toContain("===CHAPTER 1===");
     });
 
-    it("should emphasize specificity", () => {
-      expect(STORY_BIBLE_PROMPT).toContain("SPECIFIC");
-      expect(STORY_BIBLE_PROMPT).toContain("fixed plot point");
+    it("should include arc structure fields", () => {
+      expect(STORY_ARC_AND_CHAPTER_PROMPT).toContain("storyArc");
+      expect(STORY_ARC_AND_CHAPTER_PROMPT).toContain("fixedPlotPoints");
+      expect(STORY_ARC_AND_CHAPTER_PROMPT).toContain("characterArcs");
+      expect(STORY_ARC_AND_CHAPTER_PROMPT).toContain("worldRules");
+      expect(STORY_ARC_AND_CHAPTER_PROMPT).toContain("chapterOutlines");
     });
 
-    it("should require valid JSON output", () => {
-      expect(STORY_BIBLE_PROMPT).toContain("VALID JSON");
+    it("should emphasize specificity for plot points", () => {
+      expect(STORY_ARC_AND_CHAPTER_PROMPT).toContain("SPECIFIC");
+    });
+
+    it("should specify pure prose for chapter output", () => {
+      expect(STORY_ARC_AND_CHAPTER_PROMPT).toContain("Pure prose");
     });
   });
 
@@ -47,12 +51,6 @@ describe("Story Weaver — Story Bible Prompts", () => {
     it("should include quality standards", () => {
       expect(CHAPTER_PROMPT).toContain("Vary sentence length");
       expect(CHAPTER_PROMPT).toContain("Show, don't tell");
-      expect(CHAPTER_PROMPT).toContain("CONSISTENCY CHECKLIST");
-    });
-
-    it("should specify prose-only output", () => {
-      expect(CHAPTER_PROMPT).toContain("ONLY the chapter text");
-      expect(CHAPTER_PROMPT).toContain("Pure prose");
     });
   });
 
@@ -61,16 +59,6 @@ describe("Story Weaver — Story Bible Prompts", () => {
       expect(SUMMARY_PROMPT).toContain("thorough");
       expect(SUMMARY_PROMPT).toContain("5-10 lines");
       expect(SUMMARY_PROMPT).toContain("20-30+");
-    });
-
-    it("should list what to preserve", () => {
-      expect(SUMMARY_PROMPT).toContain("ALL key plot events");
-      expect(SUMMARY_PROMPT).toContain("Character development");
-      expect(SUMMARY_PROMPT).toContain("world-building");
-    });
-
-    it("should specify flowing prose format", () => {
-      expect(SUMMARY_PROMPT).toContain("flowing narrative prose");
     });
   });
 });
@@ -83,30 +71,27 @@ describe("Story Weaver — Status Messages", () => {
     expect(CHAPTER_STATUSES.failed).toBeTruthy();
   });
 
-  it("should have 25+ loading messages", () => {
-    expect(LOADING_MESSAGES.length).toBeGreaterThanOrEqual(25);
+  it("should have 30+ loading messages", () => {
+    expect(LOADING_MESSAGES.length).toBeGreaterThanOrEqual(30);
     for (const msg of LOADING_MESSAGES) {
       expect(msg.length).toBeGreaterThan(5);
     }
   });
-
-  it("should include bible-specific messages", () => {
-    expect(LOADING_MESSAGES.some(m => m.includes("bible") || m.includes("Architecting") || m.includes("Plot points"))).toBe(true);
-  });
 });
 
-describe("Story Weaver — Removed Functions", () => {
-  it("should not export getStoryPrompt with 'plan' phase", () => {
-    // Old 'plan' phase replaced by 'bible'
-    const planPrompt = getStoryPrompt("plan" as any);
-    // Should fallback to chapter prompt (not old PLAN_AND_CHAPTER_PROMPT)
-    expect(planPrompt).toBe(CHAPTER_PROMPT);
+describe("Story Weaver — Removed Phases", () => {
+  it("should not have 'bible' phase (renamed to 'arc')", () => {
+    const result = getStoryPrompt("bible" as any);
+    expect(result).toBe(CHAPTER_PROMPT); // falls back to chapter
   });
 
-  it("should not export getStoryPrompt with 'format' phase", () => {
-    // Old 'format' phase removed
-    const formatPrompt = getStoryPrompt("format" as any);
-    // Should fallback to chapter prompt (not old FORMATTING_REVIEW_PROMPT)
-    expect(formatPrompt).toBe(CHAPTER_PROMPT);
+  it("should not have 'plan' phase (replaced by 'arc')", () => {
+    const result = getStoryPrompt("plan" as any);
+    expect(result).toBe(CHAPTER_PROMPT);
+  });
+
+  it("should not have 'format' phase (removed)", () => {
+    const result = getStoryPrompt("format" as any);
+    expect(result).toBe(CHAPTER_PROMPT);
   });
 });

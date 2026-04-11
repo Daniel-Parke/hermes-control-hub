@@ -7,10 +7,11 @@ import { LOADING_MESSAGES } from "@/lib/story-weaver/prompts";
 interface GenerateOverlayProps {
   title: string;
   visible: boolean;
+  done: boolean; // Parent signals when generation is complete
   onComplete?: () => void;
 }
 
-export default function GenerateOverlay({ title, visible, onComplete }: GenerateOverlayProps) {
+export default function GenerateOverlay({ title, visible, done, onComplete }: GenerateOverlayProps) {
   const [msg, setMsg] = useState(LOADING_MESSAGES[0]);
   const [progress, setProgress] = useState(0);
   const [phase, setPhase] = useState<"generating" | "complete">("generating");
@@ -27,25 +28,33 @@ export default function GenerateOverlay({ title, visible, onComplete }: Generate
     }
   }, [visible]);
 
-  // Message rotation — 6 seconds per message
+  // When parent signals done, snap to 100% and show success
+  useEffect(() => {
+    if (done && phase === "generating") {
+      setProgress(100);
+      setPhase("complete");
+    }
+  }, [done, phase]);
+
+  // Message rotation — 5 seconds per message
   useEffect(() => {
     if (!visible || phase !== "generating") return;
     const interval = setInterval(() => {
       msgIndexRef.current = (msgIndexRef.current + 1) % LOADING_MESSAGES.length;
       setMsg(LOADING_MESSAGES[msgIndexRef.current]);
-    }, 6000);
+    }, 5000);
     return () => clearInterval(interval);
   }, [visible, phase]);
 
-  // Smooth progress bar with ease-out curve and random noise
+  // Smooth progress bar with ease-out curve — 30s to ~80%
   useEffect(() => {
     if (!visible || phase !== "generating") return;
     const interval = setInterval(() => {
       const elapsed = Date.now() - startTimeRef.current;
       // Ease-out curve: fast start, gradual slowdown
-      // Reaches ~80% at 60 seconds, with diminishing returns after
-      const t = Math.min(elapsed / 60000, 1); // normalised 0-1 over 60s
-      const eased = 1 - Math.pow(1 - t, 2.5); // ease-out quadratic-ish
+      // Reaches ~80% at 30 seconds
+      const t = Math.min(elapsed / 30000, 1); // normalised 0-1 over 30s
+      const eased = 1 - Math.pow(1 - t, 2.5); // ease-out
       const target = eased * 80;
       // Subtle noise to feel organic (±1.5%)
       const noise = (Math.random() - 0.5) * 3;
@@ -54,11 +63,10 @@ export default function GenerateOverlay({ title, visible, onComplete }: Generate
     return () => clearInterval(interval);
   }, [visible, phase]);
 
-  // Called by parent when generation is complete
+  // After showing success for 2s, call onComplete to navigate
   useEffect(() => {
     if (phase === "complete" && onComplete) {
-      setProgress(100);
-      const timeout = setTimeout(onComplete, 1500);
+      const timeout = setTimeout(onComplete, 2000);
       return () => clearTimeout(timeout);
     }
   }, [phase, onComplete]);
@@ -78,13 +86,13 @@ export default function GenerateOverlay({ title, visible, onComplete }: Generate
           <>
             <CheckCircle2 className="w-12 h-12 text-neon-green mx-auto mb-6" />
             <h2 className="text-xl font-serif text-white mb-1">{title || "Your Story"}</h2>
-            <p className="text-sm text-neon-green mb-6">Ready to read!</p>
+            <p className="text-sm text-neon-green mb-6">Your story is ready!</p>
           </>
         )}
 
         {/* Progress bar */}
         <div className="w-full h-2.5 rounded-full bg-white/5 mb-6 overflow-hidden">
-          <div className={`h-full rounded-full transition-all duration-300 ${
+          <div className={`h-full rounded-full transition-all duration-500 ${
             phase === "complete" ? "bg-gradient-to-r from-green-500 to-emerald-400" : "bg-gradient-to-r from-purple-500 to-purple-400"
           }`} style={{ width: `${progress}%` }} />
         </div>

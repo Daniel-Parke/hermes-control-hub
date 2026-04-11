@@ -3,10 +3,10 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync, readdirSync, unlink
 import { HERMES_HOME } from "@/lib/hermes";
 import { logApiError } from "@/lib/api-logger";
 import { getStoryPrompt } from "@/lib/story-weaver/prompts";
-import type { StoryBible, ChapterOutline } from "@/types/recroom";
+import type { StoryArc as StoryArcType, ChapterOutline } from "@/types/recroom";
 
 // ═══════════════════════════════════════════════════════════════
-// Stories API — Story Bible Pipeline
+// Stories API — Story Arc Pipeline (2-LLM-call creation)
 // ═══════════════════════════════════════════════════════════════
 
 const SAVE_DIR = HERMES_HOME + "/mission-control/data/stories";
@@ -68,7 +68,6 @@ async function callLLM(system: string, user: string): Promise<string> {
 function validateChapterOutput(raw: string): string {
   let content = raw.trim();
 
-  // Strip common meta-commentary prefixes
   const metaPrefixes = [
     /^here(?:'s| is) (?:your |the )?(?:chapter|prose|story)/i,
     /^(?:sure|certainly|of course|okay|alright)[.!]?\s*/i,
@@ -80,7 +79,6 @@ function validateChapterOutput(raw: string): string {
     content = content.replace(prefix, "");
   }
 
-  // Strip trailing meta-commentary
   const metaSuffixes = [
     /\s*(?:i hope|let me know|i trust|this should|feel free)[^.!?]*[.!?]\s*$/i,
     /\s*---+\s*(?:end of chapter|chapter \d+ ends?)[^.]*$/i,
@@ -89,11 +87,9 @@ function validateChapterOutput(raw: string): string {
     content = content.replace(suffix, "");
   }
 
-  // Remove prompt artifacts
   content = content.replace(/===CHAPTER \d+===/gi, "");
+  content = content.replace(/===ARC===/gi, "");
   content = content.replace(/===PLAN===/gi, "");
-  content = content.replace(/CONSISTENCY CHECKLIST[:\s]*/gi, "");
-  content = content.replace(/WRITING QUALITY STANDARDS[:\s]*/gi, "");
 
   return content.trim();
 }
@@ -126,14 +122,6 @@ function buildMasterPrompt(config: Record<string, unknown>): string {
     ``,
     `CHARACTERS:`,
     charProfiles || "(none specified)",
-    ``,
-    `STYLE REQUIREMENTS:`,
-    `- POV must remain consistent throughout`,
-    `- Character names must be spelled exactly as specified`,
-    `- Tone and mood must match the genre and mood tags`,
-    `- Show, don't tell. Emotion through action, dialogue, and sensory detail`,
-    `- Each character must have a distinct voice`,
-    `- Balance action, dialogue, description, and introspection`,
   ].join("\n");
 }
 
@@ -160,7 +148,7 @@ export async function POST(request: Request) {
   }
 }
 
-// ── Create: Bible + Chapter 1 + Summary ──────────────────────
+// ── Create: Arc + Chapter 1 in one call, then Summary ────────
 
 async function handleCreate(body: Record<string, unknown>): Promise<NextResponse> {
   ensureDir();
@@ -173,89 +161,94 @@ async function handleCreate(body: Record<string, unknown>): Promise<NextResponse
   const masterPrompt = buildMasterPrompt({ ...cfg, title });
 
   try {
-    // ── Step 1: Generate Story Bible ──
-    const bibleSystem = getStoryPrompt("bible");
-    const bibleUser = `Story configuration:\n${masterPrompt}\n\nNumber of chapters: ${getChapterCount(cfg.length as string)}\n\nGenerate the story bible now. Output ONLY valid JSON.`;
+    // ── Step 1: Generate Story Arc + Chapter 1 (single LLM call) ──
+    const system = getStoryPrompt("arc");
+    const userMessage = masterPrompt +
+      `\n\nNumber of chapters: ${getChapterCount(cfg.length as string)}` +
+      `\n\nGenerate the story arc and write Chapter 1 now.`;
 
-    const bibleRaw = await callLLM(bibleSystem, bibleUser);
+    const raw = await callLLM(system, userMessage);
 
-    // Parse bible JSON — try multiple extraction strategies
-    let bible: StoryBible | null = null;
+    // Parse ===ARC=== and ===CHAPTER 1=== sections
+    let storyArc: StoryArcType | null = null;
+    let chapter1 = "";
 
-    // Strategy 1: direct JSON parse
-    try { bible = JSON.parse(bibleRaw); } catch {}
+    const arcMatch = raw.match(/===ARC===\s*([\s\S]*?)(?===CHAPTER 1===|$)/);
+    const chapterMatch = raw.match(/===CHAPTER 1===\s*([\s\S]*?)$/);
 
-    // Strategy 2: extract JSON from markdown code blocks
-    if (!bible) {
-      const codeMatch = bibleRaw.match(/```(?:json)?\s*([\s\S]*?)```/);
-      if (codeMatch) {
-        try { bible = JSON.parse(codeMatch[1].trim()); } catch {}
+    if (arcMatch) {
+      try {
+        const jsonStr = arcMatch[1].trim();
+        storyArc = JSON.parse(jsonStr);
+      } catch {
+        // Try extracting JSON from the arc section
+        const jsonExtract = arcMatch[1].match(/\{[\s\S]*\}/);
+        if (jsonExtract) {
+          try { storyArc = JSON.parse(jsonExtract[0]); } catch {}
+        }
       }
     }
 
-    // Strategy 3: find JSON object in text
-    if (!bible) {
-      const jsonMatch = bibleRaw.match(/\{[\s\S]*"storyArc"[\s\S]*"chapterOutlines"[\s\S]*\}/);
+    if (chapterMatch) {
+      chapter1 = validateChapterOutput(chapterMatch[1]);
+    }
+
+    // Fallback: try to parse entire response
+    if (!storyArc) {
+      const jsonMatch = raw.match(/\{[\s\S]*"storyArc"[\s\S]*"chapterOutlines"[\s\S]*\}/);
       if (jsonMatch) {
-        try { bible = JSON.parse(jsonMatch[0]); } catch {}
+        try { storyArc = JSON.parse(jsonMatch[0]); } catch {}
       }
     }
+    if (!chapter1 && !storyArc) {
+      // Everything is chapter text
+      chapter1 = validateChapterOutput(raw);
+    }
 
-    // Fallback: create minimal bible
-    if (!bible) {
+    // Build fallback arc if parsing failed
+    if (!storyArc) {
       const chapterCount = getChapterCount(cfg.length as string);
-      bible = {
-        storyArc: `A ${cfg.genre || "general"} story. Beginning: setup and introduction. Middle: complications and growth. End: resolution.`,
+      storyArc = {
+        storyArc: `A ${cfg.genre || "general"} story with beginning, middle, and end.`,
         fixedPlotPoints: Array.from({ length: chapterCount }, (_, i) => ({
-          chapter: i + 1,
-          event: `Chapter ${i + 1} advances the main plot`,
+          chapter: i + 1, event: `Chapter ${i + 1} advances the plot`,
         })),
         characterArcs: ((cfg.characters as Array<Record<string, string>>) || []).map(c => ({
-          name: c.name,
-          startingState: c.description || "Unknown",
-          journey: "Grows through the challenges of the story",
-          endingState: "Transformed by their experiences",
+          name: c.name, startingState: c.description || "Unknown",
+          journey: "Grows through challenges", endingState: "Transformed",
         })),
-        worldRules: [cfg.setting ? `Setting: ${cfg.setting}` : "The world as described in the premise"],
-        themes: [cfg.genre ? `Explores themes of ${cfg.genre}` : "Human nature"],
+        worldRules: [cfg.setting ? `Setting: ${cfg.setting}` : "As described in the premise"],
+        themes: [cfg.genre ? `Themes of ${cfg.genre}` : "Human nature"],
         chapterOutlines: Array.from({ length: chapterCount }, (_, i) => ({
-          number: i + 1,
-          title: `Chapter ${i + 1}`,
-          purpose: i === 0 ? "Introduce the world and protagonist" : i === chapterCount - 1 ? "Resolve the central conflict" : "Advance the plot",
+          number: i + 1, title: `Chapter ${i + 1}`,
+          purpose: i === 0 ? "Introduction" : i === chapterCount - 1 ? "Resolution" : "Development",
           keyBeats: [`Key event for chapter ${i + 1}`],
-          emotionalTone: i === 0 ? "Intriguing" : i === chapterCount - 1 ? "Satisfying" : "Engaging",
+          emotionalTone: "Engaging",
         })),
       };
     }
 
-    // ── Step 2: Generate Chapter 1 ──
-    const chapter1Outline = bible.chapterOutlines?.[0] || {
-      number: 1, title: "Chapter 1", purpose: "Begin the story",
-      keyBeats: ["Opening scene"], emotionalTone: "Intriguing",
-    };
-
-    const chapterSystem = getStoryPrompt("chapter");
-    const chapterUser = buildChapterPrompt(masterPrompt, bible, null, null, chapter1Outline);
-
-    const chapter1Raw = await callLLM(chapterSystem, chapterUser);
-    const chapter1 = validateChapterOutput(chapter1Raw);
-
-    // ── Step 3: Generate Initial Summary ──
-    const summarySystem = getStoryPrompt("summary");
-    const summaryUser = `PREVIOUS SUMMARY: Story has not started yet.\n\nNEW CHAPTER (Chapter 1):\n${chapter1}\n\nCreate the initial rolling summary.`;
-    const rollingSummary = await callLLM(summarySystem, summaryUser);
+    // ── Step 2: Generate Rolling Summary (single LLM call) ──
+    let rollingSummary = "";
+    try {
+      const summarySystem = getStoryPrompt("summary");
+      const summaryUser = `NEW CHAPTER (Chapter 1):\n${chapter1}\n\nCreate the initial rolling summary.`;
+      rollingSummary = await callLLM(summarySystem, summaryUser);
+    } catch {
+      rollingSummary = `Chapter 1 introduces the story. ${chapter1.slice(0, 200)}...`;
+    }
 
     // ── Build Story Object ──
     const storyId = "story_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 6);
-    const storyTitle = (title as string) || bible.chapterOutlines?.[0]?.title ? (title as string) || "Untitled Story" : "Untitled Story";
+    const storyTitle = (title as string) || "Untitled Story";
 
     const story = {
       id: storyId,
       title: storyTitle,
       masterPrompt,
-      storyBible: bible,
+      storyArc,
       rollingSummary,
-      chapters: bible.chapterOutlines.map((ch: ChapterOutline, i: number) => ({
+      chapters: storyArc.chapterOutlines.map((ch: ChapterOutline, i: number) => ({
         number: i + 1,
         title: ch.title,
         status: i === 0 ? "complete" : "pending",
@@ -281,30 +274,24 @@ async function handleCreate(body: Record<string, unknown>): Promise<NextResponse
 
 function buildChapterPrompt(
   masterPrompt: string,
-  bible: StoryBible,
+  storyArc: StoryArcType,
   rollingSummary: string | null,
   previousChapter: string | null,
   outline: ChapterOutline
 ): string {
   const parts: string[] = [];
 
-  // Master prompt (always first)
   parts.push("===MASTER PROMPT===\n" + masterPrompt);
+  parts.push("\n===STORY ARC===\n" + JSON.stringify(storyArc, null, 2));
 
-  // Story bible (always included)
-  parts.push("\n===STORY BIBLE===\n" + JSON.stringify(bible, null, 2));
-
-  // Rolling summary (if available)
   if (rollingSummary) {
     parts.push("\n===NARRATIVE SO FAR===\n" + rollingSummary);
   }
 
-  // Previous chapter for style continuity
   if (previousChapter) {
     parts.push("\n===PREVIOUS CHAPTER===\n" + previousChapter);
   }
 
-  // This chapter's outline
   parts.push("\n===CHAPTER OUTLINE===" +
     `\nTitle: ${outline.title}` +
     `\nPurpose: ${outline.purpose}` +
@@ -329,48 +316,37 @@ async function handleGenerateChapter(body: Record<string, unknown>): Promise<Nex
 
   const story = JSON.parse(readFileSync(path, "utf-8"));
 
-  // Find first pending chapter
   const nextIdx = story.chapters.findIndex((c: Record<string, unknown>) => c.status === "pending");
   if (nextIdx === -1) return NextResponse.json({ error: "All chapters complete" }, { status: 400 });
 
   const nextNum = nextIdx + 1;
 
-  // ── Server-side lock: reject if any chapter is already writing ──
+  // Server-side lock
   const anyWriting = story.chapters.some((c: Record<string, unknown>) => c.status === "writing");
   if (anyWriting) {
     return NextResponse.json({ error: "A chapter is already being generated. Please wait." }, { status: 409 });
   }
 
-  // Mark as writing
   story.chapters[nextIdx].status = "writing";
   writeFileSync(path, JSON.stringify(story, null, 2));
 
   try {
-    const bible: StoryBible = story.storyBible;
-    const chapterOutline = bible.chapterOutlines?.[nextIdx] || {
-      number: nextNum,
-      title: `Chapter ${nextNum}`,
-      purpose: "Continue the story",
-      keyBeats: [`Key event for chapter ${nextNum}`],
-      emotionalTone: "Engaging",
+    const arc: StoryArcType = story.storyArc;
+    const chapterOutline = arc.chapterOutlines?.[nextIdx] || {
+      number: nextNum, title: `Chapter ${nextNum}`, purpose: "Continue the story",
+      keyBeats: [`Key event for chapter ${nextNum}`], emotionalTone: "Engaging",
     };
 
-    // Previous chapter for style continuity
     const prevChapter = nextNum > 1 ? story.chapterContents[String(nextNum - 1)] || null : null;
 
     const system = getStoryPrompt("chapter");
     const userMessage = buildChapterPrompt(
-      story.masterPrompt,
-      bible,
-      story.rollingSummary || null,
-      prevChapter,
-      chapterOutline
+      story.masterPrompt, arc, story.rollingSummary || null, prevChapter, chapterOutline
     );
 
     const raw = await callLLM(system, userMessage);
     const content = validateChapterOutput(raw);
 
-    // Store chapter
     story.chapterContents[nextNum] = content;
     story.chapters[nextIdx].status = "complete";
     story.chapters[nextIdx].wordCount = content.split(/\s+/).length;
@@ -380,13 +356,10 @@ async function handleGenerateChapter(body: Record<string, unknown>): Promise<Nex
     // Update rolling summary
     try {
       const summarySystem = getStoryPrompt("summary");
-      const summaryUser = `PREVIOUS SUMMARY:\n${story.rollingSummary || "Story has not started yet."}\n\nNEW CHAPTER (Chapter ${nextNum}):\n${content}\n\nUpdate the rolling summary to include this chapter.`;
+      const summaryUser = `PREVIOUS SUMMARY:\n${story.rollingSummary || "Story has not started yet."}\n\nNEW CHAPTER (Chapter ${nextNum}):\n${content}\n\nUpdate the rolling summary.`;
       story.rollingSummary = await callLLM(summarySystem, summaryUser);
-    } catch {
-      // Summary update failed — continue without it
-    }
+    } catch {}
 
-    // Check if all complete
     if (story.chapters.every((c: Record<string, unknown>) => c.status === "complete")) {
       story.status = "complete";
     }
@@ -401,7 +374,7 @@ async function handleGenerateChapter(body: Record<string, unknown>): Promise<Nex
   }
 }
 
-// ── Rewrite Chapter (forward-invalidation) ───────────────────
+// ── Rewrite Chapter ──────────────────────────────────────────
 
 async function handleRewriteChapter(body: Record<string, unknown>): Promise<NextResponse> {
   const { storyId, chapterNumber } = body;
@@ -419,7 +392,7 @@ async function handleRewriteChapter(body: Record<string, unknown>): Promise<Next
     return NextResponse.json({ error: "Invalid chapter number" }, { status: 400 });
   }
 
-  // Invalidate chapter N and all subsequent chapters
+  // Invalidate from chapter N forward
   for (let i = chNum - 1; i < story.chapters.length; i++) {
     story.chapters[i].status = i === chNum - 1 ? "writing" : "pending";
     story.chapters[i].wordCount = 0;
@@ -427,7 +400,7 @@ async function handleRewriteChapter(body: Record<string, unknown>): Promise<Next
     delete story.chapterContents[String(i + 1)];
   }
 
-  // Truncate rolling summary to chapters before N
+  // Truncate rolling summary
   if (chNum > 1) {
     try {
       const summarySystem = getStoryPrompt("summary");
@@ -435,18 +408,14 @@ async function handleRewriteChapter(body: Record<string, unknown>): Promise<Next
         .sort(([a], [b]) => Number(a) - Number(b))
         .map(([num, text]) => `Chapter ${num}:\n${text}`)
         .join("\n\n");
-      const summaryUser = `Create a rolling summary of these chapters only. These are the chapters that remain unchanged.\n\n${chaptersBeforeN}`;
-      story.rollingSummary = await callLLM(summarySystem, summaryUser);
-    } catch {
-      story.rollingSummary = "";
-    }
+      story.rollingSummary = await callLLM(summarySystem,
+        `Create a rolling summary of these unchanged chapters:\n\n${chaptersBeforeN}`);
+    } catch { story.rollingSummary = ""; }
   } else {
     story.rollingSummary = "";
   }
 
   writeFileSync(path, JSON.stringify(story, null, 2));
-
-  // Now generate the rewritten chapter
   return handleGenerateChapter({ storyId });
 }
 
@@ -465,36 +434,18 @@ async function handleExtend(body: Record<string, unknown>): Promise<NextResponse
   const addCount = additionalChapters as number;
   const startNum = story.chapters.length + 1;
 
-  // Generate additional chapter outlines
-  const newOutlines: ChapterOutline[] = [];
   for (let i = 0; i < addCount; i++) {
     const num = startNum + i;
-    newOutlines.push({
-      number: num,
-      title: `Chapter ${num}`,
-      purpose: "Continue and extend the story",
-      keyBeats: [`New key event for chapter ${num}`],
-      emotionalTone: "Engaging",
-    });
-  }
-
-  // Add to bible
-  story.storyBible.chapterOutlines.push(...newOutlines);
-
-  // Add chapter entries
-  for (const outline of newOutlines) {
-    story.chapters.push({
-      number: outline.number,
-      title: outline.title,
-      status: "pending",
-      wordCount: 0,
-      generatedAt: null,
-    });
+    const outline = {
+      number: num, title: `Chapter ${num}`, purpose: "Continue the story",
+      keyBeats: [`New event for chapter ${num}`], emotionalTone: "Engaging",
+    };
+    story.storyArc.chapterOutlines.push(outline);
+    story.chapters.push({ number: num, title: outline.title, status: "pending", wordCount: 0, generatedAt: null });
   }
 
   story.status = "active";
   story.updatedAt = new Date().toISOString();
-
   writeFileSync(path, JSON.stringify(story, null, 2));
   return NextResponse.json({ data: story });
 }
@@ -524,8 +475,7 @@ async function handleList(): Promise<NextResponse> {
           chapters: s.chapters?.map((c: Record<string, unknown>) => ({
             number: c.number, title: c.title, status: c.status, wordCount: c.wordCount
           })),
-          config: s.config,
-          createdAt: s.createdAt, updatedAt: s.updatedAt,
+          config: s.config, createdAt: s.createdAt, updatedAt: s.updatedAt,
         };
       } catch { return null; }
     }).filter(Boolean) as Array<Record<string, unknown>>;
