@@ -68,14 +68,37 @@ export default function MemoryPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Detect provider from config
-    fetch("/api/memory")
+    let cancelled = false;
+    // Detect provider from config — use a simple config read, not the memory API
+    const timer = setTimeout(() => {
+      if (!cancelled) {
+        setProvider("none");
+        setLoading(false);
+      }
+    }, 5000); // 5s fallback
+
+    fetch("/api/memory", { signal: AbortSignal.timeout(4000) })
       .then((r) => r.json())
       .then((d) => {
-        setProvider(d.data?.provider || "none");
+        if (!cancelled) {
+          setProvider(d.data?.provider || "none");
+          clearTimeout(timer);
+        }
       })
-      .catch(() => setProvider("none"))
-      .finally(() => setLoading(false));
+      .catch(() => {
+        if (!cancelled) {
+          setProvider("none");
+          clearTimeout(timer);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
   }, []);
 
   const getTitle = () => {

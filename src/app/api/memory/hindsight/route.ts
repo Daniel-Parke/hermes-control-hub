@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { execSync } from "child_process";
+import { exec } from "child_process";
 
 import { HERMES_HOME } from "@/lib/hermes";
 import { logApiError } from "@/lib/api-logger";
@@ -8,31 +8,40 @@ import type { ApiResponse } from "@/types/hermes";
 const BRIDGE_SCRIPT = HERMES_HOME + "/scripts/hindsight_bridge.py";
 const PYTHON = HERMES_HOME + "/hermes-agent/venv/bin/python3";
 
-function runBridge(command: string, args: Record<string, string | number | undefined> = {}): Record<string, unknown> {
-  const argStr = Object.entries(args)
-    .filter(([, v]) => v !== undefined && v !== null && v !== "")
-    .map(([k, v]) => `--${k} ${JSON.stringify(String(v))}`)
-    .join(" ");
+/** Run bridge command asynchronously with timeout */
+function runBridgeAsync(
+  command: string,
+  args: Record<string, string | number | undefined> = {},
+  timeoutMs = 15000
+): Promise<Record<string, unknown>> {
+  return new Promise((resolve, reject) => {
+    const argStr = Object.entries(args)
+      .filter(([, v]) => v !== undefined && v !== null && v !== "")
+      .map(([k, v]) => `--${k} ${JSON.stringify(String(v))}`)
+      .join(" ");
 
-  const cmd = `${PYTHON} ${BRIDGE_SCRIPT} ${command} ${argStr}`;
-  try {
-    const output = execSync(cmd, {
-      timeout: 30000,
-      encoding: "utf-8",
-      env: {
-        ...process.env,
-        PYTHONPATH: HERMES_HOME + "/hermes-agent",
+    const cmd = `${PYTHON} ${BRIDGE_SCRIPT} ${command} ${argStr}`;
+
+    exec(
+      cmd,
+      {
+        timeout: timeoutMs,
+        env: { ...process.env, PYTHONPATH: HERMES_HOME + "/hermes-agent" },
+        maxBuffer: 1024 * 1024,
       },
-    });
-    return JSON.parse(output);
-  } catch (error) {
-    if (error instanceof Error && "stdout" in error) {
-      try {
-        return JSON.parse((error as { stdout: string }).stdout);
-      } catch {}
-    }
-    throw error;
-  }
+      (error, stdout, stderr) => {
+        if (error && !stdout) {
+          reject(new Error(stderr || error.message));
+          return;
+        }
+        try {
+          resolve(JSON.parse(stdout));
+        } catch {
+          reject(new Error("Invalid JSON from bridge: " + stdout.slice(0, 200)));
+        }
+      }
+    );
+  });
 }
 
 // GET — List memories, recall, reflect, health check
@@ -48,28 +57,28 @@ export async function GET(request: NextRequest) {
 
     switch (action) {
       case "list":
-        result = runBridge("list", { bank, search: query, limit });
+        result = await runBridgeAsync("list", { bank, search: query, limit });
         break;
       case "recall":
         if (!query) {
           return NextResponse.json({ error: "query is required for recall" }, { status: 400 });
         }
-        result = runBridge("recall", { bank, query, budget });
+        result = await runBridgeAsync("recall", { bank, query, budget });
         break;
       case "reflect":
         if (!query) {
           return NextResponse.json({ error: "query is required for reflect" }, { status: 400 });
         }
-        result = runBridge("reflect", { bank, query, budget });
+        result = await runBridgeAsync("reflect", { bank, query, budget });
         break;
       case "directives":
-        result = runBridge("directives", { bank });
+        result = await runBridgeAsync("directives", { bank });
         break;
       case "mental-models":
-        result = runBridge("mental-models", { bank });
+        result = await runBridgeAsync("mental-models", { bank });
         break;
       case "health":
-        result = runBridge("health");
+        result = await runBridgeAsync("health", {}, 10000);
         break;
       default:
         return NextResponse.json({ error: `Unknown action: ${action}` }, { status: 400 });
@@ -79,8 +88,13 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     logApiError("GET /api/memory/hindsight", `action=${action}`, error);
     return NextResponse.json(
-      { error: `Hindsight bridge error: ${error instanceof Error ? error.message : "Unknown error"}` },
-      { status: 500 }
+      {
+        data: {
+          available: false,
+          error: error instanceof Error ? error.message : "Bridge error",
+          memories: [],
+        },
+      }
     );
   }
 }
@@ -96,17 +110,15 @@ export async function POST(request: NextRequest) {
     }
 
     const args: Record<string, string> = { bank, content: content.trim() };
-    if (tags && Array.isArray(tags)) {
-      args.tags = tags.join(",");
-    }
+    if (tags && Array.isArray(tags)) args.tags = tags.join(",");
 
-    const result = runBridge("retain", args);
+    const result = await runBridgeAsync("retain", args);
 
     return NextResponse.json<ApiResponse<Record<string, unknown>>>({ data: result });
   } catch (error) {
     logApiError("POST /api/memory/hindsight", "retain", error);
     return NextResponse.json(
-      { error: `Failed to retain memory: ${error instanceof Error ? error.message : "Unknown error"}` },
+      { error: `Failed to retain: ${error instanceof Error ? error.message : "Unknown"}` },
       { status: 500 }
     );
   }
