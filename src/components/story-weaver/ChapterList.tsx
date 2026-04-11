@@ -27,7 +27,6 @@ export default function ChapterList({ chapters, currentChapter, onSelect }: {
 
   return (
     <div className="space-y-0.5">
-      <div className="text-[10px] font-mono text-white/25 uppercase tracking-widest px-2 mb-3">Chapters</div>
       {chapters.map((ch) => {
         const canRead = ch.status === "complete";
         const isCurrent = ch.number === currentChapter;

@@ -63,7 +63,7 @@ export default function ReaderSettings({ settings, onChange }: {
   const theme = THEMES[settings.pageTheme] || THEMES.dark;
 
   return (
-    <div className="relative">
+    <>
       {/* Toggle Button */}
       <button onClick={() => setOpen(!open)}
         className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-white/10 text-xs font-mono text-white/50 hover:text-white/70 hover:bg-white/5 transition-colors"
@@ -72,9 +72,11 @@ export default function ReaderSettings({ settings, onChange }: {
         <Settings className="w-3.5 h-3.5" />
       </button>
 
-      {/* Settings Panel */}
+      {/* Settings Panel — fixed position to avoid overflow clipping */}
       {open && (
-        <div className="absolute right-0 top-full mt-2 w-72 rounded-xl border border-white/10 bg-dark-900/95 backdrop-blur-xl p-5 z-50 shadow-2xl">
+        <>
+          <div className="fixed inset-0 z-[55]" onClick={() => setOpen(false)} />
+          <div className="fixed top-[52px] right-4 w-72 rounded-xl border border-white/10 bg-dark-900/95 backdrop-blur-xl p-5 z-[60] shadow-2xl max-h-[80vh] overflow-y-auto">
           <div className="flex items-center justify-between mb-4">
             <span className="text-xs font-mono text-white/40 uppercase tracking-widest">Reading Settings</span>
             <button onClick={() => setOpen(false)} className="p-1 text-white/30 hover:text-white/50"><X className="w-3.5 h-3.5" /></button>
@@ -143,8 +145,9 @@ export default function ReaderSettings({ settings, onChange }: {
             className="w-full text-center text-[10px] font-mono text-white/25 hover:text-white/40 py-1.5 rounded-lg hover:bg-white/5 transition-colors">
             Reset to Defaults
           </button>
-        </div>
+          </div>
+        </>
       )}
-    </div>
+    </>
   );
 }

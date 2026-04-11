@@ -538,13 +538,15 @@ export default function Sidebar() {
 
   return (
     <>
-      {/* Mobile menu button */}
-      <button
-        onClick={() => setMobileOpen(true)}
-        className="lg:hidden fixed top-4 left-4 z-50 p-2 rounded-lg bg-dark-900/80 border border-white/10 text-white/60"
-      >
-        <Menu className="w-5 h-5" />
-      </button>
+      {/* Mobile top bar — fixed bar with hamburger */}
+      <div className="lg:hidden sticky top-0 z-50 flex items-center h-12 px-3 bg-dark-950/95 backdrop-blur-xl border-b border-white/10">
+        <button
+          onClick={() => setMobileOpen(true)}
+          className="p-2 rounded-lg text-white/60 hover:text-white/80 hover:bg-white/5 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+        >
+          <Menu className="w-5 h-5" />
+        </button>
+      </div>
 
       {/* Mobile overlay */}
       {mobileOpen && (

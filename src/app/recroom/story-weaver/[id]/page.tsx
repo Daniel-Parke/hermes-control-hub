@@ -148,24 +148,24 @@ export default function StoryReaderPage() {
 
   return (
     <div className="min-h-screen bg-dark-950 grid-bg relative scanlines flex flex-col">
-      {/* ═══ Header ═══ */}
-      <div className="border-b border-white/10 bg-dark-900/50 backdrop-blur-xl flex-shrink-0">
-        <div className="flex items-center justify-between px-4 md:px-6 py-3">
+      {/* ═══ Reader Header — sticky bar below sidebar top bar ═══ */}
+      <div className="sticky top-0 lg:top-0 z-30 border-b border-white/10 bg-dark-950/95 backdrop-blur-xl flex-shrink-0">
+        <div className="flex items-center justify-between px-3 md:px-6 h-12">
           {/* Left: Back */}
           <button onClick={() => router.push("/recroom/story-weaver")}
-            className="p-2.5 rounded-lg text-white/40 hover:text-white/70 hover:bg-white/5 transition-colors flex-shrink-0">
+            className="p-2.5 rounded-lg text-white/40 hover:text-white/70 hover:bg-white/5 transition-colors flex-shrink-0 min-w-[44px] min-h-[44px] flex items-center justify-center">
             <ChevronLeft className="w-5 h-5" />
           </button>
 
-          {/* Centre: Title (truncated on mobile) */}
+          {/* Centre: Title */}
           <h1 className="text-sm font-semibold text-white truncate mx-2 flex-1 text-center min-w-0">
             {story.title}
           </h1>
 
           {/* Right: Chapters toggle + Settings */}
-          <div className="flex items-center gap-2 flex-shrink-0">
+          <div className="flex items-center gap-1.5 flex-shrink-0">
             <button onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="flex items-center gap-1.5 px-3 py-2.5 rounded-lg border border-white/10 text-xs font-bold text-white/70 hover:text-white hover:bg-white/5 transition-colors min-h-[44px]"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-white/10 text-xs font-bold text-white/70 hover:text-white hover:bg-white/5 transition-colors min-w-[44px] min-h-[44px] justify-center"
               title={sidebarOpen ? "Hide Chapters" : "Show Chapters"}>
               <BookOpen className="w-4 h-4" />
               <span className="hidden md:inline">Chapters</span>
@@ -268,14 +268,16 @@ export default function StoryReaderPage() {
 
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
-        <div className="md:hidden fixed inset-0 z-40 bg-dark-950/80 backdrop-blur-sm" onClick={() => setSidebarOpen(false)}>
+        <div className="lg:hidden fixed inset-0 z-40 bg-dark-950/80 backdrop-blur-sm" onClick={() => setSidebarOpen(false)}>
           <div className="absolute left-0 top-0 bottom-0 w-72 border-r border-white/10 overflow-y-auto" style={{ background: theme.panel }}
             onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between p-4 border-b border-white/5">
-              <span className="text-xs font-mono text-white/40 uppercase tracking-widest">Chapters</span>
-              <button onClick={() => setSidebarOpen(false)} className="p-1.5 text-white/30 hover:text-white/50"><X className="w-4 h-4" /></button>
+            <div className="flex items-center justify-end p-3">
+              <button onClick={() => setSidebarOpen(false)}
+                className="p-2 rounded-lg text-white/40 hover:text-white/60 hover:bg-white/5 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center">
+                <X className="w-5 h-5" />
+              </button>
             </div>
-            <div className="p-4">
+            <div className="px-3 pb-4">
               <ChapterList chapters={chapters} currentChapter={currentChapter} onSelect={handleChapterSelect} />
             </div>
           </div>
