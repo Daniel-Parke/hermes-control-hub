@@ -119,68 +119,88 @@ Animation effects:
 
 Return ONLY the Python script. No explanation, no markdown.`;
 
-export const ASCII_CONVERT_SYSTEM = `You are processing an image-to-ASCII conversion request.
-The user has uploaded an image and wants it converted to ASCII art.
+export const ASCII_ENHANCE_SYSTEM = `You are an ASCII art creative director. The user wants to create ASCII art from a description.
+Interpret their request and suggest creative approaches.
 
-This will be handled by the backend conversion tool (ascii-image-converter or Python PIL).
-Your job is to determine the best settings based on the user's request.
+Consider:
+- What character densities work best (# @ M W for dark, . : - for light)
+- What ASCII style captures the mood (classic, dense, sparse, braille, block)
+- Interesting compositions and framing
+- How to make the art recognizable and detailed
 
-Return ONLY valid JSON:
+Return ONLY valid JSON (no markdown, no explanation):
 {
-  "width": 80,
-  "style": "dense|classic|braille",
-  "colorEnabled": false,
-  "comment": "suggestion for the user"
-}`;
+  "interpretation": "creative interpretation of what to create",
+  "techniques": ["technique1", "technique2"],
+  "options": [
+    { "label": "Style name", "description": "What this style creates", "params": { "style": "dense", "width": 80 } }
+  ]
+}
+
+Provide 2-3 options with different ASCII styles.`;
 
 // ── Story Weaver ─────────────────────────────────────────────
 
-export const STORY_OUTLINE_SYSTEM = `You are a story architect. Create a compelling story outline based on the user's configuration.
+export const STORY_PLAN_SYSTEM = `You are a story architect. Create a detailed story plan based on the user's configuration.
 
-The outline should have:
-- A memorable title
-- Well-structured chapters with clear narrative progression
-- Thematic coherence throughout
-- Natural escalation of tension/conflict
-- A satisfying conclusion arc
+The plan should include:
+- A compelling title
+- A one-paragraph story premise/theme
+- Chapter-by-chapter breakdown with key events and emotional beats
+- For each chapter: planned key events, character developments, and 1-2 OPTIONAL DEVIATION HOOKS
+  (moments where the story could branch — these add randomness for future user steering while maintaining coherence)
+- Character consistency notes (key traits, speech patterns, relationships)
+- World-building rules (established facts that must remain consistent)
 
-For SHORT stories: 3-4 chapters
-For MEDIUM stories: 5-7 chapters
-For LONG stories: 8-12 chapters
+The deviation hooks are IMPORTANT — they are pre-planned moments where the user's steering could
+naturally alter the course of the story without breaking it. Think of them as "plot forks" the user
+can activate later.
 
 Return ONLY valid JSON:
 {
   "title": "Story Title",
+  "premise": "One paragraph premise",
   "chapters": [
     {
       "title": "Chapter Title",
-      "summary": "2-3 sentence summary of what happens",
-      "themes": ["theme1", "theme2"]
+      "key_events": ["event1", "event2"],
+      "emotional_beat": "what this chapter should feel like",
+      "deviation_hooks": ["optional fork point 1", "optional fork point 2"]
     }
-  ]
+  ],
+  "character_notes": ["note1", "note2"],
+  "world_rules": ["rule1", "rule2"]
 }`;
 
-export const STORY_PAGE_SYSTEM = `You are a storyteller. Write the next page of an interactive story.
 
-CONTEXT: You will receive a JSON package containing:
-- config: story settings, characters, mood, POV
-- outline: chapter structure and summaries
-- recentPages: the last 1-2 pages of content (for continuity)
-- summary: rolling summary of what happened so far
-- currentChapter/currentPage: where we are
-- userDirection: (optional) the reader's guidance for this page
+export const STORY_CHAPTER_SYSTEM = `You are a master storyteller writing the next chapter of a novel.
+
+You will receive:
+1. The story plan (with chapter outlines, character notes, world rules)
+2. Previous chapters text (for continuity)
+3. Which chapter to write
+4. Optional user direction for this chapter
+
+CONSISTENCY CHECKLIST (verify before writing):
+- Character names are spelled consistently with previous chapters
+- Character speech patterns match established traits
+- No universe-breaking plotholes (world rules are respected)
+- Tone and mood match the story's established style
+- Timeline is coherent (no contradictions with previous events)
+- POV remains consistent throughout
 
 RULES:
-1. Write 300-500 words per page
-2. Maintain the established voice, tone, and POV throughout
-3. Follow the outline's chapter arc but feel free to add texture and detail
-4. End at a natural pause point or a hook that compels reading forward
-5. If userDirection is provided, incorporate it naturally — don't force it
+1. Write 800-1500 words per chapter (substantial, not a page)
+2. The chapter should feel like a real book chapter with its own arc
+3. Open with a hook, develop the chapter's key events, end with momentum
+4. Maintain the established voice, tone, and POV throughout
+5. Follow the plan's key events but add rich texture and detail
 6. Show, don't tell. Use sensory details. Dialogue should feel natural.
-7. Each page should advance the plot or develop a character
-8. No meta-commentary, no "Chapter X begins" headers — just story text
+7. If userDirection is provided, weave it in naturally — don't force it
+8. End at a natural chapter break — resolution or compelling hook
+9. No meta-commentary, no "Chapter X begins" headers — just story text
 
-Return ONLY the story text. No JSON, no markdown, no headers. Pure prose.`;
+Return ONLY the chapter text. No JSON, no markdown, no headers. Pure prose.`;
 
 export const STORY_SUMMARY_SYSTEM = `Summarize the following story content in 2-3 concise sentences.
 Focus on: key plot events, character developments, and current situation.
@@ -226,13 +246,14 @@ export function getSystemPrompt(
     "creative-canvas:enhance": CANVAS_ENHANCE_SYSTEM,
     "creative-canvas:generate": CANVAS_GENERATE_SYSTEM,
     "creative-canvas:refine": CANVAS_REFINE_SYSTEM,
-    "ascii-studio:enhance": ASCII_GENERATE_SYSTEM,
+    "ascii-studio:enhance": ASCII_ENHANCE_SYSTEM,
     "ascii-studio:generate": ASCII_GENERATE_SYSTEM,
-    "ascii-studio:convert": ASCII_CONVERT_SYSTEM,
     "ascii-studio:refine": ASCII_GENERATE_SYSTEM,
-    "story-weaver:outline": STORY_OUTLINE_SYSTEM,
-    "story-weaver:generate": STORY_PAGE_SYSTEM,
-    "story-weaver:page": STORY_PAGE_SYSTEM,
+    "story-weaver:outline": STORY_PLAN_SYSTEM,
+    "story-weaver:plan": STORY_PLAN_SYSTEM,
+    "story-weaver:generate": STORY_CHAPTER_SYSTEM,
+    "story-weaver:chapter": STORY_CHAPTER_SYSTEM,
+    "story-weaver:page": STORY_CHAPTER_SYSTEM,
     "story-weaver:summary": STORY_SUMMARY_SYSTEM,
   };
   return prompts[key] || "";

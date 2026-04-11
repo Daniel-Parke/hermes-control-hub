@@ -50,12 +50,13 @@ export default function ASCIIStudioPage() {
     setEnhancementResult(null);
     setOutput("");
     try {
-      const action = mode === "text-banner" ? "generate" : "enhance";
-      const ctx = mode === "text-banner" ? { font, width } : { style, width };
-      const data = await callAPI({ action, activity: "ascii-studio", prompt: p, context: ctx });
-      if (action === "generate") {
+      if (mode === "text-banner") {
+        // Text banner: generate directly (no enhancement needed)
+        const data = await callAPI({ action: "generate", activity: "ascii-studio", prompt: p, context: { font, width } });
         setOutput(data.output);
       } else {
+        // Describe mode: enhance first
+        const data = await callAPI({ action: "enhance", activity: "ascii-studio", prompt: p });
         setEnhancementResult(data);
       }
     } catch (error) {
@@ -63,7 +64,7 @@ export default function ASCIIStudioPage() {
     } finally {
       setEnhancing(false);
     }
-  }, [callAPI, mode, font, width, style]);
+  }, [callAPI, mode, font, width]);
 
   const handleGenerate = useCallback(async (p: string, ctx?: Record<string, unknown>) => {
     setPrompt(p);
@@ -112,7 +113,6 @@ export default function ASCIIStudioPage() {
   const modeTabs: { id: ASCIIMode; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
     { id: "describe", label: "Describe", icon: Type },
     { id: "text-banner", label: "Text Banner", icon: Terminal },
-    { id: "upload", label: "Upload Image", icon: Image },
   ];
 
   return (

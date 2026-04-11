@@ -283,12 +283,34 @@ export interface StoryChapter {
   title: string;
   summary: string;
   themes: string[];
+  key_events?: string[];
+  emotional_beat?: string;
+  deviation_hooks?: string[];
 }
 
 export interface StoryOutline {
   title: string;
+  premise?: string;
   chapters: StoryChapter[];
+  character_notes?: string[];
+  world_rules?: string[];
 }
+
+export interface StoryChapterStatus {
+  number: number;
+  title: string;
+  status: "pending" | "writing" | "complete" | "failed";
+  wordCount: number;
+  generatedAt: string | null;
+  funnyStatus?: string;
+}
+
+export const CHAPTER_STATUSES: Record<string, string> = {
+  pending: "Waiting for its moment...",
+  writing: "The muse is visiting...",
+  complete: "The ink is still wet.",
+  failed: "Fighting writer's block...",
+};
 
 export interface StoryPage {
   chapter: number;

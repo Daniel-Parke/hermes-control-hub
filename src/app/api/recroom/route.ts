@@ -39,47 +39,89 @@ function getSavePath(activity: string, id: string): string {
  * Call the LLM via the Hermes Gateway API Server.
  * The gateway handles credential resolution and provider routing.
  */
+/**
+ * Call the LLM via the Hermes Gateway API Server with retry logic.
+ * Handles rate limiting (429), timeouts, empty responses, and connection errors.
+ */
 async function callLLM(systemPrompt: string, userMessage: string): Promise<string> {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 120_000); // 2 min timeout
+  const maxRetries = 3;
+  let lastError: Error | null = null;
 
-  try {
-    const response = await fetch(GATEWAY_API, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: "hermes",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userMessage },
-        ],
-        temperature: 0.8,
-        max_tokens: 4096,
-      }),
-      signal: controller.signal,
-    });
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 120_000);
 
-    if (!response.ok) {
-      const text = await response.text();
-      throw new Error("Gateway API error " + response.status + ": " + text.slice(0, 200));
-    }
+    try {
+      const response = await fetch(GATEWAY_API, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "hermes",
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: userMessage },
+          ],
+          temperature: 0.8,
+          max_tokens: 4096,
+        }),
+        signal: controller.signal,
+      });
 
-    const data = await response.json();
-    return data.choices?.[0]?.message?.content || "";
-  } catch (error) {
-    if (error instanceof Error && error.name === "AbortError") {
-      throw new Error("LLM request timed out (120s). The model may be overloaded.");
+      // Rate limit — wait and retry
+      if (response.status === 429) {
+        const waitSeconds = Math.min(30 * attempt, 90);
+        lastError = new Error(`Rate limit reached. Retrying in ${waitSeconds}s (attempt ${attempt}/${maxRetries})...`);
+        if (attempt < maxRetries) {
+          await new Promise((r) => setTimeout(r, waitSeconds * 1000));
+          continue;
+        }
+        throw new Error("Rate limit reached. Please wait a minute and try again.");
+      }
+
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error("Gateway API error " + response.status + ": " + text.slice(0, 200));
+      }
+
+      const data = await response.json();
+      const content = data.choices?.[0]?.message?.content || "";
+
+      // Empty response — often caused by rate limiting or model error
+      if (!content || content.trim().length === 0) {
+        lastError = new Error("Empty response from LLM");
+        if (attempt < maxRetries) {
+          await new Promise((r) => setTimeout(r, 5000 * attempt));
+          continue;
+        }
+        throw new Error("The model returned an empty response. This may be due to rate limiting — please wait a moment and try again.");
+      }
+
+      return content;
+    } catch (error) {
+      if (error instanceof Error && error.name === "AbortError") {
+        throw new Error("LLM request timed out (120s). The model may be overloaded — please try again.");
+      }
+      if (error instanceof Error && error.message.includes("fetch failed")) {
+        throw new Error(
+          "Cannot connect to Gateway API at " + GATEWAY_API +
+          ". Ensure the gateway is running with API_SERVER_ENABLED=true in ~/.hermes/.env"
+        );
+      }
+      // Re-throw rate limit and empty response errors from above
+      if (error instanceof Error && (error.message.includes("Rate limit") || error.message.includes("empty response"))) {
+        throw error;
+      }
+      lastError = error instanceof Error ? error : new Error("Unknown error");
+      if (attempt < maxRetries) {
+        await new Promise((r) => setTimeout(r, 3000 * attempt));
+        continue;
+      }
+    } finally {
+      clearTimeout(timeout);
     }
-    if (error instanceof Error && error.message.includes("fetch failed")) {
-      throw new Error(
-        "Cannot connect to Gateway API at " + GATEWAY_API +
-        ". Ensure the gateway is running with API_SERVER_ENABLED=true in ~/.hermes/.env"
-      );
-    }
-    throw error;
-  } finally {
-    clearTimeout(timeout);
   }
+
+  throw lastError || new Error("LLM call failed after retries");
 }
 
 // ── POST Handler ─────────────────────────────────────────────
@@ -152,8 +194,10 @@ async function handleEnhance(body: RecRoomRequest): Promise<NextResponse<ApiResp
     return NextResponse.json({ data: result });
   } catch (error) {
     logApiError("POST /api/recroom", "enhancing prompt", error);
-    // Fallback: return the prompt as-is
+    const message = error instanceof Error ? error.message : "Enhancement failed";
+    // Return error to frontend so user sees it instead of silent fallback
     return NextResponse.json({
+      error: message,
       data: {
         interpretation: prompt,
         techniques: [],

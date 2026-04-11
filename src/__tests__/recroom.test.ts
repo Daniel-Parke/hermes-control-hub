@@ -39,10 +39,9 @@ describe("Rec Room — Prompt Templates", () => {
       ["creative-canvas", "refine"],
       ["ascii-studio", "enhance"],
       ["ascii-studio", "generate"],
-      ["ascii-studio", "convert"],
-      ["story-weaver", "outline"],
+      ["story-weaver", "plan"],
       ["story-weaver", "generate"],
-      ["story-weaver", "page"],
+      ["story-weaver", "chapter"],
     ] as const;
 
     for (const [activity, phase] of combos) {
@@ -77,10 +76,10 @@ describe("Rec Room — Prompt Templates", () => {
   });
 
   it("should include story context in story page prompt", () => {
-    const prompt = getSystemPrompt("story-weaver", "page");
+    const prompt = getSystemPrompt("story-weaver", "chapter");
     expect(prompt).toContain("story");
-    expect(prompt).toContain("300-500 words");
-    expect(prompt).toContain("POV");
+    expect(prompt).toContain("800-1500 words");
+    expect(prompt).toContain("CONSISTENCY");
   });
 });
 

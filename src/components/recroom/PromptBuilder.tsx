@@ -60,11 +60,12 @@ export default function PromptBuilder({
     onGenerate(prompt.trim());
   };
 
-  const handleOptionGenerate = (index: number) => {
+  const handleOptionSelect = (index: number) => {
     if (!enhancementResult || busy) return;
-    onSelectOption(enhancementResult.options[index], index);
     const option = enhancementResult.options[index];
-    onGenerate(prompt.trim(), option.params);
+    onSelectOption(option, index);
+    // Populate the prompt input with the enhanced interpretation
+    // User must click Create to generate
   };
 
   const handleReset = () => {
@@ -142,10 +143,11 @@ export default function PromptBuilder({
           )}
 
           <div className="space-y-2">
+            <div className="text-[10px] font-mono text-white/30 uppercase tracking-wider">Choose an approach, then click Create</div>
             {enhancementResult.options.map((opt, i) => (
               <button
                 key={i}
-                onClick={() => handleOptionGenerate(i)}
+                onClick={() => handleOptionSelect(i)}
                 disabled={busy}
                 className={`w-full text-left p-3 rounded-lg border transition-colors disabled:opacity-30 ${
                   selectedOption === i
