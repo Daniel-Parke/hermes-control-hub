@@ -37,15 +37,20 @@ export default function GenerateOverlay({ title, visible, onComplete }: Generate
     return () => clearInterval(interval);
   }, [visible, phase]);
 
-  // Smooth progress bar with random noise
+  // Smooth progress bar with ease-out curve and random noise
   useEffect(() => {
     if (!visible || phase !== "generating") return;
     const interval = setInterval(() => {
       const elapsed = Date.now() - startTimeRef.current;
-      const target = Math.min(80, (elapsed / 30000) * 80);
+      // Ease-out curve: fast start, gradual slowdown
+      // Reaches ~80% at 60 seconds, with diminishing returns after
+      const t = Math.min(elapsed / 60000, 1); // normalised 0-1 over 60s
+      const eased = 1 - Math.pow(1 - t, 2.5); // ease-out quadratic-ish
+      const target = eased * 80;
+      // Subtle noise to feel organic (±1.5%)
       const noise = (Math.random() - 0.5) * 3;
       setProgress((prev) => Math.min(85, Math.max(prev, target + noise)));
-    }, 250);
+    }, 300);
     return () => clearInterval(interval);
   }, [visible, phase]);
 
