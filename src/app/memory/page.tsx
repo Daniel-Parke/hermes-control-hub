@@ -100,11 +100,11 @@ function FactCard({
           <HardDrive className="w-3 h-3" />
           ID: {fact.id}
         </span>
-        {fact.created_at && (
-          <span>Created: {new Date(fact.created_at).toLocaleDateString()}</span>
+        {fact.createdAt && (
+          <span>Created: {new Date(fact.createdAt).toLocaleDateString()}</span>
         )}
-        {fact.updated_at && fact.updated_at !== fact.created_at && (
-          <span>Updated: {new Date(fact.updated_at).toLocaleDateString()}</span>
+        {fact.updatedAt && fact.updatedAt !== fact.createdAt && (
+          <span>Updated: {new Date(fact.updatedAt).toLocaleDateString()}</span>
         )}
       </div>
     </div>

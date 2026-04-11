@@ -73,8 +73,8 @@ export interface MemoryFact {
   category: string;
   tags: string;
   trust: number;
-  created_at: string;
-  updated_at: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface MemoryData {
