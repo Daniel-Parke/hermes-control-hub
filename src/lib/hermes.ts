@@ -57,27 +57,31 @@ export function getDiscordHomeChannel(envContent: string): string {
 export interface DefaultModelConfig {
   model: string;
   provider: string;
+  base_url: string;
+  api_key: string;
 }
 
 export function getDefaultModelConfig(): DefaultModelConfig {
   try {
-    if (!existsSync(PATHS.config)) return { model: "", provider: "" };
+    if (!existsSync(PATHS.config)) return { model: "", provider: "", base_url: "", api_key: "" };
     const content = readFileSync(PATHS.config, "utf-8");
     const parsed = yaml.load(content) as Record<string, unknown>;
     const modelSection = parsed?.model;
 
     if (typeof modelSection === "string") {
-      return { model: modelSection, provider: "" };
+      return { model: modelSection, provider: "", base_url: "", api_key: "" };
     }
     if (typeof modelSection === "object" && modelSection !== null) {
       const mc = modelSection as Record<string, unknown>;
       return {
         model: typeof mc.default === "string" ? mc.default : "",
         provider: typeof mc.provider === "string" ? mc.provider : "",
+        base_url: typeof mc.base_url === "string" ? mc.base_url : "",
+        api_key: typeof mc.api_key === "string" ? mc.api_key : "",
       };
     }
-    return { model: "", provider: "" };
+    return { model: "", provider: "", base_url: "", api_key: "" };
   } catch {
-    return { model: "", provider: "" };
+    return { model: "", provider: "", base_url: "", api_key: "" };
   }
 }

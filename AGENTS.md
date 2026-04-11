@@ -41,17 +41,30 @@ mission-control/
 │   │   ├── missions/page.tsx       # Missions page
 │   │   ├── cron/page.tsx           # Cron manager
 │   │   ├── sessions/page.tsx       # Session browser
-│   │   ├── memory/page.tsx         # Memory CRUD
-│   │   ├── config/page.tsx         # Config editor
+│   │   ├── memory/             # Memory CRUD
+│   │   ├── config/             # Config editor
+│   │   ├── recroom/            # Rec Room — creative activities
+│   │   │   ├── page.tsx        # Hub — activity selection
+│   │   │   ├── creative-canvas/  # p5.js generative art
+│   │   │   ├── ascii-studio/     # ASCII art & animation
+│   │   │   └── story-weaver/     # Interactive fiction
 │   │   └── layout.tsx              # Root layout with sidebar
 │   ├── components/
+│   │   ├── recroom/            # Rec Room shared components
+│   │   │   ├── PromptBuilder.tsx   # Universal prompt input
+│   │   │   ├── OutputViewer.tsx    # Output renderer
+│   │   │   ├── ActivityCard.tsx    # Activity preview card
+│   │   │   ├── ActivityLayout.tsx  # Page wrapper
+│   │   │   └── SaveLoadManager.tsx # Save/load/export
 │   │   ├── ui/                     # Primitives (Button, Card, Modal, etc.)
 │   │   └── layout/                 # Sidebar, PageHeader
 │   ├── lib/
 │   │   ├── api.ts                  # Typed fetch wrappers
 │   │   ├── config-schema.ts        # Config section definitions
 │   │   ├── theme.ts                # Shared theme maps
-│   │   └── utils.ts                # timeAgo, timeUntil, formatBytes
+│   │   ├── utils.ts                # timeAgo, timeUntil, formatBytes
+│   │   └── recroom/
+│   │       └── prompt-templates.ts # LLM system prompts per activity
 │   └── types/
 │       └── hermes.ts               # All TypeScript interfaces
 ├── data/

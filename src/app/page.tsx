@@ -38,6 +38,8 @@ import {
   Database,
   Code,
   FileText,
+  Gamepad2,
+  BookOpen,
 } from "lucide-react";
 import Card, { StatusDot } from "@/components/ui/Card";
 import type { SystemStatus, AccentColor } from "@/types/hermes";
@@ -560,6 +562,23 @@ export default function Dashboard() {
               ))}
             </div>
           )}
+        </div>
+
+        {/* ═══ Rec Room ═══ */}
+        <div className="rounded-xl border border-purple-500/20 bg-dark-900/50 overflow-hidden">
+          <div className="flex items-center justify-between px-4 py-2 border-b border-white/10 bg-dark-800/50">
+            <div className="flex items-center gap-2">
+              <Gamepad2 className="w-3.5 h-3.5 text-neon-purple" />
+              <span className="text-xs font-mono text-white/60">Rec Room</span>
+            </div>
+            <Link href="/recroom" className="text-[10px] font-mono text-neon-purple hover:underline flex items-center gap-1">
+              explore <ChevronRight className="w-3 h-3" />
+            </Link>
+          </div>
+          <Link href="/recroom/story-weaver" className="flex items-center justify-center gap-3 py-4 hover:bg-white/[0.02] transition-colors">
+            <BookOpen className="w-5 h-5 text-neon-purple" />
+            <span className="text-sm font-mono text-white/60">Story Weaver</span>
+          </Link>
         </div>
       </div>
     </div>

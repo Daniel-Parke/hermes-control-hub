@@ -524,9 +524,22 @@ export async function POST(request: Request) {
         // Build enhanced prompt with goal tracking, time budget, and scope constraints
         let missionPrompt = record.prompt;
 
-        // Look up template timeout if applicable
-        const templateDef = record.templateId ? TEMPLATES.find(t => t.id === record.templateId) : null;
-        const timeoutMinutes = templateDef?.timeoutMinutes || 10;
+        // Look up template timeout — check built-in and custom templates
+        let timeoutMinutes = 10;
+        if (record.templateId) {
+          const builtIn = TEMPLATES.find(t => t.id === record.templateId);
+          if (builtIn?.timeoutMinutes) {
+            timeoutMinutes = builtIn.timeoutMinutes;
+          } else if (record.templateId.startsWith("ct_")) {
+            const customPath = PATHS.templates + "/" + record.templateId + ".json";
+            if (existsSync(customPath)) {
+              try {
+                const ct = JSON.parse(readFileSync(customPath, "utf-8"));
+                if (ct.timeoutMinutes) timeoutMinutes = ct.timeoutMinutes;
+              } catch {}
+            }
+          }
+        }
 
         // Add time budget warning — cron jobs have ~10 min inactivity timeout
         const timeBudgetSection =
@@ -659,8 +672,22 @@ export async function POST(request: Request) {
         if (idx !== -1) {
           if (body.prompt !== undefined || body.goals !== undefined) {
             let missionPrompt = mission.prompt;
-            const templateDef = mission.templateId ? TEMPLATES.find(t => t.id === mission.templateId) : null;
-            const timeoutMinutes = templateDef?.timeoutMinutes || 10;
+            // Look up template timeout — check built-in and custom templates
+            let timeoutMinutes = 10;
+            if (mission.templateId) {
+              const builtIn = TEMPLATES.find(t => t.id === mission.templateId);
+              if (builtIn?.timeoutMinutes) {
+                timeoutMinutes = builtIn.timeoutMinutes;
+              } else if (mission.templateId.startsWith("ct_")) {
+                const customPath = PATHS.templates + "/" + mission.templateId + ".json";
+                if (existsSync(customPath)) {
+                  try {
+                    const ct = JSON.parse(readFileSync(customPath, "utf-8"));
+                    if (ct.timeoutMinutes) timeoutMinutes = ct.timeoutMinutes;
+                  } catch {}
+                }
+              }
+            }
             const timeBudgetSection =
               `## TIME BUDGET\n` +
               `You have approximately ${timeoutMinutes} minutes. This is a HARD LIMIT — the session will be killed after ${timeoutMinutes} minutes of inactivity.\n` +

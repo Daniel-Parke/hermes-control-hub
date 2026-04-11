@@ -101,6 +101,16 @@ if ! git clone --branch "$BRANCH" --single-branch "$REPO_URL" "$INSTALL_DIR" 2>&
 fi
 ok "Cloned to $INSTALL_DIR"
 
+# ── Enable Gateway API Server ────────────────────────────────
+HERMES_HOME="${HERMES_HOME:-$HOME/.hermes}"
+if ! grep -q "API_SERVER_ENABLED=true" "$HERMES_HOME/.env" 2>/dev/null; then
+    info "Enabling gateway API server for Rec Room..."
+    echo "" >> "$HERMES_HOME/.env"
+    echo "# Enable API server for Mission Control Rec Room" >> "$HERMES_HOME/.env"
+    echo "API_SERVER_ENABLED=true" >> "$HERMES_HOME/.env"
+    ok "API server enabled"
+fi
+
 # ── Run Setup ────────────────────────────────────────────────
 cd "$INSTALL_DIR"
 if [ ! -f "scripts/setup.sh" ]; then

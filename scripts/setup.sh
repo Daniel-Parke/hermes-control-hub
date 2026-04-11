@@ -55,11 +55,25 @@ else
     echo "   To enable: hermes plugins install hermes-memory-store"
 fi
 
+# ── Enable Gateway API Server (required for Rec Room) ────────
+echo ""
+if grep -q "API_SERVER_ENABLED=true" "$HERMES_HOME/.env" 2>/dev/null; then
+    echo "✓ Gateway API server already enabled"
+else
+    echo "Enabling gateway API server for Rec Room..."
+    echo "" >> "$HERMES_HOME/.env"
+    echo "# Enable API server for Mission Control Rec Room" >> "$HERMES_HOME/.env"
+    echo "API_SERVER_ENABLED=true" >> "$HERMES_HOME/.env"
+    echo "✓ API server enabled — restart gateway to activate"
+    echo "  Run: systemctl --user restart hermes-gateway"
+fi
+
 # ── Create data directories ───────────────────────────────────
 echo ""
 echo "Creating data directories..."
 mkdir -p "$HERMES_HOME/mission-control/data/missions"
 mkdir -p "$HERMES_HOME/mission-control/data/templates"
+mkdir -p "$HERMES_HOME/mission-control/data/recroom"
 mkdir -p "$HERMES_HOME/logs"
 echo "✓ Data directories created at $HERMES_HOME/mission-control/data/"
 

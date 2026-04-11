@@ -62,7 +62,7 @@ describe("Hermes Config Module", () => {
     });
 
     it("should return empty if not set", () => {
-      const env = "DISCORD_BOT_TOKEN=abc123\n";
+      const env = "DISCORD_BOT_TOKEN=***\n";
       expect(getDiscordHomeChannel(env)).toBe("");
     });
   });

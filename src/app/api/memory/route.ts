@@ -117,6 +117,8 @@ export async function POST(request: NextRequest) {
 
     const Database = (await import("better-sqlite3")).default;
     const db = new Database(dbPath);
+    db.pragma("journal_mode = WAL");
+    db.pragma("busy_timeout = 5000");
 
     try {
       const now = new Date().toISOString();
@@ -168,6 +170,8 @@ export async function PUT(request: NextRequest) {
 
     const Database = (await import("better-sqlite3")).default;
     const db = new Database(dbPath);
+    db.pragma("journal_mode = WAL");
+    db.pragma("busy_timeout = 5000");
 
     try {
       // Check fact exists
@@ -235,25 +239,34 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: "Valid fact ID is required" }, { status: 400 });
     }
 
-    const Database = (await import("better-sqlite3")).default;
-    const db = new Database(dbPath);
+    // Retry for database locked errors (agent may hold DB open)
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const Database = (await import("better-sqlite3")).default;
+      const db = new Database(dbPath, { readonly: false, timeout: 5000 });
+      db.pragma("journal_mode = WAL");
+      db.pragma("busy_timeout = 3000");
 
-    try {
-      // Cascade: delete from fact_entities first (foreign key constraint)
-      db.prepare("DELETE FROM fact_entities WHERE fact_id = ?").run(id);
-      // Delete from FTS index
-      try { db.prepare("DELETE FROM facts_fts WHERE rowid = ?").run(id); } catch (error) { logApiError("DELETE /api/memory", "deleting from FTS index", error); }
-      // Delete the fact
-      const result = db.prepare("DELETE FROM facts WHERE fact_id = ?").run(id);
+      try {
+        db.prepare("DELETE FROM fact_entities WHERE fact_id = ?").run(id);
+        try { db.prepare("DELETE FROM facts_fts WHERE rowid = ?").run(id); } catch {}
+        const result = db.prepare("DELETE FROM facts WHERE fact_id = ?").run(id);
+        db.close();
 
-      if (result.changes === 0) {
-        return NextResponse.json({ error: "Fact not found" }, { status: 404 });
+        if (result.changes === 0) {
+          return NextResponse.json({ error: "Fact not found" }, { status: 404 });
+        }
+        return NextResponse.json({ data: { success: true, id } });
+      } catch (error) {
+        db.close();
+        const msg = error instanceof Error ? error.message : "";
+        if (msg.includes("locked") && attempt < 2) {
+          await new Promise(r => setTimeout(r, 500 * (attempt + 1)));
+          continue;
+        }
+        throw error;
       }
-
-      return NextResponse.json({ data: { success: true, id } });
-    } finally {
-      db.close();
     }
+    return NextResponse.json({ error: "Database is busy, please try again" }, { status: 503 });
   } catch (error) {
     return NextResponse.json(
       { error: `Failed to delete fact: ${error instanceof Error ? error.message : "Unknown error"}` },

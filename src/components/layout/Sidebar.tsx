@@ -7,6 +7,7 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useSidebar } from "./SidebarContext";
 import {
   Terminal,
   Brain,
@@ -42,6 +43,8 @@ import {
   AlertTriangle,
   Check,
   Download,
+  Gamepad2,
+  BookOpen,
 } from "lucide-react";
 import type { AccentColor } from "@/types/hermes";
 import { iconColorMap } from "@/lib/theme";
@@ -75,6 +78,12 @@ const mainSections: SidebarSection[] = [
       { icon: Database, label: "Memory", href: "/memory", color: "pink" },
       { icon: Globe, label: "Gateway", href: "/gateway", color: "cyan" },
       { icon: ScrollText, label: "Logs", href: "/logs", color: "cyan" },
+    ],
+  },
+  {
+    label: "Rec Room",
+    links: [
+      { icon: BookOpen, label: "Story Weaver", href: "/recroom/story-weaver", color: "purple" },
     ],
   },
   {
@@ -417,7 +426,7 @@ function ConfigGroupSection({
 export default function Sidebar() {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const { mobileOpen, setMobileOpen } = useSidebar();
 
   const linkClass = (active: boolean) =>
     `flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
@@ -447,8 +456,8 @@ export default function Sidebar() {
 
   const sidebarContent = (
     <div className="flex flex-col h-full">
-      {/* Logo */}
-      <div className="px-4 py-4 border-b border-white/10">
+      {/* Logo — h-12 to match mobile top bar */}
+      <div className="px-4 h-12 flex items-center border-b border-white/10">
         <Link href="/" className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-lg animated-border p-[1.5px]">
             <div className="w-full h-full bg-dark-900 rounded-[5px] flex items-center justify-center">
@@ -530,14 +539,6 @@ export default function Sidebar() {
 
   return (
     <>
-      {/* Mobile menu button */}
-      <button
-        onClick={() => setMobileOpen(true)}
-        className="lg:hidden fixed top-4 left-4 z-50 p-2 rounded-lg bg-dark-900/80 border border-white/10 text-white/60"
-      >
-        <Menu className="w-5 h-5" />
-      </button>
-
       {/* Mobile overlay */}
       {mobileOpen && (
         <div
