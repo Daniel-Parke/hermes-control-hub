@@ -39,7 +39,6 @@ import {
   Code,
   FileText,
   Gamepad2,
-  Palette,
   BookOpen,
 } from "lucide-react";
 import Card, { StatusDot } from "@/components/ui/Card";
@@ -576,20 +575,10 @@ export default function Dashboard() {
               explore <ChevronRight className="w-3 h-3" />
             </Link>
           </div>
-          <div className="grid grid-cols-3 divide-x divide-white/5">
-            <Link href="/recroom/creative-canvas" className="flex flex-col items-center gap-1.5 py-4 hover:bg-white/[0.02] transition-colors">
-              <Palette className="w-5 h-5 text-neon-cyan" />
-              <span className="text-[10px] font-mono text-white/50">Canvas</span>
-            </Link>
-            <Link href="/recroom/ascii-studio" className="flex flex-col items-center gap-1.5 py-4 hover:bg-white/[0.02] transition-colors">
-              <Terminal className="w-5 h-5 text-neon-green" />
-              <span className="text-[10px] font-mono text-white/50">ASCII</span>
-            </Link>
-            <Link href="/recroom/story-weaver" className="flex flex-col items-center gap-1.5 py-4 hover:bg-white/[0.02] transition-colors">
-              <BookOpen className="w-5 h-5 text-neon-purple" />
-              <span className="text-[10px] font-mono text-white/50">Stories</span>
-            </Link>
-          </div>
+          <Link href="/recroom/story-weaver" className="flex items-center justify-center gap-3 py-4 hover:bg-white/[0.02] transition-colors">
+            <BookOpen className="w-5 h-5 text-neon-purple" />
+            <span className="text-sm font-mono text-white/60">Story Weaver</span>
+          </Link>
         </div>
       </div>
     </div>
