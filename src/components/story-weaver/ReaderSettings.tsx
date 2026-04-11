@@ -13,8 +13,8 @@ export interface ReadingSettings {
 
 export const DEFAULT_SETTINGS: ReadingSettings = {
   fontSize: 17,
-  fontFamily: "Literata",
-  lineHeight: 1.9,
+  fontFamily: "EB Garamond",
+  lineHeight: 1.2,
   brightness: 1.0,
   pageTheme: "dark",
 };

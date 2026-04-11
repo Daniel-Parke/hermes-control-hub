@@ -18,7 +18,14 @@ export default function StoryReaderPage() {
   const [loading, setLoading] = useState(true);
   const [currentChapter, setCurrentChapter] = useState(1);
   const [generating, setGenerating] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // Open chapters by default on desktop, closed on mobile
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.innerWidth >= 1024) {
+      setSidebarOpen(true);
+    }
+  }, []);
   const [settings, setSettings] = useState<ReadingSettings>(DEFAULT_SETTINGS);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -200,7 +207,7 @@ export default function StoryReaderPage() {
 
         {/* Book Content — continuous scroll */}
         <div className="flex-1 flex flex-col overflow-hidden">
-          <div className="flex-1 overflow-y-auto" style={{ background: theme.bg, filter: `brightness(${settings.brightness})` }}>
+          <div className="flex-1 w-full overflow-y-auto" style={{ background: theme.bg, filter: `brightness(${settings.brightness})` }}>
             {chapterContent ? (
               <div className="max-w-3xl mx-auto px-6 md:px-16 py-8 md:py-10">
                 <h2 className="mb-8 pb-4 border-b" style={{

@@ -455,8 +455,8 @@ export default function Sidebar() {
 
   const sidebarContent = (
     <div className="flex flex-col h-full">
-      {/* Logo */}
-      <div className="px-4 py-4 border-b border-white/10">
+      {/* Logo — h-12 to match mobile top bar */}
+      <div className="px-4 h-12 flex items-center border-b border-white/10">
         <Link href="/" className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-lg animated-border p-[1.5px]">
             <div className="w-full h-full bg-dark-900 rounded-[5px] flex items-center justify-center">
