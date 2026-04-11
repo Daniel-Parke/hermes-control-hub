@@ -67,6 +67,8 @@ export interface SessionsData {
 }
 
 // ── Memory ─────────────────────────────────────────────────────
+export type MemoryProviderType = "holographic" | "hindsight" | "none";
+
 export interface MemoryFact {
   id: number;
   content: string;
@@ -77,15 +79,22 @@ export interface MemoryFact {
   updatedAt: string;
 }
 
+export interface MemoryBank {
+  bank_name: string;
+  fact_count: number;
+  updated_at: string;
+}
+
 export interface MemoryData {
   facts: MemoryFact[];
   total: number;
   dbSize: number;
+  available: boolean;
+  provider: MemoryProviderType;
   error?: string;
-  available?: boolean;
   message?: string;
   entities?: number;
-  banks?: Array<{ bank_name: string; fact_count: number; updated_at: string }>;
+  banks?: MemoryBank[];
 }
 
 // ── Config Sections ────────────────────────────────────────────

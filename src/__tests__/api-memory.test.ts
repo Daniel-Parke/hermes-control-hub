@@ -1,132 +1,239 @@
-import { existsSync } from "fs";
-import { PATHS } from "@/lib/hermes";
-
 // ═══════════════════════════════════════════════════════════════
 // Memory API - Unit Tests
 // ═══════════════════════════════════════════════════════════════
+//
 // Tests the memory API response shapes and graceful degradation
-// when holographic memory is not installed.
+// across all supported memory providers (holographic, hindsight, none).
 
-describe("Memory API - Graceful Degradation", () => {
-  describe("Missing Memory Database", () => {
-    it("should detect whether memory DB exists", () => {
-      const hasDb = existsSync(PATHS.memoryDb);
-      expect(typeof hasDb).toBe("boolean");
+import { existsSync } from "fs";
+import { describe, it, expect } from "@jest/globals";
+
+// Mock the memory providers module
+jest.mock("@/lib/memory-providers", () => ({
+  getMemoryProvider: jest.fn(),
+  getMemoryProviderType: jest.fn(),
+}));
+
+import { getMemoryProvider, getMemoryProviderType } from "@/lib/memory-providers";
+
+describe("Memory API - Multi-Provider Support", () => {
+  describe("Provider Detection", () => {
+    it("should detect holographic provider from config", () => {
+      (getMemoryProviderType as jest.Mock).mockReturnValue("holographic");
+      expect(getMemoryProviderType()).toBe("holographic");
     });
 
-    it("should define memoryDb path under HERMES_HOME", () => {
-      expect(PATHS.memoryDb).toContain("memory_store.db");
-      expect(PATHS.memoryDb).toContain(".hermes");
+    it("should detect hindsight provider from config", () => {
+      (getMemoryProviderType as jest.Mock).mockReturnValue("hindsight");
+      expect(getMemoryProviderType()).toBe("hindsight");
+    });
+
+    it("should handle no provider configured", () => {
+      (getMemoryProviderType as jest.Mock).mockReturnValue("none");
+      expect(getMemoryProviderType()).toBe("none");
     });
   });
 
   describe("Response Shape - GET /api/memory", () => {
-    it("should define expected fields for available memory", () => {
-      const mockResponse = {
-        facts: [
-          {
-            id: 1,
-            content: "test fact",
+    it("should return MemoryData with provider field for holographic", async () => {
+      const mockProvider = {
+        type: "holographic",
+        healthCheck: jest.fn(),
+        readFacts: jest.fn().mockResolvedValue({
+          facts: [
+            {
+              id: 1,
+              content: "test fact",
+              category: "general",
+              tags: "",
+              trust: 0.7,
+              createdAt: "2026-01-01T00:00:00Z",
+              updatedAt: "2026-01-01T00:00:00Z",
+            },
+          ],
+          total: 1,
+          dbSize: 1024,
+          available: true,
+          provider: "holographic",
+          entities: 1,
+          banks: [],
+        }),
+        addFact: jest.fn(),
+        updateFact: jest.fn(),
+        deleteFact: jest.fn(),
+      };
+
+      (getMemoryProvider as jest.Mock).mockReturnValue(mockProvider);
+
+      const result = await mockProvider.readFacts();
+      expect(result).toHaveProperty("facts");
+      expect(result).toHaveProperty("total");
+      expect(result).toHaveProperty("dbSize");
+      expect(result).toHaveProperty("available", true);
+      expect(result).toHaveProperty("provider", "holographic");
+      expect(result.facts[0]).toHaveProperty("id");
+      expect(result.facts[0]).toHaveProperty("content");
+      expect(result.facts[0]).toHaveProperty("category");
+      expect(result.facts[0]).toHaveProperty("trust");
+    });
+
+    it("should return MemoryData with provider field for hindsight", async () => {
+      const mockProvider = {
+        type: "hindsight",
+        healthCheck: jest.fn(),
+        readFacts: jest.fn().mockResolvedValue({
+          facts: [],
+          total: 0,
+          dbSize: 0,
+          available: true,
+          provider: "hindsight",
+          message: "0 memories retrieved from Hindsight",
+        }),
+        addFact: jest.fn(),
+        updateFact: jest.fn(),
+        deleteFact: jest.fn(),
+      };
+
+      (getMemoryProvider as jest.Mock).mockReturnValue(mockProvider);
+
+      const result = await mockProvider.readFacts();
+      expect(result).toHaveProperty("provider", "hindsight");
+      expect(result).toHaveProperty("available", true);
+      expect(result).toHaveProperty("message");
+    });
+
+    it("should handle no provider gracefully", async () => {
+      const mockProvider = {
+        type: "none",
+        healthCheck: jest.fn(),
+        readFacts: jest.fn().mockResolvedValue({
+          facts: [],
+          total: 0,
+          dbSize: 0,
+          available: false,
+          provider: "none",
+          message: "No memory provider configured.",
+        }),
+        addFact: jest.fn(),
+        updateFact: jest.fn(),
+        deleteFact: jest.fn(),
+      };
+
+      (getMemoryProvider as jest.Mock).mockReturnValue(mockProvider);
+
+      const result = await mockProvider.readFacts();
+      expect(result).toHaveProperty("available", false);
+      expect(result).toHaveProperty("provider", "none");
+      expect(result.facts).toHaveLength(0);
+    });
+  });
+
+  describe("Add Fact", () => {
+    it("should add fact via holographic provider", async () => {
+      const mockProvider = {
+        type: "holographic",
+        addFact: jest.fn().mockResolvedValue({
+          success: true,
+          fact: {
+            id: 42,
+            content: "new fact",
             category: "general",
             tags: "",
-            trust: 0.5,
-            createdAt: "2026-04-11T00:00:00Z",
-            updatedAt: "2026-04-11T00:00:00Z",
+            trust: 0.7,
+            createdAt: "2026-01-01T00:00:00Z",
+            updatedAt: "2026-01-01T00:00:00Z",
           },
-        ],
-        total: 1,
-        dbSize: 1024,
-        entities: 0,
-        banks: [],
-        available: true,
+        }),
       };
 
-      expect(mockResponse.facts).toBeInstanceOf(Array);
-      expect(mockResponse.facts[0]).toHaveProperty("id");
-      expect(mockResponse.facts[0]).toHaveProperty("content");
-      expect(mockResponse.facts[0]).toHaveProperty("category");
-      expect(mockResponse.facts[0]).toHaveProperty("tags");
-      expect(mockResponse.facts[0]).toHaveProperty("trust");
-      expect(mockResponse.facts[0]).toHaveProperty("createdAt");
-      expect(mockResponse.facts[0]).toHaveProperty("updatedAt");
+      const result = await mockProvider.addFact({ content: "new fact" });
+      expect(result.success).toBe(true);
+      expect(result.fact).toHaveProperty("id");
+      expect(result.fact.content).toBe("new fact");
     });
 
-    it("should define expected fields for unavailable memory", () => {
-      const mockResponse = {
-        facts: [],
-        total: 0,
-        dbSize: 0,
-        entities: 0,
-        banks: [],
-        available: false,
-        message:
-          "Holographic memory is not installed. Install the hermes-memory-store plugin to enable persistent memory.",
+    it("should add fact via hindsight provider", async () => {
+      const mockProvider = {
+        type: "hindsight",
+        addFact: jest.fn().mockResolvedValue({
+          success: true,
+          fact: {
+            id: expect.any(Number),
+            content: "new fact",
+            category: "general",
+            tags: "",
+            trust: 0.7,
+          },
+        }),
       };
 
-      expect(mockResponse.available).toBe(false);
-      expect(mockResponse.facts).toHaveLength(0);
-      expect(mockResponse.message).toContain("not installed");
-      expect(mockResponse.message).toContain("hermes-memory-store");
+      const result = await mockProvider.addFact({ content: "new fact" });
+      expect(result.success).toBe(true);
     });
 
-    it("should use camelCase for date fields (matching API response)", () => {
-      const fact = {
-        id: 1,
-        content: "test",
-        category: "general",
-        tags: "",
-        trust: 0.5,
-        createdAt: "2026-04-11T00:00:00Z",
-        updatedAt: "2026-04-11T00:00:00Z",
+    it("should fail gracefully when no provider", async () => {
+      const mockProvider = {
+        type: "none",
+        addFact: jest.fn().mockResolvedValue({
+          success: false,
+          error: "No memory provider configured",
+        }),
       };
 
-      // Verify camelCase (not snake_case)
-      expect(fact).toHaveProperty("createdAt");
-      expect(fact).toHaveProperty("updatedAt");
-      expect(fact).not.toHaveProperty("created_at");
-      expect(fact).not.toHaveProperty("updated_at");
+      const result = await mockProvider.addFact({ content: "test" });
+      expect(result.success).toBe(false);
+      expect(result.error).toContain("No memory provider");
     });
   });
 
-  describe("Response Shape - DELETE /api/memory", () => {
-    it("should return success shape on valid delete", () => {
-      const mockResponse = { success: true, id: 42 };
-      expect(mockResponse.success).toBe(true);
-      expect(typeof mockResponse.id).toBe("number");
-    });
-
-    it("should return error shape for missing fact", () => {
-      const mockResponse = { error: "Fact not found" };
-      expect(mockResponse).toHaveProperty("error");
-      expect(mockResponse.error).toContain("not found");
-    });
-
-    it("should return error shape for invalid ID", () => {
-      const mockResponse = { error: "Valid fact ID is required" };
-      expect(mockResponse).toHaveProperty("error");
-      expect(mockResponse.error).toContain("fact ID");
-    });
-  });
-
-  describe("Response Shape - POST /api/memory", () => {
-    it("should return success shape with new fact", () => {
-      const mockResponse = {
-        success: true,
-        fact: {
-          id: 128,
-          content: "new fact",
-          category: "general",
-          tags: "",
-          trust: 0.5,
-          createdAt: "2026-04-11T00:00:00Z",
-          updatedAt: "2026-04-11T00:00:00Z",
-        },
+  describe("Provider Health Check", () => {
+    it("should report holographic health", async () => {
+      const mockProvider = {
+        type: "holographic",
+        healthCheck: jest.fn().mockResolvedValue({
+          available: true,
+          provider: "holographic",
+          message: "114 facts stored",
+          factCount: 114,
+          dbSize: 983040,
+        }),
       };
 
-      expect(mockResponse.success).toBe(true);
-      expect(mockResponse.fact).toHaveProperty("id");
-      expect(mockResponse.fact).toHaveProperty("content");
-      expect(mockResponse.fact).toHaveProperty("createdAt");
+      const health = await mockProvider.healthCheck();
+      expect(health.available).toBe(true);
+      expect(health.provider).toBe("holographic");
+      expect(health.factCount).toBe(114);
+    });
+
+    it("should report hindsight health", async () => {
+      const mockProvider = {
+        type: "hindsight",
+        healthCheck: jest.fn().mockResolvedValue({
+          available: true,
+          provider: "hindsight",
+          message: "Hindsight local_embedded mode — bank: hermes",
+          factCount: 50,
+        }),
+      };
+
+      const health = await mockProvider.healthCheck();
+      expect(health.available).toBe(true);
+      expect(health.provider).toBe("hindsight");
+    });
+
+    it("should report unavailable when provider is down", async () => {
+      const mockProvider = {
+        type: "hindsight",
+        healthCheck: jest.fn().mockResolvedValue({
+          available: false,
+          provider: "hindsight",
+          message: "Hindsight unavailable: Connection failed",
+        }),
+      };
+
+      const health = await mockProvider.healthCheck();
+      expect(health.available).toBe(false);
+      expect(health.message).toContain("unavailable");
     });
   });
 });

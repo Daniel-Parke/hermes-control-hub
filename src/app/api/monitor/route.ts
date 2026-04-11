@@ -171,52 +171,57 @@ export async function GET() {
       } catch (error) { logApiError("GET /api/monitor", "reading gateway platforms", error); }
     }
 
-    // ── Memory (SQLite query) ──────────────────────────────────
-    const dbPath = PATHS.memoryDb;
-    if (existsSync(dbPath)) {
-      try {
-        const stats = statSync(dbPath);
-        const sizeKB = Math.round(stats.size / 1024);
-        data.memory.dbSize =
-          sizeKB > 1024
-            ? (sizeKB / 1024).toFixed(1) + " MB"
-            : sizeKB + " KB";
+    // ── Memory (provider-aware) ──────────────────────────────────
+    try {
+      const { getMemoryProviderType } = await import("@/lib/memory-providers");
+      const providerType = getMemoryProviderType();
+      data.memory.provider = providerType === "none" ? "Not Installed" : providerType;
 
-        // Query SQLite for fact count
-        const Database = (await import("better-sqlite3")).default;
-        const db = new Database(dbPath, { readonly: true });
+      // For holographic, read SQLite directly for stats
+      if (providerType === "holographic") {
+        const dbPath = PATHS.memoryDb;
+        if (existsSync(dbPath)) {
+          const stats = statSync(dbPath);
+          const sizeKB = Math.round(stats.size / 1024);
+          data.memory.dbSize =
+            sizeKB > 1024
+              ? (sizeKB / 1024).toFixed(1) + " MB"
+              : sizeKB + " KB";
+
+          const Database = (await import("better-sqlite3")).default;
+          const db = new Database(dbPath, { readonly: true });
+          try {
+            const row = db
+              .prepare("SELECT COUNT(*) as count FROM facts")
+              .get() as { count: number };
+            data.memory.factCount = row.count;
+          } finally {
+            db.close();
+          }
+        }
+      }
+      // For hindsight, try health check
+      else if (providerType === "hindsight") {
         try {
-          const row = db
-            .prepare("SELECT COUNT(*) as count FROM facts")
-            .get() as { count: number };
-          data.memory.factCount = row.count;
-        } finally {
-          db.close();
-        }
-      } catch (error) { logApiError("GET /api/monitor", "reading memory stats", error); }
-    }
-
-    // Read memory provider from config
-    const configPath = PATHS.config;
-    if (existsSync(configPath)) {
-      try {
-        const content = readFileSync(configPath, "utf-8");
-        const lines = content.split("\n");
-        let inMemory = false;
-        for (const line of lines) {
-          if (line.startsWith("memory:")) {
-            inMemory = true;
-            continue;
+          const { hindsightProvider } = await import("@/lib/memory-providers/hindsight");
+          const health = await hindsightProvider.healthCheck();
+          if (health.available) {
+            data.memory.factCount = health.factCount ?? 0;
+            data.memory.dbSize = health.dbSize
+              ? (Math.round(health.dbSize / 1024) > 1024
+                  ? (Math.round(health.dbSize / 1024) / 1024).toFixed(1) + " MB"
+                  : Math.round(health.dbSize / 1024) + " KB")
+              : "External";
+            data.memory.provider = "Hindsight (" + health.message + ")";
+          } else {
+            data.memory.provider = "Hindsight (offline)";
+            data.memory.dbSize = "N/A";
           }
-          if (inMemory && !line.startsWith(" ") && line.trim()) break;
-          if (inMemory && line.includes("provider:")) {
-            const val = line.split("provider:")[1].trim();
-            data.memory.provider = val;
-            break;
-          }
+        } catch {
+          data.memory.provider = "Hindsight (error)";
         }
-      } catch (error) { logApiError("GET /api/monitor", "reading memory provider", error); }
-    }
+      }
+    } catch (error) { logApiError("GET /api/monitor", "reading memory stats", error); }
 
     // ── Recent Errors (from gateway.log) ───────────────────────
     const logPath = PATHS.logs + "/gateway.log";

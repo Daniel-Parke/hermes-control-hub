@@ -59,10 +59,12 @@ function FactCard({
   fact,
   onEdit,
   onDelete,
+  editable,
 }: {
   fact: MemoryFact;
   onEdit: (fact: MemoryFact) => void;
   onDelete: (id: number) => void;
+  editable?: boolean;
 }) {
   return (
     <div className="rounded-xl border border-white/10 bg-dark-900/50 p-4 hover:border-neon-pink/30 transition-colors group">
@@ -76,22 +78,24 @@ function FactCard({
         </div>
         <div className="flex items-center gap-2">
           <TrustBar trust={fact.trust ?? 0} />
-          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-            <button
-              onClick={() => onEdit(fact)}
-              className="p-1 rounded hover:bg-white/10 text-white/30 hover:text-neon-cyan transition-colors"
-              title="Edit fact"
-            >
-              <Pencil className="w-3.5 h-3.5" />
-            </button>
-            <button
-              onClick={() => onDelete(fact.id)}
-              className="p-1 rounded hover:bg-red-500/20 text-white/30 hover:text-red-400 transition-colors"
-              title="Delete fact"
-            >
-              <Trash2 className="w-3.5 h-3.5" />
-            </button>
-          </div>
+          {editable && (
+            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              <button
+                onClick={() => onEdit(fact)}
+                className="p-1 rounded hover:bg-white/10 text-white/30 hover:text-neon-cyan transition-colors"
+                title="Edit fact"
+              >
+                <Pencil className="w-3.5 h-3.5" />
+              </button>
+              <button
+                onClick={() => onDelete(fact.id)}
+                className="p-1 rounded hover:bg-red-500/20 text-white/30 hover:text-red-400 transition-colors"
+                title="Delete fact"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          )}
         </div>
       </div>
       <p className="text-sm text-white/70 leading-relaxed">{fact.content}</p>
@@ -344,25 +348,41 @@ export default function MemoryPage() {
       return true;
     }) || [];
 
-  // Show notice when holographic memory is not installed
+  // Provider-aware display name
+  const providerLabel = data?.provider === "hindsight"
+    ? "Hindsight Memory"
+    : data?.provider === "holographic"
+      ? "Holographic Memory"
+      : "Memory";
+
+  const canEditFacts = data?.provider === "holographic";
+
+  // Show notice when memory is not available
   if (!loading && data && data.available === false) {
+    const isHindsight = data.provider === "hindsight";
     return (
       <div className="min-h-screen bg-dark-950 grid-bg">
         <PageHeader
           icon={Brain}
-          title="Holographic Memory"
+          title={providerLabel}
           subtitle="Memory Provider"
           color="pink"
         />
         <div className="px-6 py-12">
           <div className="max-w-lg mx-auto text-center rounded-xl border border-pink-500/20 bg-dark-900/50 p-8">
             <Brain className="w-12 h-12 text-pink-400/40 mx-auto mb-4" />
-            <h2 className="text-lg font-semibold text-white mb-2">Holographic Memory Not Installed</h2>
+            <h2 className="text-lg font-semibold text-white mb-2">
+              {isHindsight ? "Hindsight Memory Unavailable" : "No Memory Provider Configured"}
+            </h2>
             <p className="text-sm text-white/50 mb-4">
-              {data.message || "This feature requires the hermes-memory-store plugin with the holographic memory provider."}
+              {data.message || (isHindsight
+                ? "Hindsight is configured but the server is not responding. Ensure the local Hindsight instance is running."
+                : "Configure a memory provider to enable persistent memory.")}
             </p>
             <p className="text-xs text-white/30 font-mono">
-              Install via: hermes plugins install hermes-memory-store
+              {isHindsight
+                ? "Check: hermes memory setup"
+                : "Configure via: hermes memory setup"}
             </p>
           </div>
         </div>
@@ -374,13 +394,15 @@ export default function MemoryPage() {
     <div className="min-h-screen bg-dark-950 grid-bg">
       <PageHeader
         icon={Brain}
-        title="Holographic Memory"
-        subtitle={`${data?.total || 0} stored facts — ${formatBytes(data?.dbSize || 0)}`}
+        title={providerLabel}
+        subtitle={`${data?.total || 0} stored facts${data?.dbSize ? " — " + formatBytes(data.dbSize) : ""}`}
         color="pink"
         actions={
-          <Button variant="primary" color="pink" size="sm" onClick={handleAdd} icon={Plus}>
-            Add Fact
-          </Button>
+          canEditFacts ? (
+            <Button variant="primary" color="pink" size="sm" onClick={handleAdd} icon={Plus}>
+              Add Fact
+            </Button>
+          ) : undefined
         }
       />
 
@@ -450,6 +472,7 @@ export default function MemoryPage() {
                   fact={fact}
                   onEdit={handleEdit}
                   onDelete={setDeletingFactId}
+                  editable={canEditFacts}
                 />
               ))}
             </div>
