@@ -226,72 +226,25 @@ All API routes import paths from `src/lib/hermes.ts`. The app reads from `~/.her
 
 ## Screenshots
 
-<br/>
+![Dashboard](screenshots/Hermes_Dashboard.png)
 
-<p align="center">
-  <img src="screenshots/dashboard.png" alt="Dashboard" width="800"/>
-  <br/>
-  <em>The Dashboard — live monitoring, mission dispatch, cron jobs, and agent status</em>
-</p>
+![Mission Dispatch](screenshots/Mission_Dispatch.png)
 
-<br/><br/>
+![Mission Template](screenshots/Mission_Template.png)
 
-<p align="center">
-  <img src="screenshots/missions.png" alt="Missions" width="800"/>
-  <br/>
-  <em>Missions — dispatch and track agent tasks with built-in templates</em>
-</p>
+![Mission Page](screenshots/Mission_Page.png)
 
-<br/><br/>
+![Cron Job Config](screenshots/Cron_Job.png)
 
-<p align="center">
-  <img src="screenshots/cron.png" alt="Cron Jobs" width="800"/>
-  <br/>
-  <em>Cron Jobs — schedule, edit, and monitor recurring tasks</em>
-</p>
+![Agent Behaviour](screenshots/Agent_Behaviour.png)
 
-<br/><br/>
+![Agent Personalities](screenshots/Agent_Personalities.png)
 
-<p align="center">
-  <img src="screenshots/story-weaver.png" alt="Story Weaver" width="800"/>
-  <br/>
-  <em>Story Weaver — collaborative AI fiction with 8 templates and a book-like reader</em>
-</p>
+![Agent Skills](screenshots/Agent_Skills.png)
 
-<br/><br/>
+![Agent Tools](screenshots/Agent_Tools.png)
 
-<p align="center">
-  <img src="screenshots/story-create.png" alt="Create Story" width="800"/>
-  <br/>
-  <em>Create Story — templates, tags, characters, and chapter configuration</em>
-</p>
-
-<br/><br/>
-
-<p align="center">
-  <img src="screenshots/gateway.png" alt="Gateway" width="800"/>
-  <br/>
-  <em>Gateway — platform connections and live logs</em>
-</p>
-
-<br/><br/>
-
-<p align="center">
-  <img src="screenshots/agent-behaviour.png" alt="Agent Behaviour" width="800"/>
-  <br/>
-  <em>Agent Behaviour — edit the files that define your agent's personality</em>
-</p>
-
-<!-- Screenshot map (load mc-screenshot-update skill for instructions):
-1. Dashboard — screenshots/dashboard.png
-2. Missions — screenshots/missions.png
-3. Cron — screenshots/cron.png
-4. Story Weaver — screenshots/story-weaver.png
-5. Create Story — screenshots/story-create.png
-6. Gateway — screenshots/gateway.png
-7. Agent Behaviour — screenshots/agent-behaviour.png
-8. Config — screenshots/config.png
--->
+![Agent Configuration](screenshots/Agent_Configuration.png)
 
 ---
 
