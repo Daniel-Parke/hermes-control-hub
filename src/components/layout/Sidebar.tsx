@@ -7,6 +7,7 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useSidebar } from "./SidebarContext";
 import {
   Terminal,
   Brain,
@@ -425,7 +426,7 @@ function ConfigGroupSection({
 export default function Sidebar() {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const { mobileOpen, setMobileOpen } = useSidebar();
 
   const linkClass = (active: boolean) =>
     `flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
@@ -538,16 +539,6 @@ export default function Sidebar() {
 
   return (
     <>
-      {/* Mobile top bar — fixed bar with hamburger */}
-      <div className="lg:hidden sticky top-0 z-50 flex items-center h-12 px-3 bg-dark-950/95 backdrop-blur-xl border-b border-white/10">
-        <button
-          onClick={() => setMobileOpen(true)}
-          className="p-2 rounded-lg text-white/60 hover:text-white/80 hover:bg-white/5 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
-        >
-          <Menu className="w-5 h-5" />
-        </button>
-      </div>
-
       {/* Mobile overlay */}
       {mobileOpen && (
         <div
