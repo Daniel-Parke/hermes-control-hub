@@ -24,6 +24,10 @@ export interface SectionDef {
   fields: FieldDef[];
   // Sections with complex/nested values that can't be edited inline
   complexKeys?: string[];
+  // File-based sections (HERMES.md, .env)
+  type?: "yaml" | "file";
+  filePath?: string;
+  sensitive?: boolean;
 }
 
 export const CONFIG_SECTIONS: Record<string, SectionDef> = {
@@ -359,6 +363,27 @@ export const CONFIG_SECTIONS: Record<string, SectionDef> = {
     fields: [
       { key: "backend", label: "Backend", type: "select", options: ["parallel", "firecrawl", "builtin"], description: "Web search backend" },
     ],
+  },
+  hermes_md: {
+    id: "hermes_md",
+    label: "HERMES.md",
+    description: "Priority project instructions — loaded every message",
+    icon: "FileText",
+    color: "cyan",
+    type: "file",
+    filePath: "HERMES.md",
+    fields: [],
+  },
+  env: {
+    id: "env",
+    label: "Environment Variables",
+    description: "API keys and secrets (.env file)",
+    icon: "Lock",
+    color: "orange",
+    type: "file",
+    filePath: ".env",
+    sensitive: true,
+    fields: [],
   },
 };
 

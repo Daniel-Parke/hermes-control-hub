@@ -35,6 +35,12 @@ export const BEHAVIOR_FILES: Record<
     description: "Agent development rules and guidelines",
     category: "identity",
   },
+  env: {
+    name: ".env",
+    path: PATHS.env,
+    description: "API keys and environment variables",
+    category: "system",
+  },
   config: {
     name: "config.yaml",
     path: PATHS.config,

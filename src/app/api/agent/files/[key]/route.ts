@@ -21,6 +21,7 @@ function resolveFilePath(key: string, profile?: string): { path: string; name: s
     agents: profileDir + "/AGENTS.md",
     user: profileDir + "/memories/USER.md",
     memory: profileDir + "/memories/MEMORY.md",
+    env: HERMES_HOME + "/.env",  // .env is global, not per-profile
   };
 
   const resolvedPath = pathMap[key];

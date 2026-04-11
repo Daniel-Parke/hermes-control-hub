@@ -6,7 +6,7 @@ import { logApiError } from "@/lib/api-logger";
 import type { ApiResponse } from "@/types/hermes";
 
 const BRIDGE_SCRIPT = HERMES_HOME + "/scripts/hindsight_bridge.py";
-const PYTHON = process.env.PYTHON_PATH || "python3";
+const PYTHON = HERMES_HOME + "/hermes-agent/venv/bin/python3";
 
 function runBridge(command: string, args: Record<string, string | number | undefined> = {}): Record<string, unknown> {
   const argStr = Object.entries(args)

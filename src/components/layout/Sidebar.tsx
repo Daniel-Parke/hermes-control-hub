@@ -103,6 +103,8 @@ const mainSections: SidebarSection[] = [
       { icon: FileText, label: "Skills", href: "/skills", color: "green" },
       { icon: Wrench, label: "Tools", href: "/agent/tools", color: "purple" },
       { icon: Sparkles, label: "Personalities", href: "/personalities", color: "purple" },
+      { icon: FileText, label: "HERMES.md", href: "/config/hermes_md", color: "cyan" },
+      { icon: Lock, label: "Environment", href: "/config/env", color: "orange" },
     ],
   },
 ];
@@ -110,7 +112,7 @@ const mainSections: SidebarSection[] = [
 const configGroups: ConfigGroup[] = [
   {
     label: "Core",
-    defaultOpen: true,
+    defaultOpen: false,
     links: [
       { icon: Cpu, label: "Agent", href: "/config/agent", color: "cyan" },
       { icon: Globe, label: "Model", href: "/config/model", color: "purple" },
