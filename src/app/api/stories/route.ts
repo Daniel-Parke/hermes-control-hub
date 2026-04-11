@@ -3,35 +3,14 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync, readdirSync, unlink
 import { HERMES_HOME } from "@/lib/hermes";
 import { logApiError } from "@/lib/api-logger";
 import { getStoryPrompt } from "@/lib/story-weaver/prompts";
-import type { ApiResponse } from "@/types/hermes";
+import type { StoryArc as StoryArcType, ChapterOutline } from "@/types/recroom";
 
 // ═══════════════════════════════════════════════════════════════
-// Stories API — Dedicated Story Weaver backend
+// Stories API — Story Arc Pipeline (2-LLM-call creation)
 // ═══════════════════════════════════════════════════════════════
 
 const SAVE_DIR = HERMES_HOME + "/mission-control/data/stories";
 const GATEWAY_API = "http://127.0.0.1:8642/v1/chat/completions";
-
-/**
- * Quick formatting check — returns true if the chapter needs a formatting pass.
- */
-function checkFormatting(content: string): boolean {
-  const paragraphs = content.split(/\n\n+/);
-
-  // Check for overly long paragraphs (>8 sentences)
-  for (const p of paragraphs) {
-    const sentences = p.split(/[.!?]+/).filter(s => s.trim().length > 0);
-    if (sentences.length > 8) return true;
-  }
-
-  // Check for missing paragraph breaks (single block > 500 chars without breaks)
-  if (paragraphs.length === 1 && content.length > 500) return true;
-
-  // Check for very short content (might be truncated)
-  if (content.split(/\s+/).length < 200) return false; // too short to judge
-
-  return false;
-}
 
 function ensureDir() {
   if (!existsSync(SAVE_DIR)) mkdirSync(SAVE_DIR, { recursive: true });
@@ -40,6 +19,8 @@ function ensureDir() {
 function getPath(id: string): string {
   return SAVE_DIR + "/" + id + ".json";
 }
+
+// ── LLM Call ─────────────────────────────────────────────────
 
 async function callLLM(system: string, user: string): Promise<string> {
   const maxRetries = 3;
@@ -82,6 +63,68 @@ async function callLLM(system: string, user: string): Promise<string> {
   throw new Error("LLM call failed after retries");
 }
 
+// ── Response Validation ──────────────────────────────────────
+
+function validateChapterOutput(raw: string): string {
+  let content = raw.trim();
+
+  const metaPrefixes = [
+    /^here(?:'s| is) (?:your |the )?(?:chapter|prose|story)/i,
+    /^(?:sure|certainly|of course|okay|alright)[.!]?\s*/i,
+    /^i'll (?:now |go ahead and )?write/i,
+    /^let me (?:write|craft|create)/i,
+    /^chapter \d+[.:]\s*/i,
+  ];
+  for (const prefix of metaPrefixes) {
+    content = content.replace(prefix, "");
+  }
+
+  const metaSuffixes = [
+    /\s*(?:i hope|let me know|i trust|this should|feel free)[^.!?]*[.!?]\s*$/i,
+    /\s*---+\s*(?:end of chapter|chapter \d+ ends?)[^.]*$/i,
+  ];
+  for (const suffix of metaSuffixes) {
+    content = content.replace(suffix, "");
+  }
+
+  content = content.replace(/===CHAPTER \d+===/gi, "");
+  content = content.replace(/===ARC===/gi, "");
+  content = content.replace(/===PLAN===/gi, "");
+
+  return content.trim();
+}
+
+// ── Build Master Prompt ──────────────────────────────────────
+
+function buildMasterPrompt(config: Record<string, unknown>): string {
+  const wordRanges: Record<string, string> = {
+    short: "800-1200", medium: "1200-1800", standard: "1800-2500",
+    long: "2500-3500", epic: "3500-5000", marathon: "5000+",
+  };
+  const wcRange = wordRanges[(config.wordCountRange as string) || "standard"] || "1800-2500";
+
+  const characters = (config.characters as Array<Record<string, string>>) || [];
+  const charProfiles = characters.map(c =>
+    `- ${c.name} (${c.role}): ${c.description}`
+  ).join("\n");
+
+  return [
+    `STORY CONFIGURATION:`,
+    `Title: ${(config.title as string) || "Untitled"}`,
+    `Premise: ${config.premise as string}`,
+    `Genre: ${(config.genre as string) || "General"}`,
+    `Era: ${(config.era as string) || "Modern"}`,
+    `Setting: ${(config.setting as string) || ""}`,
+    `Mood: ${((config.mood as string[]) || []).join(", ")}`,
+    `POV: ${(config.pov as string) || "first"}`,
+    `Length: ${(config.length as string) || "medium"}`,
+    `Chapter Length: ${wcRange} words per chapter`,
+    ``,
+    `CHARACTERS:`,
+    charProfiles || "(none specified)",
+  ].join("\n");
+}
+
 // ── POST Handler ─────────────────────────────────────────────
 
 export async function POST(request: Request) {
@@ -93,6 +136,8 @@ export async function POST(request: Request) {
       case "list": return handleList();
       case "load": return handleLoad(body);
       case "generate-chapter": return handleGenerateChapter(body);
+      case "rewrite-chapter": return handleRewriteChapter(body);
+      case "extend": return handleExtend(body);
       case "update": return handleUpdate(body);
       case "delete": return handleDelete(body);
       default: return NextResponse.json({ error: "Unknown action: " + action }, { status: 400 });
@@ -103,91 +148,107 @@ export async function POST(request: Request) {
   }
 }
 
-// ── Create: Plan + Chapter 1 in one call ─────────────────────
+// ── Create: Arc + Chapter 1 in one call, then Summary ────────
 
-async function handleCreate(body: any): Promise<NextResponse> {
+async function handleCreate(body: Record<string, unknown>): Promise<NextResponse> {
   ensureDir();
   const { title, config } = body;
-  if (!config?.premise) return NextResponse.json({ error: "Missing premise" }, { status: 400 });
+  if (!config || !(config as Record<string, unknown>)?.premise) {
+    return NextResponse.json({ error: "Missing premise" }, { status: 400 });
+  }
 
-  const system = getStoryPrompt("plan");
-  const wordRanges: Record<string, string> = {
-  short: "800-1200", medium: "1200-1800", standard: "1800-2500",
-  long: "2500-3500", epic: "3500-5000", marathon: "5000+",
-};
-const wcRange = wordRanges[config.wordCountRange] || "1800-2500";
-
-const userMessage = `Story configuration:
-Title: ${title || "Untitled"}
-Premise: ${config.premise}
-Genre: ${config.genre || "General"}
-Era: ${config.era || "Modern"}
-Setting: ${config.setting || ""}
-Mood: ${(config.mood || []).join(", ")}
-POV: ${config.pov || "first"}
-Length: ${config.length || "medium"}
-Chapter Length: ${wcRange} words per chapter (prioritise quality, aim within range)
-Characters: ${(config.characters || []).map((c: any) => `${c.name} (${c.role}): ${c.description}`).join("; ")}`;
+  const cfg = config as Record<string, unknown>;
+  const masterPrompt = buildMasterPrompt({ ...cfg, title });
 
   try {
+    // ── Step 1: Generate Story Arc + Chapter 1 (single LLM call) ──
+    const system = getStoryPrompt("arc");
+    const userMessage = masterPrompt +
+      `\n\nNumber of chapters: ${getChapterCount(cfg.length as string)}` +
+      `\n\nGenerate the story arc and write Chapter 1 now.`;
+
     const raw = await callLLM(system, userMessage);
 
-    // Parse plan and chapter from the structured response
-    let plan: any = null;
+    // Parse ===ARC=== and ===CHAPTER 1=== sections
+    let storyArc: StoryArcType | null = null;
     let chapter1 = "";
 
-    const planMatch = raw.match(/===PLAN===\s*([\s\S]*?)(?===CHAPTER 1===|$)/);
+    const arcMatch = raw.match(/===ARC===\s*([\s\S]*?)(?===CHAPTER 1===|$)/);
     const chapterMatch = raw.match(/===CHAPTER 1===\s*([\s\S]*?)$/);
 
-    if (planMatch) {
-      try { plan = JSON.parse(planMatch[1].trim()); } catch {}
-    }
-    if (chapterMatch) {
-      chapter1 = chapterMatch[1].trim();
-    }
-
-    // Fallback: try to parse entire response as plan JSON
-    if (!plan) {
+    if (arcMatch) {
       try {
-        const cleaned = raw.replace(/```json\s*/i, "").replace(/```\s*/g, "").trim();
-        // Try to find JSON block
-        const jsonMatch = cleaned.match(/\{[\s\S]*"chapters"[\s\S]*\}/);
-        if (jsonMatch) plan = JSON.parse(jsonMatch[0]);
-      } catch {}
+        const jsonStr = arcMatch[1].trim();
+        storyArc = JSON.parse(jsonStr);
+      } catch {
+        // Try extracting JSON from the arc section
+        const jsonExtract = arcMatch[1].match(/\{[\s\S]*\}/);
+        if (jsonExtract) {
+          try { storyArc = JSON.parse(jsonExtract[0]); } catch {}
+        }
+      }
     }
 
-    // Fallback: use raw as chapter if no structure found
-    if (!chapter1 && !plan) {
-      chapter1 = raw;
-      plan = {
-        title: title || "Untitled Story",
-        premise: config.premise,
-        chapters: [{ title: "Chapter 1", key_events: [], emotional_beat: "beginning", deviation_hooks: [] }],
-        character_notes: [],
-        world_rules: [],
+    if (chapterMatch) {
+      chapter1 = validateChapterOutput(chapterMatch[1]);
+    }
+
+    // Fallback: try to parse entire response
+    if (!storyArc) {
+      const jsonMatch = raw.match(/\{[\s\S]*"storyArc"[\s\S]*"chapterOutlines"[\s\S]*\}/);
+      if (jsonMatch) {
+        try { storyArc = JSON.parse(jsonMatch[0]); } catch {}
+      }
+    }
+    if (!chapter1 && !storyArc) {
+      // Everything is chapter text
+      chapter1 = validateChapterOutput(raw);
+    }
+
+    // Build fallback arc if parsing failed
+    if (!storyArc) {
+      const chapterCount = getChapterCount(cfg.length as string);
+      storyArc = {
+        storyArc: `A ${cfg.genre || "general"} story with beginning, middle, and end.`,
+        fixedPlotPoints: Array.from({ length: chapterCount }, (_, i) => ({
+          chapter: i + 1, event: `Chapter ${i + 1} advances the plot`,
+        })),
+        characterArcs: ((cfg.characters as Array<Record<string, string>>) || []).map(c => ({
+          name: c.name, startingState: c.description || "Unknown",
+          journey: "Grows through challenges", endingState: "Transformed",
+        })),
+        worldRules: [cfg.setting ? `Setting: ${cfg.setting}` : "As described in the premise"],
+        themes: [cfg.genre ? `Themes of ${cfg.genre}` : "Human nature"],
+        chapterOutlines: Array.from({ length: chapterCount }, (_, i) => ({
+          number: i + 1, title: `Chapter ${i + 1}`,
+          purpose: i === 0 ? "Introduction" : i === chapterCount - 1 ? "Resolution" : "Development",
+          keyBeats: [`Key event for chapter ${i + 1}`],
+          emotionalTone: "Engaging",
+        })),
       };
     }
 
-    if (!plan) {
-      plan = {
-        title: title || "Untitled Story",
-        premise: config.premise,
-        chapters: [{ title: "Chapter 1", key_events: [], emotional_beat: "beginning", deviation_hooks: [] }],
-        character_notes: [],
-        world_rules: [],
-      };
+    // ── Step 2: Generate Rolling Summary (single LLM call) ──
+    let rollingSummary = "";
+    try {
+      const summarySystem = getStoryPrompt("summary");
+      const summaryUser = `NEW CHAPTER (Chapter 1):\n${chapter1}\n\nCreate the initial rolling summary.`;
+      rollingSummary = await callLLM(summarySystem, summaryUser);
+    } catch {
+      rollingSummary = `Chapter 1 introduces the story. ${chapter1.slice(0, 200)}...`;
     }
 
+    // ── Build Story Object ──
     const storyId = "story_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 6);
-    const storyTitle = title || plan.title || "Untitled Story";
+    const storyTitle = (title as string) || "Untitled Story";
 
     const story = {
       id: storyId,
       title: storyTitle,
-      premise: config.premise,
-      config,
-      outline: plan,
-      chapters: plan.chapters.map((ch: any, i: number) => ({
+      masterPrompt,
+      storyArc,
+      rollingSummary,
+      chapters: storyArc.chapterOutlines.map((ch: ChapterOutline, i: number) => ({
         number: i + 1,
         title: ch.title,
         status: i === 0 ? "complete" : "pending",
@@ -195,6 +256,7 @@ Characters: ${(config.characters || []).map((c: any) => `${c.name} (${c.role}): 
         generatedAt: i === 0 ? new Date().toISOString() : null,
       })),
       chapterContents: chapter1 ? { "1": chapter1 } : {},
+      config: cfg,
       status: "active",
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -208,77 +270,194 @@ Characters: ${(config.characters || []).map((c: any) => `${c.name} (${c.role}): 
   }
 }
 
+// ── Build Chapter Prompt ─────────────────────────────────────
+
+function buildChapterPrompt(
+  masterPrompt: string,
+  storyArc: StoryArcType,
+  rollingSummary: string | null,
+  previousChapter: string | null,
+  outline: ChapterOutline
+): string {
+  const parts: string[] = [];
+
+  parts.push("===MASTER PROMPT===\n" + masterPrompt);
+  parts.push("\n===STORY ARC===\n" + JSON.stringify(storyArc, null, 2));
+
+  if (rollingSummary) {
+    parts.push("\n===NARRATIVE SO FAR===\n" + rollingSummary);
+  }
+
+  if (previousChapter) {
+    parts.push("\n===PREVIOUS CHAPTER===\n" + previousChapter);
+  }
+
+  parts.push("\n===CHAPTER OUTLINE===" +
+    `\nTitle: ${outline.title}` +
+    `\nPurpose: ${outline.purpose}` +
+    `\nKey Beats: ${outline.keyBeats.join("; ")}` +
+    `\nEmotional Tone: ${outline.emotionalTone}` +
+    (outline.setupForNext ? `\nSetup for Next: ${outline.setupForNext}` : "")
+  );
+
+  parts.push(`\nWrite Chapter ${outline.number} now. Return ONLY prose.`);
+
+  return parts.join("\n");
+}
+
 // ── Generate Next Chapter ────────────────────────────────────
 
-async function handleGenerateChapter(body: any): Promise<NextResponse> {
+async function handleGenerateChapter(body: Record<string, unknown>): Promise<NextResponse> {
   const { storyId } = body;
   if (!storyId) return NextResponse.json({ error: "Missing storyId" }, { status: 400 });
 
-  const path = getPath(storyId);
+  const path = getPath(storyId as string);
   if (!existsSync(path)) return NextResponse.json({ error: "Story not found" }, { status: 404 });
 
   const story = JSON.parse(readFileSync(path, "utf-8"));
-  const nextNum = story.chapters.findIndex((c: any) => c.status === "pending") + 1;
-  if (nextNum === 0) return NextResponse.json({ error: "All chapters complete" }, { status: 400 });
 
-  // Mark as writing
-  story.chapters[nextNum - 1].status = "writing";
+  const nextIdx = story.chapters.findIndex((c: Record<string, unknown>) => c.status === "pending");
+  if (nextIdx === -1) return NextResponse.json({ error: "All chapters complete" }, { status: 400 });
+
+  const nextNum = nextIdx + 1;
+
+  // Server-side lock
+  const anyWriting = story.chapters.some((c: Record<string, unknown>) => c.status === "writing");
+  if (anyWriting) {
+    return NextResponse.json({ error: "A chapter is already being generated. Please wait." }, { status: 409 });
+  }
+
+  story.chapters[nextIdx].status = "writing";
   writeFileSync(path, JSON.stringify(story, null, 2));
 
   try {
-    const system = getStoryPrompt("chapter");
-    const wordRanges2: Record<string, string> = {
-      short: "800-1200", medium: "1200-1800", standard: "1800-2500",
-      long: "2500-3500", epic: "3500-5000", marathon: "5000+",
+    const arc: StoryArcType = story.storyArc;
+    const chapterOutline = arc.chapterOutlines?.[nextIdx] || {
+      number: nextNum, title: `Chapter ${nextNum}`, purpose: "Continue the story",
+      keyBeats: [`Key event for chapter ${nextNum}`], emotionalTone: "Engaging",
     };
-    const wcRange2 = wordRanges2[story.config?.wordCountRange] || "1800-2500";
 
-    const prevChapters = Object.entries(story.chapterContents as Record<string, string>)
-      .sort(([a], [b]) => Number(a) - Number(b))
-      .map(([num, text]) => `Chapter ${num}:\n${text}`)
-      .join("\n\n---\n\n");
+    const prevChapter = nextNum > 1 ? story.chapterContents[String(nextNum - 1)] || null : null;
 
-    const userMessage = `STORY PLAN:
-${JSON.stringify(story.outline, null, 2)}
+    const system = getStoryPrompt("chapter");
+    const userMessage = buildChapterPrompt(
+      story.masterPrompt, arc, story.rollingSummary || null, prevChapter, chapterOutline
+    );
 
-PREVIOUS CHAPTERS:
-${prevChapters}
-
-Chapter Length: ${wcRange2} words (prioritise quality, aim within range)
-
-Write Chapter ${nextNum} now.`;
-
-    let content = await callLLM(system, userMessage);
-
-    // Formatting review pass — check for common issues and fix
-    const needsFormatting = checkFormatting(content);
-    if (needsFormatting) {
-      try {
-        const formatPrompt = getStoryPrompt("format");
-        content = await callLLM(formatPrompt, "Review and improve the formatting of this chapter:\n\n" + content);
-      } catch {
-        // Formatting failed — use original content
-      }
-    }
+    const raw = await callLLM(system, userMessage);
+    const content = validateChapterOutput(raw);
 
     story.chapterContents[nextNum] = content;
-    story.chapters[nextNum - 1].status = "complete";
-    story.chapters[nextNum - 1].wordCount = content.split(/\s+/).length;
-    story.chapters[nextNum - 1].generatedAt = new Date().toISOString();
+    story.chapters[nextIdx].status = "complete";
+    story.chapters[nextIdx].wordCount = content.split(/\s+/).length;
+    story.chapters[nextIdx].generatedAt = new Date().toISOString();
     story.updatedAt = new Date().toISOString();
 
-    // Check if all complete
-    if (story.chapters.every((c: any) => c.status === "complete")) {
+    // Update rolling summary
+    try {
+      const summarySystem = getStoryPrompt("summary");
+      const summaryUser = `PREVIOUS SUMMARY:\n${story.rollingSummary || "Story has not started yet."}\n\nNEW CHAPTER (Chapter ${nextNum}):\n${content}\n\nUpdate the rolling summary.`;
+      story.rollingSummary = await callLLM(summarySystem, summaryUser);
+    } catch {}
+
+    if (story.chapters.every((c: Record<string, unknown>) => c.status === "complete")) {
       story.status = "complete";
     }
 
     writeFileSync(path, JSON.stringify(story, null, 2));
     return NextResponse.json({ data: { chapter: nextNum, content, story } });
   } catch (err) {
-    story.chapters[nextNum - 1].status = "failed";
+    story.chapters[nextIdx].status = "failed";
     writeFileSync(path, JSON.stringify(story, null, 2));
     logApiError("POST /api/stories", "generate-chapter", err);
     return NextResponse.json({ error: err instanceof Error ? err.message : "Generation failed" }, { status: 500 });
+  }
+}
+
+// ── Rewrite Chapter ──────────────────────────────────────────
+
+async function handleRewriteChapter(body: Record<string, unknown>): Promise<NextResponse> {
+  const { storyId, chapterNumber } = body;
+  if (!storyId || !chapterNumber) {
+    return NextResponse.json({ error: "Missing storyId or chapterNumber" }, { status: 400 });
+  }
+
+  const path = getPath(storyId as string);
+  if (!existsSync(path)) return NextResponse.json({ error: "Story not found" }, { status: 404 });
+
+  const story = JSON.parse(readFileSync(path, "utf-8"));
+  const chNum = chapterNumber as number;
+
+  if (chNum < 1 || chNum > story.chapters.length) {
+    return NextResponse.json({ error: "Invalid chapter number" }, { status: 400 });
+  }
+
+  // Invalidate from chapter N forward
+  for (let i = chNum - 1; i < story.chapters.length; i++) {
+    story.chapters[i].status = i === chNum - 1 ? "writing" : "pending";
+    story.chapters[i].wordCount = 0;
+    story.chapters[i].generatedAt = null;
+    delete story.chapterContents[String(i + 1)];
+  }
+
+  // Truncate rolling summary
+  if (chNum > 1) {
+    try {
+      const summarySystem = getStoryPrompt("summary");
+      const chaptersBeforeN = Object.entries(story.chapterContents as Record<string, string>)
+        .sort(([a], [b]) => Number(a) - Number(b))
+        .map(([num, text]) => `Chapter ${num}:\n${text}`)
+        .join("\n\n");
+      story.rollingSummary = await callLLM(summarySystem,
+        `Create a rolling summary of these unchanged chapters:\n\n${chaptersBeforeN}`);
+    } catch { story.rollingSummary = ""; }
+  } else {
+    story.rollingSummary = "";
+  }
+
+  writeFileSync(path, JSON.stringify(story, null, 2));
+  return handleGenerateChapter({ storyId });
+}
+
+// ── Extend Story ─────────────────────────────────────────────
+
+async function handleExtend(body: Record<string, unknown>): Promise<NextResponse> {
+  const { storyId, additionalChapters } = body;
+  if (!storyId || !additionalChapters) {
+    return NextResponse.json({ error: "Missing storyId or additionalChapters" }, { status: 400 });
+  }
+
+  const path = getPath(storyId as string);
+  if (!existsSync(path)) return NextResponse.json({ error: "Story not found" }, { status: 404 });
+
+  const story = JSON.parse(readFileSync(path, "utf-8"));
+  const addCount = additionalChapters as number;
+  const startNum = story.chapters.length + 1;
+
+  for (let i = 0; i < addCount; i++) {
+    const num = startNum + i;
+    const outline = {
+      number: num, title: `Chapter ${num}`, purpose: "Continue the story",
+      keyBeats: [`New event for chapter ${num}`], emotionalTone: "Engaging",
+    };
+    story.storyArc.chapterOutlines.push(outline);
+    story.chapters.push({ number: num, title: outline.title, status: "pending", wordCount: 0, generatedAt: null });
+  }
+
+  story.status = "active";
+  story.updatedAt = new Date().toISOString();
+  writeFileSync(path, JSON.stringify(story, null, 2));
+  return NextResponse.json({ data: story });
+}
+
+// ── Helpers ──────────────────────────────────────────────────
+
+function getChapterCount(length: string): number {
+  switch (length) {
+    case "short": return 3;
+    case "medium": return 6;
+    case "long": return 10;
+    default: return 6;
   }
 }
 
@@ -291,39 +470,44 @@ async function handleList(): Promise<NextResponse> {
     const stories = files.map(f => {
       try {
         const s = JSON.parse(readFileSync(SAVE_DIR + "/" + f, "utf-8"));
-        // Return summary only (no chapter contents for list)
         return {
-          id: s.id, title: s.title, premise: s.premise,
-          config: s.config, status: s.status,
-          chapters: s.chapters?.map((c: any) => ({ number: c.number, title: c.title, status: c.status, wordCount: c.wordCount })),
-          createdAt: s.createdAt, updatedAt: s.updatedAt,
+          id: s.id, title: s.title, status: s.status,
+          chapters: s.chapters?.map((c: Record<string, unknown>) => ({
+            number: c.number, title: c.title, status: c.status, wordCount: c.wordCount
+          })),
+          config: s.config, createdAt: s.createdAt, updatedAt: s.updatedAt,
         };
       } catch { return null; }
-    }).filter(Boolean);
-    stories.sort((a: any, b: any) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+    }).filter(Boolean) as Array<Record<string, unknown>>;
+    stories.sort((a, b) =>
+      new Date(b.updatedAt as string).getTime() - new Date(a.updatedAt as string).getTime()
+    );
     return NextResponse.json({ data: { stories } });
   } catch { return NextResponse.json({ data: { stories: [] } }); }
 }
 
 // ── Load ─────────────────────────────────────────────────────
 
-async function handleLoad(body: any): Promise<NextResponse> {
+async function handleLoad(body: Record<string, unknown>): Promise<NextResponse> {
   const { storyId } = body;
   if (!storyId) return NextResponse.json({ error: "Missing storyId" }, { status: 400 });
-  const path = getPath(storyId);
+  const path = getPath(storyId as string);
   if (!existsSync(path)) return NextResponse.json({ error: "Story not found" }, { status: 404 });
   return NextResponse.json({ data: JSON.parse(readFileSync(path, "utf-8")) });
 }
 
 // ── Update ───────────────────────────────────────────────────
 
-async function handleUpdate(body: any): Promise<NextResponse> {
+async function handleUpdate(body: Record<string, unknown>): Promise<NextResponse> {
   const { storyId, ...fields } = body;
   if (!storyId) return NextResponse.json({ error: "Missing storyId" }, { status: 400 });
-  const path = getPath(storyId);
+  const path = getPath(storyId as string);
   if (!existsSync(path)) return NextResponse.json({ error: "Story not found" }, { status: 404 });
   const story = JSON.parse(readFileSync(path, "utf-8"));
-  if (fields.title) story.title = fields.title;
+  const f = fields as Record<string, unknown>;
+  if (f.title) story.title = f.title;
+  if (f.chapters) story.chapters = f.chapters;
+  if (f.rollingSummary) story.rollingSummary = f.rollingSummary;
   story.updatedAt = new Date().toISOString();
   writeFileSync(path, JSON.stringify(story, null, 2));
   return NextResponse.json({ data: story });
@@ -331,10 +515,10 @@ async function handleUpdate(body: any): Promise<NextResponse> {
 
 // ── Delete ───────────────────────────────────────────────────
 
-async function handleDelete(body: any): Promise<NextResponse> {
+async function handleDelete(body: Record<string, unknown>): Promise<NextResponse> {
   const { storyId } = body;
   if (!storyId) return NextResponse.json({ error: "Missing storyId" }, { status: 400 });
-  const path = getPath(storyId);
+  const path = getPath(storyId as string);
   if (!existsSync(path)) return NextResponse.json({ error: "Story not found" }, { status: 404 });
   unlinkSync(path);
   return NextResponse.json({ data: { deleted: true } });

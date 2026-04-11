@@ -45,17 +45,20 @@ export default function StoryReaderPage() {
 
   useEffect(() => { loadStory(); }, [loadStory]);
 
-  // Auto-generate next pending chapter
+  // Auto-generate next pending chapter — only trigger when NOT generating
+  // and only for the FIRST pending chapter (sequential enforcement)
   useEffect(() => {
     if (!story || generating) return;
-    const pending = story.chapters?.find((c: Chapter) => c.status === "pending");
-    if (pending && pending.status === "pending") {
+    const firstPending = story.chapters?.find((c: Chapter) => c.status === "pending");
+    const anyWriting = story.chapters?.some((c: Chapter) => c.status === "writing");
+    // Only generate if there's a pending chapter AND nothing is currently writing
+    if (firstPending && !anyWriting) {
       generateNext();
     }
   }, [story?.chapters]);
 
   const generateNext = useCallback(async () => {
-    if (!story || generating) return;
+    if (!story) return;
     setGenerating(true);
     try {
       const res = await fetch("/api/stories", {
@@ -64,8 +67,10 @@ export default function StoryReaderPage() {
       });
       const d = await res.json();
       if (d.data?.story) setStory(d.data.story);
-    } catch {} finally { setGenerating(false); }
-  }, [story, storyId, generating]);
+      else if (d.error) console.error("Chapter generation error:", d.error);
+    } catch (e) { console.error("Chapter generation failed:", e); }
+    finally { setGenerating(false); }
+  }, [story, storyId]);
 
   // Mark chapter as read and move to next
   const handleNextChapter = useCallback(async () => {

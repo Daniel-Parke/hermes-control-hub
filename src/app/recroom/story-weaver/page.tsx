@@ -2,7 +2,7 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { BookOpen, Plus, ChevronRight, Sparkles, Library } from "lucide-react";
+import { BookOpen, Plus, ChevronRight, Sparkles, Library, BookMarked } from "lucide-react";
 import StoryCard from "@/components/story-weaver/StoryCard";
 
 interface StorySummary {
@@ -75,6 +75,10 @@ export default function StoryWeaverDashboard() {
           <button onClick={() => router.push("/recroom/story-weaver/create")}
             className="flex-1 flex items-center justify-center gap-2 px-6 py-4 rounded-xl border border-purple-500/30 bg-purple-500/10 text-base font-mono text-neon-purple hover:bg-purple-500/20 transition-all shadow-[0_0_20px_rgba(168,85,247,0.1)]">
             <Plus className="w-5 h-5" /> Create New Story
+          </button>
+          <button onClick={() => router.push("/recroom/story-weaver/reading-desk")}
+            className="flex items-center gap-2 px-6 py-4 rounded-xl border border-white/10 text-base font-mono text-white/50 hover:text-white/70 hover:bg-white/5 transition-all">
+            <BookMarked className="w-5 h-5" /> Reading Desk
           </button>
           <button onClick={() => router.push("/recroom/story-weaver/library")}
             className="flex items-center gap-2 px-6 py-4 rounded-xl border border-white/10 text-base font-mono text-white/50 hover:text-white/70 hover:bg-white/5 transition-all">

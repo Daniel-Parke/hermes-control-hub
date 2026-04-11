@@ -45,6 +45,8 @@ import {
   Download,
   Gamepad2,
   BookOpen,
+  Library,
+  Plus,
 } from "lucide-react";
 import type { AccentColor } from "@/types/hermes";
 import { iconColorMap } from "@/lib/theme";
@@ -54,6 +56,7 @@ interface SidebarLink {
   label: string;
   href: string;
   color: AccentColor;
+  subLinks?: { label: string; href: string }[];
 }
 
 interface SidebarSection {
@@ -83,7 +86,14 @@ const mainSections: SidebarSection[] = [
   {
     label: "Rec Room",
     links: [
-      { icon: BookOpen, label: "Story Weaver", href: "/recroom/story-weaver", color: "purple" },
+      {
+        icon: BookOpen, label: "Story Weaver", href: "/recroom/story-weaver", color: "purple",
+        subLinks: [
+          { label: "Reading Desk", href: "/recroom/story-weaver/reading-desk" },
+          { label: "Library", href: "/recroom/story-weaver/library" },
+          { label: "Create", href: "/recroom/story-weaver/create" },
+        ],
+      },
     ],
   },
   {
@@ -437,20 +447,40 @@ export default function Sidebar() {
 
   const renderLink = (link: SidebarLink) => {
     const active = isActive(pathname, link.href);
+    const showSubs = active && link.subLinks && !collapsed;
     return (
-      <Link
-        key={link.href}
-        href={link.href}
-        className={linkClass(active)}
-        onClick={() => setMobileOpen(false)}
-      >
-        <link.icon
-          className={`w-4 h-4 flex-shrink-0 ${
-            active ? iconColorMap[link.color] : ""
-          }`}
-        />
-        {!collapsed && <span>{link.label}</span>}
-      </Link>
+      <div key={link.href}>
+        <Link
+          href={link.href}
+          className={linkClass(active)}
+          onClick={() => setMobileOpen(false)}
+        >
+          <link.icon
+            className={`w-4 h-4 flex-shrink-0 ${
+              active ? iconColorMap[link.color] : ""
+            }`}
+          />
+          {!collapsed && <span>{link.label}</span>}
+        </Link>
+        {showSubs && (
+          <div className="ml-7 mt-1 space-y-0.5 border-l border-white/5 pl-3">
+            {link.subLinks!.map((sub) => (
+              <Link
+                key={sub.href}
+                href={sub.href}
+                className={`block py-1 text-xs transition-colors ${
+                  pathname === sub.href
+                    ? "text-white/80"
+                    : "text-white/30 hover:text-white/60"
+                }`}
+                onClick={() => setMobileOpen(false)}
+              >
+                {sub.label}
+              </Link>
+            ))}
+          </div>
+        )}
+      </div>
     );
   };
 

@@ -19,6 +19,39 @@ export interface StoryTemplate {
   pov: "first" | "third-limited" | "third-omniscient";
 }
 
+// ── Story Arc (immutable plot contract) ───────────────────────
+
+export interface FixedPlotPoint {
+  chapter: number;
+  event: string;
+  setup?: string;
+}
+
+export interface CharacterArc {
+  name: string;
+  startingState: string;
+  journey: string;
+  endingState: string;
+}
+
+export interface ChapterOutline {
+  number: number;
+  title: string;
+  purpose: string;
+  keyBeats: string[];
+  emotionalTone: string;
+  setupForNext?: string;
+}
+
+export interface StoryArc {
+  storyArc: string;
+  fixedPlotPoints: FixedPlotPoint[];
+  characterArcs: CharacterArc[];
+  worldRules: string[];
+  themes: string[];
+  chapterOutlines: ChapterOutline[];
+}
+
 export const STORY_TEMPLATES: StoryTemplate[] = [
   {
     id: "cosmic-voyager",

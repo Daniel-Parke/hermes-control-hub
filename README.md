@@ -112,31 +112,46 @@ Create, edit, search, and delete holographic memory facts. The memory system hel
 
 ---
 
-## Story Weaver (WIP)
+## Story Weaver
 
 Collaborative interactive fiction powered by your agent. Create stories from 8 pre-built templates or build your own from scratch.
 
+**Pages:**
+- **Dashboard** — overview with stats, recent stories, quick actions
+- **Reading Desk** — personal bookshelf to browse and read stories
+- **Library** — manage all stories (grid view with CRUD)
+- **Create** — new story with template or custom configuration
+- **Reader** — continuous scroll with book-like styling and customisable settings
+
 **Create a story:**
-1. Navigate to **Rec Room → Story Weaver**
-2. Click **Create New Story**
-3. Choose a template or configure manually (title, genre, era, mood, characters, chapter length)
-4. Click **Begin Writing**
-5. The AI generates a story plan and first chapter (~20 seconds)
-6. You're taken to the story reader
+1. Navigate to **Rec Room → Story Weaver → Create**
+2. Choose a template or configure manually (title, genre, era, mood, characters, chapter length)
+3. Click **Begin Writing**
+4. The AI generates a Story Arc (plot structure) and first chapter
+5. Remaining chapters auto-generate sequentially
+6. Read in the **Reading Desk** or **Library**
+
+**Story Arc Pipeline:**
+- **Step 1:** AI generates a Story Arc — immutable plot contract with fixed plot points, character arcs, world rules, and chapter outlines
+- **Step 2:** Chapter 1 written against the arc with quality standards
+- **Step 3:** Rolling narrative summary updated (flexible length, no cap)
+- **Step N:** Each subsequent chapter uses: master prompt + story arc + rolling summary + previous chapter + chapter outline
 
 **Reading:**
 - Continuous scroll with book-like styling
 - Customisable reading experience (font, size, spacing, page theme) via the **Aa** button
-- Chapters sidebar with read status indicators (blue/orange/green dots)
+- Chapters sidebar with read status indicators
 - Next/Previous chapter navigation with chapter titles
 
 **Features:**
 - 8 story templates (Sci-Fi, Mystery, Fantasy, Crime, Romance, Horror, Historical, Children's)
 - Tag-based genre/era/mood/setting with custom tags
 - Configurable chapter word count (800 words to 5000+)
-- Auto-save and auto-generation of next chapters
+- Auto-generation of chapters with server-side locking
+- Chapter rewrite (forward-invalidation from rewrite point)
+- Story extension (add more chapters)
 - Kindle-style reading settings (font, size, theme, spacing)
-- Library with full CRUD
+- Response validation (strips meta-commentary, prompt artifacts)
 
 ---
 
