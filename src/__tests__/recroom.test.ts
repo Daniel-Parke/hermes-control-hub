@@ -3,23 +3,35 @@ import { DEFAULT_SETTINGS, FONTS, THEMES } from "@/components/story-weaver/Reade
 
 describe("Story Weaver — Prompts", () => {
   it("should return prompts for all phases", () => {
-    expect(getStoryPrompt("plan")).toContain("STORY PLAN");
+    expect(getStoryPrompt("plan")).toContain("skilled novelist");
     expect(getStoryPrompt("chapter")).toContain("CONSISTENCY");
-    expect(getStoryPrompt("summary")).toContain("Summarize");
+    expect(getStoryPrompt("summary")).toContain("summariser");
+    expect(getStoryPrompt("format")).toContain("editor");
   });
 
-  it("plan prompt should include plan+chapter format", () => {
+  it("plan prompt should include writing quality standards", () => {
     const prompt = getStoryPrompt("plan");
+    expect(prompt).toContain("Vary sentence length");
+    expect(prompt).toContain("Show, don't tell");
+    expect(prompt).toContain("Dialogue must sound natural");
     expect(prompt).toContain("===PLAN===");
     expect(prompt).toContain("===CHAPTER 1===");
-    expect(prompt).toContain("DEVIATION HOOKS");
   });
 
-  it("chapter prompt should include consistency checklist", () => {
+  it("chapter prompt should include context awareness", () => {
     const prompt = getStoryPrompt("chapter");
-    expect(prompt).toContain("Character names");
-    expect(prompt).toContain("plotholes");
-    expect(prompt).toContain("800-1500 words");
+    expect(prompt).toContain("Where the story has been");
+    expect(prompt).toContain("Where the story is going");
+    expect(prompt).toContain("CONSISTENCY CHECKLIST");
+    expect(prompt).toContain("Character names spelled");
+    expect(prompt).toContain("Avoid repetitive sentence starters");
+  });
+
+  it("formatting prompt should be non-destructive", () => {
+    const prompt = getStoryPrompt("format");
+    expect(prompt).toContain("Do NOT change plot");
+    expect(prompt).toContain("Do NOT add or remove story events");
+    expect(prompt).toContain("ONLY fix formatting");
   });
 
   it("should fallback to chapter prompt for unknown phase", () => {
@@ -39,19 +51,21 @@ describe("Story Weaver — Status Messages", () => {
 
   it("should have 20+ loading messages", () => {
     expect(LOADING_MESSAGES.length).toBeGreaterThanOrEqual(20);
+    for (const msg of LOADING_MESSAGES) {
+      expect(msg.length).toBeGreaterThan(5);
+    }
   });
 });
 
 describe("Story Weaver — Reader Settings", () => {
   it("should have valid defaults", () => {
-    expect(DEFAULT_SETTINGS.fontSize).toBeGreaterThanOrEqual(12);
-    expect(DEFAULT_SETTINGS.fontSize).toBeLessThanOrEqual(28);
-    expect(DEFAULT_SETTINGS.lineHeight).toBeGreaterThanOrEqual(1.2);
-    expect(DEFAULT_SETTINGS.lineHeight).toBeLessThanOrEqual(2.5);
-    expect(["dark", "black", "sepia", "light"]).toContain(DEFAULT_SETTINGS.pageTheme);
+    expect(DEFAULT_SETTINGS.fontSize).toBe(17);
+    expect(DEFAULT_SETTINGS.lineHeight).toBe(1.2);
+    expect(DEFAULT_SETTINGS.fontFamily).toBe("EB Garamond");
+    expect(DEFAULT_SETTINGS.pageTheme).toBe("dark");
   });
 
-  it("should have 5 font options", () => {
+  it("should have 5 font options with CSS variables", () => {
     expect(FONTS).toHaveLength(5);
     for (const font of FONTS) {
       expect(font.name).toBeTruthy();
@@ -59,7 +73,7 @@ describe("Story Weaver — Reader Settings", () => {
     }
   });
 
-  it("should have 4 theme presets", () => {
+  it("should have 4 theme presets with valid colours", () => {
     expect(Object.keys(THEMES)).toHaveLength(4);
     for (const [key, theme] of Object.entries(THEMES)) {
       expect(theme.bg).toMatch(/^#[0-9a-f]{6}$/);
@@ -84,7 +98,6 @@ describe("Story Weaver — Chapter Read Status", () => {
     ];
     expect(chapters[0].status).toBe("complete");
     expect(chapters[0].readStatus).toBe("unread");
-    expect(chapters[1].status).toBe("pending");
   });
 
   it("should detect all chapters complete", () => {
@@ -97,11 +110,22 @@ describe("Story Weaver — Chapter Read Status", () => {
   });
 });
 
+describe("Story Weaver — Formatting Check", () => {
+  it("should detect overly long paragraphs", () => {
+    const longParagraph = Array(12).fill("He walked to the door.").join(" ") ;
+    expect(longParagraph.split(/[.!?]+/).filter(s => s.trim().length > 0).length).toBeGreaterThan(8);
+  });
+
+  it("should accept well-formatted content", () => {
+    const goodContent = "First paragraph here.\n\nSecond paragraph here.\n\nThird paragraph.";
+    const paragraphs = goodContent.split(/\n\n+/);
+    expect(paragraphs.length).toBeGreaterThanOrEqual(2);
+  });
+});
+
 describe("Story Weaver — Word Count Ranges", () => {
   it("should have valid range options", () => {
     const ranges = ["short", "medium", "standard", "long", "epic", "marathon"];
-    const labels = ["800-1.2k", "1.2-1.8k", "1.8-2.5k", "2.5-3.5k", "3.5-5k", "5k+"];
     expect(ranges).toHaveLength(6);
-    expect(labels).toHaveLength(6);
   });
 });

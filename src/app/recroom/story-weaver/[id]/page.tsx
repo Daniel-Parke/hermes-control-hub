@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { ChevronLeft, ChevronRight, BookOpen, Sparkles, Loader2, Menu, X } from "lucide-react";
 import ChapterList from "@/components/story-weaver/ChapterList";
-import SteerInput from "@/components/story-weaver/SteerInput";
+
 import ReaderSettings, { loadSettings, DEFAULT_SETTINGS, FONTS, THEMES, type ReadingSettings } from "@/components/story-weaver/ReaderSettings";
 
 interface Chapter { number: number; title: string; status: string; wordCount: number; readStatus?: "writing" | "unread" | "read"; generatedAt?: string | null; }
@@ -54,13 +54,13 @@ export default function StoryReaderPage() {
     }
   }, [story?.chapters]);
 
-  const generateNext = useCallback(async (direction?: string) => {
+  const generateNext = useCallback(async () => {
     if (!story || generating) return;
     setGenerating(true);
     try {
       const res = await fetch("/api/stories", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "generate-chapter", storyId, userDirection: direction }),
+        body: JSON.stringify({ action: "generate-chapter", storyId }),
       });
       const d = await res.json();
       if (d.data?.story) setStory(d.data.story);
@@ -107,11 +107,6 @@ export default function StoryReaderPage() {
     }
   }, [story, currentChapter, storyId]);
 
-  const handleSteer = (direction: string) => {
-    const nextPending = story?.chapters?.find((c: Chapter) => c.status === "pending");
-    if (nextPending) generateNext(direction);
-  };
-
   const handleChapterSelect = (num: number) => {
     setCurrentChapter(num);
     // Mark as read when selecting from sidebar
@@ -152,6 +147,8 @@ export default function StoryReaderPage() {
   const currentMeta = chapters[currentChapter - 1];
   const prevComplete = chapters.filter((c: Chapter) => c.number < currentChapter && c.status === "complete");
   const nextComplete = chapters.find((c: Chapter) => c.number > currentChapter && c.status === "complete");
+  const prevChapter = currentChapter > 1 ? chapters[currentChapter - 2] : null;
+  const nextChapter = nextComplete ? chapters[nextComplete.number - 1] : null;
 
   return (
     <div className="min-h-screen bg-dark-950 grid-bg relative scanlines flex flex-col">
@@ -244,9 +241,10 @@ export default function StoryReaderPage() {
           <div className="flex items-center justify-between px-4 md:px-6 py-3 border-t flex-shrink-0" style={{ borderColor: settings.pageTheme === "light" ? "#d4ccc0" : "#2a2520", background: theme.panel }}>
             <button onClick={() => setCurrentChapter(Math.max(1, currentChapter - 1))}
               disabled={currentChapter <= 1}
-              className="flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-xs font-mono disabled:opacity-20 min-h-[44px]"
+              className="flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-xs font-mono disabled:opacity-20 min-h-[44px] max-w-[45%] truncate"
               style={{ color: theme.text, opacity: 0.6 }}>
-              <ChevronLeft className="w-4 h-4" /> <span className="hidden sm:inline">Prev</span>
+              <ChevronLeft className="w-4 h-4 flex-shrink-0" />
+              <span className="truncate">{prevChapter ? prevChapter.title : "Prev"}</span>
             </button>
 
             {/* Chapter dots */}
@@ -260,16 +258,13 @@ export default function StoryReaderPage() {
 
             <button onClick={handleNextChapter}
               disabled={!nextComplete}
-              className="flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-xs font-mono disabled:opacity-20 min-h-[44px]"
+              className="flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-xs font-mono disabled:opacity-20 min-h-[44px] max-w-[45%] truncate"
               style={{ color: theme.text }}>
-              <span className="hidden sm:inline">Next</span> <ChevronRight className="w-4 h-4" />
+              <span className="truncate">{nextChapter ? nextChapter.title : "Next"}</span>
+              <ChevronRight className="w-4 h-4 flex-shrink-0" />
             </button>
           </div>
 
-          {/* Steer Input */}
-          <div className="px-4 md:px-6 pb-4 flex-shrink-0" style={{ background: theme.panel }}>
-            <SteerInput onSteer={handleSteer} loading={generating} />
-          </div>
         </div>
       </div>
 

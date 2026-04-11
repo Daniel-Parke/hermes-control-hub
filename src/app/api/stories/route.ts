@@ -12,6 +12,27 @@ import type { ApiResponse } from "@/types/hermes";
 const SAVE_DIR = HERMES_HOME + "/mission-control/data/stories";
 const GATEWAY_API = "http://127.0.0.1:8642/v1/chat/completions";
 
+/**
+ * Quick formatting check — returns true if the chapter needs a formatting pass.
+ */
+function checkFormatting(content: string): boolean {
+  const paragraphs = content.split(/\n\n+/);
+
+  // Check for overly long paragraphs (>8 sentences)
+  for (const p of paragraphs) {
+    const sentences = p.split(/[.!?]+/).filter(s => s.trim().length > 0);
+    if (sentences.length > 8) return true;
+  }
+
+  // Check for missing paragraph breaks (single block > 500 chars without breaks)
+  if (paragraphs.length === 1 && content.length > 500) return true;
+
+  // Check for very short content (might be truncated)
+  if (content.split(/\s+/).length < 200) return false; // too short to judge
+
+  return false;
+}
+
 function ensureDir() {
   if (!existsSync(SAVE_DIR)) mkdirSync(SAVE_DIR, { recursive: true });
 }
@@ -223,13 +244,22 @@ ${JSON.stringify(story.outline, null, 2)}
 PREVIOUS CHAPTERS:
 ${prevChapters}
 
-USER DIRECTION: ${body.userDirection || "None — follow the plan"}
-
 Chapter Length: ${wcRange2} words (prioritise quality, aim within range)
 
 Write Chapter ${nextNum} now.`;
 
-    const content = await callLLM(system, userMessage);
+    let content = await callLLM(system, userMessage);
+
+    // Formatting review pass — check for common issues and fix
+    const needsFormatting = checkFormatting(content);
+    if (needsFormatting) {
+      try {
+        const formatPrompt = getStoryPrompt("format");
+        content = await callLLM(formatPrompt, "Review and improve the formatting of this chapter:\n\n" + content);
+      } catch {
+        // Formatting failed — use original content
+      }
+    }
 
     story.chapterContents[nextNum] = content;
     story.chapters[nextNum - 1].status = "complete";
