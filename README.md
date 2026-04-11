@@ -226,18 +226,24 @@ All API routes import paths from `src/lib/hermes.ts`. The app reads from `~/.her
 
 ## Screenshots
 
-![Dashboard](screenshots/Hermes_Dashboard_Resize.png)
+![Dashboard](screenshots/dashboard.png)
 *The dashboard — live system monitoring, mission dispatch, cron jobs, and agent status*
 
-<!-- Screenshot map for future updates:
-1. Dashboard (hero) — screenshots/Hermes_Dashboard_Resize.png
-2. Mission Dispatch — screenshots/Mission_Dispatch.png
-3. Story Weaver Dashboard — screenshots/story-weaver-dashboard.png
-4. Story Reader — screenshots/story-reader.png
-5. Create Story — screenshots/story-create.png
+![Story Weaver](screenshots/story-weaver-dashboard.png)
+*Story Weaver — collaborative AI fiction with 8 templates and a book-like reader*
+
+![Missions](screenshots/missions.png)
+*Missions — dispatch, track, and manage agent tasks with built-in templates*
+
+<!-- Screenshot map (load mc-screenshot-update skill for capture instructions):
+1. Dashboard (hero) — screenshots/dashboard.png
+2. Story Weaver Dashboard — screenshots/story-weaver-dashboard.png
+3. Missions — screenshots/missions.png
+4. Create Story — screenshots/story-create.png
+5. Story Reader — screenshots/story-reader.png
 6. Cron Manager — screenshots/Cron_Job.png
 7. Agent Behaviour — screenshots/Agent_Behaviour.png
-8. Config Editor — screenshots/config.png
+8. Gateway — screenshots/gateway.png
 -->
 
 ---
