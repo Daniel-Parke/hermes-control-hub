@@ -200,26 +200,11 @@ export async function GET() {
           }
         }
       }
-      // For hindsight, try health check
+      // Hindsight — embedded mode (no external server to check)
       else if (providerType === "hindsight") {
-        try {
-          const { hindsightProvider } = await import("@/lib/memory-providers/hindsight");
-          const health = await hindsightProvider.healthCheck();
-          if (health.available) {
-            data.memory.factCount = health.factCount ?? 0;
-            data.memory.dbSize = health.dbSize
-              ? (Math.round(health.dbSize / 1024) > 1024
-                  ? (Math.round(health.dbSize / 1024) / 1024).toFixed(1) + " MB"
-                  : Math.round(health.dbSize / 1024) + " KB")
-              : "External";
-            data.memory.provider = "Hindsight (" + health.message + ")";
-          } else {
-            data.memory.provider = "Hindsight (offline)";
-            data.memory.dbSize = "N/A";
-          }
-        } catch {
-          data.memory.provider = "Hindsight (error)";
-        }
+        data.memory.provider = "Hindsight (embedded)";
+        data.memory.dbSize = "In-agent";
+        data.memory.factCount = -1; // Unknown without agent interaction
       }
     } catch (error) { logApiError("GET /api/monitor", "reading memory stats", error); }
 

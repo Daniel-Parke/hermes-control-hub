@@ -14,7 +14,6 @@ import { readFileSync, existsSync } from "fs";
 import { HERMES_HOME } from "@/lib/hermes";
 import type { MemoryProvider, MemoryProviderType } from "./types";
 import { holographicProvider } from "./holographic";
-import { hindsightProvider } from "./hindsight";
 
 /** Parse the memory provider from config.yaml */
 function getConfiguredProvider(): MemoryProviderType {
@@ -34,8 +33,9 @@ function getConfiguredProvider(): MemoryProviderType {
       if (inMemory && !line.startsWith(" ") && line.trim()) break;
       if (inMemory && line.includes("provider:")) {
         const val = line.split("provider:")[1].trim().replace(/['"]/g, "");
-        if (val === "holographic" || val === "hindsight") return val;
-        if (val && val !== "none") return "hindsight"; // Unknown providers assumed to be external
+        if (val === "holographic") return "holographic";
+        if (val === "hindsight") return "hindsight";
+        if (val && val !== "none") return val as MemoryProviderType;
         return "none";
       }
     }
@@ -82,9 +82,9 @@ export function getMemoryProvider(): MemoryProvider {
   switch (configured) {
     case "holographic":
       return holographicProvider;
-    case "hindsight":
-      return hindsightProvider;
     default:
+      // hindsight, none, or any other — no direct provider
+      // Dashboard shows status only, facts managed via agent tools
       return nullProvider;
   }
 }
