@@ -39,22 +39,21 @@ export default function HindsightBrowser() {
   const [newTags, setNewTags] = useState("");
   const [adding, setAdding] = useState(false);
   const [health, setHealth] = useState<{ available: boolean; mode: string; message?: string; error?: string } | null>(null);
-  const toast = useToast();
+  const { showToast, toastElement } = useToast();
 
   const loadMemories = useCallback(async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams({ action: "list" });
-      if (search) params.set("search", search);
       const res = await fetch(`/api/memory/hindsight?${params}`);
       const data = await res.json();
       setMemories(data.data?.memories || []);
     } catch {
-      toast.showToast("Failed to load memories", "error");
+      showToast("Failed to load memories", "error");
     } finally {
       setLoading(false);
     }
-  }, [search, toast]);
+  }, [showToast]);
 
   const checkHealth = useCallback(async () => {
     try {
@@ -77,7 +76,7 @@ export default function HindsightBrowser() {
       const data = await res.json();
       setMemories(data.data?.memories || []);
     } catch {
-      toast.showToast("Search failed", "error");
+      showToast("Search failed", "error");
     } finally {
       setLoading(false);
     }
@@ -92,7 +91,7 @@ export default function HindsightBrowser() {
       const data = await res.json();
       setReflectResult(data.data?.response || "No reflection generated");
     } catch {
-      toast.showToast("Reflection failed", "error");
+      showToast("Reflection failed", "error");
     } finally {
       setReflecting(false);
     }
@@ -109,13 +108,13 @@ export default function HindsightBrowser() {
         body: JSON.stringify({ content: newContent, tags: tags.length > 0 ? tags : undefined }),
       });
       if (!res.ok) throw new Error("Failed");
-      toast.showToast("Memory stored", "success");
+      showToast("Memory stored", "success");
       setShowAddModal(false);
       setNewContent("");
       setNewTags("");
       loadMemories();
     } catch {
-      toast.showToast("Failed to store memory", "error");
+      showToast("Failed to store memory", "error");
     } finally {
       setAdding(false);
     }
@@ -123,6 +122,7 @@ export default function HindsightBrowser() {
 
   return (
     <div>
+      {toastElement}
       {/* Health Status */}
       {health && !health.available && (
         <div className="mb-4">
