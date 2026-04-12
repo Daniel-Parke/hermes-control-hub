@@ -42,14 +42,44 @@ The installer will:
 3. Create 8 specialist agent profiles
 4. Optionally set up Hindsight memory (PostgreSQL + semantic search)
 
-The dashboard will be available at `http://localhost:3000`.
+The dashboard will be available at `http://localhost:3000` (or `http://localhost:$PORT` if you set the `PORT` environment variable; Next.js reads `PORT` for `npm run dev` / `npm run start`).
+
+### Resilience: Mission Control vs Hermes
+
+- **Scheduled missions and cron jobs** live in Hermes’ `~/.hermes/cron/jobs.json`. Once written, the **Hermes** process (for example the gateway) **runs** them on its scheduler tick. The Mission Control web app is only an editor for that file plus local dashboard data under `~/.hermes/mission-control/data/`.
+- If **Mission Control (Next.js) stops**, jobs **keep firing** as long as **Hermes** is still running.
+- If **Hermes stops**, nothing runs until you start Hermes again—there is no separate scheduler inside Mission Control.
+
+### Platforms
+
+- **Linux / macOS / WSL2:** fully supported (same as Hermes).
+- **Windows (native):** use **WSL2** for Hermes and Mission Control so paths align with `~/.hermes`. Native Windows Node is not a supported target for this stack.
+
+### Security-related environment variables
+
+| Variable | Purpose |
+|----------|---------|
+| `MC_API_KEY` | When set, mutating API routes require header `X-MC-API-Key` or `Authorization: Bearer <key>`. |
+| `MC_READ_ONLY` | Set to `1` or `true` to reject writes (503). |
+| `MC_ENABLE_DEPLOY_API` | Set to `false` to block `POST /api/update` even in development. In **production**, deploy is off unless you set this to `true`. |
+| `MC_UPDATE_GIT_BRANCH` | Branch for git pull/reset (default `main`; use `dev` if that matches your workflow). |
+| `MC_ALLOWED_DEV_ORIGINS` | Comma-separated origins allowed with Next dev (see `next.config.ts`). |
+
+Audit-style events append JSON lines to `~/.hermes/logs/mc-audit.log`. See [.env.example](.env.example).
+
+### Testing
+
+```bash
+npm test          # Jest (unit + integration-style route tests)
+npm run build && npm run test:e2e   # Playwright smoke (uses production server on port 3000)
+```
 
 ---
 
 ## Prerequisites
 
 - **Node.js** 18+
-- **Hermes Agent** installed at `~/.hermes/` (run `hermes update` first)
+- **Hermes Agent** with data under `~/.hermes/` (or set **`HERMES_HOME`** to match Hermes; Mission Control defaults to `path.join(os.homedir(), '.hermes')` in Node, same idea as Hermes). Run `hermes update` first.
 
 ### Optional: Hindsight Memory
 
@@ -67,44 +97,6 @@ Hindsight requires:
 - PostgreSQL with pgvector extension
 - ~2GB disk for Python packages (PyTorch, transformers)
 - Sudo access for PostgreSQL installation
-
----
-
-## Architecture
-
-```
-mission-control/
-├── src/
-│   ├── app/                    # Next.js pages + API routes
-│   │   ├── api/                # REST endpoints ({ data?, error? } envelope)
-│   │   ├── agent/              # Behaviour, Tools pages
-│   │   ├── skills/             # Skills manager
-│   │   ├── memory/             # Memory browser (provider-aware)
-│   │   ├── config/             # Config editor (27+ sections)
-│   │   ├── missions/           # Mission dispatch + tracking
-│   │   ├── cron/               # Cron job manager
-│   │   ├── sessions/           # Session browser
-│   │   └── recroom/            # Creative activities
-│   ├── components/             # React components
-│   │   ├── memory/             # HindsightBrowser, HolographicBrowser
-│   │   ├── layout/             # Sidebar, PageHeader
-│   │   └── ui/                 # Button, Card, Modal, Badge, etc.
-│   ├── lib/                    # Shared utilities
-│   │   ├── memory-providers/   # Memory provider abstraction layer
-│   │   ├── config-schema.ts    # Config section definitions
-│   │   ├── hermes.ts           # Path constants, config helpers
-│   │   └── utils.ts            # timeAgo, formatBytes, parseSchedule
-│   └── types/                  # TypeScript interfaces
-├── scripts/                    # Shell scripts
-│   ├── install.sh              # One-command installer (with optional Hindsight)
-│   ├── setup.sh                # Post-clone setup (npm install, build)
-│   ├── setup-hindsight.sh      # Standalone Hindsight installer
-│   ├── restart.sh              # Safe server restart (no nohup)
-│   ├── safe-restart.sh         # Minimal restart script
-│   ├── update.sh               # Git pull + build + restart
-│   └── backup-hermes-config.sh # Config backup
-└── data/                       # Mission + template JSON files
-```
 
 ---
 
@@ -258,6 +250,46 @@ Full documentation lives in the `docs/` directory:
 | [Architecture](docs/ARCHITECTURE.md) | System design, data flow, directory structure |
 | [Contributing](docs/CONTRIBUTING.md) | Development workflow, code standards, PR checklist |
 | [Branching](docs/BRANCHING.md) | Git branching strategy and agent permissions |
+
+---
+
+## Architecture
+
+```
+mission-control/
+├── src/
+│   ├── app/                    # Next.js pages + API routes
+│   │   ├── api/                # REST endpoints ({ data?, error? } envelope)
+│   │   ├── agent/              # Behaviour, Tools pages
+│   │   ├── skills/             # Skills manager
+│   │   ├── memory/             # Memory browser (provider-aware)
+│   │   ├── config/             # Config editor (27+ sections)
+│   │   ├── missions/           # Mission dispatch + tracking
+│   │   ├── cron/               # Cron job manager
+│   │   ├── sessions/           # Session browser
+│   │   └── recroom/            # Creative activities
+│   ├── components/             # React components
+│   │   ├── memory/             # HindsightBrowser, HolographicBrowser
+│   │   ├── layout/             # Sidebar, PageHeader
+│   │   └── ui/                 # Button, Card, Modal, Badge, etc.
+│   ├── lib/                    # Shared utilities
+│   │   ├── memory-providers/   # Memory provider abstraction layer
+│   │   ├── config-schema.ts    # Config section definitions
+│   │   ├── hermes.ts           # Path constants, config helpers
+│   │   ├── jobs-repository.ts # Atomic jobs.json read/write (Hermes-compatible)
+│   │   ├── path-security.ts    # Profile/skill path allowlisting
+│   │   └── utils.ts            # timeAgo, formatBytes, parseSchedule
+│   └── types/                  # TypeScript interfaces
+├── scripts/                    # Shell scripts
+│   ├── install.sh              # One-command installer (with optional Hindsight)
+│   ├── setup.sh                # Post-clone setup (npm install, build)
+│   ├── setup-hindsight.sh      # Standalone Hindsight installer
+│   ├── restart.sh              # Safe server restart (no nohup)
+│   ├── safe-restart.sh         # Minimal restart script
+│   ├── update.sh               # Git pull + build + restart
+│   └── backup-hermes-config.sh # Config backup
+└── data/                       # Mission + template JSON files
+```
 
 ---
 

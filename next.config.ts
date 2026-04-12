@@ -1,12 +1,14 @@
 import type { NextConfig } from "next";
 
+// Comma-separated origins, e.g. MC_ALLOWED_DEV_ORIGINS=http://192.168.1.42:3000,http://phone.local:3000
+const extraOrigins = (process.env.MC_ALLOWED_DEV_ORIGINS || "")
+  .split(",")
+  .map((s) => s.trim())
+  .filter(Boolean);
+
 const nextConfig: NextConfig = {
-  // Allow any device on local network to access dev server.
-  // Next.js doesn't support CIDR ranges, so list hosts explicitly.
-  allowedDevOrigins: [
-    "192.168.1.169",
-    "*.local",
-  ],
+  // Allow devices on local network to access dev server (explicit list; no CIDR).
+  allowedDevOrigins: ["*.local", ...extraOrigins],
 };
 
 export default nextConfig;

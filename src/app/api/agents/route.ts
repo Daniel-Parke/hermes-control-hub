@@ -44,7 +44,7 @@ export async function GET() {
           const startTime = parts[8];
 
           // Determine connected platforms from .env
-          let platforms: string[] = [];
+          const platforms: string[] = [];
           try {
             const envPath = PATHS.env;
             if (existsSync(envPath)) {

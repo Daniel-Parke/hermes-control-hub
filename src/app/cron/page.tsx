@@ -567,6 +567,7 @@ export default function CronPage() {
   const [search, setSearch] = useState("");
   const [showCreate, setShowCreate] = useState(false);
   const [editingJob, setEditingJob] = useState<CronJob | null>(null);
+  const [pauseAllBusy, setPauseAllBusy] = useState(false);
   const { showToast, toastElement } = useToast();
 
   const loadJobs = useCallback(() => {
@@ -615,6 +616,34 @@ export default function CronPage() {
     setEditingJob(job);
   };
 
+  const handlePauseAll = async () => {
+    if (!data?.jobs.length) return;
+    if (
+      !confirm(
+        "Pause every cron job? Hermes will not run them until you resume each job or edit jobs.json."
+      )
+    ) {
+      return;
+    }
+    setPauseAllBusy(true);
+    try {
+      const res = await fetch("/api/cron", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "pauseAll" }),
+      });
+      const j = (await res.json()) as { error?: string; data?: { pausedCount?: number } };
+      if (!res.ok) {
+        showToast(j.error || "Failed to pause jobs", "error");
+        return;
+      }
+      showToast(`Paused ${j.data?.pausedCount ?? 0} job(s)`);
+      loadJobs();
+    } finally {
+      setPauseAllBusy(false);
+    }
+  };
+
   const filteredJobs =
     data?.jobs.filter(
       (job) =>
@@ -638,15 +667,27 @@ export default function CronPage() {
         }
         color="orange"
         actions={
-          <Button
-            variant="primary"
-            color="orange"
-            size="sm"
-            icon={Plus}
-            onClick={() => setShowCreate(true)}
-          >
-            New Job
-          </Button>
+          <>
+            <Button
+              variant="secondary"
+              color="orange"
+              size="sm"
+              icon={Pause}
+              disabled={pauseAllBusy || !data?.total}
+              onClick={() => void handlePauseAll()}
+            >
+              {pauseAllBusy ? "Pausing…" : "Pause all"}
+            </Button>
+            <Button
+              variant="primary"
+              color="orange"
+              size="sm"
+              icon={Plus}
+              onClick={() => setShowCreate(true)}
+            >
+              New Job
+            </Button>
+          </>
         }
       />
 

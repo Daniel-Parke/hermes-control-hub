@@ -1,16 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
 import { readFileSync, existsSync, readdirSync, statSync } from "fs";
 
-import { HERMES_HOME, PATHS } from "@/lib/hermes";
-import { ApiResponse } from "@/types/hermes";
+import { PATHS } from "@/lib/hermes";
 import { logApiError } from "@/lib/api-logger";
+import { resolveSkillDirUnderRoot } from "@/lib/path-security";
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ path: string[] }> }
 ) {
   const { path } = await params;
-  const skillDir = PATHS.skills + "/" + path.join("/");
+  const resolved = resolveSkillDirUnderRoot(PATHS.skills, path);
+  if (!resolved.ok) {
+    return NextResponse.json(
+      { error: resolved.error },
+      { status: 400 }
+    );
+  }
+  const skillDir = resolved.skillDir;
   const skillMdPath = skillDir + "/SKILL.md";
 
   if (!existsSync(skillMdPath)) {
@@ -25,7 +32,7 @@ export async function GET(
     const stats = statSync(skillMdPath);
 
     // Parse YAML frontmatter
-    let frontmatter: Record<string, unknown> = {};
+    const frontmatter: Record<string, unknown> = {};
     let body = content;
     const fmMatch = content.match(/^---\n([\s\S]*?)\n---/);
     if (fmMatch) {

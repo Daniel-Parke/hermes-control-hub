@@ -541,7 +541,10 @@ export default function Dashboard() {
                             ? "Executing..."
                             : job.lastRun && !job.nextRun
                             ? `${titleCase(job.lastStatus || "Ok")} ${timeAgo(job.lastRun)}`
-                            : job.nextRun && new Date(job.nextRun).getTime() > Date.now()
+                            : job.nextRun &&
+                              new Date(job.nextRun).getTime() >
+                                // eslint-disable-next-line react-hooks/purity -- need current time vs scheduled next_run
+                                Date.now()
                             ? "Next " + timeUntil(job.nextRun)
                             : job.lastRun
                             ? `Active · Ran ${timeAgo(job.lastRun)}`

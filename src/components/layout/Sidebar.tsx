@@ -47,6 +47,7 @@ import {
   BookOpen,
   Library,
   Plus,
+  Workflow,
 } from "lucide-react";
 import type { AccentColor } from "@/types/hermes";
 import { iconColorMap } from "@/lib/theme";
@@ -76,6 +77,7 @@ const mainSections: SidebarSection[] = [
     links: [
       { icon: Zap, label: "Dashboard", href: "/", color: "cyan" },
       { icon: Rocket, label: "Missions", href: "/missions", color: "cyan" },
+      { icon: Workflow, label: "Operations", href: "/operations", color: "purple" },
       { icon: ListTodo, label: "Cron", href: "/cron", color: "orange" },
       { icon: Clock, label: "Sessions", href: "/sessions", color: "orange" },
       { icon: Database, label: "Memory", href: "/memory", color: "pink" },

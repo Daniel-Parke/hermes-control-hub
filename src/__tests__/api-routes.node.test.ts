@@ -17,6 +17,9 @@ function prepHome(): string {
   mkdirSync(join(tmpHome, "mission-control", "data", "templates"), {
     recursive: true,
   });
+  mkdirSync(join(tmpHome, "mission-control", "data", "operations"), {
+    recursive: true,
+  });
   return tmpHome;
 }
 
@@ -62,6 +65,10 @@ describe("API route handlers (temp HERMES_HOME)", () => {
       gateway: expect.objectContaining({ connectedCount: 0 }),
       memory: expect.objectContaining({ factCount: 0 }),
       errors: [],
+      capabilities: expect.objectContaining({
+        jobsJsonReadable: true,
+        configPresent: false,
+      }),
     });
   });
 
@@ -99,6 +106,15 @@ describe("API route handlers (temp HERMES_HOME)", () => {
     const body = await res.json();
     expect(Array.isArray(body.data.templates)).toBe(true);
     expect(body.data.templates.length).toBeGreaterThan(0);
+  });
+
+  it("GET /api/operations lists empty operations", async () => {
+    const { GET } = await import("@/app/api/operations/route");
+    const res = await GET(new NextRequest("http://localhost/api/operations"));
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.data.operations).toEqual([]);
+    expect(body.data.total).toBe(0);
   });
 
   it("GET /api/missions lists empty missions", async () => {

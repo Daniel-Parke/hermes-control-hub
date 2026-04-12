@@ -307,6 +307,45 @@ export interface Mission {
   };
 }
 
+// ── Operations (multi-step sequences; execution via Hermes cron/delegation) ──
+export type OperationStepStatus =
+  | "pending"
+  | "running"
+  | "done"
+  | "failed"
+  | "skipped";
+
+export interface OperationStep {
+  id: string;
+  title: string;
+  missionTemplateId?: string;
+  profile?: string;
+  notes?: string;
+  status: OperationStepStatus;
+  missionId?: string;
+  cronJobId?: string;
+  error?: string | null;
+  updatedAt: string;
+}
+
+export type OperationRunStatus =
+  | "draft"
+  | "active"
+  | "paused"
+  | "completed"
+  | "failed";
+
+export interface OperationRecord {
+  id: string;
+  name: string;
+  description: string;
+  steps: OperationStep[];
+  currentStepIndex: number;
+  status: OperationRunStatus;
+  createdAt: string;
+  updatedAt: string;
+}
+
 // ── UI Component Props ─────────────────────────────────────────
 export type StatusLevel = "online" | "warning" | "error" | "idle";
 

@@ -2,6 +2,8 @@
 // API Logger — consistent error logging for API routes
 // ═══════════════════════════════════════════════════════════════
 
+import { existsSync, readFileSync } from "fs";
+
 /**
  * Log an API error with context. Use in catch blocks instead of
  * empty `catch {}` to ensure errors are visible during debugging.
@@ -34,7 +36,6 @@ export function safeJsonParse<T>(text: string, route: string, context: string): 
  */
 export function safeReadJsonFile<T>(path: string, route: string): T | null {
   try {
-    const { readFileSync, existsSync } = require("fs");
     if (!existsSync(path)) return null;
     return JSON.parse(readFileSync(path, "utf-8")) as T;
   } catch (error) {

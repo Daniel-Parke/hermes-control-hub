@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { execSync } from "child_process";
 import { HERMES_HOME, PATHS } from "@/lib/hermes";
 import { existsSync, readFileSync, readdirSync, statSync } from "fs";
 import { logApiError } from "@/lib/api-logger";
@@ -88,7 +89,6 @@ export async function GET() {
 
     // Check gateway
     try {
-      const { execSync } = require("child_process");
       const ps = execSync('ps aux | grep "gateway run" | grep -v grep | wc -l', { encoding: "utf-8", timeout: 5000 });
       report.gateway.running = parseInt(ps.trim()) > 0;
     } catch {}

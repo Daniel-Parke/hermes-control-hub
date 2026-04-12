@@ -1,21 +1,38 @@
-import { NextResponse } from "next/server";
-import { execSync, spawn } from "child_process";
+import { NextRequest, NextResponse } from "next/server";
+import { execFileSync, execSync, spawn } from "child_process";
 import { existsSync, writeFileSync, readFileSync, unlinkSync } from "fs";
+import { tmpdir } from "os";
+
 import { logApiError } from "@/lib/api-logger";
+import { requireDeployApiEnabled, requireMcApiKey } from "@/lib/api-auth";
+import { appendAuditLine } from "@/lib/audit-log";
 
 // ═══════════════════════════════════════════════════════════════
 // Update API — Version Check + Update + Restart
 // ═══════════════════════════════════════════════════════════════
 // GET  /api/update                       → check for updates
-// POST /api/update { action: "update" }  → pull + build + restart
-// POST /api/update { action: "restart" } → restart only
+// POST /api/update { action: "update" }  → pull + build + restart (gated)
+// POST /api/update { action: "restart" } → restart only (gated)
+//
+// MC_ENABLE_DEPLOY_API=true required for POST.
+// MC_API_KEY optional; when set, require X-MC-API-Key or Bearer.
+// MC_UPDATE_GIT_BRANCH (default main) — remote tracking branch for deploy.
 
 const APP_DIR = process.cwd();
-const LOCK_FILE = "/tmp/mc-deploy.lock";
+const LOCK_FILE = tmpdir() + "/mc-deploy.lock";
 const UPDATE_SCRIPT = APP_DIR + "/scripts/update.sh";
 const RESTART_SCRIPT = APP_DIR + "/scripts/restart.sh";
-const CACHE_FILE = "/tmp/mc-version-cache.json";
+const CACHE_FILE = tmpdir() + "/mc-version-cache.json";
 const CACHE_TTL_MS = 5 * 60 * 1000;
+
+const UPDATE_BRANCH = sanitizeGitBranch(
+  process.env.MC_UPDATE_GIT_BRANCH || "main"
+);
+
+function sanitizeGitBranch(raw: string): string {
+  const s = raw.replace(/[^a-zA-Z0-9._/-]/g, "").slice(0, 200);
+  return s || "main";
+}
 
 interface VersionCache {
   localHash: string;
@@ -28,26 +45,8 @@ interface VersionCache {
   lastChecked: string;
 }
 
-function runGit(args: string): string {
-  // Whitelist allowed git commands to prevent injection
-  const allowed = [
-    "fetch origin main --quiet",
-    "rev-parse HEAD",
-    "rev-parse origin/main",
-    "rev-parse --abbrev-ref HEAD",
-    "log --format='%s' -1 origin/main",
-    "log --format='%ci' -1 origin/main",
-    "checkout main --quiet",
-    "reset --hard origin/main --quiet",
-    "diff --name-only HEAD@{1} HEAD 2>/dev/null || echo ''",
-    "rev-parse --short HEAD",
-  ];
-  // Allow rev-list --count with specific pattern
-  const isRevList = /^rev-list --count [a-f0-9]+\.\.[a-f0-9]+$/.test(args);
-  if (!allowed.includes(args) && !isRevList) {
-    throw new Error("Blocked git command: " + args);
-  }
-  return execSync(`git ${args}`, {
+function runGit(args: string[]): string {
+  return execFileSync("git", args, {
     cwd: APP_DIR,
     encoding: "utf-8",
     timeout: 30000,
@@ -58,7 +57,8 @@ function getCachedVersion(): VersionCache | null {
   try {
     if (!existsSync(CACHE_FILE)) return null;
     const raw = JSON.parse(readFileSync(CACHE_FILE, "utf-8"));
-    if (Date.now() - new Date(raw.lastChecked).getTime() > CACHE_TTL_MS) return null;
+    if (Date.now() - new Date(raw.lastChecked).getTime() > CACHE_TTL_MS)
+      return null;
     return raw;
   } catch {
     return null;
@@ -66,7 +66,11 @@ function getCachedVersion(): VersionCache | null {
 }
 
 function saveVersionCache(cache: VersionCache): void {
-  try { writeFileSync(CACHE_FILE, JSON.stringify(cache, null, 2)); } catch {}
+  try {
+    writeFileSync(CACHE_FILE, JSON.stringify(cache, null, 2));
+  } catch {
+    // ignore
+  }
 }
 
 function checkVersion(): VersionCache {
@@ -74,10 +78,11 @@ function checkVersion(): VersionCache {
   if (cached) return cached;
 
   try {
-    runGit("fetch origin main --quiet");
-    const localHash = runGit("rev-parse HEAD");
-    const remoteHash = runGit("rev-parse origin/main");
-    const branch = runGit("rev-parse --abbrev-ref HEAD");
+    runGit(["fetch", "origin", UPDATE_BRANCH, "--quiet"]);
+    const localHash = runGit(["rev-parse", "HEAD"]);
+    const remoteRef = "origin/" + UPDATE_BRANCH;
+    const remoteHash = runGit(["rev-parse", remoteRef]);
+    const branch = runGit(["rev-parse", "--abbrev-ref", "HEAD"]);
 
     let commitMessage = "";
     let commitDate = "";
@@ -85,10 +90,15 @@ function checkVersion(): VersionCache {
 
     if (localHash !== remoteHash) {
       try {
-        commitMessage = runGit("log --format='%s' -1 origin/main");
-        commitDate = runGit("log --format='%ci' -1 origin/main");
-        behind = parseInt(runGit(`rev-list --count ${localHash}..${remoteHash}`) || "0", 10);
-      } catch {}
+        commitMessage = runGit(["log", "--format=%s", "-1", remoteRef]);
+        commitDate = runGit(["log", "--format=%ci", "-1", remoteRef]);
+        behind = parseInt(
+          runGit(["rev-list", "--count", localHash + ".." + remoteHash]) || "0",
+          10
+        );
+      } catch {
+        // ignore
+      }
     }
 
     const cache: VersionCache = {
@@ -105,8 +115,13 @@ function checkVersion(): VersionCache {
     return cache;
   } catch {
     return {
-      localHash: "unknown", remoteHash: "unknown", updateAvailable: false,
-      commitMessage: "", commitDate: "", behind: 0, branch: "unknown",
+      localHash: "unknown",
+      remoteHash: "unknown",
+      updateAvailable: false,
+      commitMessage: "",
+      commitDate: "",
+      behind: 0,
+      branch: "unknown",
       lastChecked: new Date().toISOString(),
     };
   }
@@ -123,88 +138,156 @@ export async function GET() {
 }
 
 // POST /api/update
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+  const gated = requireDeployApiEnabled();
+  if (gated) return gated;
+
+  const auth = requireMcApiKey(request);
+  if (auth) return auth;
+
   try {
     const body = await request.json().catch(() => ({}));
     const action = body.action || "update";
 
     if (existsSync(LOCK_FILE)) {
-      return NextResponse.json({ error: "Update already in progress" }, { status: 409 });
+      return NextResponse.json(
+        { error: "Update already in progress" },
+        { status: 409 }
+      );
     }
 
     if (action === "restart") {
       spawnScript(RESTART_SCRIPT);
+      appendAuditLine({
+        action: "deploy.restart",
+        resource: "update",
+        ok: true,
+      });
       return NextResponse.json({ data: { action: "restart", status: "started" } });
     }
 
     if (action === "update") {
-      // Pre-flight: run git ops while server is still up
       try {
-        runGit("fetch origin main --quiet");
-        runGit("checkout main --quiet");
-        runGit("reset --hard origin/main --quiet");
+        runGit(["fetch", "origin", UPDATE_BRANCH, "--quiet"]);
+        runGit(["checkout", UPDATE_BRANCH, "--quiet"]);
+        runGit(["reset", "--hard", "origin/" + UPDATE_BRANCH, "--quiet"]);
       } catch (error) {
         logApiError("POST /api/update", "git operations", error);
+        appendAuditLine({
+          action: "deploy.update",
+          resource: "git",
+          ok: false,
+          detail: "git failed",
+        });
         return NextResponse.json({ error: "Git update failed" }, { status: 500 });
       }
 
-      // npm install if needed
       try {
-        const diff = runGit("diff --name-only HEAD@{1} HEAD 2>/dev/null || echo ''");
+        const diff = execSync(
+          'git diff --name-only HEAD@{1} HEAD 2>/dev/null || echo ""',
+          { cwd: APP_DIR, encoding: "utf-8", timeout: 30000 }
+        );
         if (diff.includes("package")) {
-          execSync("npm install --prefer-offline", { cwd: APP_DIR, timeout: 120000, stdio: "pipe" });
+          execSync("npm install --prefer-offline", {
+            cwd: APP_DIR,
+            timeout: 120000,
+            stdio: "pipe",
+          });
         }
       } catch (error) {
         logApiError("POST /api/update", "npm install", error);
+        appendAuditLine({
+          action: "deploy.update",
+          resource: "npm",
+          ok: false,
+        });
         return NextResponse.json({ error: "npm install failed" }, { status: 500 });
       }
 
-      // Build (if this fails, don't restart)
       try {
-        execSync("npm run build", { cwd: APP_DIR, timeout: 180000, stdio: "pipe" });
+        execSync("npm run build", {
+          cwd: APP_DIR,
+          timeout: 180000,
+          stdio: "pipe",
+        });
       } catch (error) {
         logApiError("POST /api/update", "build", error);
+        appendAuditLine({
+          action: "deploy.update",
+          resource: "build",
+          ok: false,
+        });
         return NextResponse.json(
-          { error: "Build failed — update aborted (server still running)" },
+          {
+            error: "Build failed — update aborted (server still running)",
+          },
           { status: 500 }
         );
       }
 
-      // Build succeeded — spawn restart via update.sh (which calls restart.sh)
       spawnScript(UPDATE_SCRIPT);
-      try { unlinkSync(CACHE_FILE); } catch {}
+      try {
+        unlinkSync(CACHE_FILE);
+      } catch {
+        // ignore
+      }
+
+      let short = "";
+      try {
+        short = runGit(["rev-parse", "--short", "HEAD"]);
+      } catch {
+        // ignore
+      }
+
+      appendAuditLine({
+        action: "deploy.update",
+        resource: "full",
+        ok: true,
+        detail: short,
+      });
 
       return NextResponse.json({
-        data: { action: "update", status: "started", newHash: runGit("rev-parse --short HEAD") },
+        data: { action: "update", status: "started", newHash: short },
       });
     }
 
-    return NextResponse.json({ error: "Unknown action. Use 'update' or 'restart'" }, { status: 400 });
+    return NextResponse.json(
+      { error: "Unknown action. Use 'update' or 'restart'" },
+      { status: 400 }
+    );
   } catch (error) {
     logApiError("POST /api/update", "processing request", error);
     return NextResponse.json({ error: "Update failed" }, { status: 500 });
   }
 }
 
-/**
- * Spawn a script via systemd-run (transient unit that survives server shutdown).
- * Falls back to nohup if systemd-run unavailable.
- */
 function spawnScript(scriptPath: string): void {
-  // Build the command: sleep 3 (let API respond), then run script
   const command = `sleep 3; bash "${scriptPath}"`;
 
   try {
-    spawn("systemd-run", [
-      "--user", "--unit=mc-action", "--property=Type=oneshot",
-      "bash", "-c", command,
-    ], { detached: true, stdio: "ignore" }).unref();
+    spawn(
+      "systemd-run",
+      [
+        "--user",
+        "--unit=mc-action",
+        "--property=Type=oneshot",
+        "bash",
+        "-c",
+        command,
+      ],
+      { detached: true, stdio: "ignore" }
+    ).unref();
     return;
-  } catch {}
+  } catch {
+    // fall through
+  }
 
   try {
     spawn("nohup", ["bash", "-c", command], {
-      detached: true, stdio: "ignore",
+      detached: true,
+      stdio: "ignore",
     }).unref();
-  } catch {}
+  } catch {
+    // ignore
+  }
 }

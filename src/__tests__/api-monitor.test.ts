@@ -47,6 +47,12 @@ describe("Monitor API - Response Shape", () => {
       lastCronRun: "2026-04-11T11:00:00Z",
       lastCronStatus: "ok",
     },
+    capabilities: {
+      jobsJsonReadable: true,
+      jobsJsonError: null,
+      configPresent: true,
+      memoryProviderFromConfig: "holographic",
+    },
   };
 
   it("should have all required top-level sections", () => {
@@ -56,6 +62,7 @@ describe("Monitor API - Response Shape", () => {
     expect(mockMonitorData).toHaveProperty("memory");
     expect(mockMonitorData).toHaveProperty("errors");
     expect(mockMonitorData).toHaveProperty("system");
+    expect(mockMonitorData).toHaveProperty("capabilities");
   });
 
   it("should have valid cron section", () => {

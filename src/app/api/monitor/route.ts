@@ -1,9 +1,12 @@
 import { NextResponse } from "next/server";
 import { existsSync, readFileSync, readdirSync, statSync } from "fs";
+import yaml from "js-yaml";
 
 // Use string concatenation to avoid Turbopack NFT tracing issues
-import { HERMES_HOME, PATHS } from "@/lib/hermes";
+import { PATHS } from "@/lib/hermes";
 import { logApiError } from "@/lib/api-logger";
+import { readJobsFile } from "@/lib/jobs-repository";
+import type { CronJobData } from "@/lib/utils";
 
 interface MonitorData {
   cron: {
@@ -49,6 +52,12 @@ interface MonitorData {
     lastCronRun: string | null;
     lastCronStatus: string | null;
   };
+  capabilities: {
+    jobsJsonReadable: boolean;
+    jobsJsonError: string | null;
+    configPresent: boolean;
+    memoryProviderFromConfig: string | null;
+  };
 }
 
 export async function GET() {
@@ -60,14 +69,43 @@ export async function GET() {
       memory: { factCount: 0, dbSize: "N/A", provider: "Not Installed" },
       errors: [],
       system: { uptime: "N/A", lastCronRun: null, lastCronStatus: null },
+      capabilities: {
+        jobsJsonReadable: true,
+        jobsJsonError: null,
+        configPresent: false,
+        memoryProviderFromConfig: null,
+      },
     };
+
+    if (existsSync(PATHS.config)) {
+      data.capabilities.configPresent = true;
+      try {
+        const cfg = yaml.load(readFileSync(PATHS.config, "utf-8")) as Record<
+          string,
+          unknown
+        >;
+        const mem = cfg.memory;
+        if (mem && typeof mem === "object" && mem !== null) {
+          const p = (mem as Record<string, unknown>).provider;
+          if (typeof p === "string" && p.trim()) {
+            data.capabilities.memoryProviderFromConfig = p.trim();
+          }
+        }
+      } catch (error) {
+        logApiError("GET /api/monitor", "parsing config for capabilities", error);
+      }
+    }
 
     // ── Cron Jobs ──────────────────────────────────────────────
     const cronPath = PATHS.cronJobs;
-    if (existsSync(cronPath)) {
+    const jobsParsed = readJobsFile(cronPath);
+    if (!jobsParsed.ok) {
+      data.capabilities.jobsJsonReadable = false;
+      data.capabilities.jobsJsonError = jobsParsed.error;
+    }
+    if (existsSync(cronPath) && jobsParsed.ok) {
       try {
-        const cronData = JSON.parse(readFileSync(cronPath, "utf-8"));
-        const jobs = Array.isArray(cronData.jobs) ? cronData.jobs : [];
+        const jobs = jobsParsed.jobs;
         data.cron.total = jobs.length;
         data.cron.active = jobs.filter(
           (j: { enabled?: boolean }) => j.enabled !== false
@@ -102,17 +140,19 @@ export async function GET() {
           })
         );
         // Find most recent cron run
-        const ran = jobs.filter((j: { last_run_at?: string }) => j.last_run_at);
+        const ran = jobs.filter((j: CronJobData) => j.last_run_at);
         if (ran.length > 0) {
-          ran.sort(
-            (a: { last_run_at: string }, b: { last_run_at: string }) =>
-              new Date(b.last_run_at).getTime() -
-              new Date(a.last_run_at).getTime()
-          );
-          data.system.lastCronRun = ran[0].last_run_at;
+          ran.sort((a: CronJobData, b: CronJobData) => {
+            const ta = new Date(String(a.last_run_at)).getTime();
+            const tb = new Date(String(b.last_run_at)).getTime();
+            return tb - ta;
+          });
+          data.system.lastCronRun = ran[0].last_run_at ?? null;
           data.system.lastCronStatus = ran[0].last_status || null;
         }
-      } catch (error) { logApiError("GET /api/monitor", "reading cron jobs", error); }
+      } catch (error) {
+        logApiError("GET /api/monitor", "reading cron jobs", error);
+      }
     }
 
     // ── Sessions (recent 10) ───────────────────────────────────

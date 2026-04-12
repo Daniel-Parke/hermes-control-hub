@@ -18,7 +18,7 @@ export async function GET(request: Request) {
     }
 
     // List available log files
-    let availableLogs: Array<{ name: string; size: number; modified: string }> = [];
+    const availableLogs: Array<{ name: string; size: number; modified: string }> = [];
     try {
       const files = readdirSync(logsDir);
       for (const file of files) {

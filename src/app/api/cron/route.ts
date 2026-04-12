@@ -1,66 +1,46 @@
 import { NextRequest, NextResponse } from "next/server";
-import { readFileSync, writeFileSync, existsSync, mkdirSync } from "fs";
 
-import { HERMES_HOME, PATHS, getDefaultModelConfig } from "@/lib/hermes";
+import { PATHS, getDefaultModelConfig } from "@/lib/hermes";
 import { logApiError } from "@/lib/api-logger";
-import { parseSchedule } from "@/lib/utils";
+import { requireMcApiKey, requireNotReadOnly } from "@/lib/api-auth";
+import { appendAuditLine } from "@/lib/audit-log";
+import { parseSchedule, type CronJobData } from "@/lib/utils";
+import {
+  readJobsFile,
+  withJobsFileLock,
+} from "@/lib/jobs-repository";
+import {
+  type CronPostBody,
+  cronPostBodySchema,
+  cronPutBodySchema,
+  zodErrorResponse,
+} from "@/lib/api-schemas";
+
 const CRON_PATH = PATHS.cronJobs;
-
-interface CronJobData {
-  id: string;
-  name: string;
-  prompt: string;
-  skills: string[];
-  skill?: string;
-  model: string;
-  provider?: string;
-  schedule: { kind: string; minutes?: number; expr?: string; run_at?: string; display?: string } | string;
-  schedule_display?: string;
-  repeat: { times: number | null; completed: number } | boolean;
-  enabled: boolean;
-  state?: string;
-  deliver?: string;
-  script?: string | null;
-  created_at?: string;
-  next_run_at?: string | null;
-  last_run_at?: string | null;
-  paused_at?: string | null;
-  [key: string]: unknown;
-}
-
-function readJobsFile(): { jobs: CronJobData[]; updated_at?: string } {
-  if (!existsSync(CRON_PATH)) return { jobs: [] };
-  try {
-    const content = readFileSync(CRON_PATH, "utf-8");
-    const data = JSON.parse(content);
-    // Handle both { jobs: [...] } and legacy flat dict
-    if (Array.isArray(data.jobs)) return data;
-    if (Array.isArray(data)) return { jobs: data };
-    return { jobs: [] };
-  } catch (error) {
-    logApiError("GET /api/cron", "reading cron jobs file", error);
-    return { jobs: [] };
-  }
-}
-
-function writeJobsFile(data: { jobs: CronJobData[]; updated_at?: string }) {
-  const dir = CRON_PATH.substring(0, CRON_PATH.lastIndexOf("/"));
-  mkdirSync(dir, { recursive: true });
-  data.updated_at = new Date().toISOString();
-  writeFileSync(CRON_PATH, JSON.stringify(data, null, 2), "utf-8");
-}
+const JOBS_BACKUP_DIR = PATHS.backups + "/mc-cron-jobs";
 
 // GET /api/cron — list all cron jobs
 export async function GET() {
   try {
-    const data = readJobsFile();
-    const jobList = data.jobs.map((job) => {
-      const scheduleStr = typeof job.schedule === "object"
-        ? (job.schedule.display || job.schedule.kind || "")
-        : String(job.schedule || "");
-      const repeatBool = typeof job.repeat === "object"
-        ? (job.repeat.times !== null ? job.repeat.times !== 1 : true)
-        : Boolean(job.repeat);
+    const parsed = readJobsFile(CRON_PATH);
+    if (!parsed.ok) {
+      logApiError("GET /api/cron", "corrupt jobs.json", new Error(parsed.error));
+      return NextResponse.json(
+        { error: parsed.error },
+        { status: 503 }
+      );
+    }
+    const jobList = parsed.jobs.map((job) => {
+      const scheduleStr =
+        typeof job.schedule === "object"
+          ? job.schedule.display || job.schedule.kind || ""
+          : String(job.schedule || "");
+      const repeatBool =
+        typeof job.repeat === "object"
+          ? job.repeat.times !== null
+            ? job.repeat.times !== 1
+            : true
+          : Boolean(job.repeat);
 
       return {
         id: job.id,
@@ -91,30 +71,63 @@ export async function GET() {
   }
 }
 
-// POST /api/cron — create a new job
+// POST /api/cron — create a new job (or body.action === "pauseAll")
 export async function POST(request: NextRequest) {
+  const ro = requireNotReadOnly();
+  if (ro) return ro;
+  const auth = requireMcApiKey(request);
+  if (auth) return auth;
+
   try {
-    const body = await request.json();
-    const { name, schedule, prompt, deliver, model, repeat, skills, script } = body;
-
-    if (!name || !schedule || !prompt) {
-      return NextResponse.json(
-        { error: "Missing required fields: name, schedule, prompt" },
-        { status: 400 }
-      );
+    let raw: unknown;
+    try {
+      raw = await request.json();
+    } catch {
+      return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    }
+    const parsed = cronPostBodySchema.safeParse(raw);
+    if (!parsed.success) {
+      return zodErrorResponse(parsed.error);
     }
 
-    const data = readJobsFile();
-    const id = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-
-    if (data.jobs.some((j) => j.id === id)) {
-      return NextResponse.json(
-        { error: `Job "${id}" already exists` },
-        { status: 409 }
+    if ("action" in parsed.data && parsed.data.action === "pauseAll") {
+      const out = await withJobsFileLock(
+        CRON_PATH,
+        JOBS_BACKUP_DIR,
+        (jobs) => {
+          const next = jobs.map((j) => ({
+            ...j,
+            enabled: false,
+            state: "paused",
+            paused_at: new Date().toISOString(),
+          }));
+          return { action: "write" as const, jobs: next, value: next.length };
+        }
       );
+      if (!out.ok) {
+        return NextResponse.json({ error: out.error }, { status: 503 });
+      }
+      appendAuditLine({
+        action: "cron.pauseAll",
+        resource: "jobs.json",
+        ok: true,
+        detail: String(out.value),
+      });
+      return NextResponse.json({
+        data: { success: true, pausedCount: out.value },
+      });
     }
+
+    const { name, schedule, prompt, deliver, model, repeat, skills, script } =
+      parsed.data as Exclude<CronPostBody, { action: "pauseAll" }>;
+
+    const id = name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "");
 
     const defaults = getDefaultModelConfig();
+    const sched = parseSchedule(schedule);
 
     const newJob: CronJobData = {
       id,
@@ -123,8 +136,8 @@ export async function POST(request: NextRequest) {
       skills: skills || [],
       model: model || defaults.model,
       provider: defaults.provider,
-      schedule: parseSchedule(schedule),
-      schedule_display: parseSchedule(schedule).display as string || schedule,
+      schedule: sched,
+      schedule_display: (sched.display as string) || schedule,
       repeat: { times: repeat ? -1 : 1, completed: 0 },
       enabled: true,
       state: "scheduled",
@@ -134,8 +147,27 @@ export async function POST(request: NextRequest) {
       next_run_at: null,
     };
 
-    data.jobs.push(newJob);
-    writeJobsFile(data);
+    const out = await withJobsFileLock(CRON_PATH, JOBS_BACKUP_DIR, (jobs) => {
+      if (jobs.some((j) => j.id === id)) {
+        return { action: "abort", error: `Job "${id}" already exists` };
+      }
+      const next = [...jobs, newJob];
+      return { action: "write", jobs: next, value: undefined };
+    });
+
+    if (!out.ok) {
+      if (out.error.includes("already exists")) {
+        return NextResponse.json({ error: out.error }, { status: 409 });
+      }
+      return NextResponse.json({ error: out.error }, { status: 503 });
+    }
+
+    appendAuditLine({
+      action: "cron.create",
+      resource: id,
+      ok: true,
+    });
+
     return NextResponse.json({ data: { success: true, id, job: newJob } });
   } catch (error) {
     logApiError("POST /api/cron", "creating cron job", error);
@@ -148,62 +180,86 @@ export async function POST(request: NextRequest) {
 
 // PUT /api/cron — update or toggle a job
 export async function PUT(request: NextRequest) {
+  const ro = requireNotReadOnly();
+  if (ro) return ro;
+  const auth = requireMcApiKey(request);
+  if (auth) return auth;
+
   try {
-    const body = await request.json();
-    const { id, action, ...updates } = body;
-
-    if (!id) {
-      return NextResponse.json(
-        { error: "Missing job id" },
-        { status: 400 }
-      );
+    let raw: unknown;
+    try {
+      raw = await request.json();
+    } catch {
+      return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
     }
-
-    const data = readJobsFile();
-    const jobIndex = data.jobs.findIndex((j) => j.id === id);
-    if (jobIndex === -1) {
-      return NextResponse.json(
-        { error: `Job "${id}" not found` },
-        { status: 404 }
-      );
+    const parsed = cronPutBodySchema.safeParse(raw);
+    if (!parsed.success) {
+      return zodErrorResponse(parsed.error);
     }
+    const { id, action, ...updates } = parsed.data;
 
-    const job = data.jobs[jobIndex];
+    const out = await withJobsFileLock(CRON_PATH, JOBS_BACKUP_DIR, (jobs) => {
+      const jobIndex = jobs.findIndex((j) => j.id === id);
+      if (jobIndex === -1) {
+        return { action: "abort", error: `Job "${id}" not found` };
+      }
+      const next = jobs.map((j) => ({ ...j }));
+      const job = { ...next[jobIndex] } as CronJobData;
 
-    if (action === "pause") {
-      job.enabled = false;
-      job.paused_at = new Date().toISOString();
-      job.state = "paused";
-    } else if (action === "resume") {
-      job.enabled = true;
-      job.paused_at = null;
-      job.state = "scheduled";
-    } else if (action === "run") {
-      // Trigger the job to run on the next scheduler tick (within ~60s).
-      // Mirrors trigger_job() from cron/jobs.py — sets next_run_at to now
-      // so the scheduler's get_due_jobs() picks it up immediately.
-      job.next_run_at = new Date().toISOString();
-      job.state = "scheduled";
-      job.enabled = true;
-      job.paused_at = null;
-    } else {
-      // Whitelist allowed fields to prevent mass assignment
-      const ALLOWED_FIELDS = ["name", "prompt", "skills", "model", "deliver", "enabled", "schedule", "schedule_display"] as const;
-      for (const field of ALLOWED_FIELDS) {
-        if (field in updates) {
-          const value = (updates as Record<string, unknown>)[field];
-          if (field === "schedule" && typeof value === "string") {
-            (job as Record<string, unknown>)[field] = parseSchedule(value);
-          } else {
-            (job as Record<string, unknown>)[field] = value;
+      if (action === "pause") {
+        job.enabled = false;
+        job.paused_at = new Date().toISOString();
+        job.state = "paused";
+      } else if (action === "resume") {
+        job.enabled = true;
+        job.paused_at = null;
+        job.state = "scheduled";
+      } else if (action === "run") {
+        job.next_run_at = new Date().toISOString();
+        job.state = "scheduled";
+        job.enabled = true;
+        job.paused_at = null;
+      } else {
+        const ALLOWED_FIELDS = [
+          "name",
+          "prompt",
+          "skills",
+          "model",
+          "deliver",
+          "enabled",
+          "schedule",
+          "schedule_display",
+        ] as const;
+        for (const field of ALLOWED_FIELDS) {
+          if (field in updates) {
+            const value = (updates as Record<string, unknown>)[field];
+            if (field === "schedule" && typeof value === "string") {
+              (job as Record<string, unknown>)[field] = parseSchedule(value);
+            } else {
+              (job as Record<string, unknown>)[field] = value;
+            }
           }
         }
       }
+
+      next[jobIndex] = job;
+      return { action: "write", jobs: next, value: job };
+    });
+
+    if (!out.ok) {
+      const st = out.error.includes("not found") ? 404 : 503;
+      return NextResponse.json({ error: out.error }, { status: st });
     }
 
-    data.jobs[jobIndex] = job;
-    writeJobsFile(data);
-    return NextResponse.json({ data: { success: true, id, job } });
+    appendAuditLine({
+      action: "cron.update",
+      resource: id,
+      ok: true,
+    });
+
+    return NextResponse.json({
+      data: { success: true, id, job: out.value },
+    });
   } catch (error) {
     logApiError("PUT /api/cron", "updating cron job", error);
     return NextResponse.json(
@@ -215,28 +271,39 @@ export async function PUT(request: NextRequest) {
 
 // DELETE /api/cron — delete a job
 export async function DELETE(request: NextRequest) {
+  const ro = requireNotReadOnly();
+  if (ro) return ro;
+  const auth = requireMcApiKey(request);
+  if (auth) return auth;
+
   try {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get("id");
 
     if (!id) {
-      return NextResponse.json(
-        { error: "Missing job id" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Missing job id" }, { status: 400 });
     }
 
-    const data = readJobsFile();
-    const jobIndex = data.jobs.findIndex((j) => j.id === id);
-    if (jobIndex === -1) {
-      return NextResponse.json(
-        { error: `Job "${id}" not found` },
-        { status: 404 }
-      );
+    const out = await withJobsFileLock(CRON_PATH, JOBS_BACKUP_DIR, (jobs) => {
+      const jobIndex = jobs.findIndex((j) => j.id === id);
+      if (jobIndex === -1) {
+        return { action: "abort", error: `Job "${id}" not found` };
+      }
+      const next = jobs.filter((j) => j.id !== id);
+      return { action: "write", jobs: next, value: undefined };
+    });
+
+    if (!out.ok) {
+      const st = out.error.includes("not found") ? 404 : 503;
+      return NextResponse.json({ error: out.error }, { status: st });
     }
 
-    data.jobs.splice(jobIndex, 1);
-    writeJobsFile(data);
+    appendAuditLine({
+      action: "cron.delete",
+      resource: id,
+      ok: true,
+    });
+
     return NextResponse.json({ data: { success: true, deleted: id } });
   } catch (error) {
     logApiError("DELETE /api/cron", "deleting cron job", error);

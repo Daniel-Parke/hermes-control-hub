@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect -- overlay resets and completion snap are driven by props (visible/done) */
 // GenerateOverlay — Loading overlay with smooth progress bar and fun messages
 "use client";
 import { useState, useEffect, useRef } from "react";
@@ -15,7 +16,7 @@ export default function GenerateOverlay({ title, visible, done, onComplete }: Ge
   const [msg, setMsg] = useState(LOADING_MESSAGES[0]);
   const [progress, setProgress] = useState(0);
   const [phase, setPhase] = useState<"generating" | "complete">("generating");
-  const startTimeRef = useRef(Date.now());
+  const startTimeRef = useRef(0);
   const msgIndexRef = useRef(0);
 
   // Reset on visibility change

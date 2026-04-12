@@ -22,6 +22,7 @@ describe("Hermes Config Module", () => {
       expect(PATHS.memoryDb).toContain("memory_store.db");
       expect(PATHS.missions).toContain("missions");
       expect(PATHS.templates).toContain("templates");
+      expect(PATHS.operations).toContain("operations");
     });
 
     it("should derive all paths from HERMES_HOME", () => {
@@ -47,6 +48,34 @@ describe("Hermes Config Module", () => {
       const yaml = "model:\n  default: test\n";
       expect(getConfigValue(yaml, "model.nonexistent")).toBe("");
       expect(getConfigValue(yaml, "missing.key")).toBe("");
+    });
+  });
+
+  describe("getDefaultModelConfig", () => {
+    it("uses model as alias for default", async () => {
+      const { mkdtempSync, writeFileSync, rmSync } = await import("fs");
+      const { join } = await import("path");
+      const { tmpdir } = await import("os");
+      const t = mkdtempSync(join(tmpdir(), "mc-model-"));
+      const prev = process.env.HERMES_HOME;
+      process.env.HERMES_HOME = t;
+      jest.resetModules();
+      try {
+        writeFileSync(
+          t + "/config.yaml",
+          "model:\n  model: from-model-key\n  provider: nous\n",
+          "utf-8"
+        );
+        const { getDefaultModelConfig } = await import("@/lib/hermes");
+        const c = getDefaultModelConfig();
+        expect(c.model).toBe("from-model-key");
+        expect(c.provider).toBe("nous");
+      } finally {
+        rmSync(t, { recursive: true, force: true });
+        if (prev !== undefined) process.env.HERMES_HOME = prev;
+        else delete process.env.HERMES_HOME;
+        jest.resetModules();
+      }
     });
   });
 

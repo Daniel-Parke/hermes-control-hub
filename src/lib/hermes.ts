@@ -1,13 +1,15 @@
 import yaml from "js-yaml";
 import { readFileSync, existsSync } from "fs";
+import { homedir } from "os";
 // ═══════════════════════════════════════════════════════════════
 // Shared Hermes Configuration — centralised paths and constants
 // ═══════════════════════════════════════════════════════════════
 // All API routes should import from here instead of constructing
 // paths independently. This ensures consistency and portability.
+// Default HERMES_HOME matches hermes-agent hermes_constants.get_hermes_home().
 
-export const HOME = process.env.HOME || "";
-export const HERMES_HOME = process.env.HERMES_HOME || (HOME + "/.hermes");
+export const HERMES_HOME =
+  process.env.HERMES_HOME || homedir() + "/.hermes";
 export const MC_DATA_DIR = HERMES_HOME + "/mission-control/data";
 
 // Standard file paths
@@ -27,6 +29,7 @@ export const PATHS = {
   memoryDb: HERMES_HOME + "/memory_store.db",
   missions: MC_DATA_DIR + "/missions",
   templates: MC_DATA_DIR + "/templates",
+  operations: MC_DATA_DIR + "/operations",
 } as const;
 
 // Read a config value from config.yaml using js-yaml
@@ -73,8 +76,14 @@ export function getDefaultModelConfig(): DefaultModelConfig {
     }
     if (typeof modelSection === "object" && modelSection !== null) {
       const mc = modelSection as Record<string, unknown>;
+      const defaultModel =
+        typeof mc.default === "string"
+          ? mc.default
+          : typeof mc.model === "string"
+            ? mc.model
+            : "";
       return {
-        model: typeof mc.default === "string" ? mc.default : "",
+        model: defaultModel,
         provider: typeof mc.provider === "string" ? mc.provider : "",
         base_url: typeof mc.base_url === "string" ? mc.base_url : "",
         api_key: typeof mc.api_key === "string" ? mc.api_key : "",

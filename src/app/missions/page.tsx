@@ -52,6 +52,8 @@ import ProfileSelector from "@/components/ui/ProfileSelector";
 import CategoryAccordion from "@/components/ui/CategoryAccordion";
 import TemplateCard from "@/components/ui/TemplateCard";
 import { timeAgo, timeUntil, titleCase } from "@/lib/utils";
+import { useMissionsApi } from "@/hooks/useMissionsApi";
+import type { Mission } from "@/types/hermes";
 
 // Available icons for templates
 const TEMPLATE_ICONS = [
@@ -64,29 +66,15 @@ const TEMPLATE_COLORS = [
   "cyan", "purple", "pink", "green", "orange",
 ] as const;
 
-interface MissionRecord {
-  id: string;
-  name: string;
-  prompt: string;
-  goals: string[];
-  skills: string[];
-  model: string;
-  status: "queued" | "dispatched" | "successful" | "failed";
-  dispatchMode: "save" | "now" | "cron";
-  createdAt: string;
-  updatedAt: string;
-  results: string | null;
-  duration: number | null;
-  error: string | null;
-  cronJobId?: string;
-  templateId?: string;
+type MissionRow = Mission & {
   cronJob?: {
     state: string;
     enabled: boolean;
     lastRun: string | null;
     lastStatus: string | null;
   };
-}
+  latestSession?: { id: string; modified: string } | null;
+};
 
 interface MissionTemplate {
   id: string;
@@ -106,7 +94,7 @@ interface MissionTemplate {
 }
 
 interface MissionDetail {
-  mission: MissionRecord;
+  mission: MissionRow;
   cronJob: {
     id: string;
     name: string;
@@ -130,8 +118,9 @@ const statusColors: Record<string, { dot: "online" | "warning" | "error" | "idle
 };
 
 export default function MissionsPage() {
+  const { fetchMissions, fetchTemplates, fetchMissionDetail } = useMissionsApi();
   const router = useRouter();
-  const [missions, setMissions] = useState<MissionRecord[]>([]);
+  const [missions, setMissions] = useState<MissionRow[]>([]);
   const [templates, setTemplates] = useState<MissionTemplate[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
@@ -167,54 +156,47 @@ export default function MissionsPage() {
   const [categoryFilter, setCategoryFilter] = useState("all");
 
   const fetchData = useCallback(() => {
-    fetch("/api/missions")
-      .then((r) => r.json())
-      .then((d) => {
-        if (d.data) setMissions(d.data.missions || []);
-      })
+    fetchMissions()
+      .then((list) => setMissions(list))
       .catch(() => {});
 
-    fetch("/api/missions?action=templates")
-      .then((r) => r.json())
-      .then((d) => {
-        if (d.data) {
-          const loaded = d.data.templates || [];
-          setTemplates(loaded);
-          // Auto-apply template from URL param on first load
-          if (!templateApplied.current && loaded.length > 0) {
-            const url = new URL(window.location.href);
-            const templateId = url.searchParams.get("template");
-            if (templateId) {
-              const t = loaded.find((tmpl: MissionTemplate) => tmpl.id === templateId);
-              if (t) {
-                setNewName(t.name);
-                setNewInstruction(t.instruction);
-                setNewContext(t.context);
-                setNewGoals(t.goals.join("\n"));
-                setShowCreate(true);
-                templateApplied.current = true;
-                // Clean URL param
-                window.history.replaceState({}, "", "/missions");
-              }
+    fetchTemplates()
+      .then((loaded) => {
+        setTemplates(loaded);
+        if (!templateApplied.current && loaded.length > 0) {
+          const url = new URL(window.location.href);
+          const templateId = url.searchParams.get("template");
+          if (templateId) {
+            const t = loaded.find((tmpl: MissionTemplate) => tmpl.id === templateId);
+            if (t) {
+              setNewName(t.name);
+              setNewInstruction(t.instruction);
+              setNewContext(t.context);
+              setNewGoals(t.goals.join("\n"));
+              setShowCreate(true);
+              templateApplied.current = true;
+              window.history.replaceState({}, "", "/missions");
             }
           }
         }
       })
       .catch(() => {});
-  }, []);
+  }, [fetchMissions, fetchTemplates]);
 
-  const fetchDetail = useCallback((id: string, showLoading = true) => {
-    if (showLoading) setDetailLoading(true);
-    fetch("/api/missions?id=" + id)
-      .then((r) => r.json())
-      .then((d) => {
-        if (d.data) setDetail(d.data);
-      })
-      .catch(() => {})
-      .finally(() => {
-        if (showLoading) setDetailLoading(false);
-      });
-  }, []);
+  const fetchDetail = useCallback(
+    (id: string, showLoading = true) => {
+      if (showLoading) setDetailLoading(true);
+      fetchMissionDetail(id)
+        .then((data) => {
+          if (data) setDetail(data);
+        })
+        .catch(() => {})
+        .finally(() => {
+          if (showLoading) setDetailLoading(false);
+        });
+    },
+    [fetchMissionDetail]
+  );
 
   useEffect(() => {
     expandedIdRef.current = expandedId;
@@ -368,7 +350,7 @@ export default function MissionsPage() {
     }
   };
 
-  const handleEdit = (m: MissionRecord) => {
+  const handleEdit = (m: MissionRow) => {
     setEditingId(m.id);
     setNewName(m.name);
     // Split prompt back into instruction + context (best effort)
@@ -703,7 +685,7 @@ export default function MissionsPage() {
                   placeholder="The agent's task instructions - what to do and how to do it..."
                 />
                 <p className="text-[10px] text-white/20 font-mono mt-0.5">
-                  Defines the agent's role, approach, and step-by-step process. Templates pre-fill this.
+                  Defines the agent&apos;s role, approach, and step-by-step process. Templates pre-fill this.
                 </p>
               </div>
               <div>
@@ -716,7 +698,7 @@ export default function MissionsPage() {
                   placeholder="Additional context, specifics, or direction for this particular run..."
                 />
                 <p className="text-[10px] text-white/20 font-mono mt-0.5">
-                  Added below the instructions as "Additional Context". Use for topic, URL, code path, or specific requirements.
+                  Added below the instructions as &quot;Additional Context&quot;. Use for topic, URL, code path, or specific requirements.
                 </p>
               </div>
               <div>

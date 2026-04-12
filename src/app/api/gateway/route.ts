@@ -9,8 +9,6 @@ export async function GET() {
   try {
     // Read config for gateway settings
     const configPath = PATHS.config;
-    let gatewayConfig: Record<string, unknown> = {};
-
     if (existsSync(configPath)) {
       try {
         const content = readFileSync(configPath, "utf-8");

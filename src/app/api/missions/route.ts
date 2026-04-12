@@ -1,24 +1,32 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 // ═══════════════════════════════════════════════════════════════
 // Missions API — CRUD + Real Dispatch via Cron Jobs
 // ═══════════════════════════════════════════════════════════════
 
-import { HERMES_HOME, PATHS, getDefaultModelConfig } from "@/lib/hermes";
-import { existsSync, mkdirSync, readFileSync, writeFileSync, readdirSync, unlinkSync, statSync } from "fs";
+import { PATHS, getDefaultModelConfig } from "@/lib/hermes";
+import { existsSync, readFileSync, readdirSync, unlinkSync, statSync } from "fs";
 import { logApiError } from "@/lib/api-logger";
 import { parseSchedule, CronJobData } from "@/lib/utils";
+import { readJobsFile, withJobsFileLock } from "@/lib/jobs-repository";
+import { requireMcApiKey, requireNotReadOnly } from "@/lib/api-auth";
+import { appendAuditLine } from "@/lib/audit-log";
 import {
-  getScopeLabel,
-  missionTimeToDevHours,
-  buildGoalsSection,
   buildMissionPrompt,
   getMissionStatus,
   TEMPLATES,
-  TemplateDef,
 } from "@/lib/mission-helpers";
+import {
+  ensureMissionsDir,
+  getMissionsDataDir,
+  loadMission,
+  saveMission,
+  sanitizeMissionId,
+} from "@/lib/missions-repository";
+import { missionPostBodySchema, zodErrorResponse } from "@/lib/api-schemas";
+import type { Mission } from "@/types/hermes";
 
-const DATA_DIR = PATHS.missions;
 const CRON_PATH = PATHS.cronJobs;
+const JOBS_BACKUP_DIR = PATHS.backups + "/mc-cron-jobs";
 
 // Resolve delivery target from .env or config
 function getDeliverTarget(): string {
@@ -35,81 +43,12 @@ function getDeliverTarget(): string {
   return "local";
 }
 
-function ensureDir() {
-  if (!existsSync(DATA_DIR)) {
-    mkdirSync(DATA_DIR, { recursive: true });
-  }
-}
-
-function sanitizeId(id: string): string {
-  // Only allow alphanumeric, hyphens, underscores — block path traversal
-  return id.replace(/[^a-zA-Z0-9_-]/g, "");
-}
-
-function loadMission(id: string): MissionRecord | null {
-  const safe = sanitizeId(id);
-  if (!safe) return null;
-  const path = DATA_DIR + "/" + safe + ".json";
-  if (!existsSync(path)) return null;
-  try {
-    return JSON.parse(readFileSync(path, "utf-8"));
-  } catch {
-    return null;
-  }
-}
-
-function saveMission(record: MissionRecord) {
-  ensureDir();
-  const safe = sanitizeId(record.id);
-  if (!safe) return;
-  const path = DATA_DIR + "/" + safe + ".json";
-  writeFileSync(path, JSON.stringify(record, null, 2));
-}
-
-interface MissionRecord {
-  id: string;
-  name: string;
-  prompt: string;
-  goals: string[];
-  skills: string[];
-  model: string;
-  profile: string;
-  missionTimeMinutes: number;
-  timeoutMinutes: number;
-  schedule: string;
-  status: "queued" | "dispatched" | "successful" | "failed";
-  dispatchMode: "save" | "now" | "cron";
-  createdAt: string;
-  updatedAt: string;
-  results: string | null;
-  duration: number | null;
-  error: string | null;
-  cronJobId?: string;
-  templateId?: string;
-}
-
 // ── Cron helpers ──────────────────────────────────────────────
 
-function readCronJobs(): CronJobData[] {
-  if (!existsSync(CRON_PATH)) return [];
-  try {
-    const data = JSON.parse(readFileSync(CRON_PATH, "utf-8"));
-    return Array.isArray(data.jobs) ? data.jobs : [];
-  } catch (err) {
-    logApiError("missions/findSessionsForCronJob", "scanning session files", err);
-    return [];
-  }
-}
-
-function writeCronJobs(jobs: CronJobData[]) {
-  const dir = CRON_PATH.substring(0, CRON_PATH.lastIndexOf("/"));
-  if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
-  writeFileSync(CRON_PATH, JSON.stringify({ jobs, updated_at: new Date().toISOString() }, null, 2));
-}
-
 function findCronJobForMission(missionId: string): CronJobData | null {
-  const jobs = readCronJobs();
-  return jobs.find((j) => j.mission_id === missionId) || null;
+  const parsed = readJobsFile(CRON_PATH);
+  if (!parsed.ok) return null;
+  return parsed.jobs.find((j) => j.mission_id === missionId) || null;
 }
 
 // ── Find sessions that ran a specific cron job ────────────────
@@ -155,12 +94,14 @@ export async function GET(request: Request) {
   try {
     const url = new URL(request.url);
     const action = url.searchParams.get("action");
-    const missionId = url.searchParams.get("id") ? sanitizeId(url.searchParams.get("id")!) : null;
+    const missionId = url.searchParams.get("id")
+      ? sanitizeMissionId(url.searchParams.get("id")!)
+      : null;
 
     if (action === "templates") {
       // Merge built-in templates with custom templates
       const builtIn = TEMPLATES.map((t) => ({ ...t, isCustom: false }));
-      let custom: Array<Record<string, unknown>> = [];
+      const custom: Array<Record<string, unknown>> = [];
 
       const customDir = PATHS.templates;
       if (existsSync(customDir)) {
@@ -200,7 +141,7 @@ export async function GET(request: Request) {
       if (mission.cronJobId) {
         const job = findCronJobForMission(missionId);
         const mapped = getMissionStatus(job, mission.status);
-        mission.status = mapped.status as MissionRecord["status"];
+        mission.status = mapped.status as Mission["status"];
         if (mapped.error) mission.error = mapped.error;
         mission.updatedAt = new Date().toISOString();
 
@@ -223,13 +164,40 @@ export async function GET(request: Request) {
     }
 
     // List all missions with linked cron status
-    ensureDir();
-    const files = existsSync(DATA_DIR) ? readdirSync(DATA_DIR).filter((f) => f.endsWith(".json")) : [];
-    const missions: Array<MissionRecord & { cronJob?: { state: string; enabled: boolean; lastRun: string | null; lastStatus: string | null }; latestSession?: { id: string; modified: string } | null }> = [];
+    ensureMissionsDir();
+    const missionsDir = getMissionsDataDir();
+    const files = existsSync(missionsDir)
+      ? readdirSync(missionsDir).filter((f) => f.endsWith(".json"))
+      : [];
+    const missions: Array<
+      Mission & {
+        cronJob?: {
+          state: string;
+          enabled: boolean;
+          lastRun: string | null;
+          lastStatus: string | null;
+        };
+        latestSession?: { id: string; modified: string } | null;
+      }
+    > = [];
 
     // PERFORMANCE: Read cron jobs once, build lookup map instead of re-reading per mission
-    const allCronJobs = readCronJobs();
-    const cronJobMap = new Map(allCronJobs.map((j) => [j.mission_id, j]));
+    const cronParsed = readJobsFile(CRON_PATH);
+    const allCronJobs = cronParsed.ok
+      ? cronParsed.jobs
+      : (() => {
+          logApiError(
+            "GET /api/missions",
+            "cron jobs file unreadable: " + cronParsed.error,
+            new Error(cronParsed.error)
+          );
+          return [];
+        })();
+    const cronJobMap = new Map(
+      allCronJobs
+        .filter((j) => j.mission_id != null && j.mission_id !== "")
+        .map((j) => [j.mission_id as string, j])
+    );
 
     // PERFORMANCE: Scan sessions directory once, build map of missionId -> latest session
     const sessionsMap = new Map<string, { id: string }>();
@@ -258,19 +226,19 @@ export async function GET(request: Request) {
 
     for (const file of files) {
       try {
-        const content = readFileSync(DATA_DIR + "/" + file, "utf-8");
-        const m: MissionRecord = JSON.parse(content);
+        const content = readFileSync(missionsDir + "/" + file, "utf-8");
+        const m = JSON.parse(content) as Mission;
 
         // Derive status from cron job
         if (m.cronJobId) {
           const job = cronJobMap.get(m.id) || null;
           const mapped = getMissionStatus(job, m.status);
-          m.status = mapped.status as MissionRecord["status"];
+          m.status = mapped.status as Mission["status"];
           if (mapped.error) m.error = mapped.error;
           m.updatedAt = new Date().toISOString();
 
           if (job) {
-            (m as MissionRecord & { cronJob: unknown }).cronJob = {
+            (m as Mission & { cronJob: unknown }).cronJob = {
               state: job.state || "unknown",
               enabled: job.enabled !== false,
               lastRun: job.last_run_at || null,
@@ -304,27 +272,41 @@ export async function GET(request: Request) {
 
 // ── POST ──────────────────────────────────────────────────────
 
-export async function POST(request: Request) {
-  try {
-    const body = await request.json();
-    const { action } = body;
+export async function POST(request: NextRequest) {
+  const ro = requireNotReadOnly();
+  if (ro) return ro;
+  const auth = requireMcApiKey(request);
+  if (auth) return auth;
 
-    if (action === "create") {
+  try {
+    let raw: unknown;
+    try {
+      raw = await request.json();
+    } catch {
+      return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    }
+    const parsedBody = missionPostBodySchema.safeParse(raw);
+    if (!parsedBody.success) {
+      return zodErrorResponse(parsedBody.error);
+    }
+    const payload = parsedBody.data;
+
+    if (payload.action === "create") {
       const id = "m_" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
       const now = new Date().toISOString();
-      const dispatchMode: "save" | "now" | "cron" = body.dispatchMode || "save";
+      const dispatchMode: "save" | "now" | "cron" = payload.dispatchMode ?? "save";
 
-      const record: MissionRecord = {
+      const record: Mission = {
         id,
-        name: body.name || "Untitled Mission",
-        prompt: body.prompt || "",
-        goals: body.goals || [],
-        skills: body.skills || [],
-        model: body.model || "",
-        profile: body.profile || "",
-        missionTimeMinutes: Math.max(5, Math.min(120, body.missionTimeMinutes || 15)),
-        timeoutMinutes: Math.max(1, Math.min(120, body.timeoutMinutes || 10)),
-        schedule: body.schedule || "every 5m",
+        name: payload.name || "Untitled Mission",
+        prompt: payload.prompt || "",
+        goals: payload.goals || [],
+        skills: payload.skills || [],
+        model: payload.model || "",
+        profile: payload.profile || "",
+        missionTimeMinutes: Math.max(5, Math.min(120, payload.missionTimeMinutes ?? 15)),
+        timeoutMinutes: Math.max(1, Math.min(120, payload.timeoutMinutes ?? 10)),
+        schedule: payload.schedule || "every 5m",
         status: "queued",
         dispatchMode,
         createdAt: now,
@@ -332,7 +314,7 @@ export async function POST(request: Request) {
         results: null,
         duration: null,
         error: null,
-        templateId: body.templateId || undefined,
+        templateId: payload.templateId ?? null,
       };
 
       // Parse schedule string into cron schedule object using shared parser
@@ -376,57 +358,99 @@ export async function POST(request: Request) {
           profile: record.profile || undefined,
         } as CronJobData;
 
-        // Write cron job to jobs.json
-        const jobs = readCronJobs();
-        jobs.push(cronJob);
-        writeCronJobs(jobs);
+        const w = await withJobsFileLock(
+          CRON_PATH,
+          JOBS_BACKUP_DIR,
+          (jobs) => ({
+            action: "write" as const,
+            jobs: [...jobs, cronJob],
+            value: undefined,
+          })
+        );
+        if (!w.ok) {
+          return NextResponse.json(
+            { error: w.error },
+            { status: 503 }
+          );
+        }
 
         record.cronJobId = cronId;
         record.status = "dispatched";
       }
 
       saveMission(record);
+      appendAuditLine({
+        action: "mission.create",
+        resource: record.id,
+        ok: true,
+      });
       return NextResponse.json({ data: record });
     }
 
-    if (action === "delete") {
-      const { missionId } = body;
+    if (payload.action === "delete") {
+      const { missionId } = payload;
       const mission = loadMission(missionId);
 
-      // Also clean up associated cron job
       if (mission?.cronJobId) {
-        const jobs = readCronJobs();
-        const idx = jobs.findIndex((j) => j.id === mission.cronJobId);
-        if (idx !== -1) {
-          jobs.splice(idx, 1);
-          writeCronJobs(jobs);
+        const w = await withJobsFileLock(
+          CRON_PATH,
+          JOBS_BACKUP_DIR,
+          (jobs) => {
+            const idx = jobs.findIndex((j) => j.id === mission.cronJobId);
+            if (idx === -1) {
+              return {
+                action: "write" as const,
+                jobs,
+                value: undefined,
+              };
+            }
+            const next = jobs.filter((j) => j.id !== mission.cronJobId);
+            return { action: "write" as const, jobs: next, value: undefined };
+          }
+        );
+        if (!w.ok) {
+          return NextResponse.json({ error: w.error }, { status: 503 });
         }
       }
 
-      const safe = sanitizeId(missionId);
-      const path = DATA_DIR + "/" + safe + ".json";
+      const safe = sanitizeMissionId(missionId);
+      const path = getMissionsDataDir() + "/" + safe + ".json";
       if (existsSync(path)) {
         unlinkSync(path);
+        appendAuditLine({
+          action: "mission.delete",
+          resource: String(missionId),
+          ok: true,
+        });
         return NextResponse.json({ data: { deleted: true } });
       }
       return NextResponse.json({ error: "Mission not found" }, { status: 404 });
     }
 
-    if (action === "cancel") {
-      const { missionId } = body;
+    if (payload.action === "cancel") {
+      const { missionId } = payload;
       const mission = loadMission(missionId);
       if (!mission) {
         return NextResponse.json({ error: "Mission not found" }, { status: 404 });
       }
 
-      // Disable the cron job
       if (mission.cronJobId) {
-        const jobs = readCronJobs();
-        const idx = jobs.findIndex((j) => j.id === mission.cronJobId);
-        if (idx !== -1) {
-          jobs[idx].enabled = false;
-          jobs[idx].state = "paused";
-          writeCronJobs(jobs);
+        const w = await withJobsFileLock(
+          CRON_PATH,
+          JOBS_BACKUP_DIR,
+          (jobs) => {
+            const next = jobs.map((j) => ({ ...j }));
+            const idx = next.findIndex((j) => j.id === mission.cronJobId);
+            if (idx === -1) {
+              return { action: "write" as const, jobs: next, value: undefined };
+            }
+            next[idx].enabled = false;
+            next[idx].state = "paused";
+            return { action: "write" as const, jobs: next, value: undefined };
+          }
+        );
+        if (!w.ok) {
+          return NextResponse.json({ error: w.error }, { status: 503 });
         }
       }
 
@@ -434,49 +458,78 @@ export async function POST(request: Request) {
       mission.error = "Cancelled by user";
       mission.updatedAt = new Date().toISOString();
       saveMission(mission);
+      appendAuditLine({
+        action: "mission.cancel",
+        resource: missionId,
+        ok: true,
+      });
       return NextResponse.json({ data: mission });
     }
 
-    if (action === "update") {
-      const { missionId } = body;
+    if (payload.action === "update") {
+      const { missionId } = payload;
       const mission = loadMission(missionId);
       if (!mission) {
         return NextResponse.json({ error: "Mission not found" }, { status: 404 });
       }
 
       // Update mission fields
-      if (body.name !== undefined) mission.name = body.name;
-      if (body.prompt !== undefined) mission.prompt = body.prompt;
-      if (body.goals !== undefined) mission.goals = body.goals;
-      if (body.profile !== undefined) mission.profile = body.profile;
-      if (body.missionTimeMinutes !== undefined) mission.missionTimeMinutes = Math.max(5, Math.min(120, body.missionTimeMinutes));
-      if (body.timeoutMinutes !== undefined) mission.timeoutMinutes = Math.max(1, Math.min(120, body.timeoutMinutes));
-      if (body.schedule !== undefined) mission.schedule = body.schedule;
+      if (payload.name !== undefined) mission.name = payload.name;
+      if (payload.prompt !== undefined) mission.prompt = payload.prompt;
+      if (payload.goals !== undefined) mission.goals = payload.goals;
+      if (payload.profile !== undefined) mission.profile = payload.profile;
+      if (payload.missionTimeMinutes !== undefined) {
+        mission.missionTimeMinutes = Math.max(5, Math.min(120, payload.missionTimeMinutes));
+      }
+      if (payload.timeoutMinutes !== undefined) {
+        mission.timeoutMinutes = Math.max(1, Math.min(120, payload.timeoutMinutes));
+      }
+      if (payload.schedule !== undefined) mission.schedule = payload.schedule;
       mission.updatedAt = new Date().toISOString();
       saveMission(mission);
 
-      // Sync to cron job if linked and recurring
       if (mission.cronJobId) {
-        const jobs = readCronJobs();
-        const idx = jobs.findIndex((j) => j.id === mission.cronJobId);
-        if (idx !== -1) {
-          if (body.prompt !== undefined || body.goals !== undefined || body.missionTimeMinutes !== undefined || body.timeoutMinutes !== undefined) {
-            const missionPrompt = buildMissionPrompt(mission);
-            jobs[idx].prompt = missionPrompt;
-            jobs[idx].timeout = mission.timeoutMinutes * 60;
+        const w = await withJobsFileLock(
+          CRON_PATH,
+          JOBS_BACKUP_DIR,
+          (jobs) => {
+            const next = jobs.map((j) => ({ ...j }));
+            const idx = next.findIndex((j) => j.id === mission.cronJobId);
+            if (idx === -1) {
+              return { action: "write" as const, jobs: next, value: undefined };
+            }
+            const job = { ...next[idx] } as CronJobData;
+            if (
+              payload.prompt !== undefined ||
+              payload.goals !== undefined ||
+              payload.missionTimeMinutes !== undefined ||
+              payload.timeoutMinutes !== undefined
+            ) {
+              job.prompt = buildMissionPrompt(mission);
+              job.timeout = mission.timeoutMinutes * 60;
+            }
+            if (payload.name !== undefined) {
+              job.name = "Mission: " + mission.name;
+            }
+            if (payload.schedule !== undefined && mission.dispatchMode === "cron") {
+              const scheduleResult = parseSchedule(mission.schedule);
+              job.schedule = scheduleResult;
+              job.schedule_display = scheduleResult.display || mission.schedule;
+            }
+            next[idx] = job;
+            return { action: "write" as const, jobs: next, value: undefined };
           }
-          if (body.name !== undefined) {
-            jobs[idx].name = "Mission: " + mission.name;
-          }
-          if (body.schedule !== undefined && mission.dispatchMode === "cron") {
-            const scheduleResult = parseSchedule(mission.schedule);
-            jobs[idx].schedule = scheduleResult;
-            jobs[idx].schedule_display = scheduleResult.display || mission.schedule;
-          }
-          writeCronJobs(jobs);
+        );
+        if (!w.ok) {
+          return NextResponse.json({ error: w.error }, { status: 503 });
         }
       }
 
+      appendAuditLine({
+        action: "mission.update",
+        resource: missionId,
+        ok: true,
+      });
       return NextResponse.json({ data: mission });
     }
 

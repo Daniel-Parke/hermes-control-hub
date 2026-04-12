@@ -4,17 +4,32 @@ import { readFileSync, writeFileSync, existsSync, mkdirSync, statSync } from "fs
 import { HERMES_HOME } from "@/lib/hermes";
 import { BEHAVIOR_FILES } from "@/lib/behavior-files";
 import { logApiError } from "@/lib/api-logger";
+import { resolveSafeProfileName } from "@/lib/path-security";
+import { requireMcApiKey, requireNotReadOnly } from "@/lib/api-auth";
+import { appendAuditLine } from "@/lib/audit-log";
 
 /** Resolve file path for a given key and optional profile */
-function resolveFilePath(key: string, profile?: string): { path: string; name: string; description: string } | null {
+function resolveFilePath(
+  key: string,
+  profileParam: string | null
+):
+  | { path: string; name: string; description: string }
+  | { error: string }
+  | null {
   const fileConfig = BEHAVIOR_FILES[key];
   if (!fileConfig) return null;
 
-  if (!profile || profile === "default") {
+  const prof = resolveSafeProfileName(profileParam);
+  if (!prof.ok) {
+    return { error: prof.error };
+  }
+  const profile = prof.profile;
+
+  if (profile === "default") {
     return { path: fileConfig.path, name: fileConfig.name, description: fileConfig.description };
   }
 
-  // Profile-specific paths
+  // Profile-specific paths (segment is allowlisted; no traversal)
   const profileDir = HERMES_HOME + "/profiles/" + profile;
   const pathMap: Record<string, string> = {
     soul: profileDir + "/SOUL.md",
@@ -35,7 +50,7 @@ export async function GET(
   { params }: { params: Promise<{ key: string }> }
 ) {
   const { key } = await params;
-  const profile = request.nextUrl.searchParams.get("profile") || "default";
+  const profile = request.nextUrl.searchParams.get("profile");
   const resolved = resolveFilePath(key, profile);
 
   if (!resolved) {
@@ -43,6 +58,9 @@ export async function GET(
       { error: `Unknown file key: ${key}` },
       { status: 400 }
     );
+  }
+  if ("error" in resolved) {
+    return NextResponse.json({ error: resolved.error }, { status: 400 });
   }
 
   try {
@@ -82,12 +100,20 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ key: string }> }
 ) {
+  const ro = requireNotReadOnly();
+  if (ro) return ro;
+  const auth = requireMcApiKey(request);
+  if (auth) return auth;
+
   const { key } = await params;
-  const profile = request.nextUrl.searchParams.get("profile") || "default";
+  const profile = request.nextUrl.searchParams.get("profile");
   const resolved = resolveFilePath(key, profile);
 
   if (!resolved) {
     return NextResponse.json({ error: `Unknown file key: ${key}` }, { status: 400 });
+  }
+  if ("error" in resolved) {
+    return NextResponse.json({ error: resolved.error }, { status: 400 });
   }
 
   try {
@@ -116,6 +142,12 @@ export async function PUT(
     }
 
     writeFileSync(resolved.path, content, "utf-8");
+
+    appendAuditLine({
+      action: "agent.file.put",
+      resource: key,
+      ok: true,
+    });
 
     return NextResponse.json({ data: { success: true, key, path: resolved.path } });
   } catch (error) {

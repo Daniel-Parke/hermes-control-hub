@@ -6,7 +6,7 @@ import { timeAgo } from "@/lib/utils";
 interface StoryCardProps {
   story: {
     id: string; title: string; premise?: string; status?: string;
-    chapters?: { number: number; title: string; status: string; wordCount: number }[];
+    chapters?: { number: number; title: string; status: string; wordCount?: number }[];
     config?: { genre?: string }; createdAt?: string; updatedAt?: string;
   };
   onRead: (id: string) => void;

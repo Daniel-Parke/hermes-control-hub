@@ -20,8 +20,9 @@ set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 APP_DIR="$(dirname "$SCRIPT_DIR")"
-LOCK_FILE="/tmp/mc-deploy.lock"
+LOCK_FILE="${TMPDIR:-/tmp}/mc-deploy.lock"
 LOG_FILE="$HOME/.hermes/logs/mc-update.log"
+MC_BRANCH="${MC_UPDATE_GIT_BRANCH:-main}"
 
 # Ensure log directory exists
 mkdir -p "$(dirname "$LOG_FILE")"
@@ -62,14 +63,14 @@ fi
 
 # ── Git Update ───────────────────────────────────────────────
 if [ "$RESTART_ONLY" = false ]; then
-    log "Fetching latest from origin/main..."
-    git fetch origin main --quiet 2>>"$LOG_FILE"
+    log "Fetching latest from origin/${MC_BRANCH}..."
+    git fetch origin "$MC_BRANCH" --quiet 2>>"$LOG_FILE"
 
-    log "Checking out main branch..."
-    git checkout main --quiet 2>>"$LOG_FILE"
+    log "Checking out ${MC_BRANCH} branch..."
+    git checkout "$MC_BRANCH" --quiet 2>>"$LOG_FILE"
 
-    log "Resetting to origin/main..."
-    git reset --hard origin/main --quiet 2>>"$LOG_FILE"
+    log "Resetting to origin/${MC_BRANCH}..."
+    git reset --hard "origin/${MC_BRANCH}" --quiet 2>>"$LOG_FILE"
 
     log "Code updated to $(git rev-parse --short HEAD)"
 
