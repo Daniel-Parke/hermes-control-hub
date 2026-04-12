@@ -57,7 +57,7 @@ fi
 
 # ── Enable Gateway API Server (required for Rec Room) ────────
 echo ""
-if grep -q "API_SERVER_ENABLED=true" "$HERMES_HOME/.env" 2>/dev/null; then
+if [ -f "$HERMES_HOME/.env" ] && grep -q "API_SERVER_ENABLED=true" "$HERMES_HOME/.env" 2>/dev/null; then
     echo "✓ Gateway API server already enabled"
 else
     echo "Enabling gateway API server for Rec Room..."

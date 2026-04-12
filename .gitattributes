@@ -1,0 +1,2 @@
+# Shell scripts must use LF so bash on Linux/macOS does not see stray CR.
+*.sh text eol=lf

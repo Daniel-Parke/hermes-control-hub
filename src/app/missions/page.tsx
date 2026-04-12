@@ -42,7 +42,7 @@ import {
 import Link from "next/link";
 import Card, { StatusDot } from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
-import Toast, { useToast } from "@/components/ui/Toast";
+import { useToast } from "@/components/ui/Toast";
 import AutoTextarea from "@/components/ui/AutoTextarea";
 import Modal from "@/components/ui/Modal";
 import MissionTimeSelector from "@/components/ui/MissionTimeSelector";
@@ -142,6 +142,7 @@ export default function MissionsPage() {
   const [detailLoading, setDetailLoading] = useState(false);
   const { showToast, toastElement } = useToast();
   const templateApplied = useRef(false);
+  const expandedIdRef = useRef<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showTemplateEditor, setShowTemplateEditor] = useState(false);
   const [showTemplateManager, setShowTemplateManager] = useState(false);
@@ -216,15 +217,19 @@ export default function MissionsPage() {
   }, []);
 
   useEffect(() => {
+    expandedIdRef.current = expandedId;
+  }, [expandedId]);
+
+  useEffect(() => {
     fetchData();
     setLoading(false);
     const interval = setInterval(() => {
       fetchData();
-      // Also silently refresh expanded detail
-      if (expandedId) fetchDetail(expandedId, false);
+      const id = expandedIdRef.current;
+      if (id) fetchDetail(id, false);
     }, 5000);
     return () => clearInterval(interval);
-  }, [fetchData, expandedId, fetchDetail]);
+  }, [fetchData, fetchDetail]);
 
   // Load detail once when expanded (with loading spinner)
   useEffect(() => {

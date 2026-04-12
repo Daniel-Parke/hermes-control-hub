@@ -47,7 +47,7 @@ export default function BehaviourPage() {
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [previewMode, setPreviewMode] = useState(false);
   const [savingPersonality, setSavingPersonality] = useState<string | null>(null);
-  const toast = useToast();
+  const { showToast, toastElement } = useToast();
 
   const loadProfiles = useCallback(async () => {
     setLoading(true);
@@ -56,17 +56,17 @@ export default function BehaviourPage() {
       const data = await res.json();
       setProfiles(data.data?.profiles || []);
     } catch {
-      toast.showToast("Failed to load profiles", "error");
+      showToast("Failed to load profiles", "error");
     } finally {
       setLoading(false);
     }
-  }, [toast]);
+  }, [showToast]);
 
   useEffect(() => { loadProfiles(); }, [loadProfiles]);
 
   const openFile = async (profileId: string, file: ProfileFile) => {
     if (!file.exists) {
-      toast.showToast(`${file.name} does not exist yet`, "info");
+      showToast(`${file.name} does not exist yet`, "info");
       return;
     }
     try {
@@ -87,7 +87,7 @@ export default function BehaviourPage() {
       setPreviewMode(false);
       setSaveStatus("idle");
     } catch {
-      toast.showToast("Failed to load file", "error");
+      showToast("Failed to load file", "error");
     }
   };
 
@@ -128,10 +128,10 @@ export default function BehaviourPage() {
         }),
       });
       if (!res.ok) throw new Error("Failed");
-      toast.showToast(`Personality set to "${personality}"`, "success");
+      showToast(`Personality set to "${personality}"`, "success");
       loadProfiles();
     } catch {
-      toast.showToast("Failed to update personality", "error");
+      showToast("Failed to update personality", "error");
     } finally {
       setSavingPersonality(null);
     }
@@ -142,6 +142,7 @@ export default function BehaviourPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-dark-950 grid-bg">
+        {toastElement}
         <PageHeader icon={Brain} title="Agent Behaviour" subtitle="Loading profiles..." color="purple" />
         <div className="px-6 py-12"><LoadingSpinner text="Loading profiles..." /></div>
       </div>
@@ -150,6 +151,7 @@ export default function BehaviourPage() {
 
   return (
     <div className="min-h-screen bg-dark-950 grid-bg">
+      {toastElement}
       <PageHeader
         icon={Brain}
         title="Agent Behaviour"

@@ -66,8 +66,13 @@ fi
 # 5. Skills
 echo "Backing up skills..."
 if [ -d "$HERMES_HOME/skills" ]; then
-    rsync -a --exclude='__pycache__' --exclude='*.pyc' "$HERMES_HOME/skills/" "$TARGET/skills/"
-    SKILL_COUNT=$(find "$TARGET/skills" -name "SKILL.md" | wc -l)
+    mkdir -p "$TARGET/skills"
+    if command -v rsync &>/dev/null; then
+        rsync -a --exclude='__pycache__' --exclude='*.pyc' "$HERMES_HOME/skills/" "$TARGET/skills/"
+    else
+        cp -R "$HERMES_HOME/skills/." "$TARGET/skills/"
+    fi
+    SKILL_COUNT=$(find "$TARGET/skills" -name "SKILL.md" 2>/dev/null | wc -l)
     echo "  ✓ skills/ ($SKILL_COUNT skills)"
 fi
 
@@ -75,7 +80,12 @@ fi
 echo "Backing up Mission Control data..."
 if [ -d "$HERMES_HOME/mission-control" ]; then
     mkdir -p "$TARGET/mission-control"
-    rsync -a "$HERMES_HOME/mission-control/data/" "$TARGET/mission-control/data/" 2>/dev/null || true
+    if command -v rsync &>/dev/null; then
+        rsync -a "$HERMES_HOME/mission-control/data/" "$TARGET/mission-control/data/" 2>/dev/null || true
+    else
+        mkdir -p "$TARGET/mission-control/data"
+        cp -R "$HERMES_HOME/mission-control/data/." "$TARGET/mission-control/data/" 2>/dev/null || true
+    fi
     MISSION_COUNT=$(find "$TARGET/mission-control/data/missions" -name "*.json" 2>/dev/null | wc -l)
     TEMPLATE_COUNT=$(find "$TARGET/mission-control/data/templates" -name "*.json" 2>/dev/null | wc -l)
     echo "  ✓ mission-control/data/ ($MISSION_COUNT missions, $TEMPLATE_COUNT templates)"

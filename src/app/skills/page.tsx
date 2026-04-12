@@ -44,7 +44,7 @@ export default function SkillsPage() {
   const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({});
   const [expandedSkill, setExpandedSkill] = useState<string | null>(null);
   const [skillContent, setSkillContent] = useState<string>("");
-  const toast = useToast();
+  const { showToast, toastElement } = useToast();
 
   useEffect(() => {
     fetch("/api/agent/profiles")
@@ -71,11 +71,11 @@ export default function SkillsPage() {
       cats.slice(0, 2).forEach((c) => (expanded[c] = true));
       setExpandedCategories(expanded);
     } catch {
-      toast.showToast("Failed to load skills", "error");
+      showToast("Failed to load skills", "error");
     } finally {
       setLoading(false);
     }
-  }, [selectedProfile, toast]);
+  }, [selectedProfile, showToast]);
 
   useEffect(() => { loadSkills(); }, [loadSkills]);
 
@@ -94,10 +94,10 @@ export default function SkillsPage() {
           body: JSON.stringify({ profile: selectedProfile, enabled }),
         });
       }
-      toast.showToast(`Updated ${Object.keys(pendingToggles).length} skills`, "success");
+      showToast(`Updated ${Object.keys(pendingToggles).length} skills`, "success");
       loadSkills();
     } catch {
-      toast.showToast("Failed to save changes", "error");
+      showToast("Failed to save changes", "error");
     } finally {
       setSaving(false);
     }
@@ -141,6 +141,7 @@ export default function SkillsPage() {
 
   return (
     <div className="min-h-screen bg-dark-950 grid-bg">
+      {toastElement}
       <PageHeader
         icon={FileText}
         title="Skills Manager"

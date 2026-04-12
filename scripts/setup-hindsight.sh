@@ -91,7 +91,8 @@ if sudo -u postgres psql -d postgres -c "SELECT 1 FROM pg_extension WHERE extnam
 else
     info "Installing pgvector..."
     # Try version-specific first, then generic
-    PG_VERSION=$(pg_config --version 2>/dev/null | grep -oP '\d+' | head -1)
+    # Portable: avoid grep -oP (GNU-only)
+    PG_VERSION=$(pg_config --version 2>/dev/null | sed -n 's/.*PostgreSQL \([0-9][0-9]*\).*/\1/p' | head -1)
     if [ -n "$PG_VERSION" ]; then
         sudo apt-get install -y -qq "postgresql-${PG_VERSION}-pgvector" 2>/dev/null || true
     fi

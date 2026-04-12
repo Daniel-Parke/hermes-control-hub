@@ -261,6 +261,12 @@ Browser → /api/memory/hindsight → Next.js API route
 
 The bridge script is invoked via `child_process.exec()` with a 15-second timeout. If Hindsight is unavailable, the API returns `{ data: { available: false, memories: [] } }` rather than throwing.
 
+**Bridge script location (Hermes home):** Implementation is `HERMES_HOME/scripts/hindsight_bridge.py` (installed with Hermes, not vendored in this repo). Read that file and the installed `hindsight` package to see which subcommands invoke the LLM or embeddings vs database-only work. In typical setups, `recall` and `reflect` route model calls through the gateway (`localhost:8642`); `list` may be storage-only depending on version. The long-running server ([`scripts/hindsight-server.py`](scripts/hindsight-server.py)) exposes HTTP `http://127.0.0.1:8888/health` (see [`scripts/setup-hindsight.sh`](scripts/setup-hindsight.sh)); the Mission Control route does not call that URL directly—it always goes through the bridge executable.
+
+**Memory UI:** [`HindsightBrowser`](src/components/memory/HindsightBrowser.tsx) loads the memory list only when the user runs **Recall** (`action=recall`). It calls `action=health` when a recall response indicates the backend is unavailable or on recall failure.
+
+**Debugging gateway / Nous load:** Correlate timestamps in `HERMES_HOME/logs/gateway.log` with (1) Mission Control requests to `/api/memory/hindsight` and `/api/stories`, (2) Hermes agent and gateway traffic. Provider-side “sessions” or billing metrics reflect LLM usage, not the count of Hermes session files under `HERMES_HOME/sessions/` (those files are produced by the agent stack when recording is enabled, not by opening the Memory page).
+
 ---
 
 ## CI/CD

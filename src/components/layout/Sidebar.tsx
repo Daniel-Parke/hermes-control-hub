@@ -4,7 +4,7 @@
 
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSidebar } from "./SidebarContext";
@@ -192,6 +192,19 @@ function VersionFooter({ collapsed }: { collapsed: boolean }) {
   const [updating, setUpdating] = useState(false);
   const [restarting, setRestarting] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const isMountedRef = useRef(true);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+      if (pollIntervalRef.current !== null) {
+        clearInterval(pollIntervalRef.current);
+        pollIntervalRef.current = null;
+      }
+    };
+  }, []);
 
   const checkVersion = useCallback(async () => {
     setChecking(true);
@@ -252,6 +265,10 @@ function VersionFooter({ collapsed }: { collapsed: boolean }) {
   };
 
   const pollForReturn = () => {
+    if (pollIntervalRef.current !== null) {
+      clearInterval(pollIntervalRef.current);
+      pollIntervalRef.current = null;
+    }
     let attempts = 0;
     const maxAttempts = 30;
     const interval = setInterval(async () => {
@@ -260,22 +277,29 @@ function VersionFooter({ collapsed }: { collapsed: boolean }) {
         const res = await fetch("/api/update", { signal: AbortSignal.timeout(3000) });
         if (res.ok) {
           clearInterval(interval);
+          pollIntervalRef.current = null;
           const d = await res.json();
+          if (!isMountedRef.current) return;
           if (d.data) setVersion(d.data);
           setUpdating(false);
           setRestarting(false);
           setMessage("Done!");
-          setTimeout(() => setMessage(null), 3000);
+          setTimeout(() => {
+            if (isMountedRef.current) setMessage(null);
+          }, 3000);
         }
       } catch {
         if (attempts >= maxAttempts) {
           clearInterval(interval);
+          pollIntervalRef.current = null;
+          if (!isMountedRef.current) return;
           setUpdating(false);
           setRestarting(false);
           setMessage("Timeout — check server");
         }
       }
     }, 2000);
+    pollIntervalRef.current = interval;
   };
 
   if (collapsed) {

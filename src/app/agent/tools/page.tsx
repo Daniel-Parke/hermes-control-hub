@@ -58,7 +58,7 @@ export default function ToolsPage() {
     core: true,
     composite: true,
   });
-  const toast = useToast();
+  const { showToast, toastElement } = useToast();
 
   // Load profiles
   useEffect(() => {
@@ -82,11 +82,11 @@ export default function ToolsPage() {
       setData(d.data);
       setPendingChanges({});
     } catch {
-      toast.showToast("Failed to load tools", "error");
+      showToast("Failed to load tools", "error");
     } finally {
       setLoading(false);
     }
-  }, [selectedProfile, toast]);
+  }, [selectedProfile, showToast]);
 
   useEffect(() => { loadTools(); }, [loadTools]);
 
@@ -146,6 +146,7 @@ export default function ToolsPage() {
 
   return (
     <div className="min-h-screen bg-dark-950 grid-bg">
+      {toastElement}
       <PageHeader
         icon={Wrench}
         title="Tools Manager"

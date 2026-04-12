@@ -230,6 +230,8 @@ Query the Hindsight knowledge graph memory. Requires Hindsight to be installed a
 - `mental-models` — List stored mental models
 - `health` — Check Hindsight server health
 
+The Mission Control Memory page (Hindsight tab) does not call `list` on load; it only requests memories when the user clicks **Recall** (`action=recall` with `query`).
+
 **Response:**
 
 ```json

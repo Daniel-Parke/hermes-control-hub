@@ -1,10 +1,11 @@
 // ═══════════════════════════════════════════════════════════════
 // Hindsight Memory Browser — Browse, search, and store memories
 // ═══════════════════════════════════════════════════════════════
+// Memories are fetched only when the user clicks Recall (action=recall), not on mount.
 
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 import {
   Brain, Search, Plus, Sparkles, List, FileText,
   Settings, RefreshCw, Clock, Tag,
@@ -29,7 +30,8 @@ type Tab = "memories" | "directives" | "mental-models";
 
 export default function HindsightBrowser() {
   const [memories, setMemories] = useState<Memory[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [hasRecalled, setHasRecalled] = useState(false);
   const [search, setSearch] = useState("");
   const [activeTab, setActiveTab] = useState<Tab>("memories");
   const [reflectResult, setReflectResult] = useState<string | null>(null);
@@ -39,24 +41,9 @@ export default function HindsightBrowser() {
   const [newTags, setNewTags] = useState("");
   const [adding, setAdding] = useState(false);
   const [health, setHealth] = useState<{ available: boolean; mode: string; message?: string; error?: string } | null>(null);
-  const toast = useToast();
+  const { showToast, toastElement } = useToast();
 
-  const loadMemories = useCallback(async () => {
-    setLoading(true);
-    try {
-      const params = new URLSearchParams({ action: "list" });
-      if (search) params.set("search", search);
-      const res = await fetch(`/api/memory/hindsight?${params}`);
-      const data = await res.json();
-      setMemories(data.data?.memories || []);
-    } catch {
-      toast.showToast("Failed to load memories", "error");
-    } finally {
-      setLoading(false);
-    }
-  }, [search, toast]);
-
-  const checkHealth = useCallback(async () => {
+  const fetchHealthOnly = useCallback(async () => {
     try {
       const res = await fetch("/api/memory/hindsight?action=health");
       const data = await res.json();
@@ -66,21 +53,72 @@ export default function HindsightBrowser() {
     }
   }, []);
 
-  useEffect(() => { checkHealth(); }, [checkHealth]);
-  useEffect(() => { if (activeTab === "memories") loadMemories(); }, [activeTab, loadMemories]);
+  const applyRecallPayload = useCallback(
+    async (
+      payload:
+        | {
+            memories?: Memory[];
+            available?: boolean;
+            error?: string;
+            mode?: string;
+            message?: string;
+          }
+        | undefined
+    ) => {
+      setMemories(payload?.memories || []);
+      const backendSaysDown =
+        payload?.available === false ||
+        (typeof payload?.error === "string" && payload.error.length > 0);
+      if (!backendSaysDown) {
+        setHealth({
+          available: true,
+          mode: typeof payload?.mode === "string" ? payload.mode : "ok",
+          message: typeof payload?.message === "string" ? payload.message : undefined,
+        });
+      } else {
+        await fetchHealthOnly();
+      }
+    },
+    [fetchHealthOnly]
+  );
 
-  const handleSearch = async () => {
-    if (!search.trim()) return;
+  const runRecall = useCallback(async () => {
+    const q = search.trim();
+    if (!q) {
+      showToast("Enter a search query first", "info");
+      return;
+    }
     setLoading(true);
     try {
-      const res = await fetch(`/api/memory/hindsight?action=recall&query=${encodeURIComponent(search)}`);
-      const data = await res.json();
-      setMemories(data.data?.memories || []);
+      const res = await fetch(
+        `/api/memory/hindsight?action=recall&query=${encodeURIComponent(q)}`
+      );
+      const body = await res.json();
+      const payload = body.data as
+        | {
+            memories?: Memory[];
+            available?: boolean;
+            error?: string;
+            mode?: string;
+            message?: string;
+          }
+        | undefined;
+      setHasRecalled(true);
+      await applyRecallPayload(payload);
     } catch {
-      toast.showToast("Search failed", "error");
+      showToast("Recall failed", "error");
+      await fetchHealthOnly();
     } finally {
       setLoading(false);
     }
+  }, [search, showToast, applyRecallPayload, fetchHealthOnly]);
+
+  const handleSearch = () => {
+    void runRecall();
+  };
+
+  const handleRefreshMemories = () => {
+    void runRecall();
   };
 
   const handleReflect = async () => {
@@ -92,7 +130,7 @@ export default function HindsightBrowser() {
       const data = await res.json();
       setReflectResult(data.data?.response || "No reflection generated");
     } catch {
-      toast.showToast("Reflection failed", "error");
+      showToast("Reflection failed", "error");
     } finally {
       setReflecting(false);
     }
@@ -109,13 +147,12 @@ export default function HindsightBrowser() {
         body: JSON.stringify({ content: newContent, tags: tags.length > 0 ? tags : undefined }),
       });
       if (!res.ok) throw new Error("Failed");
-      toast.showToast("Memory stored", "success");
+      showToast("Memory stored", "success");
       setShowAddModal(false);
       setNewContent("");
       setNewTags("");
-      loadMemories();
     } catch {
-      toast.showToast("Failed to store memory", "error");
+      showToast("Failed to store memory", "error");
     } finally {
       setAdding(false);
     }
@@ -123,6 +160,7 @@ export default function HindsightBrowser() {
 
   return (
     <div>
+      {toastElement}
       {/* Health Status */}
       {health && !health.available && (
         <div className="mb-4">
@@ -140,7 +178,14 @@ export default function HindsightBrowser() {
             accentColor="pink"
           />
         </div>
-        <Button variant="secondary" color="pink" size="sm" icon={Search} onClick={handleSearch}>
+        <Button
+          variant="secondary"
+          color="pink"
+          size="sm"
+          icon={Search}
+          onClick={handleSearch}
+          disabled={!search.trim() || loading}
+        >
           Recall
         </Button>
         <Button
@@ -190,7 +235,14 @@ export default function HindsightBrowser() {
           </button>
         ))}
         <div className="flex-1" />
-        <Button variant="ghost" size="sm" icon={RefreshCw} onClick={loadMemories}>
+        <Button
+          variant="ghost"
+          size="sm"
+          icon={RefreshCw}
+          onClick={handleRefreshMemories}
+          disabled={!search.trim()}
+          title={!search.trim() ? "Enter a query to refresh recall results" : "Run the same search again"}
+        >
           Refresh
         </Button>
       </div>
@@ -199,12 +251,18 @@ export default function HindsightBrowser() {
       {activeTab === "memories" && (
         <>
           {loading ? (
-            <LoadingSpinner text="Loading memories..." />
+            <LoadingSpinner text="Recalling memories..." />
+          ) : !hasRecalled ? (
+            <EmptyState
+              icon={Brain}
+              title="Semantic recall"
+              description="Enter a query above and click Recall to search your Hindsight memory bank. Nothing is fetched until you do."
+            />
           ) : memories.length === 0 ? (
             <EmptyState
               icon={Brain}
               title="No memories found"
-              description={search ? "Try a different search query" : "Store memories using the agent or the Add Memory button"}
+              description="Try a different search query, or store new memories with Add Memory or the agent."
             />
           ) : (
             <div className="space-y-3">

@@ -9,12 +9,25 @@ import ReaderSettings, { loadSettings, DEFAULT_SETTINGS, FONTS, THEMES, type Rea
 
 interface Chapter { number: number; title: string; status: string; wordCount: number; readStatus?: "writing" | "unread" | "read"; generatedAt?: string | null; }
 
+/** Serialized story document from `/api/stories` (load / generate). */
+interface StoryState {
+  id: string;
+  title: string;
+  chapters: Chapter[];
+  chapterContents?: Record<string, string>;
+  storyArc?: unknown;
+  rollingSummary?: string;
+  status?: string;
+  masterPrompt?: string;
+  updatedAt?: string;
+}
+
 export default function StoryReaderPage() {
   const router = useRouter();
   const params = useParams();
   const storyId = params.id as string;
 
-  const [story, setStory] = useState<any>(null);
+  const [story, setStory] = useState<StoryState | null>(null);
   const [loading, setLoading] = useState(true);
   const [currentChapter, setCurrentChapter] = useState(1);
   const [generating, setGenerating] = useState(false);
@@ -39,7 +52,7 @@ export default function StoryReaderPage() {
         body: JSON.stringify({ action: "load", storyId }),
       });
       const d = await res.json();
-      if (d.data) setStory(d.data);
+      if (d.data) setStory(d.data as StoryState);
     } catch {} finally { setLoading(false); }
   }, [storyId]);
 
@@ -66,7 +79,7 @@ export default function StoryReaderPage() {
         body: JSON.stringify({ action: "generate-chapter", storyId }),
       });
       const d = await res.json();
-      if (d.data?.story) setStory(d.data.story);
+      if (d.data?.story) setStory(d.data.story as StoryState);
       else if (d.error) console.error("Chapter generation error:", d.error);
     } catch (e) { console.error("Chapter generation failed:", e); }
     finally { setGenerating(false); }
@@ -82,7 +95,7 @@ export default function StoryReaderPage() {
     if (currentMeta?.readStatus !== "read") {
       try {
         const updatedChapters = chapters.map((c: Chapter) =>
-          c.number === currentChapter ? { ...c, readStatus: "read" } : c
+          c.number === currentChapter ? { ...c, readStatus: "read" as const } : c
         );
         const updatedStory = { ...story, chapters: updatedChapters };
         setStory(updatedStory);
@@ -103,24 +116,30 @@ export default function StoryReaderPage() {
     if (nextComplete) {
       setCurrentChapter(nextComplete.number);
       // Mark next as read-status unread if it was pending
-      setStory((prev: any) => ({
-        ...prev,
-        chapters: prev.chapters.map((c: Chapter) =>
-          c.number === nextComplete.number && !c.readStatus ? { ...c, readStatus: "unread" } : c
-        ),
-      }));
+      setStory((prev: StoryState | null) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          chapters: prev.chapters.map((c: Chapter) =>
+            c.number === nextComplete.number && !c.readStatus ? { ...c, readStatus: "unread" as const } : c
+          ),
+        };
+      });
     }
   }, [story, currentChapter, storyId]);
 
   const handleChapterSelect = (num: number) => {
     setCurrentChapter(num);
     // Mark as read when selecting from sidebar
-    setStory((prev: any) => ({
-      ...prev,
-      chapters: prev.chapters.map((c: Chapter) =>
-        c.number === num && c.status === "complete" ? { ...c, readStatus: "read" } : c
-      ),
-    }));
+    setStory((prev: StoryState | null) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        chapters: prev.chapters.map((c: Chapter) =>
+          c.number === num && c.status === "complete" ? { ...c, readStatus: "read" as const } : c
+        ),
+      };
+    });
     // On mobile, close sidebar after selection
     if (window.innerWidth < 768) setSidebarOpen(false);
   };

@@ -32,7 +32,19 @@ cd "$APP_DIR"
 
 # ── Stop Existing Server ─────────────────────────────────────
 log "Stopping server on port 3000..."
-fuser -k 3000/tcp 2>/dev/null || true
+stop_port_3000() {
+    if command -v fuser &>/dev/null; then
+        fuser -k 3000/tcp 2>/dev/null || true
+    elif command -v lsof &>/dev/null; then
+        # macOS / BSD: no fuser; lsof -ti lists PIDs on port
+        for pid in $(lsof -ti:3000 2>/dev/null); do
+            kill -9 "$pid" 2>/dev/null || true
+        done
+    else
+        log "WARNING: install psmisc (fuser) or lsof to free port 3000"
+    fi
+}
+stop_port_3000
 sleep 2
 
 # Remove stale PID file

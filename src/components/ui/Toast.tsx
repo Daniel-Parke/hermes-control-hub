@@ -84,6 +84,7 @@ interface ToastState {
   id: number;
 }
 
+/** Prefer destructuring `{ showToast, toastElement }` — the returned object is not referentially stable when toasts mount/unmount. */
 export function useToast(duration = 4000) {
   const [toast, setToast] = useState<ToastState | null>(null);
   const durationRef = useRef(duration);

@@ -1,5 +1,17 @@
 import { execSync } from "child_process";
-import { existsSync, writeFileSync, unlinkSync } from "fs";
+import { existsSync, writeFileSync, unlinkSync, readFileSync } from "fs";
+import { tmpdir } from "os";
+import { join } from "path";
+
+function bashScriptChecksAvailable(): boolean {
+  if (process.platform === "win32") return false;
+  try {
+    execSync("bash -c true", { stdio: "ignore", timeout: 3000 });
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 // ═══════════════════════════════════════════════════════════════
 // Update API - Unit Tests
@@ -7,8 +19,8 @@ import { existsSync, writeFileSync, unlinkSync } from "fs";
 // Tests the version check logic without actually running git or
 // triggering updates. Mocks the filesystem and git operations.
 
-const CACHE_FILE = "/tmp/mc-version-cache.json";
-const LOCK_FILE = "/tmp/mc-deploy.lock";
+const CACHE_FILE = join(tmpdir(), "mc-version-cache.json");
+const LOCK_FILE = join(tmpdir(), "mc-deploy.lock");
 
 describe("Update API - Version Cache", () => {
   afterEach(() => {
@@ -30,9 +42,7 @@ describe("Update API - Version Cache", () => {
     writeFileSync(CACHE_FILE, JSON.stringify(cache));
     expect(existsSync(CACHE_FILE)).toBe(true);
 
-    const read = JSON.parse(
-      require("fs").readFileSync(CACHE_FILE, "utf-8")
-    );
+    const read = JSON.parse(readFileSync(CACHE_FILE, "utf-8"));
     expect(read.localHash).toBe("abc1234");
     expect(read.updateAvailable).toBe(true);
     expect(read.behind).toBe(3);
@@ -47,9 +57,7 @@ describe("Update API - Version Cache", () => {
     };
     writeFileSync(CACHE_FILE, JSON.stringify(staleCache));
 
-    const raw = JSON.parse(
-      require("fs").readFileSync(CACHE_FILE, "utf-8")
-    );
+    const raw = JSON.parse(readFileSync(CACHE_FILE, "utf-8"));
     const age = Date.now() - new Date(raw.lastChecked).getTime();
     expect(age).toBeGreaterThan(5 * 60 * 1000); // older than 5 min TTL
   });
@@ -73,7 +81,7 @@ describe("Update API - Lock File", () => {
   it("should detect existing lock", () => {
     writeFileSync(LOCK_FILE, "99999");
     // PID 99999 is unlikely to exist
-    const lockPid = require("fs").readFileSync(LOCK_FILE, "utf-8").trim();
+    const lockPid = readFileSync(LOCK_FILE, "utf-8").trim();
     expect(lockPid).toBe("99999");
 
     // Check if process exists (it shouldn't)
@@ -94,45 +102,39 @@ describe("Update API - Lock File", () => {
   });
 });
 
-describe("Update API - Scripts", () => {
+const describeScripts = bashScriptChecksAvailable() ? describe : describe.skip;
+
+describeScripts("Update API - Scripts", () => {
   it("update.sh should exist and have valid syntax", () => {
-    const path = process.cwd() + "/scripts/update.sh";
-    expect(existsSync(path)).toBe(true);
-    try {
-      execSync(`bash -n "${path}"`, { encoding: "utf-8", timeout: 5000 });
-    } catch (error) {
-      fail(`update.sh has syntax errors: ${error}`);
-    }
+    const scriptPath = process.cwd() + "/scripts/update.sh";
+    expect(existsSync(scriptPath)).toBe(true);
+    expect(() => {
+      execSync(`bash -n "${scriptPath}"`, { encoding: "utf-8", timeout: 5000 });
+    }).not.toThrow();
   });
 
   it("restart.sh should exist and have valid syntax", () => {
-    const path = process.cwd() + "/scripts/restart.sh";
-    expect(existsSync(path)).toBe(true);
-    try {
-      execSync(`bash -n "${path}"`, { encoding: "utf-8", timeout: 5000 });
-    } catch (error) {
-      fail(`restart.sh has syntax errors: ${error}`);
-    }
+    const scriptPath = process.cwd() + "/scripts/restart.sh";
+    expect(existsSync(scriptPath)).toBe(true);
+    expect(() => {
+      execSync(`bash -n "${scriptPath}"`, { encoding: "utf-8", timeout: 5000 });
+    }).not.toThrow();
   });
 
   it("install.sh should exist and have valid syntax", () => {
-    const path = process.cwd() + "/scripts/install.sh";
-    expect(existsSync(path)).toBe(true);
-    try {
-      execSync(`bash -n "${path}"`, { encoding: "utf-8", timeout: 5000 });
-    } catch (error) {
-      fail(`install.sh has syntax errors: ${error}`);
-    }
+    const scriptPath = process.cwd() + "/scripts/install.sh";
+    expect(existsSync(scriptPath)).toBe(true);
+    expect(() => {
+      execSync(`bash -n "${scriptPath}"`, { encoding: "utf-8", timeout: 5000 });
+    }).not.toThrow();
   });
 
   it("setup.sh should exist and have valid syntax", () => {
-    const path = process.cwd() + "/scripts/setup.sh";
-    expect(existsSync(path)).toBe(true);
-    try {
-      execSync(`bash -n "${path}"`, { encoding: "utf-8", timeout: 5000 });
-    } catch (error) {
-      fail(`setup.sh has syntax errors: ${error}`);
-    }
+    const scriptPath = process.cwd() + "/scripts/setup.sh";
+    expect(existsSync(scriptPath)).toBe(true);
+    expect(() => {
+      execSync(`bash -n "${scriptPath}"`, { encoding: "utf-8", timeout: 5000 });
+    }).not.toThrow();
   });
 });
 
