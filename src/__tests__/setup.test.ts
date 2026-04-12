@@ -40,7 +40,7 @@ describe("Setup & Installation", () => {
   describe("Standard File Locations", () => {
     it("should have .env file or be optional", () => {
       const hasEnv = existsSync(PATHS.env);
-      // .env is optional — some users use env vars directly
+      // .env is optional - some users use env vars directly
       expect(typeof hasEnv).toBe("boolean");
     });
 

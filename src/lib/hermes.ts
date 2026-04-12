@@ -16,7 +16,7 @@ export const PATHS = {
   env: HERMES_HOME + "/.env",
   soul: HERMES_HOME + "/SOUL.md",
   hermes: HERMES_HOME + "/HERMES.md",
-  agent: HERMES_HOME + "/AGENT.md",
+  agent: HERMES_HOME + "/AGENTS.md",
   userMd: HERMES_HOME + "/memories/USER.md",
   memoryMd: HERMES_HOME + "/memories/MEMORY.md",
   cronJobs: HERMES_HOME + "/cron/jobs.json",

@@ -24,6 +24,10 @@ export interface SectionDef {
   fields: FieldDef[];
   // Sections with complex/nested values that can't be edited inline
   complexKeys?: string[];
+  // File-based sections (HERMES.md, .env)
+  type?: "yaml" | "file";
+  filePath?: string;
+  sensitive?: boolean;
 }
 
 export const CONFIG_SECTIONS: Record<string, SectionDef> = {
@@ -81,12 +85,12 @@ export const CONFIG_SECTIONS: Record<string, SectionDef> = {
   memory: {
     id: "memory",
     label: "Memory Settings",
-    description: "Holographic memory provider, limits, and user profile",
+    description: "Memory provider (Holographic, Hindsight, or others), limits, and user profile",
     icon: "Layers",
     color: "pink",
     fields: [
-      { key: "memory_enabled", label: "Memory Enabled", type: "boolean", description: "Enable holographic memory system" },
-      { key: "provider", label: "Provider", type: "select", options: ["holographic", "mem0", "honcho"], description: "Memory backend provider" },
+      { key: "memory_enabled", label: "Memory Enabled", type: "boolean", description: "Enable memory system" },
+      { key: "provider", label: "Provider", type: "select", options: ["holographic", "hindsight", "mem0", "honcho", "supermemory", "retaindb", "byterover"], description: "Memory backend provider. Holographic = SQLite local, Hindsight = knowledge graph (local or cloud)" },
       { key: "memory_char_limit", label: "Memory Char Limit", type: "number", min: 500, max: 10000, description: "Max characters per memory entry" },
       { key: "user_char_limit", label: "User Char Limit", type: "number", min: 500, max: 10000, description: "Max characters for user profile" },
       { key: "nudge_interval", label: "Nudge Interval", type: "number", min: 1, max: 100, description: "Turns between memory flush nudges" },
@@ -359,6 +363,27 @@ export const CONFIG_SECTIONS: Record<string, SectionDef> = {
     fields: [
       { key: "backend", label: "Backend", type: "select", options: ["parallel", "firecrawl", "builtin"], description: "Web search backend" },
     ],
+  },
+  hermes_md: {
+    id: "hermes_md",
+    label: "HERMES.md",
+    description: "Priority project instructions — loaded every message",
+    icon: "FileText",
+    color: "cyan",
+    type: "file",
+    filePath: "HERMES.md",
+    fields: [],
+  },
+  env: {
+    id: "env",
+    label: "Environment Variables",
+    description: "API keys and secrets (.env file)",
+    icon: "Lock",
+    color: "orange",
+    type: "file",
+    filePath: ".env",
+    sensitive: true,
+    fields: [],
   },
 };
 

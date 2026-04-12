@@ -67,6 +67,8 @@ export interface SessionsData {
 }
 
 // ── Memory ─────────────────────────────────────────────────────
+export type MemoryProviderType = "holographic" | "hindsight" | "none";
+
 export interface MemoryFact {
   id: number;
   content: string;
@@ -77,15 +79,47 @@ export interface MemoryFact {
   updatedAt: string;
 }
 
+export interface MemoryBank {
+  bank_name: string;
+  fact_count: number;
+  updated_at: string;
+}
+
 export interface MemoryData {
   facts: MemoryFact[];
   total: number;
   dbSize: number;
+  available: boolean;
+  provider: MemoryProviderType;
   error?: string;
-  available?: boolean;
   message?: string;
   entities?: number;
-  banks?: Array<{ bank_name: string; fact_count: number; updated_at: string }>;
+  banks?: MemoryBank[];
+}
+
+// ── Agent Profiles ────────────────────────────────────────────
+export interface ProfileFile {
+  key: string;
+  name: string;
+  path: string;
+  exists: boolean;
+  size: number;
+  lastModified: string | null;
+}
+
+export interface AgentProfile {
+  id: string;
+  name: string;
+  description: string;
+  personality: string;
+  isDefault: boolean;
+  skillsCount: number;
+  toolsCount: number;
+  files: ProfileFile[];
+}
+
+export interface ProfilesData {
+  profiles: AgentProfile[];
 }
 
 // ── Config Sections ────────────────────────────────────────────
@@ -230,12 +264,15 @@ export interface MissionTemplate {
   name: string;
   icon: string;
   color: AccentColor;
+  category: string;
+  profile: string;
   description: string;
   prompt: string;
   goals: string[];
   suggestedSkills: string[];
   defaultModel: string;
   timeoutMinutes: number;
+  isCustom?: boolean;
 }
 
 export type MissionStatus = "queued" | "dispatched" | "successful" | "failed";
@@ -248,6 +285,10 @@ export interface Mission {
   goals: string[];
   skills: string[];
   model: string;
+  profile: string;
+  missionTimeMinutes: number;
+  timeoutMinutes: number;
+  schedule: string;
   templateId: string | null;
   status: MissionStatus;
   dispatchMode: DispatchMode;
@@ -257,6 +298,13 @@ export interface Mission {
   duration: number | null;
   error: string | null;
   cronJobId?: string;
+  cronJob?: {
+    state: string;
+    enabled: boolean;
+    lastRun: string | null;
+    lastStatus: string | null;
+    schedule?: string;
+  };
 }
 
 // ── UI Component Props ─────────────────────────────────────────

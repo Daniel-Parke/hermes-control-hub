@@ -16,8 +16,13 @@ function ensureDir() {
   if (!existsSync(SAVE_DIR)) mkdirSync(SAVE_DIR, { recursive: true });
 }
 
+function sanitizeId(id: string): string {
+  // Only allow alphanumeric, hyphens, underscores — block path traversal
+  return id.replace(/[^a-zA-Z0-9_-]/g, "");
+}
+
 function getPath(id: string): string {
-  return SAVE_DIR + "/" + id + ".json";
+  return SAVE_DIR + "/" + sanitizeId(id) + ".json";
 }
 
 // ── LLM Call ─────────────────────────────────────────────────

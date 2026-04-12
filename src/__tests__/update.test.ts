@@ -2,7 +2,7 @@ import { execSync } from "child_process";
 import { existsSync, writeFileSync, unlinkSync } from "fs";
 
 // ═══════════════════════════════════════════════════════════════
-// Update API — Unit Tests
+// Update API - Unit Tests
 // ═══════════════════════════════════════════════════════════════
 // Tests the version check logic without actually running git or
 // triggering updates. Mocks the filesystem and git operations.
@@ -10,7 +10,7 @@ import { existsSync, writeFileSync, unlinkSync } from "fs";
 const CACHE_FILE = "/tmp/mc-version-cache.json";
 const LOCK_FILE = "/tmp/mc-deploy.lock";
 
-describe("Update API — Version Cache", () => {
+describe("Update API - Version Cache", () => {
   afterEach(() => {
     try { unlinkSync(CACHE_FILE); } catch {}
     try { unlinkSync(LOCK_FILE); } catch {}
@@ -60,7 +60,7 @@ describe("Update API — Version Cache", () => {
   });
 });
 
-describe("Update API — Lock File", () => {
+describe("Update API - Lock File", () => {
   afterEach(() => {
     try { unlinkSync(LOCK_FILE); } catch {}
   });
@@ -94,7 +94,7 @@ describe("Update API — Lock File", () => {
   });
 });
 
-describe("Update API — Scripts", () => {
+describe("Update API - Scripts", () => {
   it("update.sh should exist and have valid syntax", () => {
     const path = process.cwd() + "/scripts/update.sh";
     expect(existsSync(path)).toBe(true);
@@ -136,7 +136,7 @@ describe("Update API — Scripts", () => {
   });
 });
 
-describe("Update API — Response Format", () => {
+describe("Update API - Response Format", () => {
   it("should match VersionInfo interface shape", () => {
     const mockResponse = {
       localHash: "abc1234",

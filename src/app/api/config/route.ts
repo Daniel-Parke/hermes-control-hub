@@ -14,11 +14,28 @@ function parseConfig(): Record<string, unknown> {
   return (yaml.load(content) as Record<string, unknown>) || {};
 }
 
-// GET /api/config — return full config
+// Whitelist of config sections that can be modified via PUT
+const WRITABLE_SECTIONS = new Set([
+  "agent", "display", "memory", "terminal", "compression",
+  "security", "tts", "stt", "delegation", "cron", "checkpoints", "approvals",
+]);
+
+// Mask sensitive values in config before returning to client
+function maskConfigSecrets(config: Record<string, unknown>): Record<string, unknown> {
+  const clone = JSON.parse(JSON.stringify(config));
+  // Mask api_key in model section
+  if (clone.model && typeof clone.model === "object" && clone.model.api_key) {
+    const key = String(clone.model.api_key);
+    clone.model.api_key = key.length > 8 ? key.slice(0, 4) + "••••" + key.slice(-4) : "••••";
+  }
+  return clone;
+}
+
+// GET /api/config — return full config (with secrets masked)
 export async function GET() {
   try {
     const config = parseConfig();
-    return NextResponse.json({ data: config });
+    return NextResponse.json({ data: maskConfigSecrets(config) });
   } catch (error) {
     logApiError("GET /api/config", "reading config.yaml", error);
     return NextResponse.json(
@@ -38,6 +55,14 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json(
         { error: "Missing 'section' or 'values'" },
         { status: 400 }
+      );
+    }
+
+    // Security: only allow whitelisted sections (prevent modifying model/provider keys)
+    if (!WRITABLE_SECTIONS.has(section)) {
+      return NextResponse.json(
+        { error: `Section '${section}' is not writable. Allowed: ${[...WRITABLE_SECTIONS].join(", ")}` },
+        { status: 403 }
       );
     }
 

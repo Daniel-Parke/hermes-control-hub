@@ -84,6 +84,39 @@ if [ "$RESTART_ONLY" = false ]; then
         exit 1
     fi
     log "Build successful"
+
+    # ── Update Agent Profiles ─────────────────────────────────────
+    log "Updating agent profiles..."
+    HERMES_HOME="${HERMES_HOME:-$HOME/.hermes}"
+    PROFILE_TEMPLATES="$APP_DIR/scripts/profiles"
+    PROFILES=("mc-qa-engineer" "mc-devops-engineer" "mc-swe-engineer" "mc-data-engineer" "mc-data-scientist" "mc-ops-director" "mc-creative-lead" "mc-support-agent")
+
+    for profile in "${PROFILES[@]}"; do
+        PROFILE_DIR="$HERMES_HOME/profiles/$profile"
+        if [ ! -d "$PROFILE_DIR" ]; then
+            log "Creating missing profile: $profile"
+            if command -v hermes &>/dev/null; then
+                hermes profile create "$profile" --clone --no-alias 2>/dev/null || true
+            else
+                mkdir -p "$PROFILE_DIR"/{memories,sessions,skills,skins,logs,plans,workspace,cron}
+                [ -f "$HERMES_HOME/config.yaml" ] && cp "$HERMES_HOME/config.yaml" "$PROFILE_DIR/config.yaml"
+                [ -f "$HERMES_HOME/.env" ] && cp "$HERMES_HOME/.env" "$PROFILE_DIR/.env"
+            fi
+        fi
+        # Update SOUL.md and AGENTS.md from templates (overwrite specialist versions)
+        if [ -f "$PROFILE_TEMPLATES/$profile/SOUL.md" ]; then
+            cp "$PROFILE_TEMPLATES/$profile/SOUL.md" "$PROFILE_DIR/SOUL.md"
+        fi
+        if [ -f "$PROFILE_TEMPLATES/$profile/AGENTS.md" ]; then
+            cp "$PROFILE_TEMPLATES/$profile/AGENTS.md" "$PROFILE_DIR/AGENTS.md"
+        fi
+        # Sync auth.json if missing
+        if [ ! -f "$PROFILE_DIR/auth.json" ] && [ -f "$HERMES_HOME/auth.json" ]; then
+            cp "$HERMES_HOME/auth.json" "$PROFILE_DIR/auth.json"
+            chmod 600 "$PROFILE_DIR/auth.json"
+        fi
+    done
+    log "Agent profiles updated"
 fi
 
 # ── Restart Server ────────────────────────────────────────────

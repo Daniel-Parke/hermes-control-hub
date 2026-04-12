@@ -1,169 +1,259 @@
 // ═══════════════════════════════════════════════════════════════
-// Skills Manager — Browse installed skills by category
+// Skills Manager — Profile-aware with collapsible categories
 // ═══════════════════════════════════════════════════════════════
 
 "use client";
 
-import { useState, useEffect } from "react";
-import Link from "next/link";
+import { useState, useEffect, useCallback } from "react";
 import {
-  FileText,
-  FolderOpen,
-  ChevronRight,
-  Clock,
-  HardDrive,
+  FileText, ChevronDown, ChevronRight, Eye, ToggleLeft, ToggleRight, Save,
 } from "lucide-react";
 import PageHeader from "@/components/layout/PageHeader";
 import { SearchInput } from "@/components/ui/Input";
 import { LoadingSpinner, EmptyState } from "@/components/ui/LoadingSpinner";
-import type { SkillsData } from "@/types/hermes";
+import Button from "@/components/ui/Button";
+import Badge from "@/components/ui/Badge";
+import { useToast } from "@/components/ui/Toast";
+
+interface Skill {
+  name: string;
+  category: string;
+  path: string;
+  description: string;
+  enabled: boolean;
+  size: number;
+  lastModified: string;
+}
+
+interface SkillsData {
+  skills: Skill[];
+  categories: Record<string, Skill[]>;
+  total: number;
+  categoryCount: number;
+  profile: string;
+}
 
 export default function SkillsPage() {
   const [data, setData] = useState<SkillsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedProfile, setSelectedProfile] = useState("default");
+  const [profiles, setProfiles] = useState<Array<{ id: string; name: string }>>([]);
+  const [pendingToggles, setPendingToggles] = useState<Record<string, boolean>>({});
+  const [saving, setSaving] = useState(false);
+  const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({});
+  const [expandedSkill, setExpandedSkill] = useState<string | null>(null);
+  const [skillContent, setSkillContent] = useState<string>("");
+  const toast = useToast();
 
   useEffect(() => {
-    fetch("/api/skills")
+    fetch("/api/agent/profiles")
       .then((res) => res.json())
-      .then((d) => setData(d.data))
-      .finally(() => setLoading(false));
+      .then((d) => {
+        const ps = (d.data?.profiles || []).map((p: { id: string; name: string }) => ({
+          id: p.id, name: p.name,
+        }));
+        setProfiles(ps);
+      })
+      .catch(() => {});
   }, []);
 
-  const filteredSkills =
-    data?.skills.filter((skill) => {
-      const matchesSearch =
-        !search ||
-        skill.name.toLowerCase().includes(search.toLowerCase()) ||
-        skill.description.toLowerCase().includes(search.toLowerCase());
-      const matchesCategory =
-        !selectedCategory || skill.category.startsWith(selectedCategory);
-      return matchesSearch && matchesCategory;
-    }) || [];
+  const loadSkills = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/skills?profile=${selectedProfile}`);
+      const d = await res.json();
+      setData(d.data);
+      setPendingToggles({});
+      // Auto-expand first 2 categories
+      const cats = Object.keys(d.data?.categories || {});
+      const expanded: Record<string, boolean> = {};
+      cats.slice(0, 2).forEach((c) => (expanded[c] = true));
+      setExpandedCategories(expanded);
+    } catch {
+      toast.showToast("Failed to load skills", "error");
+    } finally {
+      setLoading(false);
+    }
+  }, [selectedProfile, toast]);
+
+  useEffect(() => { loadSkills(); }, [loadSkills]);
+
+  const toggleSkill = (skillName: string, currentEnabled: boolean) => {
+    setPendingToggles((prev) => ({ ...prev, [skillName]: !currentEnabled }));
+  };
+
+  const saveToggles = async () => {
+    if (Object.keys(pendingToggles).length === 0) return;
+    setSaving(true);
+    try {
+      for (const [skillName, enabled] of Object.entries(pendingToggles)) {
+        await fetch(`/api/skills/${encodeURIComponent(skillName)}/toggle`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ profile: selectedProfile, enabled }),
+        });
+      }
+      toast.showToast(`Updated ${Object.keys(pendingToggles).length} skills`, "success");
+      loadSkills();
+    } catch {
+      toast.showToast("Failed to save changes", "error");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const viewSkill = async (skill: Skill) => {
+    if (expandedSkill === skill.name) { setExpandedSkill(null); return; }
+    setExpandedSkill(skill.name);
+    try {
+      const res = await fetch(`/api/skills/${encodeURIComponent(skill.name)}?profile=${selectedProfile}`);
+      const d = await res.json();
+      setSkillContent(d.data?.content || "");
+    } catch {
+      setSkillContent("// Failed to load");
+    }
+  };
+
+  const isSkillEnabled = (skill: Skill) => {
+    if (skill.name in pendingToggles) return pendingToggles[skill.name];
+    return skill.enabled;
+  };
+
+  const categories = data?.categories || {};
+  const enabledCount = data?.skills.filter((s) => isSkillEnabled(s)).length || 0;
+  const hasPendingChanges = Object.keys(pendingToggles).length > 0;
+
+  // Filter skills by search
+  const filteredCategories = Object.entries(categories).reduce(
+    (acc, [cat, skills]) => {
+      const filtered = skills.filter(
+        (s) =>
+          !search ||
+          s.name.toLowerCase().includes(search.toLowerCase()) ||
+          s.description.toLowerCase().includes(search.toLowerCase())
+      );
+      if (filtered.length > 0) acc[cat] = filtered;
+      return acc;
+    },
+    {} as Record<string, Skill[]>
+  );
 
   return (
     <div className="min-h-screen bg-dark-950 grid-bg">
       <PageHeader
         icon={FileText}
         title="Skills Manager"
-        subtitle={`${data?.total || 0} skills across ${data?.categoryCount || 0} categories`}
+        subtitle={`${enabledCount}/${data?.total || 0} enabled — ${data?.categoryCount || 0} categories`}
         color="green"
+        actions={
+          <div className="flex items-center gap-3">
+            <select
+              value={selectedProfile}
+              onChange={(e) => setSelectedProfile(e.target.value)}
+              className="bg-dark-800 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white focus:border-green-500/50 focus:outline-none"
+            >
+              {profiles.map((p) => (
+                <option key={p.id} value={p.id}>{p.name}</option>
+              ))}
+            </select>
+            {hasPendingChanges && (
+              <Button variant="primary" color="green" size="sm" icon={Save} onClick={saveToggles} disabled={saving}>
+                {saving ? "Saving..." : `Save (${Object.keys(pendingToggles).length})`}
+              </Button>
+            )}
+          </div>
+        }
       />
 
       <div className="px-6 py-6">
-        {/* Search */}
+        {/* Full Width Search */}
         <div className="mb-6">
-          <SearchInput
-            value={search}
-            onChange={setSearch}
-            placeholder="Search skills..."
-            accentColor="green"
-          />
+          <SearchInput value={search} onChange={setSearch} placeholder="Search skills..." accentColor="green" />
         </div>
 
         {loading ? (
           <LoadingSpinner text="Loading skills..." />
+        ) : Object.keys(filteredCategories).length === 0 ? (
+          <EmptyState icon={FileText} title="No skills found" description={search ? "Try a different search" : "No skills installed"} />
         ) : (
-          <div className="flex gap-6">
-            {/* Categories Sidebar */}
-            <div className="w-56 flex-shrink-0 hidden md:block">
-              <h3 className="text-xs font-mono text-white/40 uppercase tracking-widest mb-3">
-                Categories
-              </h3>
-              <div className="space-y-1">
-                <button
-                  onClick={() => setSelectedCategory(null)}
-                  className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
-                    !selectedCategory
-                      ? "bg-neon-green/10 text-neon-green border border-neon-green/20"
-                      : "text-white/60 hover:bg-white/5"
-                  }`}
-                >
-                  All Skills ({data?.total || 0})
-                </button>
-                {data &&
-                  Object.entries(data.categories)
-                    .sort(([a], [b]) => a.localeCompare(b))
-                    .map(([category, skills]) => (
-                      <button
-                        key={category}
-                        onClick={() => setSelectedCategory(category)}
-                        className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors flex items-center justify-between ${
-                          selectedCategory === category
-                            ? "bg-neon-green/10 text-neon-green border border-neon-green/20"
-                            : "text-white/60 hover:bg-white/5"
-                        }`}
-                      >
-                        <span className="flex items-center gap-2">
-                          <FolderOpen className="w-3.5 h-3.5" />
-                          {category}
-                        </span>
-                        <span className="text-xs text-white/30">
-                          {skills.length}
-                        </span>
-                      </button>
-                    ))}
-              </div>
-            </div>
+          <div className="space-y-3">
+            {Object.entries(filteredCategories).map(([category, skills]) => {
+              const isExpanded = expandedCategories[category] ?? false;
+              const catEnabled = skills.filter((s) => isSkillEnabled(s)).length;
+              return (
+                <div key={category} className="rounded-xl border border-white/10 bg-dark-900/50">
+                  {/* Category Header */}
+                  <button
+                    className="w-full flex items-center justify-between px-4 py-3 hover:bg-white/5 rounded-t-xl transition-colors"
+                    onClick={() =>
+                      setExpandedCategories((prev) => ({ ...prev, [category]: !isExpanded }))
+                    }
+                  >
+                    <div className="flex items-center gap-2">
+                      {isExpanded ? (
+                        <ChevronDown className="w-4 h-4 text-white/30" />
+                      ) : (
+                        <ChevronRight className="w-4 h-4 text-white/30" />
+                      )}
+                      <span className="text-sm font-semibold text-white/70">{category || "uncategorized"}</span>
+                      <Badge color="gray" size="sm">{catEnabled}/{skills.length}</Badge>
+                    </div>
+                  </button>
 
-            {/* Skills List */}
-            <div className="flex-1">
-              {filteredSkills.length === 0 ? (
-                <EmptyState
-                  icon={FileText}
-                  title="No skills found"
-                  description={search ? "Try a different search term" : "No skills installed"}
-                />
-              ) : (
-                <div className="grid gap-3">
-                  {filteredSkills.map((skill) => {
-                    // Derive URL path from skill path
-                    const relPath = skill.path
-                      .replace(/.*\/skills\//, "")
-                      .replace(/\/SKILL\.md$/, "");
-                    return (
-                    <Link key={skill.path} href={`/skills/${relPath}`}>
-                      <div
-                        className="rounded-xl border border-white/10 bg-dark-900/50 p-4 hover:border-neon-green/30 transition-colors group cursor-pointer"
-                      >
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-1">
-                              <FileText className="w-4 h-4 text-neon-green" />
-                              <h3 className="font-semibold text-white">
-                                {skill.name}
-                              </h3>
-                              <span className="text-xs text-white/30 font-mono bg-white/5 px-2 py-0.5 rounded">
-                                {skill.category}
-                              </span>
+                  {/* Skills List */}
+                  {isExpanded && (
+                    <div className="border-t border-white/5">
+                      {skills.map((skill) => {
+                        const enabled = isSkillEnabled(skill);
+                        const isPending = skill.name in pendingToggles;
+                        const isSkillExpanded = expandedSkill === skill.name;
+                        return (
+                          <div key={skill.name}>
+                            <div
+                              className={`flex items-center gap-3 px-4 py-2.5 hover:bg-white/5 transition-colors group ${
+                                !enabled ? "opacity-50" : ""
+                              } ${isPending ? "ring-1 ring-green-500/30" : ""}`}
+                            >
+                              <button onClick={() => toggleSkill(skill.name, enabled)} className="flex-shrink-0">
+                                {enabled ? (
+                                  <ToggleRight className="w-6 h-6 text-neon-green" />
+                                ) : (
+                                  <ToggleLeft className="w-6 h-6 text-white/20" />
+                                )}
+                              </button>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-sm font-mono text-white/80">{skill.name}</span>
+                                  {isPending && (
+                                    <Badge color="green" size="sm">
+                                      {pendingToggles[skill.name] ? "enabling" : "disabling"}
+                                    </Badge>
+                                  )}
+                                </div>
+                                <p className="text-xs text-white/30 truncate">{skill.description}</p>
+                              </div>
+                              <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                                <Button variant="ghost" size="sm" icon={Eye} onClick={() => viewSkill(skill)}>
+                                  {isSkillExpanded ? "Hide" : "View"}
+                                </Button>
+                              </div>
                             </div>
-                            <p className="text-sm text-white/50 line-clamp-2">
-                              {skill.description || "No description available"}
-                            </p>
-                            <div className="flex items-center gap-4 mt-2 text-xs text-white/30 font-mono">
-                              <span className="flex items-center gap-1">
-                                <HardDrive className="w-3 h-3" />
-                                {(skill.size / 1024).toFixed(1)} KB
-                              </span>
-                              <span className="flex items-center gap-1">
-                                <Clock className="w-3 h-3" />
-                                {new Date(skill.lastModified).toLocaleDateString()}
-                              </span>
-                            </div>
+                            {isSkillExpanded && (
+                              <div className="ml-12 mr-4 mb-2 p-3 bg-dark-800/50 border border-white/5 rounded-lg">
+                                <pre className="text-xs text-white/60 font-mono whitespace-pre-wrap max-h-60 overflow-auto">
+                                  {skillContent || "// Loading..."}
+                                </pre>
+                              </div>
+                            )}
                           </div>
-                          <div className="flex items-center gap-1 text-xs text-white/30 group-hover:text-neon-green transition-colors font-mono">
-                            VIEW
-                            <ChevronRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
-                          </div>
-                        </div>
-                      </div>
-                    </Link>
-                    );
-                  })}
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
+              );
+            })}
           </div>
         )}
       </div>

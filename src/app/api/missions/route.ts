@@ -6,6 +6,16 @@ import { NextResponse } from "next/server";
 import { HERMES_HOME, PATHS, getDefaultModelConfig } from "@/lib/hermes";
 import { existsSync, mkdirSync, readFileSync, writeFileSync, readdirSync, unlinkSync, statSync } from "fs";
 import { logApiError } from "@/lib/api-logger";
+import { parseSchedule, CronJobData } from "@/lib/utils";
+import {
+  getScopeLabel,
+  missionTimeToDevHours,
+  buildGoalsSection,
+  buildMissionPrompt,
+  getMissionStatus,
+  TEMPLATES,
+  TemplateDef,
+} from "@/lib/mission-helpers";
 
 const DATA_DIR = PATHS.missions;
 const CRON_PATH = PATHS.cronJobs;
@@ -31,8 +41,15 @@ function ensureDir() {
   }
 }
 
+function sanitizeId(id: string): string {
+  // Only allow alphanumeric, hyphens, underscores — block path traversal
+  return id.replace(/[^a-zA-Z0-9_-]/g, "");
+}
+
 function loadMission(id: string): MissionRecord | null {
-  const path = DATA_DIR + "/" + id + ".json";
+  const safe = sanitizeId(id);
+  if (!safe) return null;
+  const path = DATA_DIR + "/" + safe + ".json";
   if (!existsSync(path)) return null;
   try {
     return JSON.parse(readFileSync(path, "utf-8"));
@@ -43,7 +60,9 @@ function loadMission(id: string): MissionRecord | null {
 
 function saveMission(record: MissionRecord) {
   ensureDir();
-  const path = DATA_DIR + "/" + record.id + ".json";
+  const safe = sanitizeId(record.id);
+  if (!safe) return;
+  const path = DATA_DIR + "/" + safe + ".json";
   writeFileSync(path, JSON.stringify(record, null, 2));
 }
 
@@ -54,6 +73,10 @@ interface MissionRecord {
   goals: string[];
   skills: string[];
   model: string;
+  profile: string;
+  missionTimeMinutes: number;
+  timeoutMinutes: number;
+  schedule: string;
   status: "queued" | "dispatched" | "successful" | "failed";
   dispatchMode: "save" | "now" | "cron";
   createdAt: string;
@@ -63,27 +86,6 @@ interface MissionRecord {
   error: string | null;
   cronJobId?: string;
   templateId?: string;
-}
-
-interface CronJobData {
-  id: string;
-  name: string;
-  prompt: string;
-  skills: string[];
-  model: string;
-  schedule: { kind: string; minutes?: number; expr?: string; run_at?: string; display?: string } | string;
-  schedule_display?: string;
-  repeat: { times: number | null; completed: number } | boolean;
-  enabled: boolean;
-  state?: string;
-  deliver?: string;
-  script?: string | null;
-  created_at?: string;
-  next_run_at?: string | null;
-  last_run_at?: string | null;
-  last_status?: string | null;
-  mission_id?: string;
-  [key: string]: unknown;
 }
 
 // ── Cron helpers ──────────────────────────────────────────────
@@ -140,161 +142,12 @@ function findSessionsForCronJob(cronJobId: string): Array<{ id: string; modified
 }
 
 // ── Mission Templates ─────────────────────────────────────────
+// (template definitions and helper functions live in @/lib/mission-helpers)
 
-const TEMPLATES = [
-  {
-    id: "build-feature",
-    name: "Build Feature",
-    icon: "Wrench",
-    color: "green",
-    description: "Plan and implement a new feature",
-    instruction: [
-      "You are a full-stack developer. Plan and build the requested feature end-to-end.",
-      "",
-      "Steps:",
-      "1. Understand requirements — clarify the feature scope, inputs/outputs, edge cases",
-      "2. Design the approach — decide on architecture, data flow, component structure",
-      "3. Build incrementally — start with the core functionality, get it working before polishing",
-      "4. Add tests — write unit/integration tests for critical paths",
-      "5. Polish — handle edge cases, error states, loading states, responsive design",
-      "6. Verify — run the build, check for TypeScript errors, test manually",
-      "",
-      "Follow existing code patterns and conventions. Prefer small, composable changes over large rewrites.",
-    ].join("\n"),
-    context: "Feature description and requirements:\n",
-    goals: ["Design approach", "Build core functionality", "Add tests", "Polish & verify"],
-    suggestedSkills: ["test-driven-development"],
-    defaultModel: "",
-    timeoutMinutes: 30,
-  },
-  {
-    id: "content",
-    name: "Content Creation",
-    icon: "PenTool",
-    color: "orange",
-    description: "Write documentation, posts, or other content",
-    instruction: [
-      "You are a technical writer. Create clear, well-structured content for the intended audience.",
-      "",
-      "Steps:",
-      "1. Research — gather information on the topic, understand the target audience",
-      "2. Outline — create a logical structure with clear sections and headings",
-      "3. Draft — write the content with clear language, concrete examples, and appropriate detail",
-      "4. Review — check for accuracy, clarity, tone consistency, and completeness",
-      "5. Format — use appropriate markdown structure (headings, lists, code blocks, tables)",
-      "",
-      "Write in a professional but approachable tone. Avoid jargon unless the audience expects it.",
-      "Include examples wherever possible — abstract explanations are harder to follow than concrete ones.",
-    ].join("\n"),
-    context: "Content brief (topic, audience, format, length):\n",
-    goals: ["Research & outline", "Draft content", "Review & refine", "Final polish"],
-    suggestedSkills: [],
-    defaultModel: "",
-    timeoutMinutes: 10,
-  },
-  {
-    id: "research",
-    name: "Research & Analyse",
-    icon: "Search",
-    color: "cyan",
-    description: "Deep research on a topic with structured findings",
-    instruction: [
-      "You are a research analyst. Your job is to investigate a topic thoroughly and produce a structured, evidence-based report.",
-      "",
-      "Steps:",
-      "1. Define the research scope — identify key questions to answer",
-      "2. Search the web for current, authoritative sources on the topic",
-      "3. Cross-reference findings across multiple sources for accuracy",
-      "4. Organise into sections: Executive Summary, Key Findings, Supporting Evidence, Risks/Caveats, Recommendations",
-      "5. Cite all sources with URLs. Flag any conflicting information.",
-      "6. End with a concise TL;DR (3–5 bullet points) of the most important takeaways",
-    ].join("\n"),
-    context: "Topic to research:\n",
-    goals: ["Define scope & questions", "Gather & verify sources", "Synthesise findings", "Write report with citations"],
-    suggestedSkills: [],
-    defaultModel: "",
-    timeoutMinutes: 10,
-  },
-  {
-    id: "code-review",
-    name: "Code Review",
-    icon: "GitPullRequest",
-    color: "purple",
-    description: "Review code for bugs, security issues, and improvements",
-    instruction: [
-      "You are a senior code reviewer. Examine the codebase systematically and provide actionable feedback.",
-      "",
-      "CRITICAL: You have 15 minutes maximum. Focus on HIGH-IMPACT issues only.",
-      "Do NOT delegate to subagents — work directly. Read files yourself.",
-      "",
-      "Steps:",
-      "1. Map the project structure (2 min max) — entry points, key config, main modules",
-      "2. Scan for critical bugs (5 min) — logic errors, null refs, race conditions, unhandled errors",
-      "3. Security audit (5 min) — injection risks, exposed secrets, unsafe inputs, auth gaps",
-      "4. Report findings — file path, line number, severity, description, suggested fix",
-      "",
-      "Prioritise: Security > Critical Bugs > Performance > Code Quality",
-      "Skip low-severity items if time is short. A focused report of 3-5 critical findings",
-      "is more valuable than a superficial scan of everything.",
-    ].join("\n"),
-    context: "Focus area or specific files to review (leave blank for full scan):\n",
-    goals: ["Map structure", "Critical bug scan", "Security audit", "Report findings"],
-    suggestedSkills: ["systematic-debugging"],
-    defaultModel: "",
-    timeoutMinutes: 15,
-  },
-  {
-    id: "debug",
-    name: "Debug & Fix",
-    icon: "Bug",
-    color: "pink",
-    description: "Diagnose and fix a specific issue",
-    instruction: [
-      "You are a debugger. Your job is to reproduce, diagnose, and fix the reported issue.",
-      "",
-      "Steps:",
-      "1. Reproduce the issue — run the code, trigger the error, capture the exact failure",
-      "2. Trace the root cause — follow the execution path, inspect logs, check recent changes",
-      "3. Identify the fix — determine the minimal change needed to resolve the issue",
-      "4. Implement the fix — make the change, ensure no regressions",
-      "5. Verify — run tests, re-trigger the original scenario, confirm the fix works",
-      "6. Document — summarise what was broken, why, and what you changed",
-      "",
-      "If you cannot reproduce the issue, explain what you tried and what information is still needed.",
-    ].join("\n"),
-    context: "Describe the issue (error message, steps to reproduce, expected vs actual):\n",
-    goals: ["Reproduce the issue", "Trace root cause", "Implement fix", "Verify & document"],
-    suggestedSkills: ["systematic-debugging"],
-    defaultModel: "",
-    timeoutMinutes: 20,
-  },
-  {
-    id: "devops",
-    name: "DevOps Maintenance",
-    icon: "Activity",
-    color: "cyan",
-    description: "Maintain, monitor, and improve infrastructure and deployment pipelines",
-    instruction: [
-      "You are a DevOps engineer. Maintain and improve the reliability, performance, and security of existing infrastructure.",
-      "",
-      "Steps:",
-      "1. Assess current state — review existing setup, identify technical debt, outdated configs, or reliability gaps",
-      "2. Prioritise improvements — rank issues by impact (security > reliability > performance > convenience)",
-      "3. Implement changes — make infrastructure/config updates incrementally, one concern at a time",
-      "4. Test — verify each change works in the target environment before moving to the next",
-      "5. Document — update relevant docs, README, runbooks, and change logs",
-      "",
-      "Prefer simple, reproducible setups. Always test before declaring success.",
-      "If destructive changes are needed, flag them clearly and explain the risk.",
-      "Focus on keeping things running smoothly rather than building new features.",
-    ].join("\n"),
-    context: "Maintenance task description (what needs attention):\n",
-    goals: ["Assess current state", "Prioritise improvements", "Implement & configure", "Test & document"],
-    suggestedSkills: [],
-    defaultModel: "",
-    timeoutMinutes: 20,
-  },
-];
+// ── Template definitions (28 built-in templates across 8 categories) ──
+// Defined in @/lib/mission-helpers and imported above.
+// (TEMPLATES array removed — now sourced from mission-helpers.ts)
+
 
 // ── GET ───────────────────────────────────────────────────────
 
@@ -302,7 +155,7 @@ export async function GET(request: Request) {
   try {
     const url = new URL(request.url);
     const action = url.searchParams.get("action");
-    const missionId = url.searchParams.get("id");
+    const missionId = url.searchParams.get("id") ? sanitizeId(url.searchParams.get("id")!) : null;
 
     if (action === "templates") {
       // Merge built-in templates with custom templates
@@ -316,7 +169,13 @@ export async function GET(request: Request) {
           for (const file of files) {
             try {
               const tmpl = JSON.parse(readFileSync(customDir + "/" + file, "utf-8"));
-              custom.push({ ...tmpl, isCustom: true });
+              // Provide defaults for legacy templates missing new fields
+              custom.push({
+                ...tmpl,
+                category: tmpl.category || "Custom",
+                profile: tmpl.profile || "",
+                isCustom: true,
+              });
             } catch {}
           }
         } catch {}
@@ -328,38 +187,6 @@ export async function GET(request: Request) {
     // ── Status Mapper ─────────────────────────────────────────────
     // Maps cron job state directly to mission status.
     // Source of truth: cron job file. No session reading, no heuristics.
-    function getMissionStatus(
-      job: CronJobData | null,
-      currentStatus: string,
-    ): { status: string; error?: string } {
-      if (!job) {
-        // Cron job deleted — for one-shot dispatches this means it completed
-        if (currentStatus === "dispatched") return { status: "successful" };
-        return { status: currentStatus };
-      }
-      // User cancelled the job
-      if (job.state === "paused" && !job.enabled) {
-        return { status: "failed", error: "Cancelled by user" };
-      }
-      // Scheduler is actively executing — highest priority
-      if (job.state === "running") {
-        return { status: "dispatched" };
-      }
-      // Job has never run
-      if (!job.last_run_at) {
-        return { status: "queued" };
-      }
-      // Job has run — check result
-      if (job.last_status === "ok") {
-        return { status: "successful" };
-      }
-      if (job.last_status === "error") {
-        return { status: "failed" };
-      }
-      // Job ran but no status yet (still executing or status not recorded)
-      return { status: "dispatched" };
-    }
-
     // Get single mission with linked cron job + sessions
     if (missionId) {
       const mission = loadMission(missionId);
@@ -398,11 +225,36 @@ export async function GET(request: Request) {
     // List all missions with linked cron status
     ensureDir();
     const files = existsSync(DATA_DIR) ? readdirSync(DATA_DIR).filter((f) => f.endsWith(".json")) : [];
-    const missions: Array<MissionRecord & { cronJob?: { state: string; enabled: boolean; lastRun: string | null; lastStatus: string | null } }> = [];
+    const missions: Array<MissionRecord & { cronJob?: { state: string; enabled: boolean; lastRun: string | null; lastStatus: string | null }; latestSession?: { id: string; modified: string } | null }> = [];
 
     // PERFORMANCE: Read cron jobs once, build lookup map instead of re-reading per mission
     const allCronJobs = readCronJobs();
     const cronJobMap = new Map(allCronJobs.map((j) => [j.mission_id, j]));
+
+    // PERFORMANCE: Scan sessions directory once, build map of missionId -> latest session
+    const sessionsMap = new Map<string, { id: string }>();
+    try {
+      const sessionsDir = PATHS.sessions;
+      if (existsSync(sessionsDir)) {
+        const sessionFiles = readdirSync(sessionsDir);
+        for (const sf of sessionFiles) {
+          if (!sf.endsWith(".json") && !sf.endsWith(".jsonl")) continue;
+          // Session filename: session_cron_<cronJobId>_<YYYYMMDD_HHMMSS>.json
+          // cronJobId for missions is "mission-<missionId>"
+          // Extract missionId directly from filename
+          const match = sf.match(/session_cron_mission-(m_[a-z0-9]+)_\d{8}_\d{6}\./);
+          if (match) {
+            const missionId = match[1];
+            const sessionId = sf.replace(/\.(json|jsonl)$/, "");
+            const existing = sessionsMap.get(missionId);
+            // Keep the most recent session (filenames are lexicographically timestamped)
+            if (!existing || sessionId > existing.id) {
+              sessionsMap.set(missionId, { id: sessionId });
+            }
+          }
+        }
+      }
+    } catch {}
 
     for (const file of files) {
       try {
@@ -427,7 +279,10 @@ export async function GET(request: Request) {
           }
         }
 
-        missions.push(m as MissionRecord & { cronJob?: { state: string; enabled: boolean; lastRun: string | null; lastStatus: string | null } });
+        // Attach latest session if available
+        const latestSession = sessionsMap.get(m.id) || null;
+
+        missions.push({ ...m, latestSession } as typeof missions[0]);
       } catch {}
     }
 
@@ -466,6 +321,10 @@ export async function POST(request: Request) {
         goals: body.goals || [],
         skills: body.skills || [],
         model: body.model || "",
+        profile: body.profile || "",
+        missionTimeMinutes: Math.max(5, Math.min(120, body.missionTimeMinutes || 15)),
+        timeoutMinutes: Math.max(1, Math.min(120, body.timeoutMinutes || 10)),
+        schedule: body.schedule || "every 5m",
         status: "queued",
         dispatchMode,
         createdAt: now,
@@ -476,102 +335,26 @@ export async function POST(request: Request) {
         templateId: body.templateId || undefined,
       };
 
-      // Parse schedule string into cron schedule object
-      function parseSchedule(scheduleStr: string): { schedule: CronJobData["schedule"]; schedule_display: string } {
-        const s = scheduleStr.trim().toLowerCase();
-
-        // "every Xh Xm" or "every Xm" or "every Xh"
-        const intervalMatch = s.match(/^every\s+(\d+)\s*(m|h|d|w)(?:\s+(\d+)\s*(m|h))?$/);
-        if (intervalMatch) {
-          let minutes = parseInt(intervalMatch[1]);
-          const unit1 = intervalMatch[2];
-          if (unit1 === "h") minutes *= 60;
-          else if (unit1 === "d") minutes *= 1440;
-          else if (unit1 === "w") minutes *= 10080;
-          if (intervalMatch[3]) {
-            let extra = parseInt(intervalMatch[3]);
-            if (intervalMatch[4] === "h") extra *= 60;
-            minutes += extra;
-          }
-          const display = minutes >= 1440
-            ? `every ${minutes / 1440}d`
-            : minutes >= 60
-            ? `every ${Math.floor(minutes / 60)}h${minutes % 60 ? ` ${minutes % 60}m` : ""}`
-            : `every ${minutes}m`;
-          return { schedule: { kind: "interval", minutes, display }, schedule_display: display };
-        }
-
-        // Standard cron expression (5 fields: min hour dom month dow)
-        const cronMatch = s.match(/^(\S+\s+\S+\s+\S+\s+\S+\s+\S+)$/);
-        if (cronMatch) {
-          return {
-            schedule: { kind: "cron", expr: cronMatch[1], display: cronMatch[1] },
-            schedule_display: cronMatch[1],
-          };
-        }
-
-        // Default: every 15m
-        return {
-          schedule: { kind: "interval", minutes: 15, display: "every 15m" },
-          schedule_display: "every 15m",
-        };
+      // Parse schedule string into cron schedule object using shared parser
+      function parseMissionSchedule(scheduleStr: string): { schedule: CronJobData["schedule"]; schedule_display: string } {
+        const result = parseSchedule(scheduleStr);
+        return { schedule: result, schedule_display: result.display || scheduleStr };
       }
 
       // If dispatch mode is "now" or "cron", create a real cron job
       if (dispatchMode !== "save") {
         const cronId = "mission-" + id;
 
-        // Build enhanced prompt with goal tracking, time budget, and scope constraints
-        let missionPrompt = record.prompt;
-
-        // Look up template timeout — check built-in and custom templates
-        let timeoutMinutes = 10;
-        if (record.templateId) {
-          const builtIn = TEMPLATES.find(t => t.id === record.templateId);
-          if (builtIn?.timeoutMinutes) {
-            timeoutMinutes = builtIn.timeoutMinutes;
-          } else if (record.templateId.startsWith("ct_")) {
-            const customPath = PATHS.templates + "/" + record.templateId + ".json";
-            if (existsSync(customPath)) {
-              try {
-                const ct = JSON.parse(readFileSync(customPath, "utf-8"));
-                if (ct.timeoutMinutes) timeoutMinutes = ct.timeoutMinutes;
-              } catch {}
-            }
-          }
-        }
-
-        // Add time budget warning — cron jobs have ~10 min inactivity timeout
-        const timeBudgetSection =
-          `## TIME BUDGET\n` +
-          `You have approximately ${timeoutMinutes} minutes. This is a HARD LIMIT — the session will be killed after ${timeoutMinutes} minutes of inactivity.\n` +
-          `Plan accordingly. Do NOT attempt work that cannot be completed in this window.\n\n`;
-
-        // Add delegation constraints
-        const delegationSection =
-          `## DELEGATION RULES\n` +
-          `- You may delegate UP TO 3 subtasks in ONE round. Do NOT delegate multiple rounds.\n` +
-          `- After receiving delegation results, SYNTHESIZE and produce your final report.\n` +
-          `- If time is running short, skip delegation and work directly.\n` +
-          `- Set max_iterations to 30 for each delegated subtask to prevent runaway execution.\n\n`;
-
-        if (record.goals.length > 0) {
-          missionPrompt =
-            `## Goals (complete each in order)\n` +
-            record.goals.map((g, i) => `${i + 1}. [ ] ${g}`).join("\n") +
-            `\n\nMark each goal as done by including "GOAL_DONE: <goal text>" in your response when you finish each one.\n\n` +
-            `---\n\n${timeBudgetSection}${delegationSection}${record.prompt}`;
-        } else {
-          missionPrompt = `---\n\n${timeBudgetSection}${delegationSection}${record.prompt}`;
-        }
+        // Build enhanced prompt with Mission Scope + Safety Limits
+        const missionPrompt = buildMissionPrompt(record);
 
         const parsed = dispatchMode === "cron"
-          ? parseSchedule(body.schedule || "every 15m")
+          ? parseMissionSchedule(record.schedule)
           : { schedule: { kind: "once", run_at: now, display: "once (immediate)" }, schedule_display: "once (immediate)" };
 
         const defaults = getDefaultModelConfig();
 
-        const cronJob: CronJobData = {
+        const cronJob = {
           id: cronId,
           name: "Mission: " + record.name,
           prompt: missionPrompt,
@@ -587,9 +370,11 @@ export async function POST(request: Request) {
           state: "scheduled",
           deliver: getDeliverTarget(),
           created_at: now,
-          next_run_at: now, // Fire immediately for "now", or on next tick for "cron"
+          next_run_at: now,
           mission_id: id,
-        };
+          timeout: record.timeoutMinutes * 60,
+          profile: record.profile || undefined,
+        } as CronJobData;
 
         // Write cron job to jobs.json
         const jobs = readCronJobs();
@@ -618,7 +403,8 @@ export async function POST(request: Request) {
         }
       }
 
-      const path = DATA_DIR + "/" + missionId + ".json";
+      const safe = sanitizeId(missionId);
+      const path = DATA_DIR + "/" + safe + ".json";
       if (existsSync(path)) {
         unlinkSync(path);
         return NextResponse.json({ data: { deleted: true } });
@@ -662,6 +448,10 @@ export async function POST(request: Request) {
       if (body.name !== undefined) mission.name = body.name;
       if (body.prompt !== undefined) mission.prompt = body.prompt;
       if (body.goals !== undefined) mission.goals = body.goals;
+      if (body.profile !== undefined) mission.profile = body.profile;
+      if (body.missionTimeMinutes !== undefined) mission.missionTimeMinutes = Math.max(5, Math.min(120, body.missionTimeMinutes));
+      if (body.timeoutMinutes !== undefined) mission.timeoutMinutes = Math.max(1, Math.min(120, body.timeoutMinutes));
+      if (body.schedule !== undefined) mission.schedule = body.schedule;
       mission.updatedAt = new Date().toISOString();
       saveMission(mission);
 
@@ -670,47 +460,18 @@ export async function POST(request: Request) {
         const jobs = readCronJobs();
         const idx = jobs.findIndex((j) => j.id === mission.cronJobId);
         if (idx !== -1) {
-          if (body.prompt !== undefined || body.goals !== undefined) {
-            let missionPrompt = mission.prompt;
-            // Look up template timeout — check built-in and custom templates
-            let timeoutMinutes = 10;
-            if (mission.templateId) {
-              const builtIn = TEMPLATES.find(t => t.id === mission.templateId);
-              if (builtIn?.timeoutMinutes) {
-                timeoutMinutes = builtIn.timeoutMinutes;
-              } else if (mission.templateId.startsWith("ct_")) {
-                const customPath = PATHS.templates + "/" + mission.templateId + ".json";
-                if (existsSync(customPath)) {
-                  try {
-                    const ct = JSON.parse(readFileSync(customPath, "utf-8"));
-                    if (ct.timeoutMinutes) timeoutMinutes = ct.timeoutMinutes;
-                  } catch {}
-                }
-              }
-            }
-            const timeBudgetSection =
-              `## TIME BUDGET\n` +
-              `You have approximately ${timeoutMinutes} minutes. This is a HARD LIMIT — the session will be killed after ${timeoutMinutes} minutes of inactivity.\n` +
-              `Plan accordingly. Do NOT attempt work that cannot be completed in this window.\n\n`;
-            const delegationSection =
-              `## DELEGATION RULES\n` +
-              `- You may delegate UP TO 3 subtasks in ONE round. Do NOT delegate multiple rounds.\n` +
-              `- After receiving delegation results, SYNTHESIZE and produce your final report.\n` +
-              `- If time is running short, skip delegation and work directly.\n` +
-              `- Set max_iterations to 30 for each delegated subtask to prevent runaway execution.\n\n`;
-            if (mission.goals.length > 0) {
-              missionPrompt =
-                `## Goals (complete each in order)\n` +
-                mission.goals.map((g: string, i: number) => `${i + 1}. [ ] ${g}`).join("\n") +
-                `\n\nMark each goal as done by including "GOAL_DONE: <goal text>" in your response when you finish each one.\n\n` +
-                `---\n\n${timeBudgetSection}${delegationSection}${mission.prompt}`;
-            } else {
-              missionPrompt = `---\n\n${timeBudgetSection}${delegationSection}${mission.prompt}`;
-            }
+          if (body.prompt !== undefined || body.goals !== undefined || body.missionTimeMinutes !== undefined || body.timeoutMinutes !== undefined) {
+            const missionPrompt = buildMissionPrompt(mission);
             jobs[idx].prompt = missionPrompt;
+            jobs[idx].timeout = mission.timeoutMinutes * 60;
           }
           if (body.name !== undefined) {
             jobs[idx].name = "Mission: " + mission.name;
+          }
+          if (body.schedule !== undefined && mission.dispatchMode === "cron") {
+            const scheduleResult = parseSchedule(mission.schedule);
+            jobs[idx].schedule = scheduleResult;
+            jobs[idx].schedule_display = scheduleResult.display || mission.schedule;
           }
           writeCronJobs(jobs);
         }

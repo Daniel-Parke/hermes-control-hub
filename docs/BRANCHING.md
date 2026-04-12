@@ -44,7 +44,7 @@ git checkout main
 git pull origin main
 npm run build
 fuser -k 3000/tcp
-nohup npx next start -p 3000 -H 0.0.0.0 &
+node node_modules/next/dist/bin/next start -p 3000 -H 0.0.0.0  # Use background=true in terminal tool
 ```
 
 ## Protection Rules
@@ -93,4 +93,3 @@ git push -u origin dev
 # Agents will automatically work on dev
 ```
 
-<!-- Agent workflow test commit -->

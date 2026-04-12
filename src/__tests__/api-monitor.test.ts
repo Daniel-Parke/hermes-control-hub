@@ -2,12 +2,12 @@ import { existsSync } from "fs";
 import { PATHS } from "@/lib/hermes";
 
 // ═══════════════════════════════════════════════════════════════
-// Monitor API — Unit Tests
+// Monitor API - Unit Tests
 // ═══════════════════════════════════════════════════════════════
 // Tests the monitor API response shape and graceful degradation
 // when optional components (memory, cron, logs) are missing.
 
-describe("Monitor API — Response Shape", () => {
+describe("Monitor API - Response Shape", () => {
   const mockMonitorData = {
     cron: {
       total: 2,
@@ -90,7 +90,7 @@ describe("Monitor API — Response Shape", () => {
   });
 });
 
-describe("Monitor API — Graceful Degradation", () => {
+describe("Monitor API - Graceful Degradation", () => {
   it("should default memory to 'Not Installed' when DB missing", () => {
     const defaultMemory = {
       factCount: 0,

@@ -19,6 +19,8 @@ interface CustomTemplate {
   name: string;
   icon: string;
   color: string;
+  category: string;
+  profile: string;
   description: string;
   instruction: string;
   context: string;
@@ -81,13 +83,15 @@ export async function POST(request: NextRequest) {
         name: body.name || "Untitled Template",
         icon: body.icon || "Zap",
         color: body.color || "cyan",
+        category: body.category || "Custom",
+        profile: body.profile || "",
         description: body.description || "",
         instruction: body.instruction || "",
         context: body.context || "",
         goals: body.goals || [],
         suggestedSkills: body.suggestedSkills || [],
         dispatchMode: body.dispatchMode || "now",
-        schedule: body.schedule || "every 15m",
+        schedule: body.schedule || "every 5m",
         createdAt: now,
         updatedAt: now,
       };
@@ -106,6 +110,8 @@ export async function POST(request: NextRequest) {
       if (body.name !== undefined) template.name = body.name;
       if (body.icon !== undefined) template.icon = body.icon;
       if (body.color !== undefined) template.color = body.color;
+      if (body.category !== undefined) template.category = body.category;
+      if (body.profile !== undefined) template.profile = body.profile;
       if (body.description !== undefined) template.description = body.description;
       if (body.instruction !== undefined) template.instruction = body.instruction;
       if (body.context !== undefined) template.context = body.context;

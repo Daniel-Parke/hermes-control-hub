@@ -29,6 +29,24 @@ interface VersionCache {
 }
 
 function runGit(args: string): string {
+  // Whitelist allowed git commands to prevent injection
+  const allowed = [
+    "fetch origin main --quiet",
+    "rev-parse HEAD",
+    "rev-parse origin/main",
+    "rev-parse --abbrev-ref HEAD",
+    "log --format='%s' -1 origin/main",
+    "log --format='%ci' -1 origin/main",
+    "checkout main --quiet",
+    "reset --hard origin/main --quiet",
+    "diff --name-only HEAD@{1} HEAD 2>/dev/null || echo ''",
+    "rev-parse --short HEAD",
+  ];
+  // Allow rev-list --count with specific pattern
+  const isRevList = /^rev-list --count [a-f0-9]+\.\.[a-f0-9]+$/.test(args);
+  if (!allowed.includes(args) && !isRevList) {
+    throw new Error("Blocked git command: " + args);
+  }
   return execSync(`git ${args}`, {
     cwd: APP_DIR,
     encoding: "utf-8",

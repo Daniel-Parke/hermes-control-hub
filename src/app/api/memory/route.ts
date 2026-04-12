@@ -1,276 +1,229 @@
 import { NextRequest, NextResponse } from "next/server";
-import { existsSync, statSync } from "fs";
 
-// Use string concatenation to avoid Turbopack NFT tracing issues
-import { HERMES_HOME, PATHS } from "@/lib/hermes";
+import { getMemoryProviderType } from "@/lib/memory-providers";
 import { logApiError } from "@/lib/api-logger";
+import type { ApiResponse, MemoryData } from "@/types/hermes";
 
+// GET — Read memory facts
+// For Hindsight embedded: shows status only (facts managed via agent tools)
+// For Holographic: reads SQLite directly
 export async function GET() {
-  const dbPath = PATHS.memoryDb;
+  const providerType = getMemoryProviderType();
 
-  if (!existsSync(dbPath)) {
-    return NextResponse.json({
+  // Hindsight embedded — no direct DB access, facts managed by agent
+  if (providerType === "hindsight") {
+    return NextResponse.json<ApiResponse<MemoryData>>({
       data: {
         facts: [],
         total: 0,
         dbSize: 0,
-        entities: 0,
-        banks: [],
-        available: false,
-        message: "Holographic memory is not installed. Install the hermes-memory-store plugin to enable persistent memory.",
+        available: true,
+        provider: "hindsight",
+        message:
+          "Hindsight memory is active. Facts are managed through agent tools: " +
+          "hindsight_retain (store), hindsight_recall (search), hindsight_reflect (reason).",
       },
     });
   }
 
-  try {
-    const stats = statSync(dbPath);
-
-    // Query SQLite directly for facts
-    const Database = (await import("better-sqlite3")).default;
-    const db = new Database(dbPath, { readonly: true });
-
+  // Holographic — read SQLite directly
+  if (providerType === "holographic") {
     try {
-      // Get fact count
-      const countRow = db
-        .prepare("SELECT COUNT(*) as count FROM facts")
-        .get() as { count: number };
-
-      // Get all facts (limited to 200)
-      const facts = db
-        .prepare(
-          `SELECT fact_id, content, category, tags, trust_score, created_at, updated_at
-           FROM facts
-           ORDER BY updated_at DESC, created_at DESC
-           LIMIT 200`
-        )
-        .all() as Array<{
-        fact_id: number;
-        content: string;
-        category: string;
-        tags: string;
-        trust_score: number;
-        created_at: string;
-        updated_at: string;
-      }>;
-
-      // Get entity count
-      const entityCount = (
-        db.prepare("SELECT COUNT(*) as count FROM entities").get() as {
-          count: number;
-        }
-      ).count;
-
-      // Get memory banks
-      const bankRows = db
-        .prepare("SELECT bank_name, fact_count, updated_at FROM memory_banks ORDER BY fact_count DESC")
-        .all() as Array<{
-        bank_name: string;
-        fact_count: number;
-        updated_at: string;
-      }>;
-
-      return NextResponse.json({
-        data: {
-          facts: facts.map((f) => ({
-            id: f.fact_id,
-            content: f.content,
-            category: f.category || "general",
-            tags: f.tags || "",
-            trust: f.trust_score ?? 0.5,
-            createdAt: f.created_at,
-            updatedAt: f.updated_at,
-          })),
-          total: countRow.count,
-          dbSize: stats.size,
-          dbPath: "memory_store.db",
-          entities: entityCount,
-          banks: bankRows,
-        },
-      });
-    } finally {
-      db.close();
+      const { holographicProvider } = await import(
+        "@/lib/memory-providers/holographic"
+      );
+      const result = await holographicProvider.readFacts();
+      return NextResponse.json<ApiResponse<MemoryData>>({ data: result });
+    } catch (error) {
+      logApiError("GET /api/memory", "holographic read", error);
+      return NextResponse.json<ApiResponse<MemoryData>>(
+        { error: "Could not read holographic memory database" },
+        { status: 500 }
+      );
     }
-  } catch (error) {
-    logApiError("GET /api/memory", "reading memory database", error);
-    return NextResponse.json(
-      { error: `Could not read memory database: ${error instanceof Error ? error.message : "Unknown error"}` },
-      { status: 500 }
-    );
   }
+
+  // No provider configured
+  return NextResponse.json<ApiResponse<MemoryData>>({
+    data: {
+      facts: [],
+      total: 0,
+      dbSize: 0,
+      available: false,
+      provider: "none",
+      message: "No memory provider configured. Run: hermes memory setup",
+    },
+  });
 }
 
-// POST — Add a new memory fact
+// POST — Add a new memory fact (holographic only)
 export async function POST(request: NextRequest) {
-  const dbPath = PATHS.memoryDb;
+  const providerType = getMemoryProviderType();
 
-  if (!existsSync(dbPath)) {
-    return NextResponse.json({ error: "Holographic memory is not installed" }, { status: 404 });
+  if (providerType === "hindsight") {
+    return NextResponse.json(
+      {
+        error:
+          "Hindsight facts are managed through agent tools (hindsight_retain). Dashboard editing is not supported for Hindsight.",
+      },
+      { status: 400 }
+    );
   }
 
-  try {
-    const body = await request.json();
-    const { content, category = "general", tags = "", trust_score = 0.7 } = body;
-
-    if (!content || typeof content !== "string" || content.trim().length === 0) {
-      return NextResponse.json({ error: "Content is required" }, { status: 400 });
-    }
-
-    const Database = (await import("better-sqlite3")).default;
-    const db = new Database(dbPath);
-    db.pragma("journal_mode = WAL");
-    db.pragma("busy_timeout = 5000");
-
+  if (providerType === "holographic") {
     try {
-      const now = new Date().toISOString();
-      const result = db.prepare(
-        `INSERT INTO facts (content, category, tags, trust_score, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?)`
-      ).run(content.trim(), category, tags, trust_score, now, now);
+      const { holographicProvider } = await import(
+        "@/lib/memory-providers/holographic"
+      );
+      const body = await request.json();
+      const { content, category = "general", tags = "", trust_score = 0.7 } =
+        body;
 
-      return NextResponse.json({
-        data: {
-          success: true,
-          fact: {
-            id: result.lastInsertRowid,
-            content: content.trim(),
-            category,
-            tags,
-            trust: trust_score,
-            createdAt: now,
-            updatedAt: now,
-          },
-        },
+      if (
+        !content ||
+        typeof content !== "string" ||
+        content.trim().length === 0
+      ) {
+        return NextResponse.json(
+          { error: "Content is required" },
+          { status: 400 }
+        );
+      }
+
+      const result = await holographicProvider.addFact({
+        content: content.trim(),
+        category,
+        tags,
+        trust_score,
       });
-    } finally {
-      db.close();
+
+      if (!result.success) {
+        return NextResponse.json(
+          { error: result.error || "Failed to add fact" },
+          { status: 500 }
+        );
+      }
+
+      return NextResponse.json({ data: { success: true, fact: result.fact } });
+    } catch (error) {
+      logApiError("POST /api/memory", "adding fact", error);
+      return NextResponse.json(
+        { error: "Failed to add fact" },
+        { status: 500 }
+      );
     }
-  } catch (error) {
-    return NextResponse.json(
-      { error: `Failed to add fact: ${error instanceof Error ? error.message : "Unknown error"}` },
-      { status: 500 }
-    );
   }
+
+  return NextResponse.json(
+    { error: "No memory provider configured" },
+    { status: 404 }
+  );
 }
 
-// PUT — Update an existing memory fact
+// PUT — Update an existing memory fact (holographic only)
 export async function PUT(request: NextRequest) {
-  const dbPath = PATHS.memoryDb;
+  const providerType = getMemoryProviderType();
 
-  if (!existsSync(dbPath)) {
-    return NextResponse.json({ error: "Holographic memory is not installed" }, { status: 404 });
-  }
-
-  try {
-    const body = await request.json();
-    const { id, content, category, tags, trust_score } = body;
-
-    if (!id || typeof id !== "number") {
-      return NextResponse.json({ error: "Valid fact ID is required" }, { status: 400 });
-    }
-
-    const Database = (await import("better-sqlite3")).default;
-    const db = new Database(dbPath);
-    db.pragma("journal_mode = WAL");
-    db.pragma("busy_timeout = 5000");
-
-    try {
-      // Check fact exists
-      const existing = db.prepare("SELECT fact_id FROM facts WHERE fact_id = ?").get(id);
-      if (!existing) {
-        return NextResponse.json({ error: "Fact not found" }, { status: 404 });
-      }
-
-      // Build dynamic update
-      const updates: string[] = [];
-      const values: unknown[] = [];
-
-      if (content !== undefined && typeof content === "string") {
-        updates.push("content = ?");
-        values.push(content.trim());
-      }
-      if (category !== undefined && typeof category === "string") {
-        updates.push("category = ?");
-        values.push(category);
-      }
-      if (tags !== undefined && typeof tags === "string") {
-        updates.push("tags = ?");
-        values.push(tags);
-      }
-      if (trust_score !== undefined && typeof trust_score === "number") {
-        updates.push("trust_score = ?");
-        values.push(trust_score);
-      }
-
-      if (updates.length === 0) {
-        return NextResponse.json({ error: "No fields to update" }, { status: 400 });
-      }
-
-      updates.push("updated_at = ?");
-      values.push(new Date().toISOString());
-      values.push(id);
-
-      db.prepare(`UPDATE facts SET ${updates.join(", ")} WHERE fact_id = ?`).run(...values);
-
-      return NextResponse.json({ data: { success: true, id } });
-    } finally {
-      db.close();
-    }
-  } catch (error) {
+  if (providerType === "hindsight") {
     return NextResponse.json(
-      { error: `Failed to update fact: ${error instanceof Error ? error.message : "Unknown error"}` },
-      { status: 500 }
+      {
+        error:
+          "Hindsight facts cannot be edited through the dashboard. Use agent tools.",
+      },
+      { status: 400 }
     );
   }
+
+  if (providerType === "holographic") {
+    try {
+      const { holographicProvider } = await import(
+        "@/lib/memory-providers/holographic"
+      );
+      const body = await request.json();
+      const { id, content, category, tags, trust_score } = body;
+
+      if (!id || typeof id !== "number") {
+        return NextResponse.json(
+          { error: "Valid fact ID is required" },
+          { status: 400 }
+        );
+      }
+
+      const result = await holographicProvider.updateFact({
+        id,
+        content,
+        category,
+        tags,
+        trust_score,
+      });
+
+      if (!result.success) {
+        const status = result.error?.includes("not found") ? 404 : 500;
+        return NextResponse.json({ error: result.error }, { status });
+      }
+
+      return NextResponse.json({ data: { success: true, id: result.id } });
+    } catch (error) {
+      logApiError("PUT /api/memory", "updating fact", error);
+      return NextResponse.json({ error: "Failed to update fact" }, { status: 500 });
+    }
+  }
+
+  return NextResponse.json(
+    { error: "No memory provider configured" },
+    { status: 404 }
+  );
 }
 
-// DELETE — Remove a memory fact
+// DELETE — Remove a memory fact (holographic only)
 export async function DELETE(request: NextRequest) {
-  const dbPath = PATHS.memoryDb;
+  const providerType = getMemoryProviderType();
 
-  if (!existsSync(dbPath)) {
-    return NextResponse.json({ error: "Holographic memory is not installed" }, { status: 404 });
-  }
-
-  try {
-    const { searchParams } = new URL(request.url);
-    const id = parseInt(searchParams.get("id") || "", 10);
-
-    if (isNaN(id)) {
-      return NextResponse.json({ error: "Valid fact ID is required" }, { status: 400 });
-    }
-
-    // Retry for database locked errors (agent may hold DB open)
-    for (let attempt = 0; attempt < 2; attempt++) {
-      const Database = (await import("better-sqlite3")).default;
-      const db = new Database(dbPath, { readonly: false, timeout: 5000 });
-      db.pragma("journal_mode = WAL");
-      db.pragma("busy_timeout = 3000");
-
-      try {
-        db.prepare("DELETE FROM fact_entities WHERE fact_id = ?").run(id);
-        try { db.prepare("DELETE FROM facts_fts WHERE rowid = ?").run(id); } catch {}
-        const result = db.prepare("DELETE FROM facts WHERE fact_id = ?").run(id);
-        db.close();
-
-        if (result.changes === 0) {
-          return NextResponse.json({ error: "Fact not found" }, { status: 404 });
-        }
-        return NextResponse.json({ data: { success: true, id } });
-      } catch (error) {
-        db.close();
-        const msg = error instanceof Error ? error.message : "";
-        if (msg.includes("locked") && attempt < 2) {
-          await new Promise(r => setTimeout(r, 500 * (attempt + 1)));
-          continue;
-        }
-        throw error;
-      }
-    }
-    return NextResponse.json({ error: "Database is busy, please try again" }, { status: 503 });
-  } catch (error) {
+  if (providerType === "hindsight") {
     return NextResponse.json(
-      { error: `Failed to delete fact: ${error instanceof Error ? error.message : "Unknown error"}` },
-      { status: 500 }
+      {
+        error:
+          "Hindsight facts cannot be deleted through the dashboard. Use agent tools.",
+      },
+      { status: 400 }
     );
   }
+
+  if (providerType === "holographic") {
+    try {
+      const { holographicProvider } = await import(
+        "@/lib/memory-providers/holographic"
+      );
+      const { searchParams } = new URL(request.url);
+      const id = parseInt(searchParams.get("id") || "", 10);
+
+      if (isNaN(id)) {
+        return NextResponse.json(
+          { error: "Valid fact ID is required" },
+          { status: 400 }
+        );
+      }
+
+      const result = await holographicProvider.deleteFact(id);
+
+      if (!result.success) {
+        const status = result.error?.includes("not found")
+          ? 404
+          : result.error?.includes("busy")
+            ? 503
+            : 500;
+        return NextResponse.json({ error: result.error }, { status });
+      }
+
+      return NextResponse.json({ data: { success: true, id: result.id } });
+    } catch (error) {
+      logApiError("DELETE /api/memory", "deleting fact", error);
+      return NextResponse.json({ error: "Failed to delete fact" }, { status: 500 });
+    }
+  }
+
+  return NextResponse.json(
+    { error: "No memory provider configured" },
+    { status: 404 }
+  );
 }

@@ -11,7 +11,17 @@ export async function GET(
 ) {
   const { id } = await params;
   const sessionsPath = PATHS.sessions;
-  const fullPath = sessionsPath + "/" + id;
+
+  // Security: prevent path traversal by resolving and checking prefix
+  const sanitizedId = id.replace(/[^a-zA-Z0-9_.-]/g, "");
+  if (sanitizedId !== id || sanitizedId.includes("..")) {
+    return NextResponse.json(
+      { error: "Invalid session ID" },
+      { status: 400 }
+    );
+  }
+
+  const fullPath = sessionsPath + "/" + sanitizedId;
 
   // Try both .json and .jsonl extensions
   let filePath = "";
@@ -22,10 +32,10 @@ export async function GET(
   } else if (existsSync(fullPath + ".jsonl")) {
     filePath = fullPath + ".jsonl";
   } else {
-    return NextResponse.json(
-      { error: `Session "${id}" not found` },
-      { status: 404 }
-    );
+      return NextResponse.json(
+        { error: `Session "${sanitizedId}" not found` },
+        { status: 404 }
+      );
   }
 
   try {
@@ -42,14 +52,14 @@ export async function GET(
             const msg = JSON.parse(line);
             return { index, ...msg };
           } catch (err) {
-            logApiError("GET /api/sessions/[id]", "parsing JSONL line " + index + " in session " + id, err);
+            logApiError("GET /api/sessions/[id]", "parsing JSONL line " + index + " in session " + sanitizedId, err);
             return { index, raw: line };
           }
         });
 
       return NextResponse.json({
         data: {
-          id,
+          id: sanitizedId,
           filename: filePath.split("/").pop(),
           format: "jsonl",
           messages,
@@ -64,7 +74,7 @@ export async function GET(
 
       return NextResponse.json({
         data: {
-          id,
+          id: sanitizedId,
           filename: filePath.split("/").pop(),
           format: "json",
           title: data.title || data.name || "",
@@ -78,9 +88,9 @@ export async function GET(
       });
     }
   } catch (error) {
-    logApiError("GET /api/sessions/[id]", "reading session " + id, error);
+    logApiError("GET /api/sessions/[id]", "reading session " + sanitizedId, error);
     return NextResponse.json(
-      { error: `Failed to read session "${id}"` },
+      { error: `Failed to read session "${sanitizedId}"` },
       { status: 500 }
     );
   }

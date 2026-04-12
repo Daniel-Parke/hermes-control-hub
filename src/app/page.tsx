@@ -1,16 +1,15 @@
 // ═══════════════════════════════════════════════════════════════
-// Dashboard — Mission Control Home (Redesigned)
+// Dashboard - Mission Control Home (Redesigned)
 // ═══════════════════════════════════════════════════════════════
 // Lean operational overview. No nav cards, no fake terminals.
 // One-glance situational awareness → one-click actions.
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import {
-  Cpu,
-  HardDrive,
+  // Dashboard icons
   Activity,
   Layers,
   ListTodo,
@@ -24,9 +23,16 @@ import {
   Radio,
   Rocket,
   ChevronRight,
+  ChevronDown,
   Clock,
   Loader2,
   XCircle,
+  Gamepad2,
+  BookOpen,
+  // Template icons — used by TemplateCard, missions page, and template manager
+  // Do NOT remove even if unused here — they are referenced across the app
+  Cpu,
+  HardDrive,
   Zap,
   Search,
   Bug,
@@ -38,10 +44,11 @@ import {
   Database,
   Code,
   FileText,
-  Gamepad2,
-  BookOpen,
 } from "lucide-react";
 import Card, { StatusDot } from "@/components/ui/Card";
+import IntervalSelector from "@/components/ui/IntervalSelector";
+import CategoryAccordion from "@/components/ui/CategoryAccordion";
+import TemplateCard from "@/components/ui/TemplateCard";
 import type { SystemStatus, AccentColor } from "@/types/hermes";
 import { timeAgo, timeUntil, titleCase } from "@/lib/utils";
 
@@ -60,12 +67,12 @@ interface AgentRun {
 interface MissionBrief {
   id: string;
   name: string;
-  status: "queued" | "dispatched" | "successful" | "failed";
+  status: string;
   dispatchMode: string;
   createdAt: string;
-  goals: string[];
   cronJobId?: string;
   cronJob?: { state: string; enabled: boolean; lastRun: string | null; lastStatus: string | null };
+  latestSession?: { id: string; modified: string } | null;
 }
 
 // ── Status Badge ──────────────────────────────────────────────
@@ -191,7 +198,39 @@ export default function Dashboard() {
   const [missions, setMissions] = useState<MissionBrief[]>([]);
   const [time, setTime] = useState<Date | null>(null);
   const [config, setConfig] = useState<Record<string, unknown> | null>(null);
-  const [templates, setTemplates] = useState<Array<{ id: string; name: string; icon: string; color: string; isCustom?: boolean }>>([]);
+  const [templates, setTemplates] = useState<Array<{ id: string; name: string; icon: string; color: string; category: string; profile: string; description: string; isCustom?: boolean }>>([]);
+  const [dispatchExpanded, setDispatchExpanded] = useState(false);
+
+  // Cancel a mission from the dashboard
+  const handleCancelMission = useCallback(async (missionId: string, missionName: string) => {
+    if (!confirm(`Cancel "${missionName}"? The cron job will be paused.`)) return;
+    try {
+      await fetch("/api/missions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "cancel", missionId }),
+      });
+      // Refresh missions
+      const res = await fetch("/api/missions");
+      const d = await res.json();
+      if (d.data) setMissions(d.data.missions || []);
+    } catch {}
+  }, []);
+
+  // Update cron job schedule inline
+  const handleCronScheduleChange = useCallback(async (jobId: string, newSchedule: string) => {
+    try {
+      await fetch("/api/cron", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: jobId, schedule: newSchedule }),
+      });
+      // Refresh monitor data to show updated schedule
+      const res = await fetch("/api/monitor");
+      const d = await res.json();
+      if (d.data) setMonitor(d.data);
+    } catch {}
+  }, []);
 
   useEffect(() => {
     setTime(new Date());
@@ -216,7 +255,7 @@ export default function Dashboard() {
   }, []);
 
   const modelConfig = config?.model as Record<string, unknown> | undefined;
-  const currentModel = (modelConfig?.default as string) || "—";
+  const currentModel = (modelConfig?.default as string) || "-";
   const currentProvider = (modelConfig?.provider as string) || "";
   const activeAgents = agents.filter((a) => a.status === "running");
 
@@ -282,51 +321,125 @@ export default function Dashboard() {
         </div>
 
         {/* ═══ Mission Dispatch Quick Launch ═══ */}
-        <div className="rounded-xl border border-cyan-500/20 bg-dark-900/50 p-4">
-          <div className="flex items-center justify-between mb-3">
+        <div className="rounded-xl border border-cyan-500/20 bg-dark-900/50 overflow-hidden">
+          <button
+            onClick={() => setDispatchExpanded(!dispatchExpanded)}
+            className="w-full flex items-center justify-between px-4 py-2.5 hover:bg-white/[0.02] transition-colors"
+          >
             <div className="flex items-center gap-2">
               <Rocket className="w-4 h-4 text-neon-cyan" />
               <span className="text-sm font-mono text-white/80">Mission Dispatch</span>
+              <span className="text-[10px] font-mono text-white/25">({templates.length})</span>
             </div>
-            <Link
-              href="/missions"
-              className="text-[10px] font-mono text-neon-cyan hover:underline flex items-center gap-1"
-            >
-              full control <ChevronRight className="w-3 h-3" />
-            </Link>
-          </div>
-          <p className="text-xs text-white/30 mb-3">
-            Dispatch a mission to your agent fleet. Choose a template or write your own prompt.
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {templates.map((t) => {
-              const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
-                Search, Bug, GitPullRequest, Wrench, PenTool, Zap,
-                Rocket, Cpu, Activity, Shield, Terminal, Database,
-                Globe, Code, FileText, Layers, HardDrive, AlertTriangle,
-              };
-              const Icon = iconMap[t.icon] || Zap;
-              return (
-                <Link
-                  key={t.id}
-                  href={`/missions?template=${t.id}`}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-xs font-mono text-white/60 hover:border-white/30 hover:text-white transition-colors"
-                >
-                  <Icon className="w-3 h-3" />
-                  {t.name}
-                </Link>
-              );
-            })}
-            {templates.length === 0 && (
+            <div className="flex items-center gap-2">
               <Link
                 href="/missions"
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-xs font-mono text-white/60 hover:border-white/30 hover:text-white transition-colors"
+                onClick={(e) => e.stopPropagation()}
+                className="text-[10px] font-mono text-neon-cyan hover:underline flex items-center gap-1"
               >
-                <Rocket className="w-3 h-3" />
-                New Mission
+                full control <ChevronRight className="w-3 h-3" />
               </Link>
-            )}
-          </div>
+              {dispatchExpanded ? (
+                <ChevronDown className="w-4 h-4 text-white/20" />
+              ) : (
+                <ChevronRight className="w-4 h-4 text-white/20" />
+              )}
+            </div>
+          </button>
+
+          {/* Collapsed: horizontal pill strip */}
+          {!dispatchExpanded && (
+            <div className="px-4 pb-3 flex flex-wrap gap-1.5">
+              {templates.slice(0, 12).map((t) => (
+                <TemplateCard
+                  key={t.id}
+                  id={t.id}
+                  name={t.name}
+                  icon={t.icon}
+                  color={t.color}
+                  description={t.description}
+                  isCustom={t.isCustom}
+                  compact
+                  onSelect={() => window.location.href = `/missions?template=${t.id}`}
+                />
+              ))}
+              {templates.length > 12 && (
+                <button
+                  onClick={() => setDispatchExpanded(true)}
+                  className="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg text-[10px] font-mono text-white/30 hover:text-neon-cyan transition-colors"
+                >
+                  +{templates.length - 12} more
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* Expanded: grouped by category, all compact pills */}
+          {dispatchExpanded && (
+            <div className="px-4 pb-4 space-y-3">
+              {(() => {
+                const grouped: Record<string, typeof templates> = {};
+                for (const t of templates) {
+                  const cat = t.isCustom ? "Custom" : (t.category || "Other");
+                  if (!grouped[cat]) grouped[cat] = [];
+                  grouped[cat].push(t);
+                }
+                const catOrder = [
+                  "Business - Operations",
+                  "Engineering - QA",
+                  "Engineering - DevOps",
+                  "Engineering - Software",
+                  "Engineering - Data",
+                  "Engineering - Data Science",
+                  "Business - Creative",
+                  "Support",
+                  "Custom",
+                ].filter((c) => grouped[c]);
+                const categoryColors: Record<string, string> = {
+                  "Engineering - QA": "pink",
+                  "Engineering - DevOps": "cyan",
+                  "Engineering - Software": "purple",
+                  "Engineering - Data": "green",
+                  "Engineering - Data Science": "orange",
+                  "Business - Operations": "cyan",
+                  "Business - Creative": "orange",
+                  "Support": "blue",
+                  "Custom": "purple",
+                };
+                return catOrder.map((cat) => {
+                  const items = grouped[cat];
+                  if (!items) return null;
+                  const color = categoryColors[cat] || "cyan";
+                  return (
+                    <CategoryAccordion
+                      key={cat}
+                      name={cat}
+                      count={items.length}
+                      color={color}
+                      expandable={cat === "Custom" && items.length > 6}
+                      defaultOpen={true}
+                    >
+                      <div className="flex flex-wrap gap-1.5">
+                        {items.map((t) => (
+                          <TemplateCard
+                            key={t.id}
+                            id={t.id}
+                            name={t.name}
+                            icon={t.icon}
+                            color={t.color}
+                            description={t.description}
+                            isCustom={t.isCustom}
+                            compact
+                            onSelect={() => window.location.href = `/missions?template=${t.id}`}
+                          />
+                        ))}
+                      </div>
+                    </CategoryAccordion>
+                  );
+                });
+              })()}
+            </div>
+          )}
         </div>
 
         {/* ═══ Active Missions ═══ */}
@@ -348,20 +461,40 @@ export default function Dashboard() {
               {missions
                 .filter((m) => m.status === "queued" || m.status === "dispatched")
                 .map((m) => (
-                  <Link key={m.id} href="/missions" className="flex items-center justify-between px-4 py-2.5 hover:bg-white/[0.02] transition-colors">
+                  <div key={m.id} className="flex items-center justify-between px-4 py-2.5 hover:bg-white/[0.02] transition-colors">
                     <div className="flex items-center gap-2 min-w-0">
                       <StatusDot
                         status={m.status === "dispatched" ? "online" : "warning"}
                         pulse={m.status === "dispatched"}
                       />
-                      <span className="text-xs text-white/80 truncate">{m.name}</span>
+                      <Link href="/missions" className="text-xs text-white/80 truncate hover:text-neon-cyan transition-colors">{m.name}</Link>
                       <span className="text-[10px] font-mono text-white/30 capitalize">{m.dispatchMode}</span>
+                      {m.latestSession ? (
+                        <Link
+                          href={`/sessions/${m.latestSession.id}`}
+                          className="text-[10px] font-mono text-white/25 hover:text-neon-cyan transition-colors"
+                          title="View session"
+                        >
+                          {m.latestSession.id.slice(-20)}
+                        </Link>
+                      ) : m.cronJobId && m.status === "dispatched" ? (
+                        <span className="text-[10px] font-mono text-white/15 italic">
+                          Session loading...
+                        </span>
+                      ) : null}
                     </div>
-                    <div className="flex items-center gap-3 flex-shrink-0">
+                    <div className="flex items-center gap-2 flex-shrink-0">
                       <MissionStatusBadge status={m.status} />
                       <span className="text-[10px] font-mono text-white/25">{timeAgo(m.createdAt)}</span>
+                      <button
+                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleCancelMission(m.id, m.name); }}
+                        className="text-[10px] font-mono text-white/20 hover:text-red-400 transition-colors px-1.5 py-0.5 rounded hover:bg-red-500/10"
+                        title="Cancel mission"
+                      >
+                        Cancel
+                      </button>
                     </div>
-                  </Link>
+                  </div>
                 ))}
             </div>
           </div>
@@ -388,8 +521,12 @@ export default function Dashboard() {
                 <div key={job.id} className="px-4 py-2.5 flex items-center justify-between">
                   <div className="min-w-0 flex-1">
                     <div className="text-xs text-white/80 truncate">{job.name}</div>
-                    <div className="text-[10px] text-white/30 font-mono mt-0.5">
-                      {job.schedule}
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <IntervalSelector
+                        value={job.schedule}
+                        onChange={(v) => handleCronScheduleChange(job.id, v)}
+                        compact
+                      />
                       {job.enabled && (
                         <span className={`ml-2 ${
                           job.state === "running"

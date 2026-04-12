@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════
-// Missions — Dispatch Center with Real Monitoring
+// Missions - Dispatch Center with Real Monitoring
 // ═══════════════════════════════════════════════════════════════
 
 "use client";
@@ -45,9 +45,13 @@ import Button from "@/components/ui/Button";
 import Toast, { useToast } from "@/components/ui/Toast";
 import AutoTextarea from "@/components/ui/AutoTextarea";
 import Modal from "@/components/ui/Modal";
+import MissionTimeSelector from "@/components/ui/MissionTimeSelector";
+import TimeoutSelector from "@/components/ui/TimeoutSelector";
+import IntervalSelector from "@/components/ui/IntervalSelector";
+import ProfileSelector from "@/components/ui/ProfileSelector";
+import CategoryAccordion from "@/components/ui/CategoryAccordion";
+import TemplateCard from "@/components/ui/TemplateCard";
 import { timeAgo, timeUntil, titleCase } from "@/lib/utils";
-import { iconColorMap } from "@/lib/theme";
-import type { AccentColor } from "@/types/hermes";
 
 // Available icons for templates
 const TEMPLATE_ICONS = [
@@ -89,11 +93,16 @@ interface MissionTemplate {
   name: string;
   icon: string;
   color: string;
+  category: string;
+  profile: string;
   description: string;
   instruction: string;
   context: string;
   goals: string[];
   suggestedSkills: string[];
+  isCustom?: boolean;
+  dispatchMode?: string;
+  schedule?: string;
 }
 
 interface MissionDetail {
@@ -149,8 +158,12 @@ export default function MissionsPage() {
   const [newContext, setNewContext] = useState("");
   const [newGoals, setNewGoals] = useState("");
   const [newDispatch, setNewDispatch] = useState<"save" | "now" | "cron">("now");
-  const [newSchedule, setNewSchedule] = useState("every 15m");
+  const [newSchedule, setNewSchedule] = useState("every 5m");
+  const [newMissionTime, setNewMissionTime] = useState(15);
+  const [newTimeout, setNewTimeout] = useState(10);
+  const [newProfile, setNewProfile] = useState("");
   const [dispatching, setDispatching] = useState(false);
+  const [categoryFilter, setCategoryFilter] = useState("all");
 
   const fetchData = useCallback(() => {
     fetch("/api/missions")
@@ -248,7 +261,7 @@ export default function MissionsPage() {
       const isActive = existingMission && (existingMission.status === "queued" || existingMission.status === "dispatched");
 
       if (isActive) {
-        // Active mission — update and sync to cron job
+        // Active mission - update and sync to cron job
         showToast("Updating mission...", "info");
         const res = await fetch("/api/missions", {
           method: "POST",
@@ -259,10 +272,14 @@ export default function MissionsPage() {
             name: newName,
             prompt: fullPrompt,
             goals: newGoals.split("\n").filter((g) => g.trim()),
+            profile: newProfile || undefined,
+            missionTimeMinutes: newMissionTime,
+            timeoutMinutes: newTimeout,
+            schedule: newDispatch === "cron" ? newSchedule : undefined,
           }),
         });
         if (res.ok) {
-          showToast("Mission updated — cron job prompt synced", "success");
+          showToast("Mission updated - cron job prompt synced", "success");
           setEditingId(null);
           setShowCreate(false);
           fetchData();
@@ -274,9 +291,9 @@ export default function MissionsPage() {
         return;
       }
 
-      // Completed/failed mission — create a NEW dispatch (re-dispatch)
+      // Completed/failed mission - create a NEW dispatch (re-dispatch)
       setEditingId(null); // Clear so we fall through to create path
-      // Don't show info toast here — the create path below handles it
+      // Don't show info toast here - the create path below handles it
 
       const res = await fetch("/api/missions", {
         method: "POST",
@@ -287,6 +304,9 @@ export default function MissionsPage() {
           prompt: fullPrompt,
           goals: newGoals.split("\n").filter((g) => g.trim()),
           dispatchMode: "now",
+          profile: newProfile || undefined,
+          missionTimeMinutes: newMissionTime,
+          timeoutMinutes: newTimeout,
         }),
       });
 
@@ -313,6 +333,9 @@ export default function MissionsPage() {
         goals: newGoals.split("\n").filter((g) => g.trim()),
         dispatchMode: newDispatch,
         schedule: newDispatch === "cron" ? newSchedule : undefined,
+        profile: newProfile || undefined,
+        missionTimeMinutes: newMissionTime,
+        timeoutMinutes: newTimeout,
       }),
     });
 
@@ -331,7 +354,7 @@ export default function MissionsPage() {
         showToast("Mission dispatched! Returning to dashboard...", "success");
         setTimeout(() => router.push("/"), 2000);
       } else {
-        showToast(`Mission scheduled — ${newSchedule}`, "success");
+        showToast(`Mission scheduled - ${newSchedule}`, "success");
         setTimeout(() => router.push("/"), 2000);
       }
     } else {
@@ -447,12 +470,12 @@ export default function MissionsPage() {
     fetchData();
   };
 
-  const handleTemplateSelect = (t: MissionTemplate & { isCustom?: boolean; dispatchMode?: string; schedule?: string }) => {
+  const handleTemplateSelect = (t: MissionTemplate) => {
     setNewName(t.name);
     setNewInstruction(t.instruction);
     setNewContext(t.context);
     setNewGoals(t.goals.join("\n"));
-    // Custom templates can have default dispatch mode and schedule
+    setNewProfile(t.profile || "");
     if (t.dispatchMode) setNewDispatch(t.dispatchMode as "save" | "now" | "cron");
     if (t.schedule) setNewSchedule(t.schedule);
     setShowCreate(true);
@@ -550,7 +573,7 @@ export default function MissionsPage() {
             <div className="flex items-center justify-between mb-3">
               <h2 className="text-sm font-mono text-white/40 uppercase tracking-widest flex items-center gap-2">
                 <Zap className="w-3 h-3 text-neon-cyan" />
-                Quick Deploy — Choose a Template
+                Quick Deploy - Choose a Template
               </h2>
               <button
                 onClick={() => setShowTemplateManager(true)}
@@ -560,44 +583,67 @@ export default function MissionsPage() {
                 Edit Templates
               </button>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
-              {templates.map((t: MissionTemplate & { isCustom?: boolean }) => {
-                const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
-                  Search, Bug, GitPullRequest, Wrench, PenTool, Zap,
-                  Rocket, Cpu, Activity, Shield, Terminal, Database,
-                  Globe, Code, FileText, Layers,
+            {/* Category Accordion */}
+            <div className="space-y-2">
+              {(() => {
+                const grouped: Record<string, MissionTemplate[]> = {};
+                for (const t of templates) {
+                  const cat = t.isCustom ? "Custom" : (t.category || "Other");
+                  if (!grouped[cat]) grouped[cat] = [];
+                  grouped[cat].push(t);
+                }
+                const catOrder = [
+                  "Business - Operations",
+                  "Engineering - QA",
+                  "Engineering - DevOps",
+                  "Engineering - Software",
+                  "Engineering - Data",
+                  "Engineering - Data Science",
+                  "Business - Creative",
+                  "Support",
+                  "Custom",
+                ].filter((c) => grouped[c]);
+                const categoryColors: Record<string, string> = {
+                  "Engineering - QA": "pink", "Engineering - DevOps": "cyan",
+                  "Engineering - Software": "purple", "Engineering - Data": "green",
+                  "Engineering - Data Science": "orange", "Business - Operations": "cyan",
+                  "Business - Creative": "orange", "Support": "blue", "Custom": "purple",
                 };
-                const IconComponent = iconMap[t.icon] || Zap;
-                return (
-                  <div
-                    key={t.id}
-                    className="text-left rounded-xl border border-white/10 bg-dark-900/50 p-4 hover:border-white/30 transition-colors group relative"
-                  >
-                    <button onClick={() => handleTemplateSelect(t)} className="w-full h-full text-left">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          <IconComponent className={`w-5 h-5 ${iconColorMap[t.color as AccentColor] || "text-neon-cyan"}`} />
-                          {t.isCustom && (
-                            <span className="text-[9px] font-mono text-white/20 bg-white/5 px-1.5 py-0.5 rounded">custom</span>
-                          )}
-                        </div>
-                        <ChevronRight className="w-4 h-4 text-white/20 group-hover:text-white/60 transition-colors" />
+                // Apply category filter
+                const filteredCats = categoryFilter === "all"
+                  ? catOrder
+                  : catOrder.filter((c) => c === categoryFilter);
+                return filteredCats.map((cat, i) => {
+                  const items = grouped[cat];
+                  const color = categoryColors[cat] || "cyan";
+                  return (
+                    <CategoryAccordion
+                      key={cat}
+                      name={cat}
+                      count={items.length}
+                      color={color}
+                      expandable={cat === "Custom" && items.length > 6}
+                      defaultOpen={categoryFilter !== "all"}
+                    >
+                      <div className="flex flex-wrap gap-1.5">
+                        {items.map((t) => (
+                          <TemplateCard
+                            key={t.id}
+                            id={t.id}
+                            name={t.name}
+                            icon={t.icon}
+                            color={t.color}
+                            description={t.description}
+                            isCustom={t.isCustom}
+                            compact
+                            onSelect={() => handleTemplateSelect(t)}
+                          />
+                        ))}
                       </div>
-                      <div className="text-sm font-semibold text-white">{t.name}</div>
-                      <div className="text-[10px] text-white/40 mt-1 line-clamp-2">{t.description}</div>
-                    </button>
-                    {t.isCustom && (
-                      <button
-                        onClick={(e) => { e.stopPropagation(); handleDeleteTemplate(t.id); }}
-                        className="absolute top-2 right-2 p-1 rounded text-white/15 hover:text-red-400 hover:bg-red-500/10 transition-colors opacity-0 group-hover:opacity-100"
-                        title="Delete template"
-                      >
-                        <Trash2 className="w-3 h-3" />
-                      </button>
-                    )}
-                  </div>
-                );
-              })}
+                    </CategoryAccordion>
+                  );
+                });
+              })()}
             </div>
           </div>
         )}
@@ -649,7 +695,7 @@ export default function MissionsPage() {
                   onChange={setNewInstruction}
                   minRows={4}
                   maxRows={16}
-                  placeholder="The agent's task instructions — what to do and how to do it..."
+                  placeholder="The agent's task instructions - what to do and how to do it..."
                 />
                 <p className="text-[10px] text-white/20 font-mono mt-0.5">
                   Defines the agent's role, approach, and step-by-step process. Templates pre-fill this.
@@ -678,6 +724,21 @@ export default function MissionsPage() {
                   placeholder="Gather data&#10;Analyze findings&#10;Write report"
                 />
               </div>
+              {/* Mission Settings */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label className="text-xs text-white/40 font-mono mb-1 block">Mission Scope</label>
+                  <MissionTimeSelector value={newMissionTime} onChange={setNewMissionTime} />
+                </div>
+                <div>
+                  <label className="text-xs text-white/40 font-mono mb-1 block">Agent Profile</label>
+                  <ProfileSelector value={newProfile} onChange={setNewProfile} />
+                </div>
+                <div>
+                  <label className="text-xs text-white/40 font-mono mb-1 block">Timeout (Advanced)</label>
+                  <TimeoutSelector value={newTimeout} onChange={setNewTimeout} />
+                </div>
+              </div>
               <div className="flex items-center gap-3">
                 <label className="text-xs text-white/40 font-mono">Dispatch:</label>
                 {(["save", "now", "cron"] as const).map((mode) => (
@@ -702,30 +763,7 @@ export default function MissionsPage() {
               {newDispatch === "cron" && (
                 <div className="space-y-2">
                   <label className="text-xs text-white/40 font-mono block">Schedule</label>
-                  <div className="flex flex-wrap gap-1.5 mb-2">
-                    {["every 5m", "every 15m", "every 30m", "every 1h", "every 6h", "every 24h"].map((preset) => (
-                      <button
-                        key={preset}
-                        onClick={() => setNewSchedule(preset)}
-                        className={`px-2 py-1 rounded text-[10px] font-mono border transition-colors ${
-                          newSchedule === preset
-                            ? "border-neon-cyan/50 bg-cyan-500/10 text-neon-cyan"
-                            : "border-white/10 text-white/30 hover:text-white/50"
-                        }`}
-                      >
-                        {preset}
-                      </button>
-                    ))}
-                  </div>
-                  <input
-                    value={newSchedule}
-                    onChange={(e) => setNewSchedule(e.target.value)}
-                    placeholder="every 15m  or  0 */2 * * *  or  every day at 9am"
-                    className="w-full bg-dark-800/50 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/20 outline-none focus:border-neon-cyan/50 font-mono"
-                  />
-                  <p className="text-[10px] text-white/20 font-mono">
-                    Supports: "every 5m/15m/30m/1h/6h/24h", cron expressions ("0 */2 * * *"), or "daily at 9am"
-                  </p>
+                  <IntervalSelector value={newSchedule} onChange={setNewSchedule} />
                 </div>
               )}
               <div className="flex gap-2 pt-1">
@@ -782,7 +820,7 @@ export default function MissionsPage() {
           <div className="text-center py-12">
             <Rocket className="w-10 h-10 text-white/10 mx-auto mb-3" />
             <div className="text-sm text-white/30">
-              {missions.length === 0 ? "No missions yet — create one to get started" : "No missions match your filter"}
+              {missions.length === 0 ? "No missions yet - create one to get started" : "No missions match your filter"}
             </div>
           </div>
         ) : (
@@ -792,7 +830,7 @@ export default function MissionsPage() {
               const isExpanded = expandedId === mission.id;
               return (
                 <div key={mission.id} className="rounded-xl border border-white/10 bg-dark-900/50 overflow-hidden">
-                  {/* Main row — clickable to expand */}
+                  {/* Main row - clickable to expand */}
                   <button
                     onClick={() => setExpandedId(isExpanded ? null : mission.id)}
                     className="w-full text-left p-4 hover:bg-white/[0.02] transition-colors"
@@ -1019,84 +1057,78 @@ export default function MissionsPage() {
           }
         >
           <div className="space-y-2">
-            {/* Built-in templates */}
-            <div className="text-[10px] font-mono text-white/20 uppercase tracking-widest mb-1">Built-In Templates</div>
-            {templates.filter((t) => !(t as unknown as Record<string, unknown>).isCustom).map((t: MissionTemplate) => {
-              const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
-                Search, Bug, GitPullRequest, Wrench, PenTool, Zap,
-                Rocket, Cpu, Activity, Shield, Terminal, Database,
-                Globe, Code, FileText, Layers,
+            {(() => {
+              const grouped: Record<string, MissionTemplate[]> = {};
+              for (const t of templates) {
+                const cat = t.isCustom ? "Custom" : (t.category || "Other");
+                if (!grouped[cat]) grouped[cat] = [];
+                grouped[cat].push(t);
+              }
+              const catOrder = [
+                "Business - Operations",
+                "Engineering - QA",
+                "Engineering - DevOps",
+                "Engineering - Software",
+                "Engineering - Data",
+                "Engineering - Data Science",
+                "Business - Creative",
+                "Support",
+                "Custom",
+              ].filter((c) => grouped[c]);
+              const categoryColors: Record<string, string> = {
+                "Engineering - QA": "pink", "Engineering - DevOps": "cyan",
+                "Engineering - Software": "purple", "Engineering - Data": "green",
+                "Engineering - Data Science": "orange", "Business - Operations": "cyan",
+                "Business - Creative": "orange", "Support": "blue", "Custom": "purple",
               };
-              const Icon = iconMap[t.icon] || Zap;
-              return (
-                <div
-                  key={t.id}
-                  className="flex items-center justify-between p-3 rounded-lg border border-white/5 bg-dark-800/30"
-                >
-                  <div className="flex items-center gap-3 min-w-0 flex-1">
-                    <Icon className={`w-5 h-5 flex-shrink-0 opacity-50 ${iconColorMap[t.color as AccentColor] || "text-neon-cyan"}`} />
-                    <div className="min-w-0">
-                      <div className="text-sm text-white/50 truncate">{t.name}</div>
-                      {t.description && (
-                        <div className="text-[10px] text-white/20 truncate">{t.description}</div>
-                      )}
-                    </div>
-                  </div>
-                  <span className="text-[9px] font-mono text-white/15 flex-shrink-0">read-only</span>
-                </div>
-              );
-            })}
-
-            {/* Custom templates */}
-            <div className="text-[10px] font-mono text-white/20 uppercase tracking-widest mt-4 mb-1">Custom Templates</div>
-            {templates.filter((t) => (t as unknown as Record<string, unknown>).isCustom).length === 0 ? (
-              <div className="text-center py-4 text-white/20 text-xs border border-dashed border-white/10 rounded-lg">
-                No custom templates yet. Fill out a mission and click "Save as Template" to create one.
-              </div>
-            ) : (
-              templates
-                .filter((t) => (t as unknown as Record<string, unknown>).isCustom)
-                .map((t: MissionTemplate & { isCustom?: boolean }) => {
-                  const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
-                    Search, Bug, GitPullRequest, Wrench, PenTool, Zap,
-                    Rocket, Cpu, Activity, Shield, Terminal, Database,
-                    Globe, Code, FileText, Layers,
-                  };
-                  const Icon = iconMap[t.icon] || Zap;
-                  return (
-                    <div
-                      key={t.id}
-                      className="flex items-center justify-between p-3 rounded-lg border border-white/10 bg-dark-800/50 hover:border-white/20 transition-colors group"
-                    >
-                      <div className="flex items-center gap-3 min-w-0 flex-1">
-                        <Icon className={`w-5 h-5 flex-shrink-0 ${iconColorMap[t.color as AccentColor] || "text-neon-cyan"}`} />
-                        <div className="min-w-0">
-                          <div className="text-sm font-semibold text-white truncate">{t.name}</div>
-                          {t.description && (
-                            <div className="text-[10px] text-white/30 truncate">{t.description}</div>
+              return catOrder.map((cat) => {
+                const items = grouped[cat];
+                const color = categoryColors[cat] || "cyan";
+                return (
+                  <CategoryAccordion
+                    key={cat}
+                    name={cat}
+                    count={items.length}
+                    color={color}
+                    defaultOpen={cat === "Custom"}
+                  >
+                    <div className="space-y-1.5">
+                      {items.map((t) => (
+                        <div
+                          key={t.id}
+                          className="flex items-center justify-between p-2.5 rounded-lg border border-white/5 bg-dark-800/30 hover:border-white/10 transition-colors group"
+                        >
+                          <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                            <div className="text-sm text-white/80 truncate">{t.name}</div>
+                            {!t.isCustom && (
+                              <span className="text-[9px] font-mono text-white/15 flex-shrink-0">built-in</span>
+                            )}
+                          </div>
+                          {t.isCustom && (
+                            <div className="flex items-center gap-1 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <button
+                                onClick={() => handleEditTemplate(t)}
+                                className="p-1.5 rounded text-white/40 hover:text-neon-cyan hover:bg-cyan-500/10 transition-colors"
+                                title="Edit"
+                              >
+                                <Edit3 className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteTemplate(t.id)}
+                                className="p-1.5 rounded text-white/40 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                                title="Delete"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
                           )}
                         </div>
-                      </div>
-                      <div className="flex items-center gap-1 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button
-                          onClick={() => handleEditTemplate(t)}
-                          className="p-1.5 rounded text-white/40 hover:text-neon-cyan hover:bg-cyan-500/10 transition-colors"
-                          title="Edit"
-                        >
-                          <Edit3 className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                          onClick={() => handleDeleteTemplate(t.id)}
-                          className="p-1.5 rounded text-white/40 hover:text-red-400 hover:bg-red-500/10 transition-colors"
-                          title="Delete"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
+                      ))}
                     </div>
-                  );
-                })
-            )}
+                  </CategoryAccordion>
+                );
+              });
+            })()}
           </div>
         </Modal>
       )}
@@ -1153,7 +1185,7 @@ export default function MissionsPage() {
                 onChange={setNewInstruction}
                 minRows={4}
                 maxRows={12}
-                placeholder="The agent's task instructions — role, approach, step-by-step process..."
+                placeholder="The agent's task instructions - role, approach, step-by-step process..."
               />
             </div>
             <div>

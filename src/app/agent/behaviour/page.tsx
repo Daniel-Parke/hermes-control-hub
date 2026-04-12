@@ -1,176 +1,114 @@
 // ═══════════════════════════════════════════════════════════════
-// Behaviour Page — CRUD for agent personality & behavior files
+// Behaviour Page — Profile-centric agent configuration
 // ═══════════════════════════════════════════════════════════════
 
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
 import {
-  Brain,
-  FileText,
-  Save,
-  RotateCcw,
-  Download,
-  Eye,
-  EyeOff,
-  Code,
-  AlertCircle,
-  Check,
-  ChevronDown,
-  ChevronRight,
-  Plus,
-  FolderOpen,
-  Clock,
-  HardDrive,
-  X,
-  Shield,
-  Key,
-  Edit3,
+  Brain, FileText, Save, RotateCcw, Download, Eye, EyeOff,
+  ChevronDown, ChevronRight, Clock, HardDrive, User, Settings,
+  Check, AlertCircle,
 } from "lucide-react";
 import PageHeader from "@/components/layout/PageHeader";
 import Button from "@/components/ui/Button";
+import Badge from "@/components/ui/Badge";
 import { LoadingSpinner, EmptyState } from "@/components/ui/LoadingSpinner";
+import { useToast } from "@/components/ui/Toast";
+import type { AgentProfile, ProfileFile } from "@/types/hermes";
 
-interface BehaviorFile {
-  key: string;
-  name: string;
-  description: string;
-  category: string;
-  path: string;
-  exists: boolean;
-  size: number;
-  lastModified: string | null;
+const PERSONALITIES = [
+  "technical", "helpful", "creative", "concise", "teacher",
+  "philosopher", "pirate", "shakespeare", "surfer", "noir",
+  "kawaii", "catgirl", "hype", "uwu",
+];
+
+const PERSONALITY_COLORS: Record<string, string> = {
+  technical: "cyan", helpful: "green", creative: "pink", concise: "orange",
+  teacher: "purple", philosopher: "cyan", pirate: "orange", shakespeare: "purple",
+  surfer: "green", noir: "gray", kawaii: "pink", catgirl: "pink",
+  hype: "orange", uwu: "pink",
+};
+
+interface EditorState {
+  profileId: string;
+  fileKey: string;
+  fileName: string;
   content: string;
+  original: string;
 }
-
-interface AgentsMdFile {
-  path: string;
-  directory: string;
-  size: number;
-  lastModified: string;
-  content: string;
-}
-
-type EditorTarget =
-  | { type: "behavior"; key: string }
-  | { type: "agents-md"; path: string }
-  | null;
 
 export default function BehaviourPage() {
-  const [files, setFiles] = useState<BehaviorFile[]>([]);
-  const [agentsMdFiles, setAgentsMdFiles] = useState<AgentsMdFile[]>([]);
+  const [profiles, setProfiles] = useState<AgentProfile[]>([]);
   const [loading, setLoading] = useState(true);
-
-  // Editor state
-  const [editorTarget, setEditorTarget] = useState<EditorTarget>(null);
-  const [editorContent, setEditorContent] = useState("");
-  const [originalContent, setOriginalContent] = useState("");
+  const [expandedProfile, setExpandedProfile] = useState<string | null>(null);
+  const [editor, setEditor] = useState<EditorState | null>(null);
   const [saving, setSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [previewMode, setPreviewMode] = useState(false);
+  const [savingPersonality, setSavingPersonality] = useState<string | null>(null);
+  const toast = useToast();
 
-  // Sections expanded state
-  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
-    identity: true,
-    user: true,
-    system: false,
-    "agents-md": true,
-    env: false,
-  });
-
-  // Environment variables state
-  const [envEntries, setEnvEntries] = useState<Array<{ key: string; value: string; masked: string; sensitive: boolean; isComment: boolean; isEmpty: boolean }>>([]);
-  const [envRevealed, setEnvRevealed] = useState<Set<string>>(new Set());
-  const [envEditing, setEnvEditing] = useState<string | null>(null);
-  const [envEditValue, setEnvEditValue] = useState("");
-  const [envSaving, setEnvSaving] = useState(false);
-
-  const loadData = useCallback(async () => {
+  const loadProfiles = useCallback(async () => {
     setLoading(true);
     try {
-      const [filesRes, agentsRes, envRes] = await Promise.all([
-        fetch("/api/agent/files"),
-        fetch("/api/agent/agents-md"),
-        fetch("/api/agent/env"),
-      ]);
-      const filesData = await filesRes.json();
-      const agentsData = await agentsRes.json();
-      const envData = await envRes.json();
-      setFiles(filesData.data?.files || filesData.files || []);
-      setAgentsMdFiles(agentsData.data?.files || agentsData.files || []);
-      setEnvEntries(envData.data?.entries || envData.entries || []);
+      const res = await fetch("/api/agent/profiles");
+      const data = await res.json();
+      setProfiles(data.data?.profiles || []);
     } catch {
-      // ignore
+      toast.showToast("Failed to load profiles", "error");
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [toast]);
 
-  const handleEnvSave = async (key: string) => {
-    setEnvSaving(true);
+  useEffect(() => { loadProfiles(); }, [loadProfiles]);
+
+  const openFile = async (profileId: string, file: ProfileFile) => {
+    if (!file.exists) {
+      toast.showToast(`${file.name} does not exist yet`, "info");
+      return;
+    }
     try {
-      const res = await fetch("/api/agent/env", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ key, value: envEditValue }),
+      // Load content from existing files API or directly
+      const url = profileId === "default"
+        ? `/api/agent/files/${file.key}`
+        : `/api/agent/files/${file.key}?profile=${profileId}`;
+      const res = await fetch(url);
+      const data = await res.json();
+      const content = data.data?.content || "";
+      setEditor({
+        profileId,
+        fileKey: file.key,
+        fileName: file.name,
+        content,
+        original: content,
       });
-      if (res.ok) {
-        setEnvEditing(null);
-        loadData();
-      }
+      setPreviewMode(false);
+      setSaveStatus("idle");
     } catch {
-      // ignore
-    } finally {
-      setEnvSaving(false);
+      toast.showToast("Failed to load file", "error");
     }
   };
 
-  const toggleEnvReveal = (key: string) => {
-    setEnvRevealed((prev) => {
-      const next = new Set(prev);
-      if (next.has(key)) next.delete(key);
-      else next.add(key);
-      return next;
-    });
-  };
-
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
-
-  const openEditor = (target: EditorTarget, content: string) => {
-    setEditorTarget(target);
-    setEditorContent(content);
-    setOriginalContent(content);
-    setPreviewMode(false);
-    setSaveStatus("idle");
-  };
-
   const handleSave = async () => {
-    if (!editorTarget) return;
+    if (!editor) return;
     setSaving(true);
     setSaveStatus("saving");
     try {
-      let res: Response;
-      if (editorTarget.type === "behavior") {
-        res = await fetch(`/api/agent/files/${editorTarget.key}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ content: editorContent, backup: true }),
-        });
-      } else {
-        res = await fetch("/api/agent/agents-md", {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ path: editorTarget.path, content: editorContent, backup: true }),
-        });
-      }
+      const url = editor.profileId === "default"
+        ? `/api/agent/files/${editor.fileKey}`
+        : `/api/agent/files/${editor.fileKey}?profile=${editor.profileId}`;
+      const res = await fetch(url, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: editor.content, backup: true }),
+      });
       if (!res.ok) throw new Error("Save failed");
-      setOriginalContent(editorContent);
+      setEditor({ ...editor, original: editor.content });
       setSaveStatus("saved");
       setTimeout(() => setSaveStatus("idle"), 2000);
-      // Reload to get updated file metadata
-      loadData();
+      loadProfiles();
     } catch {
       setSaveStatus("error");
     } finally {
@@ -178,48 +116,34 @@ export default function BehaviourPage() {
     }
   };
 
-  const handleReset = () => {
-    setEditorContent(originalContent);
+  const handlePersonalityChange = async (profileId: string, personality: string) => {
+    setSavingPersonality(profileId);
+    try {
+      const res = await fetch("/api/agent/personality", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          profile: profileId === "default" ? "default" : profileId,
+          personality,
+        }),
+      });
+      if (!res.ok) throw new Error("Failed");
+      toast.showToast(`Personality set to "${personality}"`, "success");
+      loadProfiles();
+    } catch {
+      toast.showToast("Failed to update personality", "error");
+    } finally {
+      setSavingPersonality(null);
+    }
   };
 
-  const handleDownload = () => {
-    const fileName =
-      editorTarget?.type === "behavior"
-        ? files.find((f) => f.key === editorTarget.key)?.name || "file.md"
-        : "AGENTS.md";
-    const blob = new Blob([editorContent], { type: "text/plain" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = fileName;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
-  const hasChanges = editorContent !== originalContent;
-
-  const groupedFiles: Record<string, BehaviorFile[]> = {};
-  for (const f of files) {
-    if (!groupedFiles[f.category]) groupedFiles[f.category] = [];
-    groupedFiles[f.category].push(f);
-  }
-
-  const categoryLabels: Record<string, string> = {
-    identity: "Identity & Persona",
-    user: "User & Memory",
-    system: "System",
-  };
-
-  const categoryColors: Record<string, string> = {
-    identity: "cyan",
-    user: "pink",
-    system: "orange",
-  };
+  const hasChanges = editor ? editor.content !== editor.original : false;
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-dark-950 grid-bg flex items-center justify-center">
-        <LoadingSpinner text="Loading behaviour files..." />
+      <div className="min-h-screen bg-dark-950 grid-bg">
+        <PageHeader icon={Brain} title="Agent Behaviour" subtitle="Loading profiles..." color="purple" />
+        <div className="px-6 py-12"><LoadingSpinner text="Loading profiles..." /></div>
       </div>
     );
   }
@@ -229,403 +153,224 @@ export default function BehaviourPage() {
       <PageHeader
         icon={Brain}
         title="Agent Behaviour"
-        subtitle="Edit the markdown files that define your agent's personality, memory, and behaviour"
-        color="cyan"
+        subtitle={`${profiles.length} profiles configured`}
+        color="purple"
       />
 
       <div className="px-6 py-6">
-        <div className="flex gap-6">
-          {/* File List Panel */}
-          <div className="w-80 flex-shrink-0 space-y-4">
-            {/* Static Behavior Files */}
-            {Object.entries(groupedFiles).map(([category, catFiles]) => (
+        {/* Profile Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+          {profiles.map((profile) => {
+            const isExpanded = expandedProfile === profile.id;
+            const color = profile.isDefault ? "cyan" : "purple";
+            return (
               <div
-                key={category}
-                className="rounded-xl border border-white/10 bg-dark-900/50 overflow-hidden"
+                key={profile.id}
+                className={`rounded-xl border transition-all cursor-pointer ${
+                  isExpanded
+                    ? `border-${color}-500/50 bg-${color}-500/5 col-span-full`
+                    : "border-white/10 bg-dark-900/50 hover:border-white/20"
+                }`}
+                onClick={() => !isExpanded && setExpandedProfile(profile.id)}
               >
-                <button
-                  onClick={() =>
-                    setExpandedSections((s) => ({ ...s, [category]: !s[category] }))
-                  }
-                  className="w-full flex items-center justify-between px-4 py-2.5 hover:bg-white/[0.02] transition-colors"
-                >
-                  <div className="flex items-center gap-2">
-                    <div
-                      className={`w-2 h-2 rounded-full ${
-                        categoryColors[category] === "cyan"
-                          ? "bg-neon-cyan"
-                          : categoryColors[category] === "pink"
-                          ? "bg-neon-pink"
-                          : "bg-neon-orange"
-                      }`}
-                    />
-                    <span className="text-xs font-mono text-white/60 uppercase tracking-wider">
-                      {categoryLabels[category] || category}
-                    </span>
-                    <span className="text-[10px] font-mono text-white/25">
-                      ({catFiles.length})
-                    </span>
+                {/* Card Header */}
+                <div className="p-4">
+                  <div className="flex items-start justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <User className={`w-5 h-5 text-${color}-400`} />
+                      <span className="font-semibold text-white">{profile.name}</span>
+                      {profile.isDefault && (
+                        <Badge color="cyan" size="sm">Default</Badge>
+                      )}
+                    </div>
+                    <Badge
+                      color={(PERSONALITY_COLORS[profile.personality] || "gray") as "cyan" | "green" | "pink" | "orange" | "purple" | "gray" | "red"}
+                      size="sm"
+                    >
+                      {profile.personality.charAt(0).toUpperCase() + profile.personality.slice(1)}
+                    </Badge>
                   </div>
-                  {expandedSections[category] ? (
-                    <ChevronDown className="w-3.5 h-3.5 text-white/30" />
-                  ) : (
-                    <ChevronRight className="w-3.5 h-3.5 text-white/30" />
+                  <p className="text-sm text-white/50 mb-3">{profile.description}</p>
+                  {!isExpanded && (
+                    <div className="flex items-center gap-4 text-xs text-white/30">
+                      <span>{profile.skillsCount} skills</span>
+                      <span>{profile.files.filter(f => f.exists).length} files</span>
+                    </div>
                   )}
-                </button>
+                </div>
 
-                {expandedSections[category] && (
-                  <div className="border-t border-white/5 divide-y divide-white/5">
-                    {catFiles.map((file) => {
-                      const isActive =
-                        editorTarget?.type === "behavior" &&
-                        editorTarget.key === file.key;
-                      return (
-                        <button
-                          key={file.key}
-                          onClick={() => openEditor({ type: "behavior", key: file.key }, file.content)}
-                          className={`w-full text-left px-4 py-3 transition-colors ${
-                            isActive
-                              ? "bg-neon-cyan/5 border-l-2 border-l-neon-cyan"
-                              : "hover:bg-white/[0.02] border-l-2 border-l-transparent"
-                          }`}
-                        >
-                          <div className="flex items-center gap-2">
-                            <FileText
-                              className={`w-3.5 h-3.5 ${
-                                isActive ? "text-neon-cyan" : "text-white/30"
-                              }`}
-                            />
-                            <span
-                              className={`text-sm font-medium ${
-                                isActive ? "text-white" : "text-white/70"
-                              }`}
-                            >
-                              {file.name}
-                            </span>
-                            {!file.exists && (
-                              <span className="text-[10px] font-mono text-neon-orange">
-                                NEW
-                              </span>
-                            )}
+                {/* Expanded View */}
+                {isExpanded && (
+                  <div className="border-t border-white/10 p-4" onClick={(e) => e.stopPropagation()}>
+                    {/* Personality Selector */}
+                    <div className="mb-4 flex items-center gap-3">
+                      <span className="text-sm text-white/50">Personality:</span>
+                      <select
+                        value={profile.personality.charAt(0).toUpperCase() + profile.personality.slice(1)}
+                        onChange={(e) => handlePersonalityChange(profile.id, e.target.value)}
+                        disabled={savingPersonality === profile.id}
+                        className="bg-dark-800 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white focus:border-purple-500/50 focus:outline-none"
+                      >
+                        {PERSONALITIES.map((p) => (
+                          <option key={p} value={p}>{p.charAt(0).toUpperCase() + p.slice(1)}</option>
+                        ))}
+                      </select>
+                      {savingPersonality === profile.id && (
+                        <span className="text-xs text-white/30">Saving...</span>
+                      )}
+                    </div>
+
+                    {/* File Groups */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {["identity", "user", "system"].map((group) => {
+                        const groupFiles = profile.files.filter((f) => {
+                          if (group === "identity") return ["soul", "agents"].includes(f.key);
+                          if (group === "user") return ["user", "memory"].includes(f.key);
+                          return false;
+                        });
+                        if (groupFiles.length === 0) return null;
+                        return (
+                          <div key={group}>
+                            <h4 className="text-xs font-semibold text-white/30 uppercase tracking-wider mb-2">
+                              {group === "identity" ? "Identity" : "User"}
+                            </h4>
+                            {groupFiles.map((file) => (
+                              <div
+                                key={file.key}
+                                className="flex items-center justify-between py-2 px-3 rounded-lg hover:bg-white/5 transition-colors group"
+                              >
+                                <div className="flex items-center gap-2">
+                                  <FileText className="w-4 h-4 text-white/30" />
+                                  <span className="text-sm text-white/70 font-mono">{file.name}</span>
+                                  {file.exists && (
+                                    <span className="text-xs text-white/20">
+                                      {(file.size / 1024).toFixed(1)}KB
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                  {file.exists ? (
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      color="cyan"
+                                      onClick={() => openFile(profile.id, file)}
+                                    >
+                                      Edit
+                                    </Button>
+                                  ) : (
+                                    <span className="text-xs text-white/20">Not found</span>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
                           </div>
-                          <p className="text-[11px] text-white/30 mt-0.5 ml-5 line-clamp-1">
-                            {file.description}
-                          </p>
-                          {file.exists && (
-                            <div className="flex items-center gap-3 mt-1 ml-5 text-[10px] text-white/20 font-mono">
-                              <span>{(file.size / 1024).toFixed(1)} KB</span>
-                              {file.lastModified && (
-                                <span>
-                                  {new Date(file.lastModified).toLocaleDateString()}
-                                </span>
-                              )}
-                            </div>
-                          )}
-                        </button>
-                      );
-                    })}
+                        );
+                      })}
+                    </div>
+
+                    {/* Close button */}
+                    <div className="mt-4 pt-4 border-t border-white/10 flex justify-end">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setExpandedProfile(null)}
+                      >
+                        Collapse
+                      </Button>
+                    </div>
                   </div>
                 )}
               </div>
-            ))}
+            );
+          })}
+        </div>
 
-            {/* AGENTS.md Files Section */}
-            <div className="rounded-xl border border-white/10 bg-dark-900/50 overflow-hidden">
-              <button
-                onClick={() =>
-                  setExpandedSections((s) => ({
-                    ...s,
-                    "agents-md": !s["agents-md"],
-                  }))
-                }
-                className="w-full flex items-center justify-between px-4 py-2.5 hover:bg-white/[0.02] transition-colors"
-              >
+        {/* Editor Panel */}
+        {editor && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+            <div className="w-full max-w-4xl max-h-[85vh] bg-dark-900 border border-white/10 rounded-xl flex flex-col">
+              {/* Editor Header */}
+              <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
+                <div className="flex items-center gap-3">
+                  <FileText className="w-5 h-5 text-purple-400" />
+                  <span className="font-semibold text-white">{editor.fileName}</span>
+                  <Badge color="gray" size="sm">
+                    {editor.profileId === "default" ? "Main Agent" : editor.profileId}
+                  </Badge>
+                  {hasChanges && <Badge color="orange" size="sm">Unsaved</Badge>}
+                </div>
                 <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-neon-green" />
-                  <span className="text-xs font-mono text-white/60 uppercase tracking-wider">
-                    AGENTS.md
-                  </span>
-                  <span className="text-[10px] font-mono text-white/25">
-                    ({agentsMdFiles.length})
-                  </span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    icon={previewMode ? EyeOff : Eye}
+                    onClick={() => setPreviewMode(!previewMode)}
+                  >
+                    {previewMode ? "Edit" : "Preview"}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    icon={RotateCcw}
+                    onClick={() => setEditor({ ...editor, content: editor.original })}
+                    disabled={!hasChanges}
+                  >
+                    Reset
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    icon={Download}
+                    onClick={() => {
+                      const blob = new Blob([editor.content], { type: "text/plain" });
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement("a");
+                      a.href = url; a.download = editor.fileName; a.click();
+                      URL.revokeObjectURL(url);
+                    }}
+                  >
+                    Download
+                  </Button>
+                  <Button
+                    variant="primary"
+                    color="purple"
+                    size="sm"
+                    icon={saveStatus === "saved" ? Check : saveStatus === "error" ? AlertCircle : Save}
+                    onClick={handleSave}
+                    disabled={!hasChanges || saving}
+                  >
+                    {saving ? "Saving..." : saveStatus === "saved" ? "Saved!" : "Save"}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setEditor(null)}
+                  >
+                    Close
+                  </Button>
                 </div>
-                {expandedSections["agents-md"] ? (
-                  <ChevronDown className="w-3.5 h-3.5 text-white/30" />
+              </div>
+              {/* Editor Body */}
+              <div className="flex-1 overflow-auto p-4">
+                {previewMode ? (
+                  <div className="prose prose-invert max-w-none">
+                    <pre className="whitespace-pre-wrap text-sm text-white/80 font-mono bg-dark-800 rounded-lg p-4">
+                      {editor.content}
+                    </pre>
+                  </div>
                 ) : (
-                  <ChevronRight className="w-3.5 h-3.5 text-white/30" />
+                  <textarea
+                    value={editor.content}
+                    onChange={(e) => setEditor({ ...editor, content: e.target.value })}
+                    className="w-full h-full min-h-[400px] bg-dark-800 border border-white/10 rounded-lg p-4 text-sm text-white/80 font-mono resize-none focus:border-purple-500/50 focus:outline-none"
+                    spellCheck={false}
+                  />
                 )}
-              </button>
-
-              {expandedSections["agents-md"] && (
-                <div className="border-t border-white/5 divide-y divide-white/5">
-                  {agentsMdFiles.length === 0 ? (
-                    <div className="px-4 py-4 text-center text-xs text-white/30">
-                      No AGENTS.md files found
-                    </div>
-                  ) : (
-                    agentsMdFiles.map((file) => {
-                      const isActive =
-                        editorTarget?.type === "agents-md" &&
-                        editorTarget.path === file.path;
-                      return (
-                        <button
-                          key={file.path}
-                          onClick={() =>
-                            openEditor(
-                              { type: "agents-md", path: file.path },
-                              file.content
-                            )
-                          }
-                          className={`w-full text-left px-4 py-3 transition-colors ${
-                            isActive
-                              ? "bg-neon-green/5 border-l-2 border-l-neon-green"
-                              : "hover:bg-white/[0.02] border-l-2 border-l-transparent"
-                          }`}
-                        >
-                          <div className="flex items-center gap-2">
-                            <FolderOpen
-                              className={`w-3.5 h-3.5 ${
-                                isActive ? "text-neon-green" : "text-white/30"
-                              }`}
-                            />
-                            <span
-                              className={`text-sm font-medium ${
-                                isActive ? "text-white" : "text-white/70"
-                              }`}
-                            >
-                              AGENTS.md
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-3 mt-0.5 ml-5 text-[10px] text-white/25 font-mono">
-                            <span className="truncate">{file.directory}</span>
-                            <span>{(file.size / 1024).toFixed(1)} KB</span>
-                          </div>
-                        </button>
-                      );
-                    })
-                  )}
-                </div>
-              )}
+              </div>
             </div>
           </div>
-
-          {/* Environment Variables Section */}
-          <div className="rounded-xl border border-white/10 bg-dark-900/50 overflow-hidden mt-4">
-            <button
-              onClick={() => setExpandedSections((s) => ({ ...s, env: !s.env }))}
-              className="w-full flex items-center justify-between px-4 py-2.5 hover:bg-white/[0.02] transition-colors"
-            >
-              <div className="flex items-center gap-2">
-                <Shield className="w-3.5 h-3.5 text-neon-orange" />
-                <span className="text-xs font-mono text-white/60 uppercase tracking-wider">
-                  Environment Variables
-                </span>
-                <span className="text-[10px] font-mono text-white/25">
-                  ({envEntries.filter((e) => !e.isComment && !e.isEmpty).length})
-                </span>
-              </div>
-              {expandedSections.env ? (
-                <ChevronDown className="w-3.5 h-3.5 text-white/30" />
-              ) : (
-                <ChevronRight className="w-3.5 h-3.5 text-white/30" />
-              )}
-            </button>
-
-            {expandedSections.env && (
-              <div className="border-t border-white/5 divide-y divide-white/5 max-h-96 overflow-y-auto">
-                {envEntries
-                  .filter((e) => !e.isComment && !e.isEmpty && e.key)
-                  .map((entry) => (
-                    <div key={entry.key} className="px-4 py-2 flex items-center justify-between group hover:bg-white/[0.02]">
-                      <div className="flex items-center gap-2 min-w-0 flex-1">
-                        <Key className="w-3 h-3 text-white/20 flex-shrink-0" />
-                        <span className="text-xs font-mono text-white/60 truncate">{entry.key}</span>
-                      </div>
-                      <div className="flex items-center gap-2 flex-shrink-0">
-                        {envEditing === entry.key ? (
-                          <div className="flex items-center gap-1">
-                            <input
-                              type="text"
-                              value={envEditValue}
-                              onChange={(e) => setEnvEditValue(e.target.value)}
-                              className="w-40 bg-dark-800/50 border border-white/20 rounded px-2 py-1 text-xs font-mono text-white outline-none"
-                              autoFocus
-                            />
-                            <button
-                              onClick={() => handleEnvSave(entry.key)}
-                              disabled={envSaving}
-                              className="p-1 rounded text-neon-green hover:bg-green-500/10"
-                            >
-                              <Check className="w-3 h-3" />
-                            </button>
-                            <button
-                              onClick={() => setEnvEditing(null)}
-                              className="p-1 rounded text-white/30 hover:text-white/60"
-                            >
-                              <X className="w-3 h-3" />
-                            </button>
-                          </div>
-                        ) : (
-                          <>
-                            <span className="text-xs font-mono text-white/30">
-                              {entry.sensitive
-                                ? (envRevealed.has(entry.key) ? entry.masked : "••••••")
-                                : entry.masked || "(empty)"}
-                            </span>
-                            {entry.sensitive && entry.value && (
-                              <button
-                                onClick={() => toggleEnvReveal(entry.key)}
-                                className="p-1 rounded text-white/20 hover:text-white/40 opacity-0 group-hover:opacity-100 transition-opacity"
-                                title={envRevealed.has(entry.key) ? "Hide" : "Show masked"}
-                              >
-                                {envRevealed.has(entry.key) ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
-                              </button>
-                            )}
-                            <button
-                              onClick={() => { setEnvEditing(entry.key); setEnvEditValue(entry.value); }}
-                              className="p-1 rounded text-white/20 hover:text-neon-cyan opacity-0 group-hover:opacity-100 transition-opacity"
-                              title="Edit"
-                            >
-                              <Edit3 className="w-3 h-3" />
-                            </button>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-              </div>
-            )}
-          </div>
-
-          {/* Editor Panel */}
-          <div className="flex-1 min-w-0">
-            {!editorTarget ? (
-              <div className="rounded-xl border border-white/10 bg-dark-900/50 p-12 text-center">
-                <Brain className="w-12 h-12 text-white/10 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-white/60 mb-2">
-                  Select a File to Edit
-                </h3>
-                <p className="text-sm text-white/30 max-w-md mx-auto">
-                  Choose a behaviour file from the left panel to view and edit its
-                  contents. These markdown files define your agent's personality,
-                  memory, and behavioural guidelines.
-                </p>
-              </div>
-            ) : (
-              <div className="rounded-xl border border-white/10 bg-dark-900/50 overflow-hidden glow-cyan">
-                {/* Editor Header */}
-                <div className="flex items-center justify-between px-4 py-2.5 border-b border-white/10 bg-dark-800/50">
-                  <div className="flex items-center gap-3">
-                    <div className="flex gap-1.5">
-                      <div className="w-3 h-3 rounded-full bg-red-500/80" />
-                      <div className="w-3 h-3 rounded-full bg-yellow-500/80" />
-                      <div className="w-3 h-3 rounded-full bg-green-500/80" />
-                    </div>
-                    <span className="text-xs text-white/40 font-mono">
-                      {editorTarget.type === "behavior"
-                        ? files.find((f) => f.key === editorTarget.key)?.name
-                        : `AGENTS.md — ${
-                            agentsMdFiles.find((a) => a.path === editorTarget.path)
-                              ?.directory
-                          }`}
-                      {" — "}
-                      {editorContent.split("\n").length} lines
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {hasChanges && (
-                      <span className="text-xs text-neon-orange font-mono flex items-center gap-1">
-                        <AlertCircle className="w-3 h-3" />
-                        UNSAVED
-                      </span>
-                    )}
-                    <button
-                      onClick={() => setPreviewMode(!previewMode)}
-                      className="text-xs font-mono text-white/40 hover:text-white/60 px-2 py-1 rounded border border-white/10 hover:border-white/20 transition-colors"
-                    >
-                      {previewMode ? "Edit" : "Preview"}
-                    </button>
-                    <button
-                      onClick={handleReset}
-                      disabled={!hasChanges}
-                      className="text-xs font-mono text-white/40 hover:text-white/60 px-2 py-1 rounded border border-white/10 hover:border-white/20 transition-colors disabled:opacity-30"
-                    >
-                      Reset
-                    </button>
-                    <button
-                      onClick={handleDownload}
-                      className="text-xs font-mono text-white/40 hover:text-white/60 px-2 py-1 rounded border border-white/10 hover:border-white/20 transition-colors"
-                    >
-                      Export
-                    </button>
-                    <button
-                      onClick={handleSave}
-                      disabled={!hasChanges || saving}
-                      className={`text-xs font-mono px-3 py-1 rounded transition-colors flex items-center gap-1.5 ${
-                        saveStatus === "saved"
-                          ? "bg-green-500/20 text-neon-green border border-green-500/30"
-                          : hasChanges
-                          ? "bg-neon-cyan/10 text-neon-cyan border border-cyan-500/30 hover:bg-neon-cyan/20"
-                          : "bg-white/5 text-white/30 border border-white/10"
-                      }`}
-                    >
-                      {saveStatus === "saving" ? (
-                        "Saving..."
-                      ) : saveStatus === "saved" ? (
-                        <>
-                          <Check className="w-3 h-3" /> Saved!
-                        </>
-                      ) : (
-                        <>
-                          <Save className="w-3 h-3" /> Save
-                        </>
-                      )}
-                    </button>
-                    <button
-                      onClick={() => setEditorTarget(null)}
-                      className="text-white/30 hover:text-white/60 ml-1"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-
-                {/* Content Area */}
-                <div className="h-[calc(100vh-260px)] overflow-auto">
-                  {previewMode ? (
-                    <div className="p-6">
-                      <pre className="whitespace-pre-wrap font-sans text-white/80 leading-relaxed text-sm">
-                        {editorContent}
-                      </pre>
-                    </div>
-                  ) : (
-                    <div className="flex h-full">
-                      {/* Line Numbers */}
-                      <div className="flex-shrink-0 w-12 bg-dark-800/30 border-r border-white/5 py-4 select-none">
-                        {editorContent.split("\n").map((_, i) => (
-                          <div
-                            key={i}
-                            className="text-right pr-2 text-xs font-mono text-white/20 leading-6"
-                          >
-                            {i + 1}
-                          </div>
-                        ))}
-                      </div>
-                      {/* Editor */}
-                      <textarea
-                        value={editorContent}
-                        onChange={(e) => setEditorContent(e.target.value)}
-                        className="flex-1 bg-transparent text-white/80 font-mono text-sm leading-6 p-4 resize-none outline-none placeholder-white/20"
-                        placeholder="Start editing..."
-                        spellCheck={false}
-                      />
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
+        )}
       </div>
     </div>
   );

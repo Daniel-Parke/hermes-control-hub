@@ -30,9 +30,15 @@ export const BEHAVIOR_FILES: Record<
     category: "user",
   },
   agent: {
-    name: "AGENT.md",
+    name: "AGENTS.md",
     path: PATHS.agent,
     description: "Agent development rules and guidelines",
+    category: "identity",
+  },
+  env: {
+    name: ".env",
+    path: PATHS.env,
+    description: "API keys and environment variables",
     category: "system",
   },
   config: {

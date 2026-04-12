@@ -14,7 +14,7 @@ describe("Hermes Config Module", () => {
       expect(PATHS.env).toContain(".env");
       expect(PATHS.soul).toContain("SOUL.md");
       expect(PATHS.hermes).toContain("HERMES.md");
-      expect(PATHS.agent).toContain("AGENT.md");
+      expect(PATHS.agent).toContain("AGENTS.md");
       expect(PATHS.cronJobs).toContain("jobs.json");
       expect(PATHS.sessions).toContain("sessions");
       expect(PATHS.skills).toContain("skills");

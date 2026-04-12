@@ -98,7 +98,28 @@ export function messageSummary(content: string | undefined): string {
 export function parseSchedule(raw: string): { kind: string; minutes?: number; expr?: string; run_at?: string; display?: string } {
   const s = (typeof raw === "string" ? raw : "").trim();
 
-  // Interval patterns: "every 15m", "every 2h", "30m", "1h"
+  // Rich interval patterns: "every 1h 30m", "every 2d", "every 1w 3d", etc.
+  const richIntervalMatch = s.match(/^every\s+(\d+)\s*(m|h|d|w)(?:\s+(\d+)\s*(m|h))?$/);
+  if (richIntervalMatch) {
+    let minutes = parseInt(richIntervalMatch[1], 10);
+    const unit1 = richIntervalMatch[2];
+    if (unit1 === "h") minutes *= 60;
+    else if (unit1 === "d") minutes *= 1440;
+    else if (unit1 === "w") minutes *= 10080;
+    if (richIntervalMatch[3]) {
+      let extra = parseInt(richIntervalMatch[3], 10);
+      if (richIntervalMatch[4] === "h") extra *= 60;
+      minutes += extra;
+    }
+    const display = minutes >= 1440
+      ? `every ${minutes / 1440}d`
+      : minutes >= 60
+        ? `every ${Math.floor(minutes / 60)}h${minutes % 60 ? ` ${minutes % 60}m` : ""}`
+        : `every ${minutes}m`;
+    return { kind: "interval", minutes, display };
+  }
+
+  // Simple interval patterns: "every 15m", "every 2h", "30m", "1h"
   const intervalMatch = s.match(/^(?:every\s+)?(\d+)\s*(m|min|minutes?|h|hr|hours?)$/i);
   if (intervalMatch) {
     const n = parseInt(intervalMatch[1], 10);
@@ -131,6 +152,8 @@ export interface CronJobData {
   skills: string[];
   model: string;
   provider?: string;
+  profile?: string;
+  timeout?: number;
   schedule: { kind: string; minutes?: number; expr?: string; run_at?: string; display?: string } | string;
   schedule_display?: string;
   repeat: { times: number | null; completed: number } | boolean;

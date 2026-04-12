@@ -14,11 +14,13 @@ import { Toggle, Select, NumberInput, TextInput } from "@/components/ui/Input";
 import { LoadingSpinner, ErrorBanner } from "@/components/ui/LoadingSpinner";
 import { getSectionDef, type FieldDef } from "@/lib/config-schema";
 import { iconColorMap } from "@/lib/theme";
+import { HERMES_HOME } from "@/lib/hermes";
 
 export default function ConfigSectionPage() {
   const params = useParams();
   const sectionId = params.section as string;
   const sectionDef = getSectionDef(sectionId);
+  const isFileSection = sectionDef?.type === "file";
 
   const [values, setValues] = useState<Record<string, unknown>>({});
   const [originalValues, setOriginalValues] = useState<Record<string, unknown>>({});
@@ -27,23 +29,36 @@ export default function ConfigSectionPage() {
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [error, setError] = useState<string | null>(null);
 
+  // File editor state
+  const [fileContent, setFileContent] = useState("");
+  const [originalFileContent, setOriginalFileContent] = useState("");
+
   const loadConfig = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/config");
-      if (!res.ok) throw new Error("Failed to load config");
-      const json = await res.json();
-      const config = json.data || json;
-      const sectionValues = (config[sectionId] as Record<string, unknown>) || {};
-      setValues(sectionValues);
-      setOriginalValues({ ...sectionValues });
+      if (isFileSection && sectionDef?.filePath) {
+        // Load file content via agent files API
+        const res = await fetch(`/api/agent/files/${sectionDef.filePath === ".env" ? "env" : "hermes"}`);
+        const json = await res.json();
+        const content = json.data?.content || "";
+        setFileContent(content);
+        setOriginalFileContent(content);
+      } else {
+        const res = await fetch("/api/config");
+        if (!res.ok) throw new Error("Failed to load config");
+        const json = await res.json();
+        const config = json.data || json;
+        const sectionValues = (config[sectionId] as Record<string, unknown>) || {};
+        setValues(sectionValues);
+        setOriginalValues({ ...sectionValues });
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unknown error");
     } finally {
       setLoading(false);
     }
-  }, [sectionId]);
+  }, [sectionId, isFileSection, sectionDef]);
 
   useEffect(() => {
     loadConfig();
@@ -51,25 +66,34 @@ export default function ConfigSectionPage() {
 
   const handleSave = async () => {
     if (!sectionDef) return;
-    // Only save editable fields
-    const editableKeys = sectionDef.fields.map((f) => f.key);
-    const editableValues: Record<string, unknown> = {};
-    for (const key of editableKeys) {
-      if (key in values) {
-        editableValues[key] = values[key];
-      }
-    }
 
     setSaving(true);
     setSaveStatus("saving");
     try {
-      const res = await fetch("/api/config", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ section: sectionId, values: editableValues }),
-      });
-      if (!res.ok) throw new Error("Failed to save");
-      setOriginalValues({ ...values });
+      if (isFileSection) {
+        // Save file content
+        const fileKey = sectionDef.filePath === ".env" ? "env" : "hermes";
+        const res = await fetch(`/api/agent/files/${fileKey}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ content: fileContent, backup: true }),
+        });
+        if (!res.ok) throw new Error("Failed to save file");
+        setOriginalFileContent(fileContent);
+      } else {
+        const editableKeys = sectionDef.fields.map((f) => f.key);
+        const editableValues: Record<string, unknown> = {};
+        for (const key of editableKeys) {
+          if (key in values) editableValues[key] = values[key];
+        }
+        const res = await fetch("/api/config", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ section: sectionId, values: editableValues }),
+        });
+        if (!res.ok) throw new Error("Failed to save");
+        setOriginalValues({ ...values });
+      }
       setSaveStatus("saved");
       setTimeout(() => setSaveStatus("idle"), 2000);
     } catch (err) {
@@ -81,10 +105,16 @@ export default function ConfigSectionPage() {
   };
 
   const handleReset = () => {
-    setValues({ ...originalValues });
+    if (isFileSection) {
+      setFileContent(originalFileContent);
+    } else {
+      setValues({ ...originalValues });
+    }
   };
 
-  const hasChanges = JSON.stringify(values) !== JSON.stringify(originalValues);
+  const hasChanges = isFileSection
+    ? fileContent !== originalFileContent
+    : JSON.stringify(values) !== JSON.stringify(originalValues);
 
   const updateValue = (key: string, value: unknown) => {
     setValues((prev) => ({ ...prev, [key]: value }));
@@ -210,7 +240,7 @@ export default function ConfigSectionPage() {
                 </p>
               </div>
             </div>
-            {sectionDef.fields.length > 0 && (
+            {(sectionDef.fields.length > 0 || isFileSection) && (
               <div className="flex items-center gap-3">
                 {hasChanges && (
                   <span className="text-xs text-neon-orange font-mono flex items-center gap-1">
@@ -252,7 +282,54 @@ export default function ConfigSectionPage() {
       <div className="max-w-3xl mx-auto px-6 py-6">
         {error && <ErrorBanner message={error} />}
 
-        {/* Editable fields */}
+        {/* File editor for file-type sections */}
+        {isFileSection && (
+          <div className="rounded-xl border border-white/10 bg-dark-900/50 p-6 mb-6">
+            <p className="text-xs text-white/30 font-mono uppercase tracking-widest mb-4">
+              {sectionDef.sensitive ? "Sensitive File — .env" : "File Content"}
+            </p>
+            {sectionDef.sensitive ? (
+              // .env editor with masked values
+              <div className="space-y-2">
+                {fileContent.split("\n").map((line, i) => {
+                  const trimmed = line.trim();
+                  if (!trimmed || trimmed.startsWith("#")) {
+                    return (
+                      <div key={i} className="text-xs text-white/30 font-mono">
+                        {line || "\u00A0"}
+                      </div>
+                    );
+                  }
+                  const eqIdx = line.indexOf("=");
+                  if (eqIdx < 0) return <div key={i} className="text-xs font-mono text-white/50">{line}</div>;
+                  const key = line.slice(0, eqIdx).trim();
+                  const val = line.slice(eqIdx + 1).trim().replace(/^["']|["']$/g, "");
+                  const masked = val.length > 8 ? val.slice(0, 4) + "..." + val.slice(-4) : "****";
+                  return (
+                    <div key={i} className="flex items-center gap-2 text-xs font-mono">
+                      <span className="text-neon-cyan w-48 flex-shrink-0 truncate">{key}</span>
+                      <span className="text-white/50">=</span>
+                      <span className="text-white/30">{masked}</span>
+                    </div>
+                  );
+                })}
+                <p className="text-xs text-white/20 mt-4">
+                  Edit .env directly on the server for security. This view is read-only for sensitive values.
+                </p>
+              </div>
+            ) : (
+              // Markdown file editor
+              <textarea
+                value={fileContent}
+                onChange={(e) => setFileContent(e.target.value)}
+                className="w-full h-96 bg-dark-800 border border-white/10 rounded-lg p-4 text-sm text-white/80 font-mono resize-none focus:border-cyan-500/50 focus:outline-none"
+                spellCheck={false}
+              />
+            )}
+          </div>
+        )}
+
+        {/* Editable fields for YAML sections */}
         {sectionDef.fields.length > 0 && (
           <div className="rounded-xl border border-white/10 bg-dark-900/50 p-6 space-y-5 mb-6">
             {sectionDef.fields.map(renderField)}
@@ -262,7 +339,7 @@ export default function ConfigSectionPage() {
         {/* Complex / nested fields (read-only preview) */}
         {sectionDef.complexKeys && sectionDef.complexKeys.length > 0 && (
           <div className="rounded-xl border border-white/10 bg-dark-900/50 p-6">
-            {sectionDef.fields.length > 0 && (
+            {(sectionDef.fields.length > 0 || isFileSection) && (
               <p className="text-xs text-white/30 font-mono uppercase tracking-widest mb-4">
                 Complex Fields
               </p>

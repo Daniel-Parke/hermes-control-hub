@@ -3,6 +3,7 @@ import { readFileSync, writeFileSync, existsSync, mkdirSync } from "fs";
 
 import { HERMES_HOME, PATHS, getDefaultModelConfig } from "@/lib/hermes";
 import { logApiError } from "@/lib/api-logger";
+import { parseSchedule } from "@/lib/utils";
 const CRON_PATH = PATHS.cronJobs;
 
 interface CronJobData {
@@ -47,39 +48,6 @@ function writeJobsFile(data: { jobs: CronJobData[]; updated_at?: string }) {
   mkdirSync(dir, { recursive: true });
   data.updated_at = new Date().toISOString();
   writeFileSync(CRON_PATH, JSON.stringify(data, null, 2), "utf-8");
-}
-
-/**
- * Parse a schedule string into the structure the cron scheduler expects.
- * - "every 15m" / "every 2h" → { kind: "interval", minutes: N, display }
- * - "star/15 star star star star" (cron expr) → { kind: "cron", expr, display }
- * - "2026-04-09T12:00:00Z"   → { kind: "once", run_at: "...", display }
- */
-function parseSchedule(raw: string): { kind: string; minutes?: number; expr?: string; run_at?: string; display?: string } {
-  const s = (typeof raw === "string" ? raw : "").trim();
-
-  // Interval patterns: "every 15m", "every 2h", "30m", "1h"
-  const intervalMatch = s.match(/^(?:every\s+)?(\d+)\s*(m|min|minutes?|h|hr|hours?)$/i);
-  if (intervalMatch) {
-    const n = parseInt(intervalMatch[1], 10);
-    const unit = intervalMatch[2].toLowerCase();
-    const minutes = unit.startsWith("h") ? n * 60 : n;
-    return { kind: "interval", minutes, display: `every ${minutes}m` };
-  }
-
-  // Cron expression: 5 space-separated fields
-  const cronParts = s.split(/\s+/);
-  if (cronParts.length === 5 && cronParts.every((p) => /^[\d\*\/\-\,]+$/.test(p))) {
-    return { kind: "cron", expr: s, display: s };
-  }
-
-  // ISO timestamp → one-shot
-  if (/^\d{4}-\d{2}-\d{2}T/.test(s)) {
-    return { kind: "once", run_at: s, display: s };
-  }
-
-  // Fallback
-  return { kind: "interval", minutes: 15, display: s };
 }
 
 // GET /api/cron — list all cron jobs
@@ -220,7 +188,7 @@ export async function PUT(request: NextRequest) {
       job.paused_at = null;
     } else {
       // Whitelist allowed fields to prevent mass assignment
-      const ALLOWED_FIELDS = ["name", "prompt", "skills", "model", "deliver", "enabled", "schedule"] as const;
+      const ALLOWED_FIELDS = ["name", "prompt", "skills", "model", "deliver", "enabled", "schedule", "schedule_display"] as const;
       for (const field of ALLOWED_FIELDS) {
         if (field in updates) {
           const value = (updates as Record<string, unknown>)[field];
