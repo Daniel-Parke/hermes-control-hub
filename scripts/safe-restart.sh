@@ -15,8 +15,17 @@ LOG_FILE="$HOME/.hermes/logs/mc-restart.log"
 
 mkdir -p "$(dirname "$LOG_FILE")"
 
-# Stop
-fuser -k 3000/tcp 2>/dev/null || true
+# Stop (fuser on Linux; lsof fallback on macOS)
+stop_port_3000() {
+    if command -v fuser &>/dev/null; then
+        fuser -k 3000/tcp 2>/dev/null || true
+    elif command -v lsof &>/dev/null; then
+        for pid in $(lsof -ti:3000 2>/dev/null); do
+            kill -9 "$pid" 2>/dev/null || true
+        done
+    fi
+}
+stop_port_3000
 sleep 2
 
 # Start — plain & only, no nohup

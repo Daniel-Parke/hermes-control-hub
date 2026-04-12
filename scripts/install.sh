@@ -6,11 +6,14 @@
 # Handles fresh install, re-install, and existing directory.
 #
 # Usage:
-#   # From a clone:
+#   # From a clone (INSTALL_DIR defaults to ~/mission-control):
 #   cd mission-control && bash scripts/install.sh
 #
 #   # Or standalone (auto-clones):
 #   bash install.sh
+#
+# Reinstall safety: if INSTALL_DIR is this repo, the script refuses to delete it
+# (that would remove the running script). Use: git pull && bash scripts/setup.sh
 #
 # Prerequisites:
 #   - Node.js 18+
@@ -20,8 +23,13 @@
 set -e
 
 REPO_URL="https://github.com/Daniel-Parke/hermes-mission-control.git"
-INSTALL_DIR="$HOME/mission-control"
+# Override: INSTALL_DIR=/path/to/mc bash scripts/install.sh
+INSTALL_DIR="${INSTALL_DIR:-$HOME/mission-control}"
 BRANCH="main"
+
+# Repository root containing this script (resolved). Used to avoid deleting ourselves.
+SCRIPT_PATH="${BASH_SOURCE[0]:-$0}"
+SCRIPT_REPO_ROOT="$(cd "$(dirname "$SCRIPT_PATH")/.." && pwd -P)"
 
 # ── Helpers ──────────────────────────────────────────────────
 RED='\033[0;31m'
@@ -72,6 +80,17 @@ fi
 if [ -d "$INSTALL_DIR" ]; then
     echo ""
     warn "Existing installation found at $INSTALL_DIR"
+    # Never rm -rf the directory we are running from — that deletes this script mid-flight and breaks clone/setup.
+    EXISTING_ABS="$(cd "$INSTALL_DIR" && pwd -P)"
+    if [ "$SCRIPT_REPO_ROOT" = "$EXISTING_ABS" ]; then
+        echo ""
+        fail "Cannot reinstall in place: this script lives inside $INSTALL_DIR.
+
+Use an in-place update instead:
+  cd $INSTALL_DIR && git pull origin $BRANCH && bash scripts/setup.sh
+
+Or remove the directory manually from another path (e.g. open a new terminal whose cwd is not inside $INSTALL_DIR), then run this installer again."
+    fi
     read -p "   Reinstall? This will DELETE the directory. (y/N): " -n 1 -r
     echo ""
     if [[ $REPLY =~ ^[Yy]$ ]]; then
@@ -103,7 +122,7 @@ ok "Cloned to $INSTALL_DIR"
 
 # ── Enable Gateway API Server ────────────────────────────────
 HERMES_HOME="${HERMES_HOME:-$HOME/.hermes}"
-if ! grep -q "API_SERVER_ENABLED=true" "$HERMES_HOME/.env" 2>/dev/null; then
+if [ ! -f "$HERMES_HOME/.env" ] || ! grep -q "API_SERVER_ENABLED=true" "$HERMES_HOME/.env" 2>/dev/null; then
     info "Enabling gateway API server for Rec Room..."
     echo "" >> "$HERMES_HOME/.env"
     echo "# Enable API server for Mission Control Rec Room" >> "$HERMES_HOME/.env"
@@ -123,8 +142,7 @@ echo ""
 info "Setting up Mission Control agent profiles..."
 
 HERMES_HOME="${HERMES_HOME:-$HOME/.hermes}"
-MC_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-PROFILE_TEMPLATES="$MC_DIR/scripts/profiles"
+PROFILE_TEMPLATES="$INSTALL_DIR/scripts/profiles"
 
 PROFILES=("mc-qa-engineer" "mc-devops-engineer" "mc-swe-engineer" "mc-data-engineer" "mc-data-scientist" "mc-ops-director" "mc-creative-lead" "mc-support-agent")
 

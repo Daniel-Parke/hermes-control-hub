@@ -55,6 +55,11 @@ fi
 
 cd "$APP_DIR"
 
+if ! git rev-parse --is-inside-work-tree &>/dev/null; then
+    log "ERROR: $APP_DIR is not a git repository — cannot update"
+    exit 1
+fi
+
 # ── Git Update ───────────────────────────────────────────────
 if [ "$RESTART_ONLY" = false ]; then
     log "Fetching latest from origin/main..."
