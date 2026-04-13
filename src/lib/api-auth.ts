@@ -4,6 +4,8 @@
 
 import { NextRequest, NextResponse } from "next/server";
 
+import { isCommercialLicenseValid } from "@/lib/commercial-license";
+
 /** When set, mutating routes require this key (header X-MC-API-Key or Authorization: Bearer). */
 export function getMcApiKey(): string {
   return (process.env.MC_API_KEY || "").trim();
@@ -66,4 +68,21 @@ export function requireDeployApiEnabled(): NextResponse | null {
     );
   }
   return null;
+}
+
+/**
+ * When `MC_EDITION=commercial`, mutating commercial-only APIs require a valid Ed25519 license
+ * (`AC_LICENSE_KEY` + `AC_LICENSE_ED25519_PUBLIC_PEM`) in addition to optional `MC_API_KEY`.
+ */
+export function requireCommercialLicense(): NextResponse | null {
+  const edition = (process.env.MC_EDITION || "").toLowerCase();
+  if (edition !== "commercial") return null;
+  if (isCommercialLicenseValid()) return null;
+  return NextResponse.json(
+    {
+      error:
+        "Commercial license required or invalid. Set AC_LICENSE_KEY and AC_LICENSE_ED25519_PUBLIC_PEM.",
+    },
+    { status: 403 }
+  );
 }

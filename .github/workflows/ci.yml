@@ -25,12 +25,16 @@ jobs:
       - run: npx tsc --noEmit -p tsconfig.json
       - run: npm test
       - run: npm run build
+        env:
+          MC_EDITION: simple
+          NEXT_PUBLIC_MC_EDITION: simple
       - run: npx playwright install chromium --with-deps
         if: matrix.os == 'ubuntu-latest'
       - run: npm run test:e2e
         if: matrix.os == 'ubuntu-latest'
         env:
           CI: true
+          PLAYWRIGHT_OSS_ONLY: "1"
 
   build-windows:
     runs-on: windows-latest

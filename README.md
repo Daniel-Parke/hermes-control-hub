@@ -6,12 +6,6 @@ A command centre dashboard for [Hermes Agent](https://github.com/NousResearch/he
 
 ![Dashboard](screenshots/Hermes_Dashboard.png)
 
-### OSS Simple edition (this repo)
-
-- **Commercial-only areas** (Operations, Task Lists, Workspaces, Hermes Packages, Command Room) are **blocked in Simple edition**: the app **redirects** to `/edition-not-available` and those items are hidden from the sidebar when `NEXT_PUBLIC_MC_EDITION` is not `commercial`.
-- **`next build` still prints routes like `/operations`** — Next compiles those pages; Simple edition **does not remove them from the tree**, it **denies access at runtime** (middleware). Seeing `○ /operations` in the build log is expected, not a sign you are on an old build.
-- After changing env, run **`npm run build`** again, then **restart** the `next start` (or systemd/Docker) process. If port 3000 was serving an old server, stop it or you will keep hitting the previous binary.
-
 ---
 
 ## Features
@@ -52,6 +46,14 @@ The installer will:
 
 The dashboard will be available at `http://localhost:3000` (or `http://localhost:$PORT` if you set the `PORT` environment variable; Next.js reads `PORT` for `npm run dev` / `npm run start`).
 
+### OSS build output vs runtime routes
+
+`next build` prints a **route table** for every page/API file Next compiled. In **Mission Control Simple (OSS)**, commercial-only areas are **not shipped as files** in this repository; any mention of them in older docs refers to the **commercial** product. What users can actually open is determined by **`middleware`** plus **`MC_EDITION` / `NEXT_PUBLIC_MC_EDITION`** (see `.env.example`). Prefer testing with real URLs rather than inferring surface area from the build table alone.
+
+### Port already in use (`EADDRINUSE`)
+
+If `npm run start` fails because port 3000 is taken, stop the old server first (often a previous `next start`). On Linux: `fuser -k 3000/tcp` or use another port, e.g. `PORT=3001 npm run start`. A small helper script is available at `scripts/restart-mc.sh` (stops listeners on `PORT`, then runs `npm run start`).
+
 ### Resilience: Mission Control vs Hermes
 
 - **Scheduled missions and cron jobs** live in Hermes’ `~/.hermes/cron/jobs.json`. Once written, the **Hermes** process (for example the gateway) **runs** them on its scheduler tick. The Mission Control web app is only an editor for that file plus local dashboard JSON under **`$HOME/mission-control/data/`** (override with **`MC_DATA_DIR`** or **`MISSION_CONTROL_DATA_DIR`** so Hermes `mark_job_run` can update mission files in the same place). See [MIGRATION.md](MIGRATION.md) if you used the older default under `~/.hermes/mission-control/data/`.
@@ -78,8 +80,8 @@ Audit-style events append JSON lines to `~/.hermes/logs/mc-audit.log`. See [.env
 ### Testing
 
 ```bash
-npm test          # Jest (unit + integration-style route tests)
-npm run build && npm run test:e2e   # Playwright smoke (uses production server on port 3000)
+npm test          # Jest (OSS suite for Simple edition)
+npm run build && PLAYWRIGHT_OSS_ONLY=1 npm run test:e2e   # Playwright OSS smoke (Simple; set env before build/start as needed)
 ```
 
 ---

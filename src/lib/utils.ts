@@ -87,78 +87,24 @@ export function messageSummary(content: string | undefined): string {
 
 // ── Schedule Parsing ──────────────────────────────────────────
 
-/** Result of parsing a schedule string for Hermes `jobs.json` (see nested Hermes `parse_schedule`). */
-export type ParsedSchedule =
-  | { kind: "interval"; minutes: number; display: string }
-  | { kind: "cron"; expr: string; display: string }
-  | { kind: "once"; run_at: string; display: string }
-  | { kind: "invalid"; raw: string; message: string };
+export type { ParsedSchedule } from "@/lib/schedule/types";
 
-function looksLikeCronExpression(s: string): boolean {
-  const parts = s.trim().split(/\s+/);
-  if (parts.length !== 5 && parts.length !== 6) return false;
-  return parts.every((p) => p.length > 0 && !/\s/.test(p));
-}
+import type { ParsedSchedule } from "@/lib/schedule/types";
+import { parseScheduleOss } from "@/lib/schedule/parse-schedule-oss";
+import { tryParseRichInterval } from "@/features/commercial/parse-schedule-rich";
 
 /**
  * Parse a schedule string into the structure the cron scheduler expects.
- * - "every 15m" / "every 2h" → interval
+ * - Commercial: extended interval patterns ("every 1h 30m", …) via `tryParseRichInterval`
+ * - OSS: Hermes-compatible core via `parseScheduleOss` only
  * - Five- or six-field cron → cron (`expr` is the full string)
  * - ISO-8601 timestamp → once
  * - Unknown or empty → invalid (callers must reject for user-supplied input)
  */
 export function parseSchedule(raw: string): ParsedSchedule {
-  const s = (typeof raw === "string" ? raw : "").trim();
-
-  if (!s) {
-    return { kind: "invalid", raw: "", message: "Schedule is empty" };
-  }
-
-  // Rich interval patterns: "every 1h 30m", "every 2d", "every 1w 3d", etc.
-  const richIntervalMatch = s.match(/^every\s+(\d+)\s*(m|h|d|w)(?:\s+(\d+)\s*(m|h))?$/);
-  if (richIntervalMatch) {
-    let minutes = parseInt(richIntervalMatch[1], 10);
-    const unit1 = richIntervalMatch[2];
-    if (unit1 === "h") minutes *= 60;
-    else if (unit1 === "d") minutes *= 1440;
-    else if (unit1 === "w") minutes *= 10080;
-    if (richIntervalMatch[3]) {
-      let extra = parseInt(richIntervalMatch[3], 10);
-      if (richIntervalMatch[4] === "h") extra *= 60;
-      minutes += extra;
-    }
-    const display = minutes >= 1440
-      ? `every ${minutes / 1440}d`
-      : minutes >= 60
-        ? `every ${Math.floor(minutes / 60)}h${minutes % 60 ? ` ${minutes % 60}m` : ""}`
-        : `every ${minutes}m`;
-    return { kind: "interval", minutes, display };
-  }
-
-  // Simple interval patterns: "every 15m", "every 2h", "30m", "1h"
-  const intervalMatch = s.match(/^(?:every\s+)?(\d+)\s*(m|min|minutes?|h|hr|hours?)$/i);
-  if (intervalMatch) {
-    const n = parseInt(intervalMatch[1], 10);
-    const unit = intervalMatch[2].toLowerCase();
-    const minutes = unit.startsWith("h") ? n * 60 : n;
-    return { kind: "interval", minutes, display: `every ${minutes}m` };
-  }
-
-  // Cron: 5 fields (standard) or 6 fields (with seconds), space-separated
-  if (looksLikeCronExpression(s)) {
-    return { kind: "cron", expr: s, display: s };
-  }
-
-  // ISO timestamp → one-shot
-  if (/^\d{4}-\d{2}-\d{2}T/.test(s)) {
-    return { kind: "once", run_at: s, display: s };
-  }
-
-  return {
-    kind: "invalid",
-    raw: s,
-    message: `Unrecognized schedule: ${s.slice(0, 120)}`,
-  };
+  const rich = tryParseRichInterval(raw);
+  if (rich) return rich;
+  return parseScheduleOss(raw);
 }
 
 // ── Cron Job Types ────────────────────────────────────────────
