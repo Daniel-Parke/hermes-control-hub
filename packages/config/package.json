@@ -2,7 +2,7 @@
   "name": "@agent-control-hub/config",
   "version": "1.0.0",
   "private": false,
-  "description": "Shared typed environment and deployment profile helpers for Mission Control.",
+  "description": "Shared typed environment and deployment profile helpers for Control Hub.",
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "exports": {

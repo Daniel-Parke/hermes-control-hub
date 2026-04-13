@@ -11,7 +11,7 @@
 #   bash install.sh
 #
 # Environment (non-interactive / CI / VPS):
-#   CH_INSTALL_NONINTERACTIVE=1  or  MC_INSTALL_NONINTERACTIVE=1  or  CI=1
+#   CH_INSTALL_NONINTERACTIVE=1  or  CH_INSTALL_NONINTERACTIVE=1  or  CI=1
 #     Requires either a working `hermes` on PATH, or:
 #     INSTALL_HERMES=yes   — run upstream Hermes install + `hermes setup`, then exit (re-run this script after)
 #     INSTALL_HERMES=no    — continue without Hermes CLI (limited profile/gateway steps)
@@ -49,7 +49,7 @@ hermes_cli_ok() {
 }
 
 noninteractive() {
-  [[ "${CI:-}" == "1" || "${CH_INSTALL_NONINTERACTIVE:-}" == "1" || "${MC_INSTALL_NONINTERACTIVE:-}" == "1" ]]
+  [[ "${CI:-}" == "1" || "${CH_INSTALL_NONINTERACTIVE:-}" == "1" || "${CH_INSTALL_NONINTERACTIVE:-}" == "1" ]]
 }
 
 HERMES_HOME="${HERMES_HOME:-$HOME/.hermes}"
@@ -207,7 +207,7 @@ if hermes_cli_ok && [ -f "$HERMES_HOME/config.yaml" ]; then
     echo ""
     info "Setting up Command Hub agent profiles..."
     PROFILE_TEMPLATES="$INSTALL_DIR/scripts/profiles"
-    PROFILES=("mc-qa-engineer" "mc-devops-engineer" "mc-swe-engineer" "mc-data-engineer" "mc-data-scientist" "mc-ops-director" "mc-creative-lead" "mc-support-agent")
+    PROFILES=("ch-qa-engineer" "ch-devops-engineer" "ch-swe-engineer" "ch-data-engineer" "ch-data-scientist" "ch-ops-director" "ch-creative-lead" "ch-support-agent")
     for profile in "${PROFILES[@]}"; do
         PROFILE_DIR="$HERMES_HOME/profiles/$profile"
         if [ -d "$PROFILE_DIR" ]; then

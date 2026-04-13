@@ -8,7 +8,7 @@ export const TEMPLATES_OSS: TemplateDef[] = [
     icon: "Bug",
     color: "pink",
     category: "Engineering - QA",
-    profile: "mc-qa-engineer",
+    profile: "ch-qa-engineer",
     description: "Reproduce, diagnose, fix, and test a specific bug",
     instruction: [
       "You are a QA Bug Fix Engineer. Your job is to reproduce, diagnose, fix, and verify the reported issue.",
@@ -38,7 +38,7 @@ export const TEMPLATES_OSS: TemplateDef[] = [
     icon: "CheckSquare",
     color: "pink",
     category: "Engineering - QA",
-    profile: "mc-qa-engineer",
+    profile: "ch-qa-engineer",
     description: "Write and run acceptance tests for a feature or component",
     instruction: [
       "You are a QA Engineer specialising in acceptance testing.",
@@ -62,7 +62,7 @@ export const TEMPLATES_OSS: TemplateDef[] = [
     icon: "TestTube",
     color: "pink",
     category: "Engineering - QA",
-    profile: "mc-qa-engineer",
+    profile: "ch-qa-engineer",
     description: "Write comprehensive unit and integration tests for a module",
     instruction: [
       "You are a QA Engineer specialising in test coverage.",
@@ -87,7 +87,7 @@ export const TEMPLATES_OSS: TemplateDef[] = [
     icon: "ShieldAlert",
     color: "pink",
     category: "Engineering - QA",
-    profile: "mc-qa-engineer",
+    profile: "ch-qa-engineer",
     description: "Scan for regressions after recent changes",
     instruction: [
       "You are a QA Engineer performing a regression scan.",
@@ -112,7 +112,7 @@ export const TEMPLATES_OSS: TemplateDef[] = [
     icon: "Palette",
     color: "cyan",
     category: "Engineering - DevOps",
-    profile: "mc-devops-engineer",
+    profile: "ch-devops-engineer",
     description: "Enforce formatting, linting, naming conventions, import order",
     instruction: [
       "You are a DevOps Engineer enforcing code standards.",
@@ -135,7 +135,7 @@ export const TEMPLATES_OSS: TemplateDef[] = [
     icon: "Gauge",
     color: "cyan",
     category: "Engineering - DevOps",
-    profile: "mc-devops-engineer",
+    profile: "ch-devops-engineer",
     description: "Profile, identify bottlenecks, optimise build/runtime performance",
     instruction: [
       "You are a DevOps Engineer optimising performance.",
@@ -159,7 +159,7 @@ export const TEMPLATES_OSS: TemplateDef[] = [
     icon: "BookOpen",
     color: "cyan",
     category: "Engineering - DevOps",
-    profile: "mc-devops-engineer",
+    profile: "ch-devops-engineer",
     description: "Write/update README, API docs, inline comments, architecture docs",
     instruction: [
       "You are a DevOps Engineer writing documentation.",
@@ -182,7 +182,7 @@ export const TEMPLATES_OSS: TemplateDef[] = [
     icon: "Rocket",
     color: "cyan",
     category: "Engineering - DevOps",
-    profile: "mc-devops-engineer",
+    profile: "ch-devops-engineer",
     description: "Build pipeline, deploy validation, smoke tests, rollback plan",
     instruction: [
       "You are a DevOps Engineer managing build and deployment.",

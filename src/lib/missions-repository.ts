@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════
-// MissionsRepository — mission JSON under mission-control/data/missions
+// MissionsRepository — mission JSON under control-hub/data/missions
 // ═══════════════════════════════════════════════════════════════
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";

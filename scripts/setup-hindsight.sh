@@ -1,9 +1,9 @@
 #!/bin/bash
 # ═══════════════════════════════════════════════════════════════
-# Mission Control — Hindsight Memory Provider Setup
+# Control Hub — Hindsight Memory Provider Setup
 # ═══════════════════════════════════════════════════════════════
 # Installs and configures Hindsight memory with PostgreSQL backend.
-# Run this on an existing Mission Control installation.
+# Run this on an existing Control Hub installation.
 #
 # Usage:
 #   bash scripts/setup-hindsight.sh

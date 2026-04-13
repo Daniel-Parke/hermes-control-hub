@@ -1,8 +1,8 @@
 #!/bin/bash
 # ═══════════════════════════════════════════════════════════════
-# Mission Control — Restart Script
+# Control Hub — Restart Script
 # ═══════════════════════════════════════════════════════════════
-# Safely stops and restarts the Mission Control web server.
+# Safely stops and restarts the Control Hub web server.
 # No git operations, no build — just a clean restart.
 #
 # Usage:
@@ -19,8 +19,8 @@ set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 APP_DIR="$(dirname "$SCRIPT_DIR")"
-LOG_FILE="$HOME/.hermes/logs/mc-restart.log"
-PID_FILE="$HOME/.hermes/logs/mc-server.pid"
+LOG_FILE="$HOME/.hermes/logs/ch-restart.log"
+PID_FILE="$HOME/.hermes/logs/ch-server.pid"
 
 mkdir -p "$(dirname "$LOG_FILE")"
 

@@ -1,5 +1,5 @@
 #!/bin/bash
-# Stop Mission Control Next.js server on PORT (default 3000).
+# Stop Control Hub Next.js server on PORT (default 3000).
 set -e
 PORT="${PORT:-3000}"
 if command -v fuser &>/dev/null; then

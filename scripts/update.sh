@@ -1,6 +1,6 @@
 #!/bin/bash
 # ═══════════════════════════════════════════════════════════════
-# Mission Control — Deploy Script
+# Control Hub — Deploy Script
 # ═══════════════════════════════════════════════════════════════
 # Safely pulls latest code from main, rebuilds, and restarts.
 #
@@ -20,9 +20,9 @@ set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 APP_DIR="$(dirname "$SCRIPT_DIR")"
-LOCK_FILE="${TMPDIR:-/tmp}/mc-deploy.lock"
-LOG_FILE="$HOME/.hermes/logs/mc-update.log"
-MC_BRANCH="${MC_UPDATE_GIT_BRANCH:-main}"
+LOCK_FILE="${TMPDIR:-/tmp}/ch-deploy.lock"
+LOG_FILE="$HOME/.hermes/logs/ch-update.log"
+CH_BRANCH="${CH_UPDATE_GIT_BRANCH:-main}"
 
 # Ensure log directory exists
 mkdir -p "$(dirname "$LOG_FILE")"
@@ -63,14 +63,14 @@ fi
 
 # ── Git Update ───────────────────────────────────────────────
 if [ "$RESTART_ONLY" = false ]; then
-    log "Fetching latest from origin/${MC_BRANCH}..."
-    git fetch origin "$MC_BRANCH" --quiet 2>>"$LOG_FILE"
+    log "Fetching latest from origin/${CH_BRANCH}..."
+    git fetch origin "$CH_BRANCH" --quiet 2>>"$LOG_FILE"
 
-    log "Checking out ${MC_BRANCH} branch..."
-    git checkout "$MC_BRANCH" --quiet 2>>"$LOG_FILE"
+    log "Checking out ${CH_BRANCH} branch..."
+    git checkout "$CH_BRANCH" --quiet 2>>"$LOG_FILE"
 
-    log "Resetting to origin/${MC_BRANCH}..."
-    git reset --hard "origin/${MC_BRANCH}" --quiet 2>>"$LOG_FILE"
+    log "Resetting to origin/${CH_BRANCH}..."
+    git reset --hard "origin/${CH_BRANCH}" --quiet 2>>"$LOG_FILE"
 
     log "Code updated to $(git rev-parse --short HEAD)"
 
@@ -95,7 +95,7 @@ if [ "$RESTART_ONLY" = false ]; then
     log "Updating agent profiles..."
     HERMES_HOME="${HERMES_HOME:-$HOME/.hermes}"
     PROFILE_TEMPLATES="$APP_DIR/scripts/profiles"
-    PROFILES=("mc-qa-engineer" "mc-devops-engineer" "mc-swe-engineer" "mc-data-engineer" "mc-data-scientist" "mc-ops-director" "mc-creative-lead" "mc-support-agent")
+    PROFILES=("ch-qa-engineer" "ch-devops-engineer" "ch-swe-engineer" "ch-data-engineer" "ch-data-scientist" "ch-ops-director" "ch-creative-lead" "ch-support-agent")
 
     for profile in "${PROFILES[@]}"; do
         PROFILE_DIR="$HERMES_HOME/profiles/$profile"

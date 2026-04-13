@@ -93,7 +93,7 @@ import type { ParsedSchedule } from "@/lib/schedule/types";
 import { parseScheduleOss } from "@/lib/schedule/parse-schedule-oss";
 
 /**
- * Parse a schedule string (Mission Control Simple / OSS export).
+ * Parse a schedule string (Control Hub Simple / OSS export).
  * Hermes-compatible intervals, cron, and ISO one-shots only.
  */
 export function parseSchedule(raw: string): ParsedSchedule {

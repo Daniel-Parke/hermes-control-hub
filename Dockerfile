@@ -1,4 +1,4 @@
-# Mission Control — production image (Next.js)
+# Control Hub — production image (Next.js)
 FROM node:20-bookworm-slim AS deps
 WORKDIR /app
 COPY package.json package-lock.json* ./

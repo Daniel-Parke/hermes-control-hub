@@ -1,4 +1,4 @@
-import { getMcEditionFromEnv } from "@agent-control-hub/config";
+import { getChEditionFromEnv } from "@agent-control-hub/config";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
@@ -16,7 +16,7 @@ const COMMERCIAL_ONLY_PREFIXES: string[] = [
 ];
 
 function isSimpleEdition(): boolean {
-  return getMcEditionFromEnv() !== "commercial";
+  return getChEditionFromEnv() !== "commercial";
 }
 
 function isCommercialPath(pathname: string): boolean {
