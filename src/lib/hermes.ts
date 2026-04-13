@@ -19,7 +19,9 @@ function normalizeDirPath(dir: string): string {
 }
 
 /**
- * Mission Control JSON data root (missions, templates, operations, stories, …).
+ * Mission Control JSON data root (missions, templates, stories, …).
+ * Some keys (`operations`, `taskLists`, …) are on-disk paths used by Hermes or commercial tooling;
+ * the OSS app does not ship UIs for every path listed here.
  * Default: `$HOME/mission-control/data`. Override with `MC_DATA_DIR` or `MISSION_CONTROL_DATA_DIR`.
  */
 export function getMcDataDir(): string {

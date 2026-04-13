@@ -1,5 +1,7 @@
 # Contributing
 
+This guide applies to **this repository** (Mission Control Simple / OSS). Run **`npm test`** for the Jest suite configured for this tree; do not assume commercial-only test projects exist here.
+
 ## Getting Started
 
 ```bash
@@ -32,7 +34,7 @@ git push origin feature/your-feature-name
 # Create PR: feature/your-feature-name → dev
 ```
 
-See [docs/BRANCHING.md](BRANCHING.md) for full branching rules.
+See [BRANCHING.md](BRANCHING.md) for full branching rules.
 
 ### Commit Convention
 
@@ -54,7 +56,7 @@ chore: maintenance tasks
 ```bash
 npm run dev           # Dev server with hot reload (port 3000)
 npm run build         # Production build (MUST pass before commit)
-npm test              # Run test suite
+npm test              # Jest (OSS suite for Simple edition)
 npm run test:watch    # Watch mode for TDD
 npm run test:coverage # Coverage report
 npm run lint          # ESLint check
@@ -138,7 +140,7 @@ describe("timeAgo", () => {
 ### Running Tests
 
 ```bash
-npm test                    # Full suite
+npm test                    # Jest (OSS project)
 npm run test:watch          # Watch mode
 npm run test:coverage       # With coverage report
 npm test -- --testPathPattern=utils  # Run specific test file
@@ -198,7 +200,7 @@ cd ~/mission-control && npm run build
 # 2. Kill existing server
 fuser -k 3000/tcp 2>/dev/null; sleep 2
 
-# 3. Start (use background=true in terminal tool — never nohup ... &)
+# 3. Start (bind for LAN if needed)
 node node_modules/next/dist/bin/next start -p 3000 -H 0.0.0.0
 ```
 
@@ -224,8 +226,8 @@ bash scripts/update.sh --restart-only  # Restart only (same as restart.sh)
 
 ## Project Structure
 
-See [docs/ARCHITECTURE.md](ARCHITECTURE.md) for full directory structure and data flow.
+See [ARCHITECTURE.md](ARCHITECTURE.md) for directory layout and data flow.
 
 ## API Reference
 
-See [docs/API.md](API.md) for all API endpoints, request/response formats.
+See [API.md](API.md) for API endpoints and request/response formats.

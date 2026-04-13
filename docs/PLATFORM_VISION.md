@@ -1,6 +1,6 @@
-# Mission Control platform vision
+# Mission Control platform vision (OSS)
 
-Mission Control is the **Next.js control plane** for [Hermes Agent](https://github.com/NousResearch/hermes-agent): missions, cron, configuration, sessions, memory, and operator workflows. Execution still lives in **Hermes** (Python gateway, cron scheduler). This app edits `jobs.json`, mission JSON, and `config.yaml` through audited APIs.
+Mission Control is the **Next.js control plane** for [Hermes Agent](https://github.com/NousResearch/hermes-agent): missions, cron, configuration, sessions, memory, and day-to-day operator workflows. Execution remains in **Hermes** (gateway, scheduler). This app edits Hermes and Mission Control JSON through audited REST routes.
 
 ## Architecture (layers)
 
@@ -16,33 +16,32 @@ flowchart TB
 ```
 
 - **`HERMES_HOME`** (`~/.hermes`): `config.yaml`, `cron/jobs.json`, sessions, skills, logs.
-- **`MC_DATA_DIR`** (default `~/mission-control/data`): missions, templates, operations, task lists, packages, workspaces registry, stories, Rec Room data.
+- **`MC_DATA_DIR`** (default `~/mission-control/data`): missions, templates, stories, Rec Room data, and other JSON used by this build. Some directory names may exist for compatibility with broader Hermes tooling; **this OSS app only ships UIs and APIs present in the repository** (see [OSS_SCOPE.md](OSS_SCOPE.md)).
 
-## Scheduling contract
+## Scheduling
 
-- Cron jobs are rows in **`HERMES_HOME/cron/jobs.json`**. Mission Control appends with a file lock compatible with Hermes.
+- Cron jobs are rows in **`HERMES_HOME/cron/jobs.json`**. Mission Control uses a file lock compatible with Hermes.
 - Recurring jobs use **`repeat.times: null`** for infinite runs (Hermes canonical).
-- **`parseSchedule`** in `src/lib/utils.ts` accepts intervals, ISO one-shots, and five- or six-field cron strings; unknown input is **`invalid`** and rejected on user-facing routes.
+- **`parseSchedule`** accepts simple intervals, ISO one-shots, and five- or six-field cron strings; invalid input is rejected on user-facing routes.
 
-## Major features (roadmap alignment)
+## Core features in OSS
 
 | Area | Role |
 |------|------|
-| Model / provider | `GET`/`PUT /api/config/model` — Zod-validated updates, masked keys, audit. |
-| Operations | Multi-step records on disk; **Dispatch step** saves a mission from a built-in template id; advance is manual unless you add a Hermes coordinator. |
-| Task lists | Definitions under `task-lists/`; recommended execution is **one coordinator cron job** in Hermes (see nested Hermes docs). |
-| Packages | JSON bundles under `packages/` for templates / list ids / profile names. |
-| Workspaces | Allowlisted absolute paths under home, `HERMES_HOME`, or `MC_DATA_DIR`. |
-| Command Room | MVP shell; chat/dual-agent needs gateway HTTP/WebSocket surfaces from Hermes. |
+| Model / provider | `GET`/`PUT /api/config/model` — validated updates, masked keys, audit. |
+| Missions | CRUD, dispatch, templates (built-in set in OSS). |
+| Cron | CRUD against Hermes `jobs.json`. |
+| Config / sessions / memory / gateway / logs / skills / personalities | Hermes-aligned surfaces as shipped in this repo. |
+
+An extended edition with additional operator workflows may exist separately from this repository; it is not documented here.
 
 ## Security
 
 - Mutating routes use **`MC_API_KEY`** when set (`src/lib/api-auth.ts`).
-- Config writes use **whitelisted sections**; model updates go through **`/api/config/model`**.
-- Workspace paths are validated with **`resolveAllowedWorkspacePath`** (`src/lib/path-security.ts`).
+- Config writes use whitelisted sections; model updates go through **`/api/config/model`**.
 
 ## Related docs
 
-- [MIGRATION.md](../MIGRATION.md) — default data directory change.
+- [MIGRATION.md](../MIGRATION.md) — data directory migration.
 - [DEPLOY.md](DEPLOY.md) — host, port, TLS, Docker.
-- [HERMES_CONFIG_INTEGRATION.md](HERMES_CONFIG_INTEGRATION.md) — external `hermes-config` repo checklist.
+- [HERMES_CONFIG_INTEGRATION.md](HERMES_CONFIG_INTEGRATION.md) — optional `hermes-config` checklist.

@@ -29,23 +29,8 @@ import {
   XCircle,
   Gamepad2,
   BookOpen,
-  // Template icons — used by TemplateCard, missions page, and template manager
-  // Do NOT remove even if unused here — they are referenced across the app
-  Cpu,
-  HardDrive,
-  Zap,
-  Search,
-  Bug,
-  GitPullRequest,
-  Wrench,
-  PenTool,
-  Shield,
-  Terminal,
-  Database,
-  Code,
-  FileText,
 } from "lucide-react";
-import Card, { StatusDot } from "@/components/ui/Card";
+import { StatusDot } from "@/components/ui/Card";
 import IntervalSelector from "@/components/ui/IntervalSelector";
 import CategoryAccordion from "@/components/ui/CategoryAccordion";
 import TemplateCard from "@/components/ui/TemplateCard";

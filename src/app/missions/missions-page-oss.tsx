@@ -19,7 +19,6 @@ import {
   ChevronRight,
   X,
   Send,
-  AlertTriangle,
   ExternalLink,
   StopCircle,
   RefreshCw,

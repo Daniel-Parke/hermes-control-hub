@@ -2,7 +2,7 @@
 
 A command centre dashboard for [Hermes Agent](https://github.com/NousResearch/hermes-agent). Monitor your agent fleet, dispatch missions, manage configurations, and control everything from one place.
 
-**Docs:** [Platform vision](docs/PLATFORM_VISION.md) · [Deploy / TLS / Docker](docs/DEPLOY.md) · [Changelog](CHANGELOG.md) · [Migration (data dir)](MIGRATION.md) · [hermes-config checklist](docs/HERMES_CONFIG_INTEGRATION.md)
+**Docs:** [OSS scope](docs/OSS_SCOPE.md) · [Platform vision](docs/PLATFORM_VISION.md) · [Deploy / TLS / Docker](docs/DEPLOY.md) · [Changelog](CHANGELOG.md) · [Migration (data dir)](MIGRATION.md) · [hermes-config checklist](docs/HERMES_CONFIG_INTEGRATION.md)
 
 ![Dashboard](screenshots/Hermes_Dashboard.png)
 
@@ -13,7 +13,7 @@ A command centre dashboard for [Hermes Agent](https://github.com/NousResearch/he
 | Feature | Description |
 |---------|-------------|
 | **Dashboard** | Live stats, active missions, system health, collapsible mission dispatch |
-| **Missions** | **Simple (OSS):** 8 built-in templates · **Commercial:** full 28+ template library across 8 categories, 8 specialist profiles |
+| **Missions** | Built-in templates and custom templates within the Simple edition scope ([docs/OSS_SCOPE.md](docs/OSS_SCOPE.md)) |
 | **Agent Profiles** | QA, DevOps, SWE, Data, Data Science, Ops, Creative, Support specialists |
 | **Cron Manager** | Schedule, edit, and monitor recurring tasks (1m to 7d intervals) |
 | **Agent Behaviour** | Profile-centric editor with personality selection, file editing per profile |
@@ -48,7 +48,7 @@ The dashboard will be available at `http://localhost:3000` (or `http://localhost
 
 ### OSS build output vs runtime routes
 
-`next build` prints a **route table** for every page/API file Next compiled. In **Mission Control Simple (OSS)**, commercial-only areas are **not shipped as files** in this repository; any mention of them in older docs refers to the **commercial** product. What users can actually open is determined by **`middleware`** plus **`MC_EDITION` / `NEXT_PUBLIC_MC_EDITION`** (see `.env.example`). Prefer testing with real URLs rather than inferring surface area from the build table alone.
+`next build` may list routes from the compiled graph; **what you can open** in this repository is defined by the shipped source tree plus **`middleware`** and **`MC_EDITION` / `NEXT_PUBLIC_MC_EDITION`** (see `.env.example`). See [docs/OSS_SCOPE.md](docs/OSS_SCOPE.md).
 
 ### Port already in use (`EADDRINUSE`)
 
@@ -252,14 +252,16 @@ Error logging: all catch blocks call `logApiError(route, context, error)`.
 
 ## Documentation
 
-Full documentation lives in the `docs/` directory:
+Documentation for **Mission Control Simple** lives in the `docs/` directory:
 
 | Document | Description |
 |----------|-------------|
-| [API Reference](docs/API.md) | All REST endpoints with request/response formats |
+| [OSS scope](docs/OSS_SCOPE.md) | What this repository includes and excludes |
+| [API Reference](docs/API.md) | REST endpoints with request/response formats |
 | [Architecture](docs/ARCHITECTURE.md) | System design, data flow, directory structure |
 | [Contributing](docs/CONTRIBUTING.md) | Development workflow, code standards, PR checklist |
 | [Branching](docs/BRANCHING.md) | Git branching strategy and agent permissions |
+| [Upgrade / extended edition](docs/UPGRADE.md) | Scope note for capabilities not in this repo |
 
 ---
 
