@@ -1,36 +1,32 @@
-# Edition components (Simple vs commercial)
+# OSS Component Inventory
 
-Control Hub Simple is produced from an **upstream private monorepo** via an allowlisted OSS export. These patterns keep commercial-only code out of this repository.
+This repository documents and tests only the OSS product surface.
 
-## 1. Commercial-only routes and APIs
+## UI Areas
 
-Commercial UI and APIs are **omitted from this tree** (not merely hidden). [`src/middleware.ts`](../src/middleware.ts) still blocks legacy commercial URL prefixes in Simple edition as defense in depth.
+- Dashboard
+- Missions
+- Cron
+- Sessions
+- Memory
+- Config
+- Gateway
+- Logs
+- Agent behavior and tools management
+- Rec Room activities
 
-When adding features upstream, new commercial surfaces must stay in **excluded paths** in the private publish allowlist—not in files that sync here.
+## API Areas
 
-## 2. Shared URL, Simple UI
+- Agent files and behavior
+- Mission management
+- Cron management
+- Session browsing
+- Memory operations
+- Config operations
+- Deploy/update controls
+- Monitoring and health endpoints
 
-When the same route supports both editions upstream, the Simple UI often lives in `*-oss.tsx` modules, for example:
+## Ownership Rule
 
-- [`src/app/missions/missions-page-oss.tsx`](../src/app/missions/missions-page-oss.tsx)
-- [`src/app/cron/cron-page-oss.tsx`](../src/app/cron/cron-page-oss.tsx)
-
-The route `page.tsx` selects the commercial shell only in commercial builds upstream.
-
-## 3. Shared Hermes logic
-
-Hermes paths, shared types, and schema packages that are safe for Simple may ship in both trees. **Scheduling, orchestration, and proprietary template logic** must remain upstream-only.
-
-## 4. Tests in this repository
-
-Only [`src/__tests__/oss/`](../src/__tests__/oss) is published here. The full unit and commercial suites run in the private monorepo.
-
-## 5. Screen inventory (high level)
-
-| Area | Simple (this repo) | Commercial (upstream only) |
-|------|--------------------|------------------------------|
-| Missions / cron | OSS page modules + shared APIs | Extended UI, rich scheduling |
-| Operations, task lists, workspaces, packages, command room | Not shipped | Full UI + APIs |
-| Config, gateway, logs, memory, skills, sessions | Shared | Same + optional overlays later |
-
-Update this table when major surfaces change upstream.
+- Any component or route in this repository is part of OSS.
+- New OSS behavior must include route-level tests and docs updates in the same change.

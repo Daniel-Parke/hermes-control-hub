@@ -46,7 +46,7 @@ flowchart TB
 
 - Recurring jobs use **`repeat.times: null`** for infinite runs (Hermes canonical).
 
-- **`parseSchedule`** accepts simple intervals, ISO one-shots, and five- or six-field cron strings; invalid input is rejected on user-facing routes.
+- **`parseSchedule`** accepts interval expressions, ISO one-shots, and five- or six-field cron strings; invalid input is rejected on user-facing routes.
 
 
 
@@ -68,7 +68,7 @@ flowchart TB
 
 
 
-An extended edition with additional operator workflows may exist separately from this repository; it is not documented here.
+This document describes only the OSS product surface in this repository.
 
 
 

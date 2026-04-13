@@ -1,8 +1,8 @@
-# Control Hub Simple (OSS) scope
+# Control Hub OSS Scope
 
 
 
-This repository ships **Control Hub Simple**: a Next.js control plane for [Hermes Agent](https://github.com/NousResearch/hermes-agent). Execution stays in Hermes; this app edits `jobs.json`, mission JSON, and `config.yaml` through audited APIs.
+This repository ships **Control Hub OSS**: a Next.js control plane for [Hermes Agent](https://github.com/NousResearch/hermes-agent). Execution stays in Hermes; this app edits `jobs.json`, mission JSON, and `config.yaml` through audited APIs.
 
 
 
@@ -14,7 +14,7 @@ This repository ships **Control Hub Simple**: a Next.js control plane for [Herme
 
 - Shared packages: `@agent-control-hub/schema`, `@agent-control-hub/config` (vendored under `packages/`).
 
-- Schedule parsing for Hermes-style **simple** intervals (`every 15m`, `30m`, `every 2h`), cron strings, and ISO one-shots. In this export, `parseSchedule` in `utils.ts` delegates **only** to `parseScheduleOss` (no rich multi-unit intervals such as `every 1h 30m`, no `every 2d` / `every 1w` on the Simple surface).
+- Schedule parsing for Hermes-style short interval expressions (`every 15m`, `30m`, `every 2h`), cron strings, and ISO one-shots. In this build, `parseSchedule` in `utils.ts` delegates to `parseScheduleOss`.
 
 
 
@@ -22,7 +22,7 @@ This repository ships **Control Hub Simple**: a Next.js control plane for [Herme
 
 
 
-Commercial-only UI routes and APIs are **not present as source files** in this export (e.g. multi-step operations console, task-list coordinator UI, workspace registry UI, package bundles UI, command room). If a URL path is blocked, **middleware** returns `/edition-not-available` or a JSON error for APIs. Data directories under `CH_DATA_DIR` may still exist on disk from other tools; absence of a route here means there is no bundled UI for that feature in OSS.
+Some UI routes and APIs are intentionally not present as source files in this build. If a URL path is blocked, middleware returns `/edition-not-available` or a JSON error for APIs. Data directories under `CH_DATA_DIR` may still exist on disk from other tools; absence of a route here means there is no bundled UI for that feature in OSS.
 
 
 
@@ -46,9 +46,7 @@ Commercial-only UI routes and APIs are **not present as source files** in this e
 
 
 
-## Hermes documentation
+## Hermes Documentation
 
-
-
-Follow upstream Hermes / Nous Research docs for agent behaviour, jobs, and memory providers. Model endpoints are configured in Hermes, not Control Hub.
+Use Hermes documentation for agent behavior, jobs, and memory providers. Model endpoints are configured in Hermes, not Control Hub.
 

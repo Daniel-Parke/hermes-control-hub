@@ -1,117 +1,25 @@
-# Upgrade notes (OSS / Simple edition)
-
-
-
-
-
-## Extended edition
-
-
-
-
-
-Advanced Control Hub capabilities (additional operator workflows, extended scheduling helpers, and related UIs) are **not part of this open-source repository**.
-
-
-
-
-
-This project is **Control Hub Simple**. For questions about other offerings, contact the maintainers through the channels listed on the project homepage.
-
-
-
-
-
----
-
-
-
-
-
-## Renaming from “Control Hub” and legacy env vars
-
-
-
-
-
-The product is now **Control Hub**. The public Git repository is **hermes-control-hub** (previously published as `hermes-control-hub`).
-
-
-
-
-
-### Clone / install path
-
-
-
-
-
-- Default app data directory is now **`$HOME/control-hub/data`** (was `~/control-hub/data`). Set **`CH_DATA_DIR`** or legacy **`CH_DATA_DIR`** if you keep data in the old location.
-
-
-- Default installer clone directory is **`~/control-hub`** unless you set **`INSTALL_DIR`**.
-
-
-
-
-
-### Environment variables (canonical vs legacy)
-
-
-
-
-
-| Prefer | Legacy (still works) |
-
-
-|--------|----------------------|
-
-
-| `CH_EDITION` | `CH_EDITION` |
-
-
-| `NEXT_PUBLIC_CH_EDITION` | `NEXT_PUBLIC_CH_EDITION` |
-
-
-| `CH_API_KEY` | `CH_API_KEY` |
-
-
-| `CH_DATA_DIR` | `CH_DATA_DIR`, `CONTROL_HUB_DATA_DIR` |
-
-
-| `CH_READ_ONLY` | `CH_READ_ONLY` |
-
-
-| `CH_ENABLE_DEPLOY_API` | `CH_ENABLE_DEPLOY_API` |
-
-
-
-
-
-API clients may send **`X-CH-API-Key`** or legacy **`X-CH-API-Key`**.
-
-
-
-
-
-### Git remote
-
-
-
-
-
-After the GitHub repository rename, update your remote:
-
-
-
-
-
-```bash
-
-
-git remote set-url origin https://github.com/<owner>/hermes-control-hub.git
-
-
-```
-
-
+# Upgrade Notes (OSS)
+
+## Supported Runtime Variables
+
+Control Hub OSS uses the following canonical variables:
+
+| Variable | Purpose |
+|---|---|
+| `CH_EDITION` | Build/runtime edition value (`oss`) |
+| `NEXT_PUBLIC_CH_EDITION` | Client-visible edition value |
+| `CH_API_KEY` | Optional API key for mutating routes |
+| `CH_API_KEYS_SCOPED_JSON` | Optional scoped key map (`read`, `write`, `admin`) |
+| `CH_REQUEST_SIGNING_SECRET` | Optional request-signing secret |
+| `CH_READ_ONLY` | Read-only mode for mutating routes |
+| `CH_ENABLE_DEPLOY_API` | Deploy API enable gate |
+| `CH_DATA_DIR` | Application data directory |
+| `HERMES_HOME` | Hermes root directory |
+
+## Upgrade Checklist
+
+1. Pull latest changes.
+2. Run `npm ci`.
+3. Run `npm run lint`, `npm run typecheck`, `npm test`, and `npm run build`.
+4. Update environment variables to canonical names listed above.
+5. Run `bash scripts/release.sh` for controlled release execution.
