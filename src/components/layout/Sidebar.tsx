@@ -96,7 +96,6 @@ import {
 
 } from "lucide-react";
 
-import { getPublicChEdition } from "@agent-control-hub/config";
 
 import type { AccentColor } from "@/types/hermes";
 
@@ -142,7 +141,7 @@ interface ConfigGroup {
 
 
 
-const COMMERCIAL_ONLY_HREFS = new Set([
+const RESTRICTED_HREFS = new Set([
 
   "/operations",
 
@@ -158,11 +157,11 @@ const COMMERCIAL_ONLY_HREFS = new Set([
 
 
 
-function isCommercialNavHref(href: string): boolean {
+function isRestrictedNavHref(href: string): boolean {
 
-  if (COMMERCIAL_ONLY_HREFS.has(href)) return true;
+  if (RESTRICTED_HREFS.has(href)) return true;
 
-  for (const p of COMMERCIAL_ONLY_HREFS) {
+  for (const p of RESTRICTED_HREFS) {
 
     if (href.startsWith(p + "/")) return true;
 
@@ -174,7 +173,7 @@ function isCommercialNavHref(href: string): boolean {
 
 
 
-const showCommercialNav = getPublicChEdition() === "commercial";
+const showRestrictedNav = false;
 
 
 
@@ -1132,7 +1131,7 @@ export default function Sidebar() {
 
             {section.links
 
-              .filter((link) => showCommercialNav || !isCommercialNavHref(link.href))
+              .filter((link) => showRestrictedNav || !isRestrictedNavHref(link.href))
 
               .map(renderLink)}
 

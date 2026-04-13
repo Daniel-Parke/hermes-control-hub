@@ -1,6 +1,6 @@
 export type DeploymentMode = "local" | "hosted";
 
-export type ChEdition = "simple" | "commercial";
+export type ChEdition = "oss";
 
 function firstNonEmptyEnv(
   env: NodeJS.ProcessEnv,
@@ -18,25 +18,21 @@ function firstNonEmptyEnv(
 export function getChEditionFromEnv(
   env: NodeJS.ProcessEnv = process.env,
 ): ChEdition {
-  const value = (
-    firstNonEmptyEnv(env, ["CH_EDITION", "NEXT_PUBLIC_CH_EDITION"]) ?? "simple"
-  ).toLowerCase();
-  return value === "commercial" ? "commercial" : "simple";
+  void firstNonEmptyEnv(env, ["CH_EDITION", "NEXT_PUBLIC_CH_EDITION"]);
+  return "oss";
 }
 
 export function getPublicChEdition(): ChEdition {
   if (typeof process !== "undefined" && process.env?.NEXT_PUBLIC_CH_EDITION !== undefined) {
-    return process.env.NEXT_PUBLIC_CH_EDITION === "commercial" ? "commercial" : "simple";
+    return "oss";
   }
 
   if (typeof window !== "undefined") {
     const win = window as unknown as { __CH_EDITION__?: string };
-    if (win.__CH_EDITION__ === "commercial") {
-      return "commercial";
-    }
+    void win.__CH_EDITION__;
   }
 
-  return "simple";
+  return "oss";
 }
 
 export function getDeploymentMode(
@@ -50,7 +46,6 @@ export interface ChEnvSummary {
   hermesHome: string | undefined;
   chDataDir: string | undefined;
   chApiKeySet: boolean;
-  acLicenseKeySet: boolean;
   edition: ChEdition;
   deploymentMode: DeploymentMode;
 }
@@ -69,7 +64,6 @@ export function summarizeChEnv(
     hermesHome: env.HERMES_HOME,
     chDataDir: firstNonEmptyEnv(env, ["CH_DATA_DIR"]),
     chApiKeySet: apiKey.length > 0,
-    acLicenseKeySet: Boolean(env.AC_LICENSE_KEY && env.AC_LICENSE_KEY.length > 0),
     edition: getChEditionFromEnv(env),
     deploymentMode: getDeploymentMode(env),
   };

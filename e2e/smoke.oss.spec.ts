@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 
-test.describe("OSS smoke (Simple edition)", () => {
+test.describe("OSS smoke", () => {
   test("dashboard loads", async ({ page }) => {
     await page.goto("/");
     const title = page.locator("h1").filter({ hasText: "MISSION" });
@@ -20,7 +20,7 @@ test.describe("OSS smoke (Simple edition)", () => {
     ).toBeVisible();
   });
 
-  test("commercial path redirects away from operations UI", async ({ page }) => {
+  test("restricted path redirects away from operations UI", async ({ page }) => {
     await page.goto("/operations", { waitUntil: "networkidle" });
     await expect(page).toHaveURL(/\/edition-not-available$/);
   });

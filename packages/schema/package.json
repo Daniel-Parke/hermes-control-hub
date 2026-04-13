@@ -2,7 +2,7 @@
   "name": "@agent-control-hub/schema",
   "version": "1.0.0",
   "private": false,
-  "description": "Versioned Control Hub + marketplace schemas (OSS and commercial compatible).",
+  "description": "Versioned Control Hub and marketplace schemas for OSS.",
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "exports": {

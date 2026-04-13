@@ -18,13 +18,13 @@
 
     "start:network": "next start -H 0.0.0.0",
 
-    "test": "cross-env CH_EDITION=simple jest",
+    "test": "cross-env CH_EDITION=oss jest",
 
     "test:watch": "jest --watch",
 
     "test:coverage": "jest --coverage",
 
-    "test:e2e": "cross-env CH_EDITION=simple NEXT_PUBLIC_CH_EDITION=simple PLAYWRIGHT_OSS_ONLY=1 playwright test"
+    "test:e2e": "cross-env CH_EDITION=oss NEXT_PUBLIC_CH_EDITION=oss PLAYWRIGHT_OSS_ONLY=1 playwright test"
 
   },
 

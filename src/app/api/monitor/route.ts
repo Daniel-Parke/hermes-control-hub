@@ -4,8 +4,6 @@ import yaml from "js-yaml";
 
 // Use string concatenation to avoid Turbopack NFT tracing issues
 import { PATHS } from "@/lib/hermes";
-import { isCommercialLicenseValid } from "@/lib/commercial-license";
-import { getEdition } from "@/lib/edition";
 import { logApiError } from "@/lib/api-logger";
 import { readJobsFile } from "@/lib/jobs-repository";
 import type { CronJobData } from "@/lib/utils";
@@ -59,8 +57,6 @@ interface MonitorData {
     jobsJsonError: string | null;
     configPresent: boolean;
     memoryProviderFromConfig: string | null;
-    /** `null` when edition is Simple (OSS). */
-    commercialLicenseOk: boolean | null;
   };
 }
 
@@ -78,7 +74,6 @@ export async function GET() {
         jobsJsonError: null,
         configPresent: false,
         memoryProviderFromConfig: null,
-        commercialLicenseOk: null,
       },
     };
 
@@ -310,10 +305,6 @@ export async function GET() {
     });
     // Keep only most recent 10
     data.errors = data.errors.slice(0, 10);
-
-    const edition = getEdition();
-    data.capabilities.commercialLicenseOk =
-      edition === "commercial" ? isCommercialLicenseValid() : null;
 
     return NextResponse.json({ data });
   } catch (error) {

@@ -10,7 +10,7 @@ A command centre dashboard for [Hermes Agent](https://github.com/NousResearch/he
 
 
 
-**Docs:** [OSS scope](docs/OSS_SCOPE.md) · [Edition components](docs/EDITION_COMPONENTS.md) · [Platform vision](docs/PLATFORM_VISION.md) · [Deploy / TLS / Docker](docs/DEPLOY.md) · [Changelog](CHANGELOG.md) · [Migration (data dir)](MIGRATION.md) · [hermes-config checklist](docs/HERMES_CONFIG_INTEGRATION.md)
+**Docs:** [OSS scope](docs/OSS_SCOPE.md) · [Edition components](docs/EDITION_COMPONENTS.md) · [Platform vision](docs/PLATFORM_VISION.md) · [Deploy / TLS / Docker](docs/DEPLOY.md) · [Changelog](CHANGELOG.md) · [Migration (data dir)](docs/MIGRATION.md) · [hermes-config checklist](docs/HERMES_CONFIG_INTEGRATION.md)
 
 
 
@@ -43,7 +43,7 @@ A command centre dashboard for [Hermes Agent](https://github.com/NousResearch/he
 | **Dashboard** | Live stats, active missions, system health, collapsible mission dispatch |
 
 
-| **Missions** | Built-in templates and custom templates within the Simple edition scope ([docs/OSS_SCOPE.md](docs/OSS_SCOPE.md)) |
+| **Missions** | Built-in templates and custom templates within the OSS scope ([docs/OSS_SCOPE.md](docs/OSS_SCOPE.md)) |
 
 
 | **Agent Profiles** | QA, DevOps, SWE, Data, Data Science, Ops, Creative, Support specialists |
@@ -172,7 +172,7 @@ If `npm run start` fails because port 3000 is taken, stop the old server first (
 
 
 
-- **Scheduled missions and cron jobs** live in Hermes’ `~/.hermes/cron/jobs.json`. Once written, the **Hermes** process (for example the gateway) **runs** them on its scheduler tick. The Control Hub web app is only an editor for that file plus local dashboard JSON under **`$HOME/control-hub/data/`** (override with **`CH_DATA_DIR`** or **`CONTROL_HUB_DATA_DIR`** so Hermes `mark_job_run` can update mission files in the same place). See [MIGRATION.md](MIGRATION.md) if you used the older default under `~/.hermes/control-hub/data/`.
+- **Scheduled missions and cron jobs** live in Hermes’ `~/.hermes/cron/jobs.json`. Once written, the **Hermes** process (for example the gateway) **runs** them on its scheduler tick. The Control Hub web app is only an editor for that file plus local dashboard JSON under **`$HOME/control-hub/data/`** (override with **`CH_DATA_DIR`** or **`CONTROL_HUB_DATA_DIR`** so Hermes `mark_job_run` can update mission files in the same place). See [docs/MIGRATION.md](docs/MIGRATION.md) if you used the older default under `~/.hermes/control-hub/data/`.
 
 
 - If **Control Hub (Next.js) stops**, jobs **keep firing** as long as **Hermes** is still running.
@@ -244,10 +244,10 @@ Audit-style events append JSON lines to `~/.hermes/logs/ch-audit.log`. See [.env
 ```bash
 
 
-npm test          # Jest (OSS suite for Simple edition)
+npm test          # Jest (OSS suite)
 
 
-npm run build && PLAYWRIGHT_OSS_ONLY=1 npm run test:e2e   # Playwright OSS smoke (Simple; set env before build/start as needed)
+npm run build && PLAYWRIGHT_OSS_ONLY=1 npm run test:e2e   # Playwright OSS smoke
 
 
 ```
@@ -760,7 +760,7 @@ Error logging: all catch blocks call `logApiError(route, context, error)`.
 
 
 
-Documentation for **Control Hub Simple** lives in the `docs/` directory:
+Documentation for **Control Hub OSS** lives in the `docs/` directory:
 
 
 
@@ -775,7 +775,7 @@ Documentation for **Control Hub Simple** lives in the `docs/` directory:
 | [OSS scope](docs/OSS_SCOPE.md) | What this repository includes and excludes |
 
 
-| [Edition components](docs/EDITION_COMPONENTS.md) | How Simple vs commercial surfaces are separated upstream |
+| [Edition components](docs/EDITION_COMPONENTS.md) | OSS component inventory for this repository |
 
 
 | [API Reference](docs/API.md) | REST endpoints with request/response formats |
@@ -790,7 +790,7 @@ Documentation for **Control Hub Simple** lives in the `docs/` directory:
 | [Branching](docs/BRANCHING.md) | Git branching strategy and agent permissions |
 
 
-| [Upgrade / extended edition](docs/UPGRADE.md) | Scope note for capabilities not in this repo |
+| [Upgrade](docs/UPGRADE.md) | Upgrade notes and migration checklist |
 
 
 

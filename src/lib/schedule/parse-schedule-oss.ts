@@ -1,6 +1,6 @@
 /**
- * Hermes-compatible schedule parsing for Control Hub Simple (OSS surface).
- * Rich multi-unit intervals (e.g. combined hours + minutes) are commercial-only in the private monorepo.
+ * Hermes-compatible schedule parsing for Control Hub OSS.
+ * Supports OSS-safe interval, cron, and one-shot formats only.
  */
 
 import type { ParsedSchedule } from "./types";

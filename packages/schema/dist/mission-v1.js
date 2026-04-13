@@ -1,5 +1,5 @@
 import { z } from "zod";
-/** Semantic version of the mission JSON contract (Mission Control + Hermes file on disk). */
+/** Semantic version of the mission JSON contract (Control Hub + Hermes file on disk). */
 export const MISSION_SCHEMA_VERSION = "1.0.0";
 export const missionStatusSchema = z.enum([
     "queued",
@@ -9,8 +9,8 @@ export const missionStatusSchema = z.enum([
 ]);
 export const dispatchModeSchema = z.enum(["save", "now", "cron"]);
 /**
- * Mission record as persisted under MC_DATA_DIR/missions/{id}.json.
- * Commercial-only fields may appear under `extensions` and must be ignored by OSS validators.
+ * Mission record as persisted under CH_DATA_DIR/missions/{id}.json.
+ * Forward-compatible fields may appear under `extensions` and must be ignored by validators.
  */
 export const missionV1Schema = z
     .object({

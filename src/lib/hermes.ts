@@ -21,7 +21,7 @@ function normalizeDirPath(dir: string): string {
 
 /**
  * Control Hub JSON data root (missions, templates, stories, …).
- * Some keys (`operations`, `taskLists`, …) are on-disk paths used by Hermes or commercial tooling;
+ * Some keys (`operations`, `taskLists`, …) are on-disk paths used by Hermes tooling;
  * the OSS app does not ship UIs for every path listed here.
  * Default: `$HOME/control-hub/data`. Override with `CH_DATA_DIR` or `CONTROL_HUB_DATA_DIR`.
  */

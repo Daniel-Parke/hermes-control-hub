@@ -86,7 +86,7 @@ This document describes only the OSS product surface in this repository.
 
 
 
-- [MIGRATION.md](../MIGRATION.md) — data directory migration.
+- [MIGRATION.md](MIGRATION.md) — data directory migration.
 
 - [DEPLOY.md](DEPLOY.md) — host, port, TLS, Docker.
 

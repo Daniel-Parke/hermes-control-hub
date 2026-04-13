@@ -33,6 +33,15 @@ describe("api-auth", () => {
     expect(requireChApiKey(request)?.status).toBe(403);
   });
 
+  it("accepts fallback API key when scoped keys are unset", () => {
+    process.env.CH_API_KEY = "legacy-key";
+    const request = new NextRequest("http://localhost/api/test", {
+      method: "POST",
+      headers: { "x-ch-api-key": "legacy-key" },
+    });
+    expect(requireChApiKey(request)).toBeNull();
+  });
+
   it("accepts valid signed request", () => {
     process.env.CH_REQUEST_SIGNING_SECRET = "secret";
     const ts = Date.now().toString();
@@ -43,6 +52,16 @@ describe("api-auth", () => {
       headers: { "x-ch-ts": ts, "x-ch-signature": signature },
     });
     expect(requireSignedRequest(request)).toBeNull();
+  });
+
+  it("rejects tampered signed request", () => {
+    process.env.CH_REQUEST_SIGNING_SECRET = "secret";
+    const ts = Date.now().toString();
+    const request = new NextRequest("http://localhost/api/update", {
+      method: "POST",
+      headers: { "x-ch-ts": ts, "x-ch-signature": "bad-signature" },
+    });
+    expect(requireSignedRequest(request)?.status).toBe(401);
   });
 
   it("uses x-correlation-id before x-request-id", () => {

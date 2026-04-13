@@ -1,9 +1,7 @@
 import { createHmac, randomUUID, timingSafeEqual } from "crypto";
 
-import { getChApiKeyFromEnv, getChEditionFromEnv } from "@agent-control-hub/config";
+import { getChApiKeyFromEnv } from "@agent-control-hub/config";
 import { NextRequest, NextResponse } from "next/server";
-
-import { isCommercialLicenseValid } from "@/lib/commercial-license";
 
 function firstEnvFlag(keys: string[]): string | undefined {
   for (const key of keys) {
@@ -101,18 +99,6 @@ export function requireDeployApiEnabled(): NextResponse | null {
   if (isDeployApiEnabled()) return null;
   return NextResponse.json(
     { error: "Deploy API disabled. Set CH_ENABLE_DEPLOY_API=true to allow update/restart." },
-    { status: 403 }
-  );
-}
-
-export function requireCommercialLicense(): NextResponse | null {
-  if (getChEditionFromEnv() !== "commercial") return null;
-  if (isCommercialLicenseValid()) return null;
-  return NextResponse.json(
-    {
-      error:
-        "Commercial license required or invalid. Set AC_LICENSE_KEY and AC_LICENSE_ED25519_PUBLIC_PEM.",
-    },
     { status: 403 }
   );
 }

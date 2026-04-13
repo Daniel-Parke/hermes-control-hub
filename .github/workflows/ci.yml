@@ -29,15 +29,15 @@ jobs:
       - run: npm run test:coverage
       - run: npm run build
         env:
-          CH_EDITION: simple
-          NEXT_PUBLIC_CH_EDITION: simple
+          CH_EDITION: oss
+          NEXT_PUBLIC_CH_EDITION: oss
       - run: npx playwright install chromium --with-deps
         if: matrix.os == 'ubuntu-latest'
       - run: npm run test:e2e
         if: matrix.os == 'ubuntu-latest'
         env:
           CI: true
-          CH_EDITION: simple
-          NEXT_PUBLIC_CH_EDITION: simple
+          CH_EDITION: oss
+          NEXT_PUBLIC_CH_EDITION: oss
           PLAYWRIGHT_OSS_ONLY: "1"
 

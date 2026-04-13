@@ -13,7 +13,7 @@ export type Edition = ChEdition;
 /**
 
 
- * Server-side edition (Hermes OSS Simple vs commercial).
+ * Server-side build profile loaded from environment.
 
 
  * Reads `CH_EDITION` / `NEXT_PUBLIC_CH_EDITION` with legacy `CH_*` fallback (see `@agent-control-hub/config`).
@@ -31,15 +31,5 @@ export function getEdition(): Edition {
 }
 
 
-
-
-
-export function isCommercialEdition(): boolean {
-
-
-  return getEdition() === "commercial";
-
-
-}
 
 

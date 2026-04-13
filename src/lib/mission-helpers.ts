@@ -4,8 +4,6 @@
 // ═══════════════════════════════════════════════════════════════
 
 import type { TemplateDef } from "./mission-template-def";
-import { TEMPLATES_COMMERCIAL_EXTRA } from "@/features/commercial/data/mission-templates-commercial";
-import { getEdition } from "@/lib/edition";
 import { TEMPLATES_OSS } from "@/lib/mission-templates-oss";
 import type { CronJobData } from "@/lib/utils";
 
@@ -114,7 +112,4 @@ export function promptFromTemplate(t: TemplateDef): string {
   return t.instruction + ctx;
 }
 
-export const TEMPLATES: TemplateDef[] =
-  getEdition() === "commercial"
-    ? [...TEMPLATES_OSS, ...TEMPLATES_COMMERCIAL_EXTRA]
-    : TEMPLATES_OSS;
+export const TEMPLATES: TemplateDef[] = TEMPLATES_OSS;
