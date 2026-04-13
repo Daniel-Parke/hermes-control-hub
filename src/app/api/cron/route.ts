@@ -128,6 +128,9 @@ export async function POST(request: NextRequest) {
 
     const defaults = getDefaultModelConfig();
     const sched = parseSchedule(schedule);
+    if (sched.kind === "invalid") {
+      return NextResponse.json({ error: sched.message }, { status: 400 });
+    }
 
     const newJob: CronJobData = {
       id,
@@ -137,8 +140,8 @@ export async function POST(request: NextRequest) {
       model: model || defaults.model,
       provider: defaults.provider,
       schedule: sched,
-      schedule_display: (sched.display as string) || schedule,
-      repeat: { times: repeat ? -1 : 1, completed: 0 },
+      schedule_display: sched.display,
+      repeat: { times: repeat ? null : 1, completed: 0 },
       enabled: true,
       state: "scheduled",
       deliver: deliver || "none",
@@ -197,6 +200,13 @@ export async function PUT(request: NextRequest) {
       return zodErrorResponse(parsed.error);
     }
     const { id, action, ...updates } = parsed.data;
+
+    if (typeof updates.schedule === "string") {
+      const p = parseSchedule(updates.schedule);
+      if (p.kind === "invalid") {
+        return NextResponse.json({ error: p.message }, { status: 400 });
+      }
+    }
 
     const out = await withJobsFileLock(CRON_PATH, JOBS_BACKUP_DIR, (jobs) => {
       const jobIndex = jobs.findIndex((j) => j.id === id);

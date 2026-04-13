@@ -7,10 +7,30 @@ import { homedir } from "os";
 // All API routes should import from here instead of constructing
 // paths independently. This ensures consistency and portability.
 // Default HERMES_HOME matches hermes-agent hermes_constants.get_hermes_home().
+//
+// Mission Control app data defaults to $HOME/mission-control/data so paths align with
+// nested Hermes cron/jobs.py (mark_job_run mission file updates). Override with MC_DATA_DIR.
 
 export const HERMES_HOME =
   process.env.HERMES_HOME || homedir() + "/.hermes";
-export const MC_DATA_DIR = HERMES_HOME + "/mission-control/data";
+
+function normalizeDirPath(dir: string): string {
+  return dir.replace(/[/\\]+$/, "");
+}
+
+/**
+ * Mission Control JSON data root (missions, templates, operations, stories, …).
+ * Default: `$HOME/mission-control/data`. Override with `MC_DATA_DIR` or `MISSION_CONTROL_DATA_DIR`.
+ */
+export function getMcDataDir(): string {
+  const raw = process.env.MC_DATA_DIR || process.env.MISSION_CONTROL_DATA_DIR;
+  if (raw && String(raw).trim()) {
+    return normalizeDirPath(String(raw).trim());
+  }
+  return normalizeDirPath(homedir() + "/mission-control/data");
+}
+
+export const MC_DATA_DIR = getMcDataDir();
 
 // Standard file paths
 export const PATHS = {
@@ -30,6 +50,11 @@ export const PATHS = {
   missions: MC_DATA_DIR + "/missions",
   templates: MC_DATA_DIR + "/templates",
   operations: MC_DATA_DIR + "/operations",
+  stories: MC_DATA_DIR + "/stories",
+  recroom: MC_DATA_DIR + "/recroom",
+  taskLists: MC_DATA_DIR + "/task-lists",
+  packages: MC_DATA_DIR + "/packages",
+  workspaces: MC_DATA_DIR + "/workspaces",
 } as const;
 
 // Read a config value from config.yaml using js-yaml

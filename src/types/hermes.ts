@@ -320,6 +320,7 @@ export interface OperationStep {
   title: string;
   missionTemplateId?: string;
   profile?: string;
+  model?: string;
   notes?: string;
   status: OperationStepStatus;
   missionId?: string;
@@ -335,6 +336,11 @@ export type OperationRunStatus =
   | "completed"
   | "failed";
 
+/** How the operator advances work — Hermes still runs jobs; MC only tracks intent. */
+export type OperationRunnerContract =
+  | "manual_advance"
+  | "dispatch_mission_per_step";
+
 export interface OperationRecord {
   id: string;
   name: string;
@@ -342,8 +348,63 @@ export interface OperationRecord {
   steps: OperationStep[];
   currentStepIndex: number;
   status: OperationRunStatus;
+  /** Declared execution pattern (default manual advance). */
+  runnerContract?: OperationRunnerContract;
   createdAt: string;
   updatedAt: string;
+}
+
+// ── Task lists (ordered recurring sequences; coordinator design in PLATFORM_VISION) ──
+
+export interface TaskListStep {
+  id: string;
+  title: string;
+  schedule: string;
+  missionTemplateId?: string;
+  prompt?: string;
+  profile?: string;
+  model?: string;
+}
+
+export interface TaskListRecord {
+  id: string;
+  name: string;
+  description: string;
+  steps: TaskListStep[];
+  /** Optional Hermes cron job id when using a single coordinator job. */
+  coordinatorJobId?: string | null;
+  coordinatorNotes?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// ── Workspace registry (extra repos under allowlisted roots) ──
+
+export interface WorkspaceEntry {
+  id: string;
+  label: string;
+  path: string;
+  gitRemote?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface WorkspaceRegistry {
+  workspaces: WorkspaceEntry[];
+  updatedAt: string;
+}
+
+// ── Package bundles (export/import JSON) ──
+
+export interface PackageBundle {
+  id: string;
+  name: string;
+  version: string;
+  createdAt: string;
+  missionTemplateIds: string[];
+  taskListIds: string[];
+  profileNames: string[];
+  notes?: string;
 }
 
 // ── UI Component Props ─────────────────────────────────────────

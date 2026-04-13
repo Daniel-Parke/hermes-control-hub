@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agent-control-hub.dev/schema/mission-v1.json",
+  "title": "MissionV1",
+  "type": "object",
+  "additionalProperties": true,
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "id": { "type": "string", "minLength": 1 },
+    "name": { "type": "string" },
+    "prompt": { "type": "string" },
+    "goals": { "type": "array", "items": { "type": "string" } },
+    "skills": { "type": "array", "items": { "type": "string" } },
+    "model": { "type": "string" },
+    "profile": { "type": "string" },
+    "missionTimeMinutes": { "type": "integer", "minimum": 5, "maximum": 120 },
+    "timeoutMinutes": { "type": "integer", "minimum": 1, "maximum": 120 },
+    "schedule": { "type": "string" },
+    "templateId": { "type": ["string", "null"] },
+    "status": {
+      "type": "string",
+      "enum": ["queued", "dispatched", "successful", "failed"]
+    },
+    "dispatchMode": { "type": "string", "enum": ["save", "now", "cron"] },
+    "createdAt": { "type": "string" },
+    "updatedAt": { "type": "string" },
+    "results": { "type": ["string", "null"] },
+    "duration": { "type": ["number", "null"] },
+    "error": { "type": ["string", "null"] },
+    "extensions": { "type": "object", "additionalProperties": true }
+  },
+  "required": [
+    "id",
+    "name",
+    "prompt",
+    "goals",
+    "skills",
+    "model",
+    "profile",
+    "missionTimeMinutes",
+    "timeoutMinutes",
+    "schedule",
+    "templateId",
+    "status",
+    "dispatchMode",
+    "createdAt",
+    "updatedAt",
+    "results",
+    "duration",
+    "error"
+  ]
+}

@@ -1,12 +1,19 @@
 import { parseSchedule } from "@/lib/utils";
 import {
-  getScopeLabel,
-  missionTimeToDevHours,
-  buildGoalsSection,
-  buildMissionPrompt,
   getMissionStatus,
+  promptFromTemplate,
+  TEMPLATES,
 } from "@/lib/mission-helpers";
 import type { CronJobData } from "@/lib/utils";
+
+describe("promptFromTemplate", () => {
+  it("includes instruction and context sections", () => {
+    const t = TEMPLATES[0];
+    const p = promptFromTemplate(t);
+    expect(p).toContain(t.instruction.slice(0, 40));
+    if (t.context) expect(p).toContain("Additional Context");
+  });
+});
 
 // ── Schedule Parsing ───────────────────────────────────────────
 
@@ -14,79 +21,68 @@ describe("Schedule Parsing (missions context)", () => {
   describe("interval formats", () => {
     it("should parse 'every 15m'", () => {
       const r = parseSchedule("every 15m");
-      expect(r.kind).toBe("interval");
-      expect(r.minutes).toBe(15);
+      expect(r).toMatchObject({ kind: "interval", minutes: 15 });
     });
 
     it("should parse 'every 2h'", () => {
       const r = parseSchedule("every 2h");
-      expect(r.kind).toBe("interval");
-      expect(r.minutes).toBe(120);
+      expect(r).toMatchObject({ kind: "interval", minutes: 120 });
     });
 
     it("should parse shorthand '30m'", () => {
       const r = parseSchedule("30m");
-      expect(r.kind).toBe("interval");
-      expect(r.minutes).toBe(30);
+      expect(r).toMatchObject({ kind: "interval", minutes: 30 });
     });
 
     it("should parse 'every 1h 30m' compound", () => {
       const r = parseSchedule("every 1h 30m");
-      expect(r.kind).toBe("interval");
-      expect(r.minutes).toBe(90);
+      expect(r).toMatchObject({ kind: "interval", minutes: 90 });
     });
 
     it("should parse 'every 2d'", () => {
       const r = parseSchedule("every 2d");
-      expect(r.kind).toBe("interval");
-      expect(r.minutes).toBe(2880);
+      expect(r).toMatchObject({ kind: "interval", minutes: 2880 });
     });
 
     it("should parse 'every 1w'", () => {
       const r = parseSchedule("every 1w");
-      expect(r.kind).toBe("interval");
-      expect(r.minutes).toBe(10080);
+      expect(r).toMatchObject({ kind: "interval", minutes: 10080 });
     });
   });
 
   describe("cron expressions", () => {
     it("should parse standard 5-field cron", () => {
       const r = parseSchedule("*/15 * * * *");
-      expect(r.kind).toBe("cron");
-      expect(r.expr).toBe("*/15 * * * *");
+      expect(r).toMatchObject({ kind: "cron", expr: "*/15 * * * *" });
     });
 
     it("should parse hourly cron", () => {
       const r = parseSchedule("0 * * * *");
-      expect(r.kind).toBe("cron");
+      expect(r).toMatchObject({ kind: "cron" });
     });
 
     it("should parse daily cron", () => {
       const r = parseSchedule("0 9 * * *");
-      expect(r.kind).toBe("cron");
-      expect(r.expr).toBe("0 9 * * *");
+      expect(r).toMatchObject({ kind: "cron", expr: "0 9 * * *" });
     });
   });
 
   describe("ISO timestamps (one-shot)", () => {
     it("should parse ISO timestamp as 'once'", () => {
       const r = parseSchedule("2026-04-09T12:00:00Z");
-      expect(r.kind).toBe("once");
-      expect(r.run_at).toBe("2026-04-09T12:00:00Z");
+      expect(r).toMatchObject({ kind: "once", run_at: "2026-04-09T12:00:00Z" });
     });
   });
 
-  describe("fallback behavior", () => {
-    it("should fallback to 15m for unknown formats", () => {
+  describe("invalid schedules", () => {
+    it("should mark unknown formats as invalid", () => {
       const r = parseSchedule("something weird");
-      expect(r.kind).toBe("interval");
-      expect(r.minutes).toBe(15);
+      expect(r.kind).toBe("invalid");
     });
 
-    it("should handle empty string", () => {
+    it("should mark empty string as invalid", () => {
       const r = parseSchedule("");
-      expect(r.kind).toBe("interval");
-      expect(r.minutes).toBe(15);
+      expect(r.kind).toBe("invalid");
     });
   });
 });

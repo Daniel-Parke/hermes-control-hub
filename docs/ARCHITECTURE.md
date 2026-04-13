@@ -152,7 +152,7 @@ Next.js App Router (src/app/)
         ├── Read: ~/.hermes/config.yaml, SOUL.md, etc.
         ├── Read: ~/.hermes/memory_store.db (SQLite)
         ├── Read: ~/.hermes/sessions/, logs/
-        ├── Write: ~/.hermes/mission-control/data/ (missions, templates)
+        ├── Write: ~/mission-control/data/ (missions, templates, operations; `MC_DATA_DIR`)
         └── Gateway: localhost:8642 (LLM calls for Story Weaver)
 ```
 

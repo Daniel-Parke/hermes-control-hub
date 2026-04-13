@@ -320,6 +320,36 @@ export default function Dashboard() {
           />
         </div>
 
+        {/* ═══ Handoff / continuation ═══ */}
+        <div className="rounded-xl border border-white/10 bg-dark-900/40 px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <div className="text-[10px] font-mono text-white/40 uppercase tracking-wider">
+              Continue work
+            </div>
+            <div className="text-sm text-white/80 mt-1">
+              {monitor?.sessions?.recent?.[0] ? (
+                <>
+                  Latest session {timeAgo(monitor.sessions.recent[0].modified)}{" "}
+                  <Link
+                    href={"/sessions/" + monitor.sessions.recent[0].id}
+                    className="text-neon-cyan hover:underline font-mono text-xs"
+                  >
+                    open transcript
+                  </Link>
+                </>
+              ) : (
+                "No sessions yet — run a mission or use Hermes chat."
+              )}
+            </div>
+          </div>
+          <Link
+            href="/sessions"
+            className="text-xs font-mono text-neon-purple hover:underline inline-flex items-center gap-1"
+          >
+            Session browser <ChevronRight className="w-3 h-3" />
+          </Link>
+        </div>
+
         {/* ═══ Mission Dispatch Quick Launch ═══ */}
         <div className="rounded-xl border border-cyan-500/20 bg-dark-900/50 overflow-hidden">
           <button

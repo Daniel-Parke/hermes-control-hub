@@ -68,14 +68,17 @@ else
     echo "  Run: systemctl --user restart hermes-gateway"
 fi
 
-# ── Create data directories ───────────────────────────────────
+# ── Create data directories (align with MC_DATA_DIR default: ~/mission-control/data) ──
 echo ""
 echo "Creating data directories..."
-mkdir -p "$HERMES_HOME/mission-control/data/missions"
-mkdir -p "$HERMES_HOME/mission-control/data/templates"
-mkdir -p "$HERMES_HOME/mission-control/data/recroom"
+MC_DATA_ROOT="${MC_DATA_DIR:-$HOME/mission-control/data}"
+mkdir -p "$MC_DATA_ROOT/missions"
+mkdir -p "$MC_DATA_ROOT/templates"
+mkdir -p "$MC_DATA_ROOT/operations"
+mkdir -p "$MC_DATA_ROOT/recroom"
+mkdir -p "$MC_DATA_ROOT/stories"
 mkdir -p "$HERMES_HOME/logs"
-echo "✓ Data directories created at $HERMES_HOME/mission-control/data/"
+echo "✓ Mission Control data directories created at $MC_DATA_ROOT"
 
 # ── Ensure scripts are executable ─────────────────────────────
 chmod +x scripts/*.sh

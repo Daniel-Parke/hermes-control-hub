@@ -2,7 +2,48 @@
 // Path safety — prevent traversal from user-controlled segments
 // ═══════════════════════════════════════════════════════════════
 
+import { relative, resolve } from "path";
+import { homedir } from "os";
+
+import { HERMES_HOME, MC_DATA_DIR } from "@/lib/hermes";
+
 const PROFILE_PATTERN = /^[a-zA-Z0-9][a-zA-Z0-9_-]{0,127}$/;
+
+function isPathUnderRoot(absolutePath: string, root: string): boolean {
+  const R = resolve(root);
+  const C = resolve(absolutePath);
+  if (C === R) return true;
+  const rel = relative(R, C);
+  return rel !== "" && !rel.startsWith("..") && !rel.includes("..");
+}
+
+/**
+ * Workspace paths must resolve under home, HERMES_HOME, or MC_DATA_DIR.
+ */
+export function resolveAllowedWorkspacePath(
+  input: string
+): { ok: true; absolute: string } | { ok: false; error: string } {
+  const trimmed = (input || "").trim();
+  if (!trimmed) {
+    return { ok: false, error: "Path is required" };
+  }
+  let abs: string;
+  try {
+    abs = resolve(trimmed);
+  } catch {
+    return { ok: false, error: "Invalid path" };
+  }
+  const roots = [homedir(), HERMES_HOME, MC_DATA_DIR];
+  for (const root of roots) {
+    if (isPathUnderRoot(abs, root)) {
+      return { ok: true, absolute: abs };
+    }
+  }
+  return {
+    ok: false,
+    error: "Path must be under your home directory, HERMES_HOME, or MC_DATA_DIR",
+  };
+}
 
 /**
  * Returns a safe profile segment for paths under HERMES_HOME/profiles/<profile>/.

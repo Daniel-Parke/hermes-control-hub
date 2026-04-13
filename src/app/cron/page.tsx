@@ -30,6 +30,7 @@ import { useToast } from "@/components/ui/Toast";
 import Modal from "@/components/ui/Modal";
 import Select from "@/components/ui/Select";
 import { baseInputStyles } from "@/lib/theme";
+import { parseSchedule } from "@/lib/utils";
 
 interface CronJob {
   id: string;
@@ -50,39 +51,6 @@ interface CronJob {
 interface CronData {
   jobs: CronJob[];
   total: number;
-}
-
-/**
- * Parse a schedule string into the structure the cron scheduler expects.
- * - "every 15m" / "every 2h" → { kind: "interval", minutes: N, display }
- * - "star/15 star star star star" (cron expr) → { kind: "cron", expr, display }
- * - "2026-04-09T12:00:00Z"   → { kind: "once", run_at: "...", display }
- */
-function parseSchedule(raw: string): { kind: string; minutes?: number; expr?: string; run_at?: string; display?: string } {
-  const s = raw.trim();
-
-  // Interval patterns: "every 15m", "every 2h", "30m", "1h"
-  const intervalMatch = s.match(/^(?:every\s+)?(\d+)\s*(m|min|minutes?|h|hr|hours?)$/i);
-  if (intervalMatch) {
-    const n = parseInt(intervalMatch[1], 10);
-    const unit = intervalMatch[2].toLowerCase();
-    const minutes = unit.startsWith("h") ? n * 60 : n;
-    return { kind: "interval", minutes, display: `every ${minutes}m` };
-  }
-
-  // Cron expression: 5 space-separated fields (digit or */ or *)
-  const cronParts = s.split(/\s+/);
-  if (cronParts.length === 5 && cronParts.every(p => /^[\d\*\/\-\,]+$/.test(p))) {
-    return { kind: "cron", expr: s, display: s };
-  }
-
-  // ISO timestamp → one-shot
-  if (/^\d{4}-\d{2}-\d{2}T/.test(s)) {
-    return { kind: "once", run_at: s, display: s };
-  }
-
-  // Fallback: treat as display-only interval (best effort)
-  return { kind: "interval", minutes: 15, display: s };
 }
 
 function formatSchedule(schedule: string): string {
@@ -292,17 +260,19 @@ function EditJobModal({
     setSaving(true);
     setError(null);
     try {
-      // Parse schedule string into proper structure for the scheduler.
-      // "every 15m" → { kind: "interval", minutes: 15, display: "every 15m" }
-      // "0 9 * * *" → { kind: "cron", expr: "0 9 * * *", display: "0 9 * * *" }
       const parsedSchedule = parseSchedule(schedule);
+      if (parsedSchedule.kind === "invalid") {
+        setError(parsedSchedule.message);
+        setSaving(false);
+        return;
+      }
       const res = await fetch("/api/cron", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           id: job.id,
-          schedule: parsedSchedule,
-          schedule_display: parsedSchedule.display || schedule,
+          schedule,
+          schedule_display: parsedSchedule.display,
           prompt,
           deliver,
           model,

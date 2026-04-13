@@ -17,7 +17,7 @@ describe("api-schemas Hermes jobs contract", () => {
           model: "gpt-4",
           schedule: { kind: "interval", minutes: 15, display: "every 15m" },
           schedule_display: "every 15m",
-          repeat: { times: -1, completed: 0 },
+          repeat: { times: null, completed: 0 },
           enabled: true,
           state: "scheduled",
           deliver: "none",

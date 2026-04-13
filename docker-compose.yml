@@ -1,0 +1,18 @@
+# Example stack: Mission Control with mounted Hermes + MC data dirs.
+# Hermes Python runtime is not included — run the agent/gateway on host or another compose service.
+services:
+  mission-control:
+    build: .
+    ports:
+      - "${PORT:-3000}:3000"
+    environment:
+      HERMES_HOME: /data/hermes
+      MC_DATA_DIR: /data/mc
+      # MC_API_KEY: set in production
+    volumes:
+      - hermes_home:/data/hermes
+      - mc_data:/data/mc
+
+volumes:
+  hermes_home:
+  mc_data:

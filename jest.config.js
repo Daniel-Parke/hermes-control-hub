@@ -3,10 +3,11 @@ const nextJest = require("next/jest.js");
 
 const createJestConfig = nextJest({ dir: "./" });
 
+const isCommercialSuite = process.env.JEST_SUITE === "commercial";
+
 const config = {
   testEnvironment: "jest-environment-jsdom",
   setupFilesAfterEnv: ["<rootDir>/config/jest.setup.ts"],
-  testMatch: ["**/__tests__/**/*.test.ts", "**/__tests__/**/*.test.tsx"],
   moduleNameMapper: {
     "^@/(.*)$": "<rootDir>/src/$1",
   },
@@ -43,6 +44,21 @@ const config = {
       statements: 50,
     },
   },
+  ...(isCommercialSuite
+    ? {
+        testMatch: [
+          "<rootDir>/src/__tests__/commercial/**/*.test.ts",
+          "<rootDir>/src/__tests__/commercial/**/*.test.tsx",
+        ],
+      }
+    : {
+        testMatch: ["**/__tests__/**/*.test.ts", "**/__tests__/**/*.test.tsx"],
+        testPathIgnorePatterns: [
+          "/node_modules/",
+          "/.next/",
+          "<rootDir>/src/__tests__/commercial/",
+        ],
+      }),
 };
 
 module.exports = createJestConfig(config);

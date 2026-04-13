@@ -87,16 +87,32 @@ export function messageSummary(content: string | undefined): string {
 
 // ── Schedule Parsing ──────────────────────────────────────────
 
+/** Result of parsing a schedule string for Hermes `jobs.json` (see nested Hermes `parse_schedule`). */
+export type ParsedSchedule =
+  | { kind: "interval"; minutes: number; display: string }
+  | { kind: "cron"; expr: string; display: string }
+  | { kind: "once"; run_at: string; display: string }
+  | { kind: "invalid"; raw: string; message: string };
+
+function looksLikeCronExpression(s: string): boolean {
+  const parts = s.trim().split(/\s+/);
+  if (parts.length !== 5 && parts.length !== 6) return false;
+  return parts.every((p) => p.length > 0 && !/\s/.test(p));
+}
+
 /**
  * Parse a schedule string into the structure the cron scheduler expects.
- * - "every 15m" / "every 2h" → { kind: "interval", minutes: N, display }
- * - "0 * /2 * * *" (cron expr) → { kind: "cron", expr, display }
- * - "2026-04-09T12:00:00Z"   → { kind: "once", run_at: "...", display }
- *
- * Shared between cron/route.ts and missions/route.ts.
+ * - "every 15m" / "every 2h" → interval
+ * - Five- or six-field cron → cron (`expr` is the full string)
+ * - ISO-8601 timestamp → once
+ * - Unknown or empty → invalid (callers must reject for user-supplied input)
  */
-export function parseSchedule(raw: string): { kind: string; minutes?: number; expr?: string; run_at?: string; display?: string } {
+export function parseSchedule(raw: string): ParsedSchedule {
   const s = (typeof raw === "string" ? raw : "").trim();
+
+  if (!s) {
+    return { kind: "invalid", raw: "", message: "Schedule is empty" };
+  }
 
   // Rich interval patterns: "every 1h 30m", "every 2d", "every 1w 3d", etc.
   const richIntervalMatch = s.match(/^every\s+(\d+)\s*(m|h|d|w)(?:\s+(\d+)\s*(m|h))?$/);
@@ -128,9 +144,8 @@ export function parseSchedule(raw: string): { kind: string; minutes?: number; ex
     return { kind: "interval", minutes, display: `every ${minutes}m` };
   }
 
-  // Cron expression: 5 space-separated fields
-  const cronParts = s.split(/\s+/);
-  if (cronParts.length === 5 && cronParts.every((p) => /^[\d\*\/\-\,]+$/.test(p))) {
+  // Cron: 5 fields (standard) or 6 fields (with seconds), space-separated
+  if (looksLikeCronExpression(s)) {
     return { kind: "cron", expr: s, display: s };
   }
 
@@ -139,8 +154,11 @@ export function parseSchedule(raw: string): { kind: string; minutes?: number; ex
     return { kind: "once", run_at: s, display: s };
   }
 
-  // Fallback
-  return { kind: "interval", minutes: 15, display: s };
+  return {
+    kind: "invalid",
+    raw: s,
+    message: `Unrecognized schedule: ${s.slice(0, 120)}`,
+  };
 }
 
 // ── Cron Job Types ────────────────────────────────────────────
@@ -152,6 +170,7 @@ export interface CronJobData {
   skills: string[];
   model: string;
   provider?: string;
+  base_url?: string;
   profile?: string;
   timeout?: number;
   schedule: { kind: string; minutes?: number; expr?: string; run_at?: string; display?: string } | string;

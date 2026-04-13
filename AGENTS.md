@@ -94,7 +94,7 @@ mission-control/
 §
 - `src/lib/utils.ts` — `parseSchedule()`, `CronJobData`, `messageSummary()`, `timeAgo()`, `timeUntil()`, `formatBytes()`
 - `src/lib/api-logger.ts` — `logApiError()`, `safeJsonParse()`, `safeReadJsonFile()`
-- `src/lib/hermes.ts` — `PATHS`, `HERMES_HOME`, `getDefaultModelConfig()`, `getDiscordHomeChannel()`
+- `src/lib/hermes.ts` — `PATHS`, `MC_DATA_DIR`, `HERMES_HOME`, `getDefaultModelConfig()`, `getDiscordHomeChannel()`
 §
 ## Git Workflow
 §

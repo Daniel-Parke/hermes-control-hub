@@ -3,29 +3,40 @@ import { tmpdir } from "os";
 import { join } from "path";
 
 describe("Setup & paths (hermetic)", () => {
-  it("HERMES_HOME drives PATHS.missions and templates under mission-control/data", async () => {
+  it("MC_DATA_DIR drives PATHS.missions and templates (isolated test home)", async () => {
     const tmp = mkdtempSync(join(tmpdir(), "mc-setup-"));
-    const prev = process.env.HERMES_HOME;
+    const dataRoot = join(tmp, "mcdata");
+    const prevH = process.env.HERMES_HOME;
+    const prevM = process.env.MC_DATA_DIR;
     process.env.HERMES_HOME = tmp;
+    process.env.MC_DATA_DIR = dataRoot;
     jest.resetModules();
     try {
-      const { HERMES_HOME, PATHS } = await import("@/lib/hermes");
+      const { HERMES_HOME, PATHS, MC_DATA_DIR } = await import("@/lib/hermes");
       expect(HERMES_HOME).toBe(tmp);
-      expect(PATHS.missions).toBe(tmp + "/mission-control/data/missions");
-      expect(PATHS.templates).toBe(tmp + "/mission-control/data/templates");
-      expect(PATHS.missions).toContain("mission-control");
+      expect(MC_DATA_DIR).toBe(dataRoot);
+      expect(PATHS.missions).toBe(dataRoot + "/missions");
+      expect(PATHS.templates).toBe(dataRoot + "/templates");
+      expect(PATHS.stories).toBe(dataRoot + "/stories");
+      expect(PATHS.taskLists).toBe(dataRoot + "/task-lists");
+      expect(PATHS.packages).toBe(dataRoot + "/packages");
     } finally {
       rmSync(tmp, { recursive: true, force: true });
-      if (prev !== undefined) process.env.HERMES_HOME = prev;
+      if (prevH !== undefined) process.env.HERMES_HOME = prevH;
       else delete process.env.HERMES_HOME;
+      if (prevM !== undefined) process.env.MC_DATA_DIR = prevM;
+      else delete process.env.MC_DATA_DIR;
       jest.resetModules();
     }
   });
 
   it("creates missions and templates dirs idempotently in temp home", async () => {
     const tmp = mkdtempSync(join(tmpdir(), "mc-setup-"));
+    const dataRoot = join(tmp, "mcdata");
     const prev = process.env.HERMES_HOME;
+    const prevM = process.env.MC_DATA_DIR;
     process.env.HERMES_HOME = tmp;
+    process.env.MC_DATA_DIR = dataRoot;
     jest.resetModules();
     try {
       const { PATHS } = await import("@/lib/hermes");
@@ -37,14 +48,19 @@ describe("Setup & paths (hermetic)", () => {
       rmSync(tmp, { recursive: true, force: true });
       if (prev !== undefined) process.env.HERMES_HOME = prev;
       else delete process.env.HERMES_HOME;
+      if (prevM !== undefined) process.env.MC_DATA_DIR = prevM;
+      else delete process.env.MC_DATA_DIR;
       jest.resetModules();
     }
   });
 
   it("optional files are boolean flags without requiring real ~/.hermes", async () => {
     const tmp = mkdtempSync(join(tmpdir(), "mc-setup-"));
+    const dataRoot = join(tmp, "mcdata");
     const prev = process.env.HERMES_HOME;
+    const prevM = process.env.MC_DATA_DIR;
     process.env.HERMES_HOME = tmp;
+    process.env.MC_DATA_DIR = dataRoot;
     mkdirSync(join(tmp, "skills"), { recursive: true });
     mkdirSync(join(tmp, "sessions"), { recursive: true });
     jest.resetModules();
@@ -62,6 +78,8 @@ describe("Setup & paths (hermetic)", () => {
       rmSync(tmp, { recursive: true, force: true });
       if (prev !== undefined) process.env.HERMES_HOME = prev;
       else delete process.env.HERMES_HOME;
+      if (prevM !== undefined) process.env.MC_DATA_DIR = prevM;
+      else delete process.env.MC_DATA_DIR;
       jest.resetModules();
     }
   });

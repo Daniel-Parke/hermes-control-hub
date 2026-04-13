@@ -119,6 +119,7 @@ export async function POST(request: NextRequest) {
               ? s.missionTemplateId
               : undefined,
           profile: typeof s.profile === "string" ? s.profile : undefined,
+          model: typeof s.model === "string" ? s.model : undefined,
           notes: typeof s.notes === "string" ? s.notes : undefined,
           status: "pending" as const,
           updatedAt: now,

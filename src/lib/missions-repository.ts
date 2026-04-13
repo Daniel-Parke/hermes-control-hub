@@ -4,6 +4,8 @@
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
 
+import { parseMissionV1 } from "@agent-control-hub/schema";
+
 import { PATHS } from "@/lib/hermes";
 import type { Mission } from "@/types/hermes";
 
@@ -25,13 +27,20 @@ export function loadMission(id: string): Mission | null {
   const path = DATA_DIR + "/" + safe + ".json";
   if (!existsSync(path)) return null;
   try {
-    return JSON.parse(readFileSync(path, "utf-8")) as Mission;
+    const raw: unknown = JSON.parse(readFileSync(path, "utf-8"));
+    const parsed = parseMissionV1(raw);
+    if (!parsed.ok) return null;
+    return parsed.data as Mission;
   } catch {
     return null;
   }
 }
 
 export function saveMission(record: Mission): void {
+  const parsed = parseMissionV1(record);
+  if (!parsed.ok) {
+    throw new Error("Mission record failed schema validation");
+  }
   ensureMissionsDir();
   const safe = sanitizeMissionId(record.id);
   if (!safe) return;

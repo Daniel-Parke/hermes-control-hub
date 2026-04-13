@@ -52,6 +52,7 @@ describe("Monitor API - Response Shape", () => {
       jobsJsonError: null,
       configPresent: true,
       memoryProviderFromConfig: "holographic",
+      commercialLicenseOk: null,
     },
   };
 

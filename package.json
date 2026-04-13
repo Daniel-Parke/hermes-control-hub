@@ -8,12 +8,15 @@
     "start": "next start",
     "lint": "eslint",
     "start:network": "next start -H 0.0.0.0",
-    "test": "jest",
+    "test": "cross-env MC_EDITION=simple JEST_SUITE=oss jest",
+    "test:oss": "cross-env MC_EDITION=simple JEST_SUITE=oss jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "test:e2e": "playwright test"
   },
   "dependencies": {
+    "@agent-control-hub/config": "file:./packages/config",
+    "@agent-control-hub/schema": "file:./packages/schema",
     "@radix-ui/react-dialog": "^1.1.15",
     "@radix-ui/react-dropdown-menu": "^2.1.16",
     "@radix-ui/react-tabs": "^1.1.13",
@@ -35,6 +38,7 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "cross-env": "^7.0.3",
     "@playwright/test": "^1.59.1",
     "@tailwindcss/postcss": "^4",
     "@testing-library/jest-dom": "^6.9.1",

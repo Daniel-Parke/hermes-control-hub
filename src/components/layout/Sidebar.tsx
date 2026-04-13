@@ -48,6 +48,8 @@ import {
   Library,
   Plus,
   Workflow,
+  CheckSquare,
+  FolderOpen,
 } from "lucide-react";
 import type { AccentColor } from "@/types/hermes";
 import { iconColorMap } from "@/lib/theme";
@@ -71,6 +73,26 @@ interface ConfigGroup {
   links: SidebarLink[];
 }
 
+const COMMERCIAL_ONLY_HREFS = new Set([
+  "/operations",
+  "/task-lists",
+  "/workspaces",
+  "/packages",
+  "/command-room",
+]);
+
+function isCommercialNavHref(href: string): boolean {
+  if (COMMERCIAL_ONLY_HREFS.has(href)) return true;
+  for (const p of COMMERCIAL_ONLY_HREFS) {
+    if (href.startsWith(p + "/")) return true;
+  }
+  return false;
+}
+
+const showCommercialNav =
+  typeof process.env.NEXT_PUBLIC_MC_EDITION === "string" &&
+  process.env.NEXT_PUBLIC_MC_EDITION.toLowerCase() === "commercial";
+
 const mainSections: SidebarSection[] = [
   {
     label: "Main",
@@ -78,11 +100,14 @@ const mainSections: SidebarSection[] = [
       { icon: Zap, label: "Dashboard", href: "/", color: "cyan" },
       { icon: Rocket, label: "Missions", href: "/missions", color: "cyan" },
       { icon: Workflow, label: "Operations", href: "/operations", color: "purple" },
+      { icon: CheckSquare, label: "Task Lists", href: "/task-lists", color: "orange" },
       { icon: ListTodo, label: "Cron", href: "/cron", color: "orange" },
       { icon: Clock, label: "Sessions", href: "/sessions", color: "orange" },
+      { icon: FolderOpen, label: "Workspaces", href: "/workspaces", color: "green" },
       { icon: Database, label: "Memory", href: "/memory", color: "pink" },
       { icon: Globe, label: "Gateway", href: "/gateway", color: "cyan" },
       { icon: ScrollText, label: "Logs", href: "/logs", color: "cyan" },
+      { icon: MessageSquare, label: "Command Room", href: "/command-room", color: "purple" },
     ],
   },
   {
@@ -544,7 +569,9 @@ export default function Sidebar() {
                 {section.label}
               </div>
             )}
-            {section.links.map(renderLink)}
+            {section.links
+              .filter((link) => showCommercialNav || !isCommercialNavHref(link.href))
+              .map(renderLink)}
           </div>
         ))}
 

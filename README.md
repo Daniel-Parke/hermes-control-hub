@@ -2,6 +2,8 @@
 
 A command centre dashboard for [Hermes Agent](https://github.com/NousResearch/hermes-agent). Monitor your agent fleet, dispatch missions, manage configurations, and control everything from one place.
 
+**Docs:** [Platform vision](docs/PLATFORM_VISION.md) · [Deploy / TLS / Docker](docs/DEPLOY.md) · [Changelog](CHANGELOG.md) · [Migration (data dir)](MIGRATION.md) · [hermes-config checklist](docs/HERMES_CONFIG_INTEGRATION.md)
+
 ![Dashboard](screenshots/Hermes_Dashboard.png)
 
 ---
@@ -11,7 +13,7 @@ A command centre dashboard for [Hermes Agent](https://github.com/NousResearch/he
 | Feature | Description |
 |---------|-------------|
 | **Dashboard** | Live stats, active missions, system health, collapsible mission dispatch |
-| **Missions** | 29 built-in templates across 8 categories, with 8 specialist agent profiles |
+| **Missions** | **Simple (OSS):** 8 built-in templates · **Commercial:** full 28+ template library across 8 categories, 8 specialist profiles |
 | **Agent Profiles** | QA, DevOps, SWE, Data, Data Science, Ops, Creative, Support specialists |
 | **Cron Manager** | Schedule, edit, and monitor recurring tasks (1m to 7d intervals) |
 | **Agent Behaviour** | Profile-centric editor with personality selection, file editing per profile |
@@ -46,7 +48,7 @@ The dashboard will be available at `http://localhost:3000` (or `http://localhost
 
 ### Resilience: Mission Control vs Hermes
 
-- **Scheduled missions and cron jobs** live in Hermes’ `~/.hermes/cron/jobs.json`. Once written, the **Hermes** process (for example the gateway) **runs** them on its scheduler tick. The Mission Control web app is only an editor for that file plus local dashboard data under `~/.hermes/mission-control/data/`.
+- **Scheduled missions and cron jobs** live in Hermes’ `~/.hermes/cron/jobs.json`. Once written, the **Hermes** process (for example the gateway) **runs** them on its scheduler tick. The Mission Control web app is only an editor for that file plus local dashboard JSON under **`$HOME/mission-control/data/`** (override with **`MC_DATA_DIR`** or **`MISSION_CONTROL_DATA_DIR`** so Hermes `mark_job_run` can update mission files in the same place). See [MIGRATION.md](MIGRATION.md) if you used the older default under `~/.hermes/mission-control/data/`.
 - If **Mission Control (Next.js) stops**, jobs **keep firing** as long as **Hermes** is still running.
 - If **Hermes stops**, nothing runs until you start Hermes again—there is no separate scheduler inside Mission Control.
 

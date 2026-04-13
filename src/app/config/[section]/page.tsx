@@ -44,6 +44,13 @@ export default function ConfigSectionPage() {
         const content = json.data?.content || "";
         setFileContent(content);
         setOriginalFileContent(content);
+      } else if (sectionId === "model") {
+        const res = await fetch("/api/config/model");
+        if (!res.ok) throw new Error("Failed to load model config");
+        const json = await res.json();
+        const sectionValues = (json.data as Record<string, unknown>) || {};
+        setValues(sectionValues);
+        setOriginalValues({ ...sectionValues });
       } else {
         const res = await fetch("/api/config");
         if (!res.ok) throw new Error("Failed to load config");
@@ -80,6 +87,31 @@ export default function ConfigSectionPage() {
         });
         if (!res.ok) throw new Error("Failed to save file");
         setOriginalFileContent(fileContent);
+      } else if (sectionId === "model") {
+        const editableKeys = sectionDef.fields.map((f) => f.key);
+        const body: Record<string, unknown> = {};
+        for (const key of editableKeys) {
+          if (key === "api_key") {
+            const v = values.api_key;
+            const ov = originalValues.api_key;
+            const vs = typeof v === "string" ? v : "";
+            const os = typeof ov === "string" ? ov : "";
+            if (vs.includes("•") && vs === os) continue;
+            if (vs.trim() !== "") body.api_key = vs;
+            continue;
+          }
+          if (key in values) body[key] = values[key];
+        }
+        const res = await fetch("/api/config/model", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+        if (!res.ok) throw new Error("Failed to save model config");
+        const json = await res.json();
+        const next = (json.data as Record<string, unknown>) || {};
+        setValues(next);
+        setOriginalValues({ ...next });
       } else {
         const editableKeys = sectionDef.fields.map((f) => f.key);
         const editableValues: Record<string, unknown> = {};
@@ -148,6 +180,25 @@ export default function ConfigSectionPage() {
 
   const renderField = (field: FieldDef) => {
     const value = values[field.key];
+
+    if (field.key === "api_key" && sectionId === "model") {
+      return (
+        <div key={field.key} className="space-y-1.5">
+          <label className="text-sm font-medium text-white/70">{field.label}</label>
+          {field.description && (
+            <p className="text-xs text-white/40">{field.description}</p>
+          )}
+          <input
+            type="password"
+            autoComplete="off"
+            value={typeof value === "string" ? value : ""}
+            onChange={(e) => updateValue(field.key, e.target.value)}
+            className="w-full bg-dark-900/50 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/20 outline-none focus:border-neon-purple/50 transition-colors font-mono"
+            placeholder="••••••••"
+          />
+        </div>
+      );
+    }
 
     switch (field.type) {
       case "boolean":

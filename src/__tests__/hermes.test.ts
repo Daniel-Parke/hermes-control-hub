@@ -1,4 +1,10 @@
-import { HERMES_HOME, PATHS, getConfigValue, getDiscordHomeChannel } from "@/lib/hermes";
+import {
+  HERMES_HOME,
+  PATHS,
+  MC_DATA_DIR,
+  getConfigValue,
+  getDiscordHomeChannel,
+} from "@/lib/hermes";
 
 describe("Hermes Config Module", () => {
   describe("HERMES_HOME", () => {
@@ -25,10 +31,16 @@ describe("Hermes Config Module", () => {
       expect(PATHS.operations).toContain("operations");
     });
 
-    it("should derive all paths from HERMES_HOME", () => {
+    it("should derive Hermes paths from HERMES_HOME", () => {
       expect(PATHS.config.startsWith(HERMES_HOME)).toBe(true);
       expect(PATHS.soul.startsWith(HERMES_HOME)).toBe(true);
       expect(PATHS.sessions.startsWith(HERMES_HOME)).toBe(true);
+    });
+
+    it("should place mission data paths under MC_DATA_DIR", () => {
+      expect(PATHS.missions.startsWith(MC_DATA_DIR)).toBe(true);
+      expect(PATHS.templates.startsWith(MC_DATA_DIR)).toBe(true);
+      expect(PATHS.operations.startsWith(MC_DATA_DIR)).toBe(true);
     });
   });
 

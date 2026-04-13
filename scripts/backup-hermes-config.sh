@@ -76,19 +76,29 @@ if [ -d "$HERMES_HOME/skills" ]; then
     echo "  ✓ skills/ ($SKILL_COUNT skills)"
 fi
 
-# 6. Mission Control data
+# 6. Mission Control data (default ~/mission-control/data; legacy ~/.hermes/mission-control/data)
 echo "Backing up Mission Control data..."
-if [ -d "$HERMES_HOME/mission-control" ]; then
-    mkdir -p "$TARGET/mission-control"
+MC_DATA_ROOT="${MC_DATA_DIR:-$HOME/mission-control/data}"
+backup_mc_data() {
+    local SRC="$1"
+    local LABEL="$2"
+    if [ ! -d "$SRC" ]; then
+        return 0
+    fi
+    mkdir -p "$TARGET/mission-control/data"
     if command -v rsync &>/dev/null; then
-        rsync -a "$HERMES_HOME/mission-control/data/" "$TARGET/mission-control/data/" 2>/dev/null || true
+        rsync -a "$SRC/" "$TARGET/mission-control/data/" 2>/dev/null || true
     else
-        mkdir -p "$TARGET/mission-control/data"
-        cp -R "$HERMES_HOME/mission-control/data/." "$TARGET/mission-control/data/" 2>/dev/null || true
+        cp -R "$SRC/." "$TARGET/mission-control/data/" 2>/dev/null || true
     fi
     MISSION_COUNT=$(find "$TARGET/mission-control/data/missions" -name "*.json" 2>/dev/null | wc -l)
     TEMPLATE_COUNT=$(find "$TARGET/mission-control/data/templates" -name "*.json" 2>/dev/null | wc -l)
-    echo "  ✓ mission-control/data/ ($MISSION_COUNT missions, $TEMPLATE_COUNT templates)"
+    echo "  ✓ $LABEL ($MISSION_COUNT missions, $TEMPLATE_COUNT templates)"
+}
+if [ -d "$MC_DATA_ROOT" ]; then
+    backup_mc_data "$MC_DATA_ROOT" "mission-control data ($MC_DATA_ROOT)"
+elif [ -d "$HERMES_HOME/mission-control/data" ]; then
+    backup_mc_data "$HERMES_HOME/mission-control/data" "mission-control data (legacy under HERMES_HOME)"
 fi
 
 # 7. Channel directory

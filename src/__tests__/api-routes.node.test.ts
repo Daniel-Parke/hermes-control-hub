@@ -9,15 +9,17 @@ import { NextRequest } from "next/server";
 
 function prepHome(): string {
   const tmpHome = mkdtempSync(join(tmpdir(), "mc-route-"));
+  const dataRoot = join(tmpHome, "mission-control", "data");
   process.env.HERMES_HOME = tmpHome;
+  process.env.MC_DATA_DIR = dataRoot;
   mkdirSync(join(tmpHome, "sessions"), { recursive: true });
-  mkdirSync(join(tmpHome, "mission-control", "data", "missions"), {
+  mkdirSync(join(dataRoot, "missions"), {
     recursive: true,
   });
-  mkdirSync(join(tmpHome, "mission-control", "data", "templates"), {
+  mkdirSync(join(dataRoot, "templates"), {
     recursive: true,
   });
-  mkdirSync(join(tmpHome, "mission-control", "data", "operations"), {
+  mkdirSync(join(dataRoot, "operations"), {
     recursive: true,
   });
   return tmpHome;

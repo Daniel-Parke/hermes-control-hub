@@ -22,7 +22,7 @@ jobs:
           cache-dependency-path: package-lock.json
       - run: npm ci
       - run: npm run lint
-      - run: npx tsc --noEmit
+      - run: npx tsc --noEmit -p tsconfig.json
       - run: npm test
       - run: npm run build
       - run: npx playwright install chromium --with-deps

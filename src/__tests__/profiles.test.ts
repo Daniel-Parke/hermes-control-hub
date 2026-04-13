@@ -55,8 +55,14 @@ describe("Profile System", () => {
       }
     });
 
-    it("should have every profile referenced by at least one template", () => {
+    it("should have every profile referenced by at least one template (commercial full library)", () => {
       const templateProfiles = new Set(TEMPLATES.map((t) => t.profile));
+      if (process.env.MC_EDITION !== "commercial") {
+        for (const p of templateProfiles) {
+          expect(EXPECTED_PROFILES).toContain(p);
+        }
+        return;
+      }
       for (const expected of EXPECTED_PROFILES) {
         expect(templateProfiles.has(expected)).toBe(true);
       }
@@ -74,7 +80,7 @@ describe("Profile System", () => {
       }
 
       // Each profile should map to exactly one category
-      for (const [profile, categories] of Object.entries(profileCategoryMap)) {
+      for (const categories of Object.values(profileCategoryMap)) {
         expect(categories).toHaveLength(1);
       }
     });

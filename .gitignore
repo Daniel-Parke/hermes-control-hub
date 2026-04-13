@@ -20,7 +20,7 @@
 /out/
 /build
 
-# Data (stored in ~/.hermes/mission-control/data/, not in repo)
+# Data (default ~/mission-control/data/ or MC_DATA_DIR; not in repo)
 /data/
 
 # Environment

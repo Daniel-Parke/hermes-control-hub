@@ -1,0 +1,20 @@
+{
+  "name": "@agent-control-hub/schema",
+  "version": "1.0.0",
+  "private": false,
+  "description": "Versioned Mission Control + marketplace schemas (OSS and commercial compatible).",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "typescript": "^5"
+  }
+}

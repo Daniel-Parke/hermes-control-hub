@@ -44,6 +44,7 @@ export const hermesCronJobRecordSchema = z
     last_status: z.string().nullable().optional(),
     mission_id: z.string().optional(),
     provider: z.string().optional(),
+    base_url: z.string().optional(),
     profile: z.string().optional(),
     timeout: z.number().optional(),
   })
@@ -101,6 +102,7 @@ export const missionPostBodySchema = z.discriminatedUnion("action", [
     schedule: z.string().optional(),
     dispatchMode: z.enum(["save", "now", "cron"]).optional(),
     templateId: z.string().optional(),
+    base_url: z.string().optional(),
   }),
   z.object({
     action: z.literal("delete"),

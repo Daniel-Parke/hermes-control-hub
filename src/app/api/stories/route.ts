@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { existsSync, mkdirSync, readFileSync, writeFileSync, readdirSync, unlinkSync } from "fs";
-import { HERMES_HOME } from "@/lib/hermes";
+import { PATHS } from "@/lib/hermes";
 import { logApiError } from "@/lib/api-logger";
 import { getStoryPrompt } from "@/lib/story-weaver/prompts";
 import type { StoryArc as StoryArcType, ChapterOutline } from "@/types/recroom";
@@ -9,7 +9,7 @@ import type { StoryArc as StoryArcType, ChapterOutline } from "@/types/recroom";
 // Stories API — Story Arc Pipeline (2-LLM-call creation)
 // ═══════════════════════════════════════════════════════════════
 
-const SAVE_DIR = HERMES_HOME + "/mission-control/data/stories";
+const SAVE_DIR = PATHS.stories;
 const GATEWAY_API = "http://127.0.0.1:8642/v1/chat/completions";
 
 function ensureDir() {

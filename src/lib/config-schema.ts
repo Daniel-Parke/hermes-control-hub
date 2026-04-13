@@ -57,7 +57,9 @@ export const CONFIG_SECTIONS: Record<string, SectionDef> = {
       { key: "provider", label: "Provider", type: "string", description: "API provider name" },
       { key: "base_url", label: "Base URL", type: "string", description: "Custom API base URL (leave empty for default)" },
       { key: "context_length", label: "Context Length", type: "number", min: 1000, max: 2000000, description: "Override model context window size" },
+      { key: "api_key", label: "API Key", type: "string", description: "Leave unchanged to keep existing; enter a new key to rotate (stored in config.yaml)" },
     ],
+    sensitive: true,
   },
   display: {
     id: "display",

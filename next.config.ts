@@ -7,6 +7,11 @@ const extraOrigins = (process.env.MC_ALLOWED_DEV_ORIGINS || "")
   .filter(Boolean);
 
 const nextConfig: NextConfig = {
+  transpilePackages: [
+    "@agent-control-hub/schema",
+    "@agent-control-hub/config",
+
+  ],
   // Allow devices on local network to access dev server (explicit list; no CIDR).
   allowedDevOrigins: ["*.local", ...extraOrigins],
 };

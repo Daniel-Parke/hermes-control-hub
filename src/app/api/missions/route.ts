@@ -317,12 +317,6 @@ export async function POST(request: NextRequest) {
         templateId: payload.templateId ?? null,
       };
 
-      // Parse schedule string into cron schedule object using shared parser
-      function parseMissionSchedule(scheduleStr: string): { schedule: CronJobData["schedule"]; schedule_display: string } {
-        const result = parseSchedule(scheduleStr);
-        return { schedule: result, schedule_display: result.display || scheduleStr };
-      }
-
       // If dispatch mode is "now" or "cron", create a real cron job
       if (dispatchMode !== "save") {
         const cronId = "mission-" + id;
@@ -330,11 +324,22 @@ export async function POST(request: NextRequest) {
         // Build enhanced prompt with Mission Scope + Safety Limits
         const missionPrompt = buildMissionPrompt(record);
 
-        const parsed = dispatchMode === "cron"
-          ? parseMissionSchedule(record.schedule)
-          : { schedule: { kind: "once", run_at: now, display: "once (immediate)" }, schedule_display: "once (immediate)" };
+        let parsedSchedule: CronJobData["schedule"];
+        let scheduleDisplay: string;
+        if (dispatchMode === "cron") {
+          const sched = parseSchedule(record.schedule);
+          if (sched.kind === "invalid") {
+            return NextResponse.json({ error: sched.message }, { status: 400 });
+          }
+          parsedSchedule = sched;
+          scheduleDisplay = sched.display;
+        } else {
+          parsedSchedule = { kind: "once", run_at: now, display: "once (immediate)" };
+          scheduleDisplay = "once (immediate)";
+        }
 
         const defaults = getDefaultModelConfig();
+        const baseUrl = (payload.base_url ?? defaults.base_url).trim();
 
         const cronJob = {
           id: cronId,
@@ -343,11 +348,12 @@ export async function POST(request: NextRequest) {
           skills: record.skills,
           model: record.model || defaults.model,
           provider: defaults.provider,
-          schedule: parsed.schedule,
-          schedule_display: parsed.schedule_display,
+          ...(baseUrl ? { base_url: baseUrl } : {}),
+          schedule: parsedSchedule,
+          schedule_display: scheduleDisplay,
           repeat: dispatchMode === "now"
             ? { times: 1, completed: 0 }
-            : { times: -1, completed: 0 },
+            : { times: null, completed: 0 },
           enabled: true,
           state: "scheduled",
           deliver: getDeliverTarget(),
@@ -484,7 +490,15 @@ export async function POST(request: NextRequest) {
       if (payload.timeoutMinutes !== undefined) {
         mission.timeoutMinutes = Math.max(1, Math.min(120, payload.timeoutMinutes));
       }
-      if (payload.schedule !== undefined) mission.schedule = payload.schedule;
+      if (payload.schedule !== undefined) {
+        if (mission.dispatchMode === "cron") {
+          const pr = parseSchedule(payload.schedule);
+          if (pr.kind === "invalid") {
+            return NextResponse.json({ error: pr.message }, { status: 400 });
+          }
+        }
+        mission.schedule = payload.schedule;
+      }
       mission.updatedAt = new Date().toISOString();
       saveMission(mission);
 
@@ -513,8 +527,10 @@ export async function POST(request: NextRequest) {
             }
             if (payload.schedule !== undefined && mission.dispatchMode === "cron") {
               const scheduleResult = parseSchedule(mission.schedule);
-              job.schedule = scheduleResult;
-              job.schedule_display = scheduleResult.display || mission.schedule;
+              if (scheduleResult.kind !== "invalid") {
+                job.schedule = scheduleResult;
+                job.schedule_display = scheduleResult.display;
+              }
             }
             next[idx] = job;
             return { action: "write" as const, jobs: next, value: undefined };

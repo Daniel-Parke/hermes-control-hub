@@ -82,38 +82,49 @@ describe("titleCase", () => {
 describe("parseSchedule", () => {
   it("should parse 'every 15m' interval", () => {
     const result = parseSchedule("every 15m");
-    expect(result.kind).toBe("interval");
-    expect(result.minutes).toBe(15);
-    expect(result.display).toBe("every 15m");
+    expect(result).toMatchObject({
+      kind: "interval",
+      minutes: 15,
+      display: "every 15m",
+    });
   });
 
   it("should parse 'every 2h' interval", () => {
     const result = parseSchedule("every 2h");
-    expect(result.kind).toBe("interval");
-    expect(result.minutes).toBe(120);
+    expect(result).toMatchObject({ kind: "interval", minutes: 120 });
   });
 
   it("should parse '30m' shorthand", () => {
     const result = parseSchedule("30m");
-    expect(result.kind).toBe("interval");
-    expect(result.minutes).toBe(30);
+    expect(result).toMatchObject({ kind: "interval", minutes: 30 });
   });
 
   it("should parse cron expressions", () => {
     const result = parseSchedule("0 */2 * * *");
-    expect(result.kind).toBe("cron");
-    expect(result.expr).toBe("0 */2 * * *");
+    expect(result).toMatchObject({ kind: "cron", expr: "0 */2 * * *" });
   });
 
   it("should parse ISO timestamps as one-shot", () => {
     const result = parseSchedule("2026-04-09T12:00:00Z");
-    expect(result.kind).toBe("once");
-    expect(result.run_at).toBe("2026-04-09T12:00:00Z");
+    expect(result).toMatchObject({
+      kind: "once",
+      run_at: "2026-04-09T12:00:00Z",
+    });
   });
 
-  it("should fallback to 15m interval for unknown formats", () => {
+  it("should return invalid for unknown formats", () => {
     const result = parseSchedule("some random string");
-    expect(result.kind).toBe("interval");
-    expect(result.minutes).toBe(15);
+    expect(result.kind).toBe("invalid");
+    if (result.kind === "invalid") {
+      expect(result.message.length).toBeGreaterThan(0);
+    }
+  });
+
+  it("should accept six-field cron expressions", () => {
+    const result = parseSchedule("0 */15 * * * *");
+    expect(result.kind).toBe("cron");
+    if (result.kind === "cron") {
+      expect(result.expr).toContain("*");
+    }
   });
 });

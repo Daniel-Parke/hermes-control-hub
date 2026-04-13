@@ -15,6 +15,8 @@ export default function OperationsPage() {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [stepTitles, setStepTitles] = useState("Plan\nExecute\nVerify");
+  const [stepTemplateIds, setStepTemplateIds] = useState("");
+  const [stepModels, setStepModels] = useState("");
   const { showToast, toastElement } = useToast();
 
   const load = useCallback(() => {
@@ -36,11 +38,17 @@ export default function OperationsPage() {
       showToast("Name required", "error");
       return;
     }
-    const steps = stepTitles
+    const titles = stepTitles
       .split("\n")
       .map((t) => t.trim())
-      .filter(Boolean)
-      .map((title) => ({ title }));
+      .filter(Boolean);
+    const tmplLines = stepTemplateIds.split("\n");
+    const modelLines = stepModels.split("\n");
+    const steps = titles.map((title, i) => ({
+      title,
+      missionTemplateId: tmplLines[i]?.trim() || undefined,
+      model: modelLines[i]?.trim() || undefined,
+    }));
     const res = await fetch("/api/operations", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -51,6 +59,8 @@ export default function OperationsPage() {
       setName("");
       setDescription("");
       setStepTitles("Plan\nExecute\nVerify");
+      setStepTemplateIds("");
+      setStepModels("");
       load();
     } else {
       const j = await res.json().catch(() => ({}));
@@ -73,12 +83,28 @@ export default function OperationsPage() {
     }
   };
 
+  const dispatchStep = async (id: string) => {
+    const res = await fetch("/api/operations/" + id, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "dispatchCurrentStep" }),
+    });
+    if (res.ok) {
+      const j = await res.json().catch(() => ({}));
+      showToast("Mission saved: " + (j.data?.missionId || "ok"), "success");
+      load();
+    } else {
+      const j = await res.json().catch(() => ({}));
+      showToast(j.error || "Dispatch failed", "error");
+    }
+  };
+
   return (
     <div className="min-h-screen p-6 md:p-8">
       {toastElement}
       <PageHeader
         title="Operations"
-        subtitle="Multi-step sequences. Execute each step via Missions/Cron using Hermes delegation; this page tracks progress on disk."
+        subtitle="Multi-step sequences. Hermes enforces delegation limits (e.g. ≤3 sub-agents per policy). Dispatch saves a mission file from the current step’s built-in template; advance moves the pointer."
         icon={GitBranch}
         color="purple"
       />
@@ -114,6 +140,28 @@ export default function OperationsPage() {
                 onChange={(e) => setStepTitles(e.target.value)}
               />
             </div>
+            <div>
+              <label className="mb-1 block text-sm text-zinc-400">
+                Optional: built-in template id per line (same order as steps), e.g. qa-bugfix
+              </label>
+              <textarea
+                className="min-h-[72px] w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 font-mono text-xs"
+                value={stepTemplateIds}
+                onChange={(e) => setStepTemplateIds(e.target.value)}
+                placeholder={"qa-bugfix\n\n"}
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm text-zinc-400">
+                Optional: model override per line (same order; empty = config default)
+              </label>
+              <textarea
+                className="min-h-[48px] w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 font-mono text-xs"
+                value={stepModels}
+                onChange={(e) => setStepModels(e.target.value)}
+                placeholder=""
+              />
+            </div>
             <Button onClick={create}>
               <Plus className="mr-2 h-4 w-4" />
               Create
@@ -142,6 +190,17 @@ export default function OperationsPage() {
                       </p>
                     </div>
                     <div className="flex flex-wrap gap-2">
+                      <Button
+                        variant="secondary"
+                        className="text-xs"
+                        onClick={() => dispatchStep(op.id)}
+                        disabled={
+                          op.status === "completed" ||
+                          op.currentStepIndex >= op.steps.length
+                        }
+                      >
+                        Dispatch step
+                      </Button>
                       <Button
                         variant="secondary"
                         className="text-xs"
