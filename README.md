@@ -121,7 +121,7 @@ bash scripts/install.sh
 The installer will:
 
 
-1. Check prerequisites (Node.js 18+, Hermes agent)
+1. Check prerequisites (Node.js 20+, Hermes agent)
 
 
 2. Install dependencies and build
@@ -190,10 +190,10 @@ If `npm run start` fails because port 3000 is taken, stop the old server first (
 
 
 
-- **Linux / macOS / WSL2:** fully supported (same as Hermes).
+- **Linux / macOS / WSL2 / Android (Termux):** supported.
 
 
-- **Windows (native):** use **WSL2** for Hermes and Control Hub so paths align with `~/.hermes`. Native Windows Node is not a supported target for this stack.
+- **Windows (native):** unsupported; use WSL2.
 
 
 
@@ -733,7 +733,7 @@ Error logging: all catch blocks call `logApiError(route, context, error)`.
 
 
 
-- Node.js 18+
+- Node.js 20+
 
 
 - Hermes Agent installed at `~/.hermes/`

@@ -6,8 +6,9 @@
 2. Implement change with tests.
 3. Run:
    - `npm run lint`
-   - `npm run typecheck`
+   - `npx tsc --noEmit -p tsconfig.json`
    - `npm test`
+   - `npm run test:coverage`
    - `npm run build`
 4. Open PR to `dev`.
 5. Merge to `main` only through reviewed PR flow.
@@ -25,6 +26,7 @@
 - Add or update tests for every code change.
 - Prefer contract assertions over weak truthy checks.
 - Keep OSS tests in `src/__tests__/oss`.
+- CI runs on Linux and macOS; local validation should match that matrix.
 
 ## Documentation
 

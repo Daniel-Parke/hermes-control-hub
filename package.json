@@ -1,58 +1,132 @@
-{
-  "name": "control-hub",
-  "version": "0.1.0",
-  "private": true,
-  "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "eslint",
-    "start:network": "next start -H 0.0.0.0",
-    "test": "cross-env CH_EDITION=simple jest",
-    "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage",
-    "test:e2e": "cross-env CH_EDITION=simple NEXT_PUBLIC_CH_EDITION=simple PLAYWRIGHT_OSS_ONLY=1 playwright test"
-  },
-  "dependencies": {
-    "@agent-control-hub/config": "file:./packages/config",
-    "@agent-control-hub/schema": "file:./packages/schema",
-    "@radix-ui/react-dialog": "^1.1.15",
-    "@radix-ui/react-dropdown-menu": "^2.1.16",
-    "@radix-ui/react-tabs": "^1.1.13",
-    "@types/js-yaml": "^4.0.9",
-    "better-sqlite3": "^12.8.0",
-    "class-variance-authority": "^0.7.1",
-    "clsx": "^2.1.1",
-    "date-fns": "^4.1.0",
-    "gray-matter": "^4.0.3",
-    "js-yaml": "^4.1.1",
-    "lucide-react": "^1.7.0",
-    "next": "16.2.3",
-    "react": "19.2.4",
-    "react-dom": "19.2.4",
-    "react-markdown": "^10.1.0",
-    "rehype-highlight": "^7.0.2",
-    "remark-gfm": "^4.0.1",
-    "tailwind-merge": "^3.5.0",
-    "zod": "^4.3.6"
-  },
-  "devDependencies": {
-    "cross-env": "^7.0.3",
-    "@playwright/test": "^1.59.1",
-    "@tailwindcss/postcss": "^4",
-    "@testing-library/jest-dom": "^6.9.1",
-    "@testing-library/react": "^16.3.2",
-    "@types/better-sqlite3": "^7.6.13",
-    "@types/jest": "^30.0.0",
-    "@types/node": "^20",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
-    "eslint": "^9",
-    "eslint-config-next": "16.2.3",
-    "jest": "^30.3.0",
-    "jest-environment-jsdom": "^30.3.0",
-    "tailwindcss": "^4",
-    "ts-jest": "^29.4.9",
-    "typescript": "^5"
-  }
-}
+{
+
+  "name": "control-hub",
+
+  "version": "0.1.0",
+
+  "private": true,
+
+  "scripts": {
+
+    "dev": "next dev",
+
+    "build": "next build",
+
+    "start": "next start",
+
+    "lint": "eslint",
+
+    "start:network": "next start -H 0.0.0.0",
+
+    "test": "cross-env CH_EDITION=simple jest",
+
+    "test:watch": "jest --watch",
+
+    "test:coverage": "jest --coverage",
+
+    "test:e2e": "cross-env CH_EDITION=simple NEXT_PUBLIC_CH_EDITION=simple PLAYWRIGHT_OSS_ONLY=1 playwright test"
+
+  },
+
+  "dependencies": {
+
+    "@agent-control-hub/config": "file:./packages/config",
+
+    "@agent-control-hub/schema": "file:./packages/schema",
+
+    "@radix-ui/react-dialog": "^1.1.15",
+
+    "@radix-ui/react-dropdown-menu": "^2.1.16",
+
+    "@radix-ui/react-tabs": "^1.1.13",
+
+    "@types/js-yaml": "^4.0.9",
+
+    "better-sqlite3": "^12.8.0",
+
+    "class-variance-authority": "^0.7.1",
+
+    "clsx": "^2.1.1",
+
+    "date-fns": "^4.1.0",
+
+    "gray-matter": "^4.0.3",
+
+    "js-yaml": "^4.1.1",
+
+    "lucide-react": "^1.7.0",
+
+    "next": "16.2.3",
+
+    "react": "19.2.4",
+
+    "react-dom": "19.2.4",
+
+    "react-markdown": "^10.1.0",
+
+    "rehype-highlight": "^7.0.2",
+
+    "remark-gfm": "^4.0.1",
+
+    "tailwind-merge": "^3.5.0",
+
+    "zod": "^4.3.6"
+
+  },
+
+  "devDependencies": {
+
+    "cross-env": "^7.0.3",
+
+    "@playwright/test": "^1.59.1",
+
+    "@tailwindcss/postcss": "^4",
+
+    "@testing-library/jest-dom": "^6.9.1",
+
+    "@testing-library/react": "^16.3.2",
+
+    "@types/better-sqlite3": "^7.6.13",
+
+    "@types/jest": "^30.0.0",
+
+    "@types/node": "^20",
+
+    "@types/react": "^19",
+
+    "@types/react-dom": "^19",
+
+    "eslint": "^9",
+
+    "eslint-config-next": "16.2.3",
+
+    "jest": "^30.3.0",
+
+    "jest-environment-jsdom": "^30.3.0",
+
+    "tailwindcss": "^4",
+
+    "ts-jest": "^29.4.9",
+
+    "typescript": "^5"
+
+  },
+
+  "overrides": {
+
+    "@typescript-eslint/typescript-estree": {
+
+      "brace-expansion": "5.0.4"
+
+    },
+
+    "glob": {
+
+      "brace-expansion": "2.0.2"
+
+    }
+
+  }
+
+}
+
