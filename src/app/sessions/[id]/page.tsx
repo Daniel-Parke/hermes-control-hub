@@ -186,28 +186,42 @@ export default function SessionDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [roleFilter, setRoleFilter] = useState<string | null>(null);
   const messageRefs = useRef<Map<number, HTMLDivElement>>(new Map());
-
-  const loadSession = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await fetch(`/api/sessions/${sessionId}`);
-      if (!res.ok) {
-        const body = await res.json().catch(() => null);
-        throw new Error(body?.error || `Failed to load session`);
-      }
-      const json = await res.json();
-      setData(json.data || json);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Unknown error");
-    } finally {
-      setLoading(false);
-    }
-  }, [sessionId]);
+  const loadEpochRef = useRef(0);
 
   useEffect(() => {
-    loadSession();
-  }, [loadSession]);
+    const controller = new AbortController();
+    const epoch = ++loadEpochRef.current;
+
+    setLoading(true);
+    setError(null);
+
+    void (async () => {
+      const url = "/api/sessions/" + encodeURIComponent(sessionId);
+      try {
+        const res = await fetch(url, { signal: controller.signal });
+        if (epoch !== loadEpochRef.current) return;
+        if (!res.ok) {
+          const errBody = (await res.json().catch(() => null)) as { error?: string } | null;
+          throw new Error(errBody?.error || "Failed to load session");
+        }
+        const json = (await res.json()) as { data?: SessionData };
+        if (epoch !== loadEpochRef.current) return;
+        setData(json.data ?? (json as unknown as SessionData));
+      } catch (err) {
+        if (controller.signal.aborted) return;
+        if (epoch !== loadEpochRef.current) return;
+        setError(err instanceof Error ? err.message : "Unknown error");
+      } finally {
+        if (epoch === loadEpochRef.current) {
+          setLoading(false);
+        }
+      }
+    })();
+
+    return () => {
+      controller.abort();
+    };
+  }, [sessionId]);
 
   // Count messages by role
   const roleCounts = useMemo(() => {

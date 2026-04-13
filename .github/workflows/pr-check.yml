@@ -1,16 +1,73 @@
 name: PR Check
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 on:
   pull_request:
-    branches: [main]
+    branches: [main, dev]
+  workflow_dispatch:
 
+# Split into two parallel jobs so wall time is roughly max(unit, e2e) instead of unit + e2e.
 jobs:
-  build-and-test:
+  lint-typecheck-test-coverage-build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: npm
+          cache-dependency-path: package-lock.json
       - run: npm ci
+      - run: npm run lint
+      - run: npx tsc --noEmit -p tsconfig.json
+      # One Jest run with coverage — avoids running the full suite twice (npm test + test:coverage).
+      - name: Unit tests with coverage
+        run: npm run test:coverage
+        env:
+          CH_EDITION: simple
+          NEXT_PUBLIC_CH_EDITION: simple
       - run: npm run build
-      - run: npm test
+        env:
+          CH_EDITION: simple
+          NEXT_PUBLIC_CH_EDITION: simple
+      - name: Upload coverage HTML
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage/lcov-report
+          if-no-files-found: ignore
+
+  e2e-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - run: npm ci
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            playwright-${{ runner.os }}-
+      # Chromium only; omit --with-deps to avoid large apt installs on every run (ubuntu-latest usually suffices).
+      - name: Install Playwright Chromium
+        run: npx playwright install chromium
+      - run: npm run build
+        env:
+          CH_EDITION: simple
+          NEXT_PUBLIC_CH_EDITION: simple
+      - name: E2E smoke
+        run: npm run test:e2e
+        env:
+          CI: true
+          CH_EDITION: simple
+          NEXT_PUBLIC_CH_EDITION: simple
+          PLAYWRIGHT_OSS_ONLY: "1"

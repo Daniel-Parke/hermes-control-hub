@@ -152,7 +152,7 @@ export default function CreateStoryPage() {
 
         {/* Premise */}
         <div className="rounded-xl border border-white/8 bg-dark-900/50 p-5">
-          <label className="text-xs font-mono text-white/40 uppercase tracking-widest block mb-2">What's your story about?</label>
+          <label className="text-xs font-mono text-white/40 uppercase tracking-widest block mb-2">What&apos;s your story about?</label>
           <textarea value={premise} onChange={(e) => setPremise(e.target.value)} rows={4}
             className="w-full bg-dark-800/50 border border-white/10 rounded-lg px-4 py-3 text-sm text-white placeholder-white/20 outline-none focus:border-purple-500/30 font-mono resize-none leading-relaxed" placeholder="Describe your story concept..." />
         </div>

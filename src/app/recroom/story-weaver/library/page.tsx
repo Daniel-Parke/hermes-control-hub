@@ -5,9 +5,19 @@ import { useRouter } from "next/navigation";
 import { ChevronLeft, Plus, Sparkles } from "lucide-react";
 import StoryCard from "@/components/story-weaver/StoryCard";
 
+interface StoryListItem {
+  id: string;
+  title: string;
+  status: string;
+  chapters?: Array<{ number: number; title: string; status: string; wordCount?: number }>;
+  config?: Record<string, unknown>;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 export default function LibraryPage() {
   const router = useRouter();
-  const [stories, setStories] = useState<any[]>([]);
+  const [stories, setStories] = useState<StoryListItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchStories = useCallback(async () => {

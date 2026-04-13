@@ -1,0 +1,18 @@
+# Example stack: Control Hub with mounted Hermes + CH data dirs.
+# Hermes Python runtime is not included — run the agent/gateway on host or another compose service.
+services:
+  control-hub:
+    build: .
+    ports:
+      - "${PORT:-3000}:3000"
+    environment:
+      HERMES_HOME: /data/hermes
+      CH_DATA_DIR: /data/ch
+      # CH_API_KEY: set in production
+    volumes:
+      - hermes_home:/data/hermes
+      - ch_data:/data/ch
+
+volumes:
+  hermes_home:
+  ch_data:

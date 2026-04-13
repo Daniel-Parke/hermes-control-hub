@@ -3,7 +3,7 @@
 # Hermes Config Backup Script
 # ═══════════════════════════════════════════════════════════════
 # Backs up your Hermes agent configuration, skills, memory, and
-# Mission Control data to a portable directory or git repo.
+# Control Hub data to a portable directory or git repo.
 #
 # Usage:
 #   bash scripts/backup-hermes-config.sh [target_dir]
@@ -76,19 +76,29 @@ if [ -d "$HERMES_HOME/skills" ]; then
     echo "  ✓ skills/ ($SKILL_COUNT skills)"
 fi
 
-# 6. Mission Control data
-echo "Backing up Mission Control data..."
-if [ -d "$HERMES_HOME/mission-control" ]; then
-    mkdir -p "$TARGET/mission-control"
-    if command -v rsync &>/dev/null; then
-        rsync -a "$HERMES_HOME/mission-control/data/" "$TARGET/mission-control/data/" 2>/dev/null || true
-    else
-        mkdir -p "$TARGET/mission-control/data"
-        cp -R "$HERMES_HOME/mission-control/data/." "$TARGET/mission-control/data/" 2>/dev/null || true
+# 6. Control Hub data (default ~/control-hub/data; legacy ~/.hermes/control-hub/data)
+echo "Backing up Control Hub data..."
+CH_DATA_ROOT="${CH_DATA_DIR:-$HOME/control-hub/data}"
+backup_ch_data() {
+    local SRC="$1"
+    local LABEL="$2"
+    if [ ! -d "$SRC" ]; then
+        return 0
     fi
-    MISSION_COUNT=$(find "$TARGET/mission-control/data/missions" -name "*.json" 2>/dev/null | wc -l)
-    TEMPLATE_COUNT=$(find "$TARGET/mission-control/data/templates" -name "*.json" 2>/dev/null | wc -l)
-    echo "  ✓ mission-control/data/ ($MISSION_COUNT missions, $TEMPLATE_COUNT templates)"
+    mkdir -p "$TARGET/control-hub/data"
+    if command -v rsync &>/dev/null; then
+        rsync -a "$SRC/" "$TARGET/control-hub/data/" 2>/dev/null || true
+    else
+        cp -R "$SRC/." "$TARGET/control-hub/data/" 2>/dev/null || true
+    fi
+    MISSION_COUNT=$(find "$TARGET/control-hub/data/missions" -name "*.json" 2>/dev/null | wc -l)
+    TEMPLATE_COUNT=$(find "$TARGET/control-hub/data/templates" -name "*.json" 2>/dev/null | wc -l)
+    echo "  ✓ $LABEL ($MISSION_COUNT missions, $TEMPLATE_COUNT templates)"
+}
+if [ -d "$CH_DATA_ROOT" ]; then
+    backup_ch_data "$CH_DATA_ROOT" "control-hub data ($CH_DATA_ROOT)"
+elif [ -d "$HERMES_HOME/control-hub/data" ]; then
+    backup_ch_data "$HERMES_HOME/control-hub/data" "control-hub data (legacy under HERMES_HOME)"
 fi
 
 # 7. Channel directory
@@ -129,7 +139,7 @@ done
 [ -d "memories" ] && cp -r memories/* "$HERMES_HOME/memories/" && echo "  ✓ memories/"
 [ -f "memory_store.db" ] && cp memory_store.db "$HERMES_HOME/memory_store.db" && echo "  ✓ memory_store.db"
 [ -d "skills" ] && rsync -a skills/ "$HERMES_HOME/skills/" && echo "  ✓ skills/"
-[ -d "mission-control" ] && mkdir -p "$HERMES_HOME/mission-control" && rsync -a mission-control/ "$HERMES_HOME/mission-control/" && echo "  ✓ mission-control/"
+[ -d "control-hub" ] && mkdir -p "$HERMES_HOME/control-hub" && rsync -a control-hub/ "$HERMES_HOME/control-hub/" && echo "  ✓ control-hub/"
 echo "Restore complete!"
 RESTORE
 chmod +x "$TARGET/restore.sh"

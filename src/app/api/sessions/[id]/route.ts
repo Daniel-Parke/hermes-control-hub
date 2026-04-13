@@ -1,14 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import { readFileSync, existsSync, statSync } from "fs";
 
-import { HERMES_HOME, PATHS } from "@/lib/hermes";
-import { ApiResponse } from "@/types/hermes";
+import { PATHS } from "@/lib/hermes";
 import { logApiError } from "@/lib/api-logger";
+import {
+  getMaxSessionFileBytes,
+  sessionsRateLimitResponse,
+} from "@/lib/sessions-api-guard";
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const limited = sessionsRateLimitResponse(request, "GET /api/sessions/[id]");
+  if (limited) return limited;
+
   const { id } = await params;
   const sessionsPath = PATHS.sessions;
 
@@ -39,8 +45,26 @@ export async function GET(
   }
 
   try {
+    const st = statSync(filePath);
+    const maxBytes = getMaxSessionFileBytes();
+    if (st.size > maxBytes) {
+      logApiError(
+        "GET /api/sessions/[id]",
+        "session file exceeds max size (" + st.size + " bytes)",
+        new Error("PayloadTooLarge")
+      );
+      return NextResponse.json(
+        {
+          error:
+            "Session file is too large to load in Control Hub (max " +
+            Math.round(maxBytes / (1024 * 1024)) +
+            " MB).",
+        },
+        { status: 413 }
+      );
+    }
+
     const content = readFileSync(filePath, "utf-8");
-    const stats = statSync(filePath);
 
     if (filePath.endsWith(".jsonl")) {
       // Parse JSONL — one JSON object per line
@@ -64,7 +88,7 @@ export async function GET(
           format: "jsonl",
           messages,
           messageCount: messages.length,
-          size: stats.size,
+          size: st.size,
         },
       });
     } else {
@@ -82,8 +106,8 @@ export async function GET(
           source: data.source || "",
           messages,
           messageCount: messages.length,
-          size: stats.size,
-          created: data.created || stats.birthtime.toISOString(),
+          size: st.size,
+          created: data.created || st.birthtime.toISOString(),
         },
       });
     }

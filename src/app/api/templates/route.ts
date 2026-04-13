@@ -4,6 +4,8 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { existsSync, mkdirSync, readFileSync, writeFileSync, readdirSync, unlinkSync } from "fs";
+import { parseTemplatePackManifestV1 } from "@agent-control-hub/schema";
+import { zodErrorResponse } from "@/lib/api-schemas";
 import { PATHS } from "@/lib/hermes";
 
 const DATA_DIR = PATHS.templates;
@@ -123,6 +125,41 @@ export async function POST(request: NextRequest) {
 
       saveTemplate(template);
       return NextResponse.json({ data: template });
+    }
+
+    if (action === "importPack") {
+      const parsed = parseTemplatePackManifestV1(body.manifest);
+      if (!parsed.ok) {
+        return zodErrorResponse(parsed.error);
+      }
+      const manifest = parsed.data;
+      const created: CustomTemplate[] = [];
+      const now = new Date().toISOString();
+      for (const t of manifest.templates) {
+        const id = `ct_${t.id.replace(/[^a-zA-Z0-9_-]/g, "_")}`;
+        const template: CustomTemplate = {
+          id,
+          name: t.name,
+          icon: t.icon,
+          color: t.color,
+          category: "Imported",
+          profile: t.profile,
+          description: t.description,
+          instruction: t.prompt,
+          context: "",
+          goals: t.goals,
+          suggestedSkills: t.suggestedSkills,
+          dispatchMode: "now",
+          schedule: "every 5m",
+          createdAt: now,
+          updatedAt: now,
+        };
+        saveTemplate(template);
+        created.push(template);
+      }
+      return NextResponse.json({
+        data: { imported: created.length, templates: created, packId: manifest.id },
+      });
     }
 
     if (action === "delete") {

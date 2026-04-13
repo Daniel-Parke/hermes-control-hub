@@ -13,7 +13,7 @@ const lora = Lora({ variable: "--font-lora", subsets: ["latin"], display: "swap"
 const merriweather = Merriweather({ variable: "--font-merriweather", weight: ["300", "400", "700"], subsets: ["latin"], display: "swap" });
 
 export const metadata: Metadata = {
-  title: "Mission Control | Hermes Agent",
+  title: "Control Hub | Hermes Agent",
   description: "Monitor, update, and control the essence of your AI agent",
 };
 

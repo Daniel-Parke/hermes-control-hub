@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════
-// Dashboard - Mission Control Home (Redesigned)
+// Dashboard - Control Hub Home (Redesigned)
 // ═══════════════════════════════════════════════════════════════
 // Lean operational overview. No nav cards, no fake terminals.
 // One-glance situational awareness → one-click actions.
@@ -29,23 +29,8 @@ import {
   XCircle,
   Gamepad2,
   BookOpen,
-  // Template icons — used by TemplateCard, missions page, and template manager
-  // Do NOT remove even if unused here — they are referenced across the app
-  Cpu,
-  HardDrive,
-  Zap,
-  Search,
-  Bug,
-  GitPullRequest,
-  Wrench,
-  PenTool,
-  Shield,
-  Terminal,
-  Database,
-  Code,
-  FileText,
 } from "lucide-react";
-import Card, { StatusDot } from "@/components/ui/Card";
+import { StatusDot } from "@/components/ui/Card";
 import IntervalSelector from "@/components/ui/IntervalSelector";
 import CategoryAccordion from "@/components/ui/CategoryAccordion";
 import TemplateCard from "@/components/ui/TemplateCard";
@@ -320,6 +305,36 @@ export default function Dashboard() {
           />
         </div>
 
+        {/* ═══ Handoff / continuation ═══ */}
+        <div className="rounded-xl border border-white/10 bg-dark-900/40 px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <div className="text-[10px] font-mono text-white/40 uppercase tracking-wider">
+              Continue work
+            </div>
+            <div className="text-sm text-white/80 mt-1">
+              {monitor?.sessions?.recent?.[0] ? (
+                <>
+                  Latest session {timeAgo(monitor.sessions.recent[0].modified)}{" "}
+                  <Link
+                    href={"/sessions/" + monitor.sessions.recent[0].id}
+                    className="text-neon-cyan hover:underline font-mono text-xs"
+                  >
+                    open transcript
+                  </Link>
+                </>
+              ) : (
+                "No sessions yet — run a mission or use Hermes chat."
+              )}
+            </div>
+          </div>
+          <Link
+            href="/sessions"
+            className="text-xs font-mono text-neon-purple hover:underline inline-flex items-center gap-1"
+          >
+            Session browser <ChevronRight className="w-3 h-3" />
+          </Link>
+        </div>
+
         {/* ═══ Mission Dispatch Quick Launch ═══ */}
         <div className="rounded-xl border border-cyan-500/20 bg-dark-900/50 overflow-hidden">
           <button
@@ -541,7 +556,10 @@ export default function Dashboard() {
                             ? "Executing..."
                             : job.lastRun && !job.nextRun
                             ? `${titleCase(job.lastStatus || "Ok")} ${timeAgo(job.lastRun)}`
-                            : job.nextRun && new Date(job.nextRun).getTime() > Date.now()
+                            : job.nextRun &&
+                              new Date(job.nextRun).getTime() >
+                                // eslint-disable-next-line react-hooks/purity -- need current time vs scheduled next_run
+                                Date.now()
                             ? "Next " + timeUntil(job.nextRun)
                             : job.lastRun
                             ? `Active · Ran ${timeAgo(job.lastRun)}`

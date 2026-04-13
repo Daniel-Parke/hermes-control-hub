@@ -1,0 +1,119 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "TemplatePackManifestV1",
+  "description": "Template pack manifest for marketplace imports. Generated from templatePackManifestSchema (Zod).",
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "const": "1.0.0"
+    },
+    "id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "name": {
+      "type": "string"
+    },
+    "version": {
+      "type": "string"
+    },
+    "author": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "templates": {
+      "minItems": 1,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "name": {
+            "type": "string"
+          },
+          "icon": {
+            "type": "string"
+          },
+          "color": {
+            "type": "string",
+            "enum": [
+              "cyan",
+              "purple",
+              "green",
+              "pink",
+              "orange"
+            ]
+          },
+          "category": {
+            "type": "string"
+          },
+          "profile": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "prompt": {
+            "type": "string"
+          },
+          "goals": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "suggestedSkills": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "defaultModel": {
+            "type": "string"
+          },
+          "timeoutMinutes": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 120
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "icon",
+          "color",
+          "category",
+          "profile",
+          "description",
+          "prompt",
+          "goals",
+          "suggestedSkills",
+          "defaultModel",
+          "timeoutMinutes"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "extensions": {
+      "type": "object",
+      "propertyNames": {
+        "type": "string"
+      },
+      "additionalProperties": {}
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "id",
+    "name",
+    "version",
+    "templates"
+  ],
+  "additionalProperties": false
+}

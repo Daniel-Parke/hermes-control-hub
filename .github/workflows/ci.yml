@@ -1,0 +1,90 @@
+name: CI
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main, dev]
+
+# Parallel jobs: unit+build per OS, and E2E on Ubuntu only — avoids duplicate Jest runs and long serial time.
+jobs:
+  build-test-ubuntu:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - name: Install dependencies (with cache reset retry)
+        run: |
+          npm ci || (npm cache clean --force && npm ci)
+      - run: npm run lint
+      - run: npx tsc --noEmit -p tsconfig.json
+      - name: Unit tests with coverage
+        run: npm run test:coverage
+        env:
+          CH_EDITION: oss
+          NEXT_PUBLIC_CH_EDITION: oss
+      - run: npm run build
+        env:
+          CH_EDITION: oss
+          NEXT_PUBLIC_CH_EDITION: oss
+
+  build-test-macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - name: Install dependencies (with cache reset retry)
+        run: |
+          npm ci || (npm cache clean --force && npm ci)
+      - run: npm run lint
+      - run: npx tsc --noEmit -p tsconfig.json
+      - name: Unit tests with coverage
+        run: npm run test:coverage
+        env:
+          CH_EDITION: oss
+          NEXT_PUBLIC_CH_EDITION: oss
+      - run: npm run build
+        env:
+          CH_EDITION: oss
+          NEXT_PUBLIC_CH_EDITION: oss
+
+  e2e-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - name: Install dependencies (with cache reset retry)
+        run: |
+          npm ci || (npm cache clean --force && npm ci)
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            playwright-${{ runner.os }}-
+      - name: Install Playwright Chromium
+        run: npx playwright install chromium
+      - run: npm run build
+        env:
+          CH_EDITION: oss
+          NEXT_PUBLIC_CH_EDITION: oss
+      - name: E2E smoke
+        run: npm run test:e2e
+        env:
+          CI: true
+          CH_EDITION: oss
+          NEXT_PUBLIC_CH_EDITION: oss
+          PLAYWRIGHT_OSS_ONLY: "1"

@@ -2,8 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from "fs";
 import yaml from "js-yaml";
 
-import { HERMES_HOME, PATHS } from "@/lib/hermes";
+import { PATHS } from "@/lib/hermes";
 import { logApiError } from "@/lib/api-logger";
+import { requireMcApiKey, requireNotReadOnly } from "@/lib/api-auth";
+import { appendAuditLine } from "@/lib/audit-log";
 const CONFIG_PATH = PATHS.config;
 
 function parseConfig(): Record<string, unknown> {
@@ -47,6 +49,11 @@ export async function GET() {
 
 // PUT /api/config — update specific section
 export async function PUT(request: NextRequest) {
+  const ro = requireNotReadOnly();
+  if (ro) return ro;
+  const auth = requireMcApiKey(request);
+  if (auth) return auth;
+
   try {
     const body = await request.json();
     const { section, values } = body;
@@ -84,6 +91,12 @@ export async function PUT(request: NextRequest) {
     // Write back
     const content = yaml.dump(config, { lineWidth: -1, noRefs: true });
     writeFileSync(CONFIG_PATH, content, "utf-8");
+
+    appendAuditLine({
+      action: "config.put",
+      resource: String(section),
+      ok: true,
+    });
 
     return NextResponse.json({ data: { success: true, section, values } });
   } catch (error) {

@@ -1,6 +1,6 @@
 #!/bin/bash
 # ═══════════════════════════════════════════════════════════════
-# Mission Control — Safe Restart
+# Control Hub — Safe Restart
 # ═══════════════════════════════════════════════════════════════
 # Minimal restart script with no dependencies on nohup.
 # Safe for both manual use and agent terminal tool.
@@ -11,7 +11,7 @@
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 APP_DIR="$(dirname "$SCRIPT_DIR")"
-LOG_FILE="$HOME/.hermes/logs/mc-restart.log"
+LOG_FILE="$HOME/.hermes/logs/ch-restart.log"
 
 mkdir -p "$(dirname "$LOG_FILE")"
 

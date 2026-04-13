@@ -1,7 +1,8 @@
 # See https://help.github.com/articles/ignoring-files/
 
 # Dependencies
-/node_modules
+node_modules/
+**/node_modules/
 /.pnp
 .pnp.*
 .yarn/*
@@ -11,14 +12,18 @@
 !.yarn/versions
 
 # Testing
-/coverage
+coverage/
+**/coverage/
+playwright-report/
+test-results/
 
 # Next.js
-/.next/
-/out/
-/build
+.next/
+**/.next/
+out/
+build/
 
-# Data (stored in ~/.hermes/mission-control/data/, not in repo)
+# Data (default ~/control-hub/data/ or CH_DATA_DIR; not in repo)
 /data/
 
 # Environment
@@ -42,5 +47,3 @@ yarn-error.log*
 # TypeScript
 *.tsbuildinfo
 next-env.d.ts
-
-# hook test

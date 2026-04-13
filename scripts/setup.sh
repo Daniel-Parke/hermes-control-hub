@@ -1,11 +1,11 @@
 #!/bin/bash
 # ═══════════════════════════════════════════════════════════════
-# Mission Control — Setup Script
+# Control Hub — Setup Script
 # ═══════════════════════════════════════════════════════════════
-# Run this after cloning the repository to set up Mission Control.
+# Run this after cloning the repository to set up Control Hub.
 #
 # Usage:
-#   cd mission-control
+#   cd control-hub
 #   bash scripts/setup.sh
 #
 # Prerequisites:
@@ -16,7 +16,7 @@
 set -e
 
 echo "╔══════════════════════════════════════════╗"
-echo "║       Mission Control — Setup             ║"
+echo "║       Control Hub — Setup             ║"
 echo "╚══════════════════════════════════════════╝"
 echo ""
 
@@ -62,20 +62,23 @@ if [ -f "$HERMES_HOME/.env" ] && grep -q "API_SERVER_ENABLED=true" "$HERMES_HOME
 else
     echo "Enabling gateway API server for Rec Room..."
     echo "" >> "$HERMES_HOME/.env"
-    echo "# Enable API server for Mission Control Rec Room" >> "$HERMES_HOME/.env"
+    echo "# Enable API server for Control Hub Rec Room" >> "$HERMES_HOME/.env"
     echo "API_SERVER_ENABLED=true" >> "$HERMES_HOME/.env"
     echo "✓ API server enabled — restart gateway to activate"
     echo "  Run: systemctl --user restart hermes-gateway"
 fi
 
-# ── Create data directories ───────────────────────────────────
+# ── Create data directories (align with CH_DATA_DIR default: ~/control-hub/data) ──
 echo ""
 echo "Creating data directories..."
-mkdir -p "$HERMES_HOME/mission-control/data/missions"
-mkdir -p "$HERMES_HOME/mission-control/data/templates"
-mkdir -p "$HERMES_HOME/mission-control/data/recroom"
+CH_DATA_ROOT="${CH_DATA_DIR:-$HOME/control-hub/data}"
+mkdir -p "$CH_DATA_ROOT/missions"
+mkdir -p "$CH_DATA_ROOT/templates"
+mkdir -p "$CH_DATA_ROOT/operations"
+mkdir -p "$CH_DATA_ROOT/recroom"
+mkdir -p "$CH_DATA_ROOT/stories"
 mkdir -p "$HERMES_HOME/logs"
-echo "✓ Data directories created at $HERMES_HOME/mission-control/data/"
+echo "✓ Control Hub data directories created at $CH_DATA_ROOT"
 
 # ── Ensure scripts are executable ─────────────────────────────
 chmod +x scripts/*.sh

@@ -1,11 +1,14 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { readdirSync, existsSync, statSync } from "fs";
 
-import { HERMES_HOME, PATHS } from "@/lib/hermes";
-import { ApiResponse } from "@/types/hermes";
+import { PATHS } from "@/lib/hermes";
 import { logApiError } from "@/lib/api-logger";
+import { sessionsRateLimitResponse } from "@/lib/sessions-api-guard";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const limited = sessionsRateLimitResponse(request);
+  if (limited) return limited;
+
   const sessionsPath = PATHS.sessions;
 
   if (!existsSync(sessionsPath)) {

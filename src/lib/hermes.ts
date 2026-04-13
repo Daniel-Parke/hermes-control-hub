@@ -1,14 +1,48 @@
 import yaml from "js-yaml";
 import { readFileSync, existsSync } from "fs";
+import { homedir } from "os";
 // ═══════════════════════════════════════════════════════════════
 // Shared Hermes Configuration — centralised paths and constants
 // ═══════════════════════════════════════════════════════════════
 // All API routes should import from here instead of constructing
 // paths independently. This ensures consistency and portability.
+// Default HERMES_HOME matches hermes-agent hermes_constants.get_hermes_home().
+//
+// Control Hub app data defaults to $HOME/control-hub/data so paths align with
+// nested Hermes cron/jobs.py (mark_job_run mission file updates).
+// Override with `CH_DATA_DIR` or `CONTROL_HUB_DATA_DIR`.
 
-export const HOME = process.env.HOME || "";
-export const HERMES_HOME = process.env.HERMES_HOME || (HOME + "/.hermes");
-export const MC_DATA_DIR = HERMES_HOME + "/mission-control/data";
+export const HERMES_HOME =
+  process.env.HERMES_HOME || homedir() + "/.hermes";
+
+function normalizeDirPath(dir: string): string {
+  return dir.replace(/[/\\]+$/, "");
+}
+
+/**
+ * Control Hub JSON data root (missions, templates, stories, …).
+ * Some keys (`operations`, `taskLists`, …) are on-disk paths used by Hermes tooling;
+ * the OSS app does not ship UIs for every path listed here.
+ * Default: `$HOME/control-hub/data`. Override with `CH_DATA_DIR` or `CONTROL_HUB_DATA_DIR`.
+ */
+export function getChDataDir(): string {
+  const raw =
+    process.env.CH_DATA_DIR ||
+    process.env.CONTROL_HUB_DATA_DIR;
+  if (raw && String(raw).trim()) {
+    return normalizeDirPath(String(raw).trim());
+  }
+  return normalizeDirPath(homedir() + "/control-hub/data");
+}
+
+export function getMcDataDir(): string {
+  return getChDataDir();
+}
+
+export const CH_DATA_DIR = getChDataDir();
+
+/** Canonical alias for app data root (same value as CH_DATA_DIR). */
+export const CONTROL_HUB_DATA_DIR = CH_DATA_DIR;
 
 // Standard file paths
 export const PATHS = {
@@ -25,8 +59,14 @@ export const PATHS = {
   logs: HERMES_HOME + "/logs",
   backups: HERMES_HOME + "/backups",
   memoryDb: HERMES_HOME + "/memory_store.db",
-  missions: MC_DATA_DIR + "/missions",
-  templates: MC_DATA_DIR + "/templates",
+  missions: CH_DATA_DIR + "/missions",
+  templates: CH_DATA_DIR + "/templates",
+  operations: CH_DATA_DIR + "/operations",
+  stories: CH_DATA_DIR + "/stories",
+  recroom: CH_DATA_DIR + "/recroom",
+  taskLists: CH_DATA_DIR + "/task-lists",
+  packages: CH_DATA_DIR + "/packages",
+  workspaces: CH_DATA_DIR + "/workspaces",
 } as const;
 
 // Read a config value from config.yaml using js-yaml
@@ -72,12 +112,18 @@ export function getDefaultModelConfig(): DefaultModelConfig {
       return { model: modelSection, provider: "", base_url: "", api_key: "" };
     }
     if (typeof modelSection === "object" && modelSection !== null) {
-      const mc = modelSection as Record<string, unknown>;
+      const ch = modelSection as Record<string, unknown>;
+      const defaultModel =
+        typeof ch.default === "string"
+          ? ch.default
+          : typeof ch.model === "string"
+            ? ch.model
+            : "";
       return {
-        model: typeof mc.default === "string" ? mc.default : "",
-        provider: typeof mc.provider === "string" ? mc.provider : "",
-        base_url: typeof mc.base_url === "string" ? mc.base_url : "",
-        api_key: typeof mc.api_key === "string" ? mc.api_key : "",
+        model: defaultModel,
+        provider: typeof ch.provider === "string" ? ch.provider : "",
+        base_url: typeof ch.base_url === "string" ? ch.base_url : "",
+        api_key: typeof ch.api_key === "string" ? ch.api_key : "",
       };
     }
     return { model: "", provider: "", base_url: "", api_key: "" };

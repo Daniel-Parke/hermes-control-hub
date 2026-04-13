@@ -1,6 +1,6 @@
 # Branching Strategy
 
-Mission Control uses a **dev → main** branching model with PR-based approval for production changes.
+Control Hub uses a **dev → main** branching model with PR-based approval for production changes.
 
 ## Branch Structure
 
@@ -37,7 +37,7 @@ git push origin dev
 # Human workflow (manual)
 gh pr list                          # See open PRs
 gh pr review <number> --approve     # Approve
-gh pr merge <number> --merge        # Merge to main
+gh pr merge <number>                # Merge to main (merge, squash, or rebase per team policy)
 
 # Deploy from main
 git checkout main
@@ -56,6 +56,8 @@ Set these on GitHub (Settings → Branches → Branch protection rules for `main
 - [x] Require status checks to pass (build)
 - [x] Require branches to be up to date
 - [ ] Allow force pushes (keep OFF)
+
+**Enforcement:** Rely on branch protection and required checks. The **Branch Guard** workflow on `main` is informational only (it does not block squash or rebase merges).
 
 ## Agent Permission Model
 

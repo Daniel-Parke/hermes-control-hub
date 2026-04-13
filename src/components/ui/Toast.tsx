@@ -4,7 +4,7 @@
 
 "use client";
 
-import { useEffect, useState, useCallback, useMemo, useRef } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { Check, AlertCircle, Info, X } from "lucide-react";
 
 export type ToastType = "success" | "error" | "info";
@@ -87,8 +87,6 @@ interface ToastState {
 /** Prefer destructuring `{ showToast, toastElement }` — the returned object is not referentially stable when toasts mount/unmount. */
 export function useToast(duration = 4000) {
   const [toast, setToast] = useState<ToastState | null>(null);
-  const durationRef = useRef(duration);
-  durationRef.current = duration;
 
   const showToast = useCallback((message: string, type: ToastType = "success") => {
     setToast({ message, type, id: Date.now() });
@@ -103,11 +101,11 @@ export function useToast(duration = 4000) {
           key={toast.id}
           message={toast.message}
           type={toast.type}
-          duration={durationRef.current}
+          duration={duration}
           onClose={handleClose}
         />
       ) : null,
-    [toast, handleClose]
+    [toast, handleClose, duration]
   );
 
   return useMemo(() => ({ showToast, toastElement }), [showToast, toastElement]);

@@ -90,15 +90,15 @@ export default function SessionsPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  // Extract unique sources
+  const sessions = data?.sessions;
   const sources = useMemo(() => {
-    if (!data?.sessions) return [];
+    if (!sessions) return [];
     const srcs = new Set<string>();
-    for (const s of data.sessions) {
+    for (const s of sessions) {
       if (s.source) srcs.add(s.source);
     }
     return Array.from(srcs).sort();
-  }, [data?.sessions]);
+  }, [sessions]);
 
   const filteredSessions =
     data?.sessions.filter((session) => {

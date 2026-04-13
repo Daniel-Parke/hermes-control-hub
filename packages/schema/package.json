@@ -1,0 +1,30 @@
+{
+  "name": "@agent-control-hub/schema",
+  "version": "1.0.0",
+  "private": false,
+  "description": "Versioned Control Hub and marketplace schemas for OSS.",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./json/mission-v1.schema.json": "./json/mission-v1.schema.json",
+    "./json/template-pack-v1.schema.json": "./json/template-pack-v1.schema.json"
+  },
+  "files": [
+    "dist",
+    "json",
+    "src",
+    "scripts"
+  ],
+  "scripts": {
+    "build": "npm run generate:json && tsc -p tsconfig.json",
+    "generate:json": "npx tsx scripts/generate-json-schema.ts",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "typescript": "^5"
+  }
+}

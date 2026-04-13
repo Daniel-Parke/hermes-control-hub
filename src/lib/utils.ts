@@ -87,60 +87,17 @@ export function messageSummary(content: string | undefined): string {
 
 // ── Schedule Parsing ──────────────────────────────────────────
 
+export type { ParsedSchedule } from "@/lib/schedule/types";
+
+import type { ParsedSchedule } from "@/lib/schedule/types";
+import { parseScheduleOss } from "@/lib/schedule/parse-schedule-oss";
+
 /**
- * Parse a schedule string into the structure the cron scheduler expects.
- * - "every 15m" / "every 2h" → { kind: "interval", minutes: N, display }
- * - "0 * /2 * * *" (cron expr) → { kind: "cron", expr, display }
- * - "2026-04-09T12:00:00Z"   → { kind: "once", run_at: "...", display }
- *
- * Shared between cron/route.ts and missions/route.ts.
+ * Parse a schedule string (Control Hub Simple / OSS export).
+ * Hermes-compatible intervals, cron, and ISO one-shots only.
  */
-export function parseSchedule(raw: string): { kind: string; minutes?: number; expr?: string; run_at?: string; display?: string } {
-  const s = (typeof raw === "string" ? raw : "").trim();
-
-  // Rich interval patterns: "every 1h 30m", "every 2d", "every 1w 3d", etc.
-  const richIntervalMatch = s.match(/^every\s+(\d+)\s*(m|h|d|w)(?:\s+(\d+)\s*(m|h))?$/);
-  if (richIntervalMatch) {
-    let minutes = parseInt(richIntervalMatch[1], 10);
-    const unit1 = richIntervalMatch[2];
-    if (unit1 === "h") minutes *= 60;
-    else if (unit1 === "d") minutes *= 1440;
-    else if (unit1 === "w") minutes *= 10080;
-    if (richIntervalMatch[3]) {
-      let extra = parseInt(richIntervalMatch[3], 10);
-      if (richIntervalMatch[4] === "h") extra *= 60;
-      minutes += extra;
-    }
-    const display = minutes >= 1440
-      ? `every ${minutes / 1440}d`
-      : minutes >= 60
-        ? `every ${Math.floor(minutes / 60)}h${minutes % 60 ? ` ${minutes % 60}m` : ""}`
-        : `every ${minutes}m`;
-    return { kind: "interval", minutes, display };
-  }
-
-  // Simple interval patterns: "every 15m", "every 2h", "30m", "1h"
-  const intervalMatch = s.match(/^(?:every\s+)?(\d+)\s*(m|min|minutes?|h|hr|hours?)$/i);
-  if (intervalMatch) {
-    const n = parseInt(intervalMatch[1], 10);
-    const unit = intervalMatch[2].toLowerCase();
-    const minutes = unit.startsWith("h") ? n * 60 : n;
-    return { kind: "interval", minutes, display: `every ${minutes}m` };
-  }
-
-  // Cron expression: 5 space-separated fields
-  const cronParts = s.split(/\s+/);
-  if (cronParts.length === 5 && cronParts.every((p) => /^[\d\*\/\-\,]+$/.test(p))) {
-    return { kind: "cron", expr: s, display: s };
-  }
-
-  // ISO timestamp → one-shot
-  if (/^\d{4}-\d{2}-\d{2}T/.test(s)) {
-    return { kind: "once", run_at: s, display: s };
-  }
-
-  // Fallback
-  return { kind: "interval", minutes: 15, display: s };
+export function parseSchedule(raw: string): ParsedSchedule {
+  return parseScheduleOss(raw);
 }
 
 // ── Cron Job Types ────────────────────────────────────────────
@@ -152,6 +109,7 @@ export interface CronJobData {
   skills: string[];
   model: string;
   provider?: string;
+  base_url?: string;
   profile?: string;
   timeout?: number;
   schedule: { kind: string; minutes?: number; expr?: string; run_at?: string; display?: string } | string;

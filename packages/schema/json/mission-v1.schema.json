@@ -1,0 +1,188 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "MissionV1",
+  "description": "Mission record under CH_DATA_DIR/missions/{id}.json. Generated from missionV1Schema (Zod).",
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "const": "1.0.0"
+    },
+    "id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "name": {
+      "type": "string"
+    },
+    "prompt": {
+      "type": "string"
+    },
+    "goals": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "skills": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "model": {
+      "type": "string"
+    },
+    "profile": {
+      "type": "string"
+    },
+    "missionTimeMinutes": {
+      "type": "integer",
+      "minimum": 5,
+      "maximum": 120
+    },
+    "timeoutMinutes": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 120
+    },
+    "schedule": {
+      "type": "string"
+    },
+    "templateId": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "queued",
+        "dispatched",
+        "successful",
+        "failed"
+      ]
+    },
+    "dispatchMode": {
+      "type": "string",
+      "enum": [
+        "save",
+        "now",
+        "cron"
+      ]
+    },
+    "createdAt": {
+      "type": "string"
+    },
+    "updatedAt": {
+      "type": "string"
+    },
+    "results": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "duration": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "error": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "cronJobId": {
+      "type": "string"
+    },
+    "cronJob": {
+      "type": "object",
+      "properties": {
+        "state": {
+          "type": "string"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "lastRun": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "lastStatus": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "schedule": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "state",
+        "enabled",
+        "lastRun",
+        "lastStatus"
+      ],
+      "additionalProperties": false
+    },
+    "extensions": {
+      "type": "object",
+      "propertyNames": {
+        "type": "string"
+      },
+      "additionalProperties": {}
+    }
+  },
+  "required": [
+    "id",
+    "name",
+    "prompt",
+    "goals",
+    "skills",
+    "model",
+    "profile",
+    "missionTimeMinutes",
+    "timeoutMinutes",
+    "schedule",
+    "templateId",
+    "status",
+    "dispatchMode",
+    "createdAt",
+    "updatedAt",
+    "results",
+    "duration",
+    "error"
+  ],
+  "additionalProperties": {}
+}
