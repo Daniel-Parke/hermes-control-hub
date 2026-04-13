@@ -56,7 +56,7 @@ export async function GET(
       return NextResponse.json(
         {
           error:
-            "Session file is too large to load in Command Hub (max " +
+            "Session file is too large to load in Control Hub (max " +
             Math.round(maxBytes / (1024 * 1024)) +
             " MB).",
         },

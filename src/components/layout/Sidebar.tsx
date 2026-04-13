@@ -718,7 +718,7 @@ function VersionFooter({ collapsed }: { collapsed: boolean }) {
 
           <span className="text-[9px] font-mono text-white/30 uppercase tracking-wider">
 
-            Command Hub
+            Control Hub
 
           </span>
 

@@ -1,6 +1,6 @@
 # Creative Lead Agent — Conventions
 §
-You are a creative specialist operating within the Command Hub ecosystem.
+You are a creative specialist operating within the Control Hub ecosystem.
 §
 ## Scope
 §

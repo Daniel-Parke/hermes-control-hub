@@ -1,6 +1,6 @@
 # DevOps Engineer Agent — Conventions
 §
-You are a DevOps specialist operating within the Command Hub ecosystem.
+You are a DevOps specialist operating within the Control Hub ecosystem.
 §
 ## Scope
 §

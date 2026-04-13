@@ -1,13 +1,13 @@
 #!/bin/bash
 # ═══════════════════════════════════════════════════════════════
-# Command Hub — Install Script
+# Control Hub — Install Script
 # ═══════════════════════════════════════════════════════════════
-# One-command installer for Command Hub (Hermes Control Hub OSS).
+# One-command installer for Control Hub (Hermes Control Hub OSS).
 # Handles fresh install, re-install, optional Hermes bootstrap (two-pass), and Hindsight.
 #
 # Usage:
 #   cd <repo> && bash scripts/install.sh
-#   # Or standalone (auto-clones); INSTALL_DIR defaults to ~/command-hub:
+#   # Or standalone (auto-clones); INSTALL_DIR defaults to ~/control-hub:
 #   bash install.sh
 #
 # Environment (non-interactive / CI / VPS):
@@ -18,7 +18,7 @@
 #   INSTALL_HERMES_SKIP_RECONFIRM=1 — with INSTALL_HERMES=yes, skip second confirmation (automation only)
 #
 # Hermes two-pass: if you choose to install Hermes when prompted, this script runs the official
-# installer and `hermes setup`, then exits — run install.sh again to finish Command Hub setup.
+# installer and `hermes setup`, then exits — run install.sh again to finish Control Hub setup.
 #
 # Override: INSTALL_DIR=/path/to/hub bash scripts/install.sh
 # Prerequisites: Node.js 18+, git. Hermes recommended (see prompts).
@@ -27,7 +27,7 @@
 set -e
 
 REPO_URL="${REPO_URL:-https://github.com/Daniel-Parke/hermes-control-hub.git}"
-INSTALL_DIR="${INSTALL_DIR:-$HOME/command-hub}"
+INSTALL_DIR="${INSTALL_DIR:-$HOME/control-hub}"
 BRANCH="${BRANCH:-main}"
 
 SCRIPT_PATH="${BASH_SOURCE[0]:-$0}"
@@ -57,7 +57,7 @@ HERMES_INSTALL_URL="https://raw.githubusercontent.com/NousResearch/hermes-agent/
 
 echo ""
 echo "╔══════════════════════════════════════════╗"
-echo "║   Command Hub — Installer                 ║"
+echo "║   Control Hub — Installer                 ║"
 echo "╚══════════════════════════════════════════╝"
 echo ""
 
@@ -84,7 +84,7 @@ if ! hermes_cli_ok; then
                 echo "════════════════════════════════════════════════════════════"
                 echo "  Next: open a new terminal if \`hermes\` is not on PATH, then run:"
                 echo "    bash $(basename "$SCRIPT_PATH")"
-                echo "  (from your Command Hub repo or re-download install.sh)"
+                echo "  (from your Control Hub repo or re-download install.sh)"
                 echo "  Full path hint: $SCRIPT_PATH"
                 echo "════════════════════════════════════════════════════════════"
                 exit 0
@@ -118,7 +118,7 @@ if ! hermes_cli_ok; then
             ok "Hermes install step finished."
             echo ""
             echo "════════════════════════════════════════════════════════════"
-            echo "  Re-run this script to finish Command Hub setup:"
+            echo "  Re-run this script to finish Control Hub setup:"
             echo "    bash scripts/install.sh"
             echo "  (from your repo clone, or the path you used to start the installer)"
             echo "════════════════════════════════════════════════════════════"
@@ -176,7 +176,7 @@ fi
 
 # ── Clone Repository ─────────────────────────────────────────
 echo ""
-info "Cloning Command Hub..."
+info "Cloning Control Hub..."
 if ! git clone --branch "$BRANCH" --single-branch "$REPO_URL" "$INSTALL_DIR" 2>&1; then
     fail "Clone failed. Check your internet connection and try again."
 fi
@@ -188,7 +188,7 @@ if hermes_cli_ok && [ -f "$HERMES_HOME/config.yaml" ]; then
         info "Enabling gateway API server for Rec Room..."
         mkdir -p "$HERMES_HOME"
         echo "" >> "$HERMES_HOME/.env"
-        echo "# Enable API server for Command Hub Rec Room" >> "$HERMES_HOME/.env"
+        echo "# Enable API server for Control Hub Rec Room" >> "$HERMES_HOME/.env"
         echo "API_SERVER_ENABLED=true" >> "$HERMES_HOME/.env"
         ok "API server enabled"
     fi
@@ -205,7 +205,7 @@ bash scripts/setup.sh
 # ── Create agent profiles (Hermes) ───────────────────────────
 if hermes_cli_ok && [ -f "$HERMES_HOME/config.yaml" ]; then
     echo ""
-    info "Setting up Command Hub agent profiles..."
+    info "Setting up Control Hub agent profiles..."
     PROFILE_TEMPLATES="$INSTALL_DIR/scripts/profiles"
     PROFILES=("ch-qa-engineer" "ch-devops-engineer" "ch-swe-engineer" "ch-data-engineer" "ch-data-scientist" "ch-ops-director" "ch-creative-lead" "ch-support-agent")
     for profile in "${PROFILES[@]}"; do

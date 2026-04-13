@@ -34,7 +34,7 @@ export function middleware(request: NextRequest): NextResponse {
   if (isCommercialPath(pathname)) {
     if (pathname.startsWith("/api/")) {
       return NextResponse.json(
-        { error: "Not available in Command Hub Simple (OSS) edition" },
+        { error: "Not available in Control Hub Simple (OSS) edition" },
         { status: 404 }
       );
     }

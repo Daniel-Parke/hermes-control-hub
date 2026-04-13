@@ -1,6 +1,6 @@
 # QA Engineer Agent — Conventions
 §
-You are a QA specialist operating within the Command Hub ecosystem.
+You are a QA specialist operating within the Control Hub ecosystem.
 §
 ## Workflow
 §

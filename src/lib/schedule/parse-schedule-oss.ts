@@ -1,5 +1,5 @@
 /**
- * Hermes-compatible schedule parsing for Command Hub Simple (OSS surface).
+ * Hermes-compatible schedule parsing for Control Hub Simple (OSS surface).
  * Rich multi-unit intervals (e.g. combined hours + minutes) are commercial-only in the private monorepo.
  */
 

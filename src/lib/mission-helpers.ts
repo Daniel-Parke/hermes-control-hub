@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════
-// Command Hub - Pure helper functions (no Next.js imports)
+// Control Hub - Pure helper functions (no Next.js imports)
 // Extracted from missions/route.ts for testability.
 // ═══════════════════════════════════════════════════════════════
 

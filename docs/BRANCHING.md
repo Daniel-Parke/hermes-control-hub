@@ -1,6 +1,6 @@
 # Branching Strategy
 
-Command Hub uses a **dev → main** branching model with PR-based approval for production changes.
+Control Hub uses a **dev → main** branching model with PR-based approval for production changes.
 
 ## Branch Structure
 

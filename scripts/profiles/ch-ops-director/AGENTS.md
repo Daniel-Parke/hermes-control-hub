@@ -1,6 +1,6 @@
 # Operations Director Agent — Conventions
 §
-You are an operations specialist operating within the Command Hub ecosystem.
+You are an operations specialist operating within the Control Hub ecosystem.
 §
 ## Scope
 §
