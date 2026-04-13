@@ -12,6 +12,16 @@ This repository ships **Mission Control Simple**: a Next.js control plane for [H
 
 Commercial-only UI routes and APIs are **not present as source files** in this export (e.g. multi-step operations console, task-list coordinator UI, workspace registry UI, package bundles UI, command room). If a URL path is blocked, **middleware** returns `/edition-not-available` or a JSON error for APIs. Data directories under `MC_DATA_DIR` may still exist on disk from other tools; absence of a route here means there is no bundled UI for that feature in OSS.
 
+## Memory providers (Hindsight, Holographic, none)
+
+- **Hindsight:** Facts are managed through Hermes agent tools (for example retain/recall flows). This dashboard does **not** offer full CRUD on Hindsight facts; it surfaces status and guidance.
+- **Holographic:** Structured facts may be read and edited via Mission Control APIs where configured.
+- **None / unset:** Memory UI reflects that no provider is configured; follow Hermes CLI/docs to set up a provider.
+
+## Models and profiles
+
+**Inference endpoints and default models** are defined in Hermes (`config.yaml` per profile, environment, etc.), not in Mission Control core. This app exposes **config editing** and mission/cron payloads that include **per-run model fields** where the schema allows, so you can vary models mission-by-mission or job-by-job for token/cost tuning. Changing a profile’s default model is done through the **Config** editor (profile `config.yaml`), not via a dedicated profiles mutation API.
+
 ## Hermes documentation
 
 Follow upstream Hermes / Nous Research docs for agent behaviour, jobs, and memory providers. Model endpoints are configured in Hermes, not Mission Control.

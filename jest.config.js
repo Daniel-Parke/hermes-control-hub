@@ -3,8 +3,7 @@ const nextJest = require("next/jest.js");
 
 const createJestConfig = nextJest({ dir: "./" });
 
-const isCommercialSuite = process.env.JEST_SUITE === "commercial";
-
+/** OSS export: community test surface is `src/__tests__/oss/**` only. */
 const config = {
   testEnvironment: "jest-environment-jsdom",
   setupFilesAfterEnv: ["<rootDir>/config/jest.setup.ts"],
@@ -25,40 +24,11 @@ const config = {
       lines: 0,
       statements: 0,
     },
-    "src/lib/mission-helpers.ts": {
-      branches: 85,
-      functions: 90,
-      lines: 90,
-      statements: 90,
-    },
-    "src/lib/utils.ts": {
-      branches: 55,
-      functions: 40,
-      lines: 48,
-      statements: 45,
-    },
-    "src/lib/hermes.ts": {
-      branches: 35,
-      functions: 60,
-      lines: 50,
-      statements: 50,
-    },
   },
-  ...(isCommercialSuite
-    ? {
-        testMatch: [
-          "<rootDir>/src/__tests__/commercial/**/*.test.ts",
-          "<rootDir>/src/__tests__/commercial/**/*.test.tsx",
-        ],
-      }
-    : {
-        testMatch: ["**/__tests__/**/*.test.ts", "**/__tests__/**/*.test.tsx"],
-        testPathIgnorePatterns: [
-          "/node_modules/",
-          "/.next/",
-          "<rootDir>/src/__tests__/commercial/",
-        ],
-      }),
+  testMatch: [
+    "<rootDir>/src/__tests__/oss/**/*.test.ts",
+    "<rootDir>/src/__tests__/oss/**/*.test.tsx",
+  ],
 };
 
 module.exports = createJestConfig(config);

@@ -80,7 +80,7 @@ Hermes runtime (separate process) → reads/writes same Hermes paths; executes c
 npm test
 ```
 
-Tests live under `src/__tests__/` (see repository layout).
+Automated tests in this repository live **only** under `src/__tests__/oss/` (Simple edition contract, middleware, templates, scheduling surface). Deeper suites run in the upstream private monorepo.
 
 ---
 

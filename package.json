@@ -8,11 +8,10 @@
     "start": "next start",
     "lint": "eslint",
     "start:network": "next start -H 0.0.0.0",
-    "test": "cross-env MC_EDITION=simple JEST_SUITE=oss jest",
-    "test:oss": "cross-env MC_EDITION=simple JEST_SUITE=oss jest",
+    "test": "cross-env MC_EDITION=simple jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
-    "test:e2e": "playwright test"
+    "test:e2e": "cross-env MC_EDITION=simple NEXT_PUBLIC_MC_EDITION=simple PLAYWRIGHT_OSS_ONLY=1 playwright test"
   },
   "dependencies": {
     "@agent-control-hub/config": "file:./packages/config",

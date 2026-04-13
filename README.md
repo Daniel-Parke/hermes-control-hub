@@ -2,7 +2,7 @@
 
 A command centre dashboard for [Hermes Agent](https://github.com/NousResearch/hermes-agent). Monitor your agent fleet, dispatch missions, manage configurations, and control everything from one place.
 
-**Docs:** [OSS scope](docs/OSS_SCOPE.md) · [Platform vision](docs/PLATFORM_VISION.md) · [Deploy / TLS / Docker](docs/DEPLOY.md) · [Changelog](CHANGELOG.md) · [Migration (data dir)](MIGRATION.md) · [hermes-config checklist](docs/HERMES_CONFIG_INTEGRATION.md)
+**Docs:** [OSS scope](docs/OSS_SCOPE.md) · [Edition components](docs/EDITION_COMPONENTS.md) · [Platform vision](docs/PLATFORM_VISION.md) · [Deploy / TLS / Docker](docs/DEPLOY.md) · [Changelog](CHANGELOG.md) · [Migration (data dir)](MIGRATION.md) · [hermes-config checklist](docs/HERMES_CONFIG_INTEGRATION.md)
 
 ![Dashboard](screenshots/Hermes_Dashboard.png)
 
@@ -257,6 +257,7 @@ Documentation for **Mission Control Simple** lives in the `docs/` directory:
 | Document | Description |
 |----------|-------------|
 | [OSS scope](docs/OSS_SCOPE.md) | What this repository includes and excludes |
+| [Edition components](docs/EDITION_COMPONENTS.md) | How Simple vs commercial surfaces are separated upstream |
 | [API Reference](docs/API.md) | REST endpoints with request/response formats |
 | [Architecture](docs/ARCHITECTURE.md) | System design, data flow, directory structure |
 | [Contributing](docs/CONTRIBUTING.md) | Development workflow, code standards, PR checklist |

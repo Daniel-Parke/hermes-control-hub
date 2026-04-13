@@ -3,7 +3,21 @@ import { test, expect } from "@playwright/test";
 test.describe("OSS smoke (Simple edition)", () => {
   test("dashboard loads", async ({ page }) => {
     await page.goto("/");
-    await expect(page.locator("body")).toBeVisible();
+    const title = page.locator("h1").filter({ hasText: "MISSION" });
+    await expect(title).toBeVisible();
+    await expect(title.getByText("CONTROL", { exact: true })).toBeVisible();
+  });
+
+  test("cron page loads", async ({ page }) => {
+    await page.goto("/cron");
+    await expect(page.getByRole("heading", { name: /Cron Jobs/i })).toBeVisible();
+  });
+
+  test("missions page loads", async ({ page }) => {
+    await page.goto("/missions");
+    await expect(
+      page.getByRole("heading", { name: "Missions", exact: true })
+    ).toBeVisible();
   });
 
   test("commercial path redirects away from operations UI", async ({ page }) => {

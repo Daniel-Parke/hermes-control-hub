@@ -36,9 +36,18 @@ jobs:
       - run: npm run lint
       - run: npx tsc --noEmit -p tsconfig.json
       - run: npm test
+        env:
+          MC_EDITION: simple
+          NEXT_PUBLIC_MC_EDITION: simple
       - run: npm run build
+        env:
+          MC_EDITION: simple
+          NEXT_PUBLIC_MC_EDITION: simple
       - name: Coverage report
         run: npm run test:coverage
+        env:
+          MC_EDITION: simple
+          NEXT_PUBLIC_MC_EDITION: simple
       - name: Upload coverage HTML
         uses: actions/upload-artifact@v4
         with:
@@ -51,3 +60,6 @@ jobs:
         run: npm run test:e2e
         env:
           CI: true
+          MC_EDITION: simple
+          NEXT_PUBLIC_MC_EDITION: simple
+          PLAYWRIGHT_OSS_ONLY: "1"

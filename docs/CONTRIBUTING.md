@@ -1,6 +1,10 @@
 # Contributing
 
-This guide applies to **this repository** (Mission Control Simple / OSS). Run **`npm test`** for the Jest suite configured for this tree; do not assume commercial-only test projects exist here.
+This guide applies to **this repository** (Mission Control Simple / OSS). Run **`npm test`** for the Jest suite: it executes **only** tests under `src/__tests__/oss/` (Simple-edition surface). There is no commercial test project here.
+
+## Upstream source
+
+Mission Control is **released from a private monorepo** using an allowlisted export. Most day-to-day development and review may happen upstream; this public tree is the supported **OSS artifact**. Non-trivial changes merged here should be mirrored upstream so the next `publish:oss` export does not overwrite your work. Maintainers may restrict or decline community PRs that do not align with the product roadmap.
 
 ## Getting Started
 
