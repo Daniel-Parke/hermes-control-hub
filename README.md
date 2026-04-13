@@ -6,6 +6,12 @@ A command centre dashboard for [Hermes Agent](https://github.com/NousResearch/he
 
 ![Dashboard](screenshots/Hermes_Dashboard.png)
 
+### OSS Simple edition (this repo)
+
+- **Commercial-only areas** (Operations, Task Lists, Workspaces, Hermes Packages, Command Room) are **blocked in Simple edition**: the app **redirects** to `/edition-not-available` and those items are hidden from the sidebar when `NEXT_PUBLIC_MC_EDITION` is not `commercial`.
+- **`next build` still prints routes like `/operations`** — Next compiles those pages; Simple edition **does not remove them from the tree**, it **denies access at runtime** (middleware). Seeing `○ /operations` in the build log is expected, not a sign you are on an old build.
+- After changing env, run **`npm run build`** again, then **restart** the `next start` (or systemd/Docker) process. If port 3000 was serving an old server, stop it or you will keep hitting the previous binary.
+
 ---
 
 ## Features

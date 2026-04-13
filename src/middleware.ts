@@ -42,7 +42,8 @@ export function middleware(request: NextRequest): NextResponse {
         { status: 404 }
       );
     }
-    return NextResponse.rewrite(new URL("/edition-not-available", request.url));
+    // Redirect (not rewrite) so the browser URL shows /edition-not-available — rewrites kept /operations in the bar and looked like the old page.
+    return NextResponse.redirect(new URL("/edition-not-available", request.url));
   }
   return NextResponse.next();
 }
