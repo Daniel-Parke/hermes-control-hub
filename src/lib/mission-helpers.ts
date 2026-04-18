@@ -3,11 +3,24 @@
 // Extracted from missions/route.ts for testability.
 // ═══════════════════════════════════════════════════════════════
 
-import type { TemplateDef } from "./mission-template-def";
 import { TEMPLATES_OSS } from "@/lib/mission-templates-oss";
 import type { CronJobData } from "@/lib/utils";
 
-export type { TemplateDef } from "./mission-template-def";
+// ── Template definition (prompt-building blocks) ───────────────
+
+export interface TemplateDef {
+  id: string;
+  name: string;
+  icon: string;
+  color: string;
+  category: string;
+  profile: string;
+  description: string;
+  instruction: string;
+  context: string;
+  goals: string[];
+  suggestedSkills: string[];
+}
 
 // ── Scope Labels ──────────────────────────────────────────────
 

@@ -1,4 +1,4 @@
-﻿import type { TemplateDef } from "@/lib/mission-template-def";
+﻿import type { TemplateDef } from "@/lib/mission-helpers";
 
 export const TEMPLATES_OSS: TemplateDef[] = [
   // === ENGINEERING - QA ===

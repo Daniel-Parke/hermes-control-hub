@@ -1,7 +1,1253 @@
+// ═══════════════════════════════════════════════════════════════
+// Missions - Dispatch Center with Real Monitoring
+// ═══════════════════════════════════════════════════════════════
+
 "use client";
 
-import MissionsPageOss from "./missions-page-oss";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { useRouter } from "next/navigation";
+import {
+  Rocket,
+  Plus,
+  Search,
+  Clock,
+  CheckCircle2,
+  XCircle,
+  Loader2,
+  Trash2,
+  Zap,
+  ChevronRight,
+  X,
+  Send,
+  ExternalLink,
+  StopCircle,
+  RefreshCw,
+  Bug,
+  GitPullRequest,
+  Wrench,
+  PenTool,
+  Edit3,
+  Save,
+  Cpu,
+  Activity,
+  Shield,
+  Terminal,
+  Database,
+  Globe,
+  Code,
+  FileText,
+  Layers,
+} from "lucide-react";
+import Link from "next/link";
+import Card, { StatusDot } from "@/components/ui/Card";
+import Button from "@/components/ui/Button";
+import { useToast } from "@/components/ui/Toast";
+import AutoTextarea from "@/components/ui/AutoTextarea";
+import Modal from "@/components/ui/Modal";
+import MissionTimeSelector from "@/components/ui/MissionTimeSelector";
+import TimeoutSelector from "@/components/ui/TimeoutSelector";
+import IntervalSelector from "@/components/ui/IntervalSelector";
+import ProfileSelector from "@/components/ui/ProfileSelector";
+import CategoryAccordion from "@/components/ui/CategoryAccordion";
+import TemplateCard from "@/components/ui/TemplateCard";
+import { timeAgo, timeUntil, titleCase } from "@/lib/utils";
+import { useMissionsApi } from "@/hooks/useMissionsApi";
+import type { Mission } from "@/types/hermes";
+
+// Available icons for templates
+const TEMPLATE_ICONS = [
+  "Search", "Bug", "GitPullRequest", "Wrench", "PenTool", "Zap",
+  "Rocket", "Cpu", "Activity", "Shield", "Terminal", "Database",
+  "Globe", "Code", "FileText", "Layers",
+] as const;
+
+const TEMPLATE_COLORS = [
+  "cyan", "purple", "pink", "green", "orange",
+] as const;
+
+type MissionRow = Mission & {
+  cronJob?: {
+    state: string;
+    enabled: boolean;
+    lastRun: string | null;
+    lastStatus: string | null;
+  };
+  latestSession?: { id: string; modified: string } | null;
+};
+
+interface MissionTemplate {
+  id: string;
+  name: string;
+  icon: string;
+  color: string;
+  category: string;
+  profile: string;
+  description: string;
+  instruction: string;
+  context: string;
+  goals: string[];
+  suggestedSkills: string[];
+  isCustom?: boolean;
+  dispatchMode?: string;
+  schedule?: string;
+}
+
+interface MissionDetail {
+  mission: MissionRow;
+  cronJob: {
+    id: string;
+    name: string;
+    state: string;
+    enabled: boolean;
+    lastRun: string | null;
+    nextRun: string | null;
+    lastStatus: string | null;
+    schedule: string;
+  } | null;
+  sessions: Array<{ id: string; modified: string; size: number }>;
+}
+
+// Template icons resolved at render time via name lookup
+
+const statusColors: Record<string, { dot: "online" | "warning" | "error" | "idle"; bg: string; text: string }> = {
+  queued: { dot: "warning", bg: "bg-orange-500/10", text: "text-neon-orange" },
+  dispatched: { dot: "online", bg: "bg-blue-500/10", text: "text-blue-400" },
+  successful: { dot: "online", bg: "bg-green-500/10", text: "text-neon-green" },
+  failed: { dot: "error", bg: "bg-red-500/10", text: "text-red-400" },
+};
 
 export default function MissionsPage() {
-  return <MissionsPageOss />;
+  const { fetchMissions, fetchTemplates, fetchMissionDetail } = useMissionsApi();
+  const router = useRouter();
+  const [missions, setMissions] = useState<MissionRow[]>([]);
+  const [templates, setTemplates] = useState<MissionTemplate[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showCreate, setShowCreate] = useState(false);
+  const [filter, setFilter] = useState("all");
+  const [search, setSearch] = useState("");
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [detail, setDetail] = useState<MissionDetail | null>(null);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const { showToast, toastElement } = useToast();
+  const templateApplied = useRef(false);
+  const expandedIdRef = useRef<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [showTemplateEditor, setShowTemplateEditor] = useState(false);
+  const [showTemplateManager, setShowTemplateManager] = useState(false);
+  const [editingTemplateId, setEditingTemplateId] = useState<string | null>(null);
+  const [templateName, setTemplateName] = useState("");
+  const [templateDescription, setTemplateDescription] = useState("");
+  const [templateIcon, setTemplateIcon] = useState("Zap");
+  const [templateColor, setTemplateColor] = useState("cyan");
+  const [templateSaving, setTemplateSaving] = useState(false);
+
+  // Create form state
+  const [newName, setNewName] = useState("");
+  const [newInstruction, setNewInstruction] = useState("");
+  const [newContext, setNewContext] = useState("");
+  const [newGoals, setNewGoals] = useState("");
+  const [newDispatch, setNewDispatch] = useState<"save" | "now" | "cron">("now");
+  const [newSchedule, setNewSchedule] = useState("every 5m");
+  const [newMissionTime, setNewMissionTime] = useState(15);
+  const [newTimeout, setNewTimeout] = useState(10);
+  const [newProfile, setNewProfile] = useState("");
+  const [dispatching, setDispatching] = useState(false);
+  const [categoryFilter, setCategoryFilter] = useState("all");
+
+  const fetchData = useCallback(() => {
+    fetchMissions()
+      .then((list) => setMissions(list))
+      .catch(() => {});
+
+    fetchTemplates()
+      .then((loaded) => {
+        setTemplates(loaded);
+        if (!templateApplied.current && loaded.length > 0) {
+          const url = new URL(window.location.href);
+          const templateId = url.searchParams.get("template");
+          if (templateId) {
+            const t = loaded.find((tmpl: MissionTemplate) => tmpl.id === templateId);
+            if (t) {
+              setNewName(t.name);
+              setNewInstruction(t.instruction);
+              setNewContext(t.context);
+              setNewGoals(t.goals.join("\n"));
+              setShowCreate(true);
+              templateApplied.current = true;
+              window.history.replaceState({}, "", "/missions");
+            }
+          }
+        }
+      })
+      .catch(() => {});
+  }, [fetchMissions, fetchTemplates]);
+
+  const fetchDetail = useCallback(
+    (id: string, showLoading = true) => {
+      if (showLoading) setDetailLoading(true);
+      fetchMissionDetail(id)
+        .then((data) => {
+          if (data) setDetail(data);
+        })
+        .catch(() => {})
+        .finally(() => {
+          if (showLoading) setDetailLoading(false);
+        });
+    },
+    [fetchMissionDetail]
+  );
+
+  useEffect(() => {
+    expandedIdRef.current = expandedId;
+  }, [expandedId]);
+
+  useEffect(() => {
+    fetchData();
+    setLoading(false);
+    const interval = setInterval(() => {
+      fetchData();
+      const id = expandedIdRef.current;
+      if (id) fetchDetail(id, false);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [fetchData, fetchDetail]);
+
+  // Load detail once when expanded (with loading spinner)
+  useEffect(() => {
+    if (expandedId) {
+      fetchDetail(expandedId, true);
+    } else {
+      setDetail(null);
+    }
+  }, [expandedId, fetchDetail]);
+
+  // Build final prompt from instruction + context
+  const buildPrompt = () => {
+    const parts = [newInstruction.trim()];
+    if (newContext.trim()) {
+      // Strip any existing header from context (defense against round-trip duplication)
+      const cleanContext = newContext.trim().replace(/(?:## Additional Context\n\n?)+/g, "").trim();
+      if (cleanContext) {
+        parts.push("", "---", "", "## Additional Context", "", cleanContext);
+      }
+    }
+    return parts.join("\n");
+  };
+
+  const handleCreate = async () => {
+    if (!newName.trim() || !newInstruction.trim()) return;
+    if (dispatching) return; // Prevent double-submit
+    setDispatching(true);
+
+    const fullPrompt = buildPrompt();
+
+    // Update existing mission (only for active missions with a live cron job)
+    if (editingId) {
+      const existingMission = missions.find(m => m.id === editingId);
+      const isActive = existingMission && (existingMission.status === "queued" || existingMission.status === "dispatched");
+
+      if (isActive) {
+        // Active mission - update and sync to cron job
+        showToast("Updating mission...", "info");
+        const res = await fetch("/api/missions", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "update",
+            missionId: editingId,
+            name: newName,
+            prompt: fullPrompt,
+            goals: newGoals.split("\n").filter((g) => g.trim()),
+            profile: newProfile || undefined,
+            missionTimeMinutes: newMissionTime,
+            timeoutMinutes: newTimeout,
+            schedule: newDispatch === "cron" ? newSchedule : undefined,
+          }),
+        });
+        if (res.ok) {
+          showToast("Mission updated - cron job prompt synced", "success");
+          setEditingId(null);
+          setShowCreate(false);
+          fetchData();
+          if (expandedId === editingId) fetchDetail(editingId);
+        } else {
+          showToast("Failed to update mission", "error");
+        }
+        setDispatching(false);
+        return;
+      }
+
+      // Completed/failed mission - create a NEW dispatch (re-dispatch)
+      setEditingId(null); // Clear so we fall through to create path
+      // Don't show info toast here - the create path below handles it
+
+      const res = await fetch("/api/missions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "create",
+          name: newName,
+          prompt: fullPrompt,
+          goals: newGoals.split("\n").filter((g) => g.trim()),
+          dispatchMode: "now",
+          profile: newProfile || undefined,
+          missionTimeMinutes: newMissionTime,
+          timeoutMinutes: newTimeout,
+        }),
+      });
+
+      if (res.ok) {
+        showToast("Mission re-dispatched! Returning to dashboard...", "success");
+        setTimeout(() => router.push("/"), 2000);
+      } else {
+        showToast("Failed to re-dispatch mission", "error");
+        setDispatching(false);
+      }
+      return;
+    }
+
+    // Create new mission
+    showToast("Dispatching mission...", "info");
+
+    const res = await fetch("/api/missions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action: "create",
+        name: newName,
+        prompt: fullPrompt,
+        goals: newGoals.split("\n").filter((g) => g.trim()),
+        dispatchMode: newDispatch,
+        schedule: newDispatch === "cron" ? newSchedule : undefined,
+        profile: newProfile || undefined,
+        missionTimeMinutes: newMissionTime,
+        timeoutMinutes: newTimeout,
+      }),
+    });
+
+    if (res.ok) {
+      const d = await res.json();
+      if (newDispatch === "save") {
+        showToast("Mission saved as draft", "success");
+        setNewName("");
+        setNewInstruction("");
+        setNewContext("");
+        setNewGoals("");
+        setShowCreate(false);
+        fetchData();
+        setDispatching(false);
+      } else if (newDispatch === "now") {
+        showToast("Mission dispatched! Returning to dashboard...", "success");
+        setTimeout(() => router.push("/"), 2000);
+      } else {
+        showToast(`Mission scheduled - ${newSchedule}`, "success");
+        setTimeout(() => router.push("/"), 2000);
+      }
+    } else {
+      showToast("Failed to create mission", "error");
+      setDispatching(false);
+    }
+  };
+
+  const handleEdit = (m: MissionRow) => {
+    setEditingId(m.id);
+    setNewName(m.name);
+    // Split prompt back into instruction + context (best effort)
+    // The stored prompt has injected sections: Goals header, TIME BUDGET, DELEGATION RULES
+    // We need to strip these and recover the original instruction
+    let rawPrompt = m.prompt;
+
+    // Remove ## Goals tracking header block
+    rawPrompt = rawPrompt.replace(/^## Goals \(complete each in order\)\n[\s\S]*?GOAL_DONE:.*\n\n---\n\n/m, "");
+    // Remove TIME BUDGET section
+    rawPrompt = rawPrompt.replace(/## TIME BUDGET\n[^\n]*\n[^\n]*\n\n/g, "");
+    // Remove DELEGATION RULES section
+    rawPrompt = rawPrompt.replace(/## DELEGATION RULES\n(?:- [^\n]*\n){4}\n/g, "");
+
+    const parts = rawPrompt.split("\n---\n");
+    setNewInstruction(parts[0]?.trim() || rawPrompt);
+    setNewContext(
+      parts.length > 1
+        ? parts[parts.length - 1].replace(/(?:## Additional Context\n\n?)+/g, "").trim()
+        : ""
+    );
+    setNewGoals(m.goals.join("\n"));
+    // Auto-set dispatch mode to "now" for completed/failed missions (re-dispatch)
+    if (m.status === "successful" || m.status === "failed") {
+      setNewDispatch("now");
+    }
+    setShowCreate(true);
+  };
+
+  const handleSaveAsTemplate = () => {
+    if (!newInstruction.trim()) return;
+    setTemplateName(newName || "");
+    setTemplateDescription("");
+    setTemplateIcon("Zap");
+    setTemplateColor("cyan");
+    setShowTemplateEditor(true);
+  };
+
+  const handleTemplateSave = async () => {
+    if (!templateName.trim()) return;
+    setTemplateSaving(true);
+    try {
+      const payload: Record<string, unknown> = editingTemplateId
+        ? { action: "update", templateId: editingTemplateId }
+        : { action: "create" };
+
+      payload.name = templateName;
+      payload.icon = templateIcon;
+      payload.color = templateColor;
+      payload.description = templateDescription;
+
+      // Always include instruction/context/goals
+      payload.instruction = newInstruction;
+      payload.context = newContext;
+      payload.goals = newGoals.split("\n").filter((g) => g.trim());
+      if (!editingTemplateId) {
+        payload.dispatchMode = newDispatch;
+        payload.schedule = newSchedule;
+      }
+
+      const res = await fetch("/api/templates", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (res.ok) {
+        showToast(editingTemplateId ? "Template updated!" : "Template saved!", "success");
+        setShowTemplateEditor(false);
+        setEditingTemplateId(null);
+        fetchData();
+      } else {
+        showToast("Failed to save template", "error");
+      }
+    } catch {
+      showToast("Failed to save template", "error");
+    } finally {
+      setTemplateSaving(false);
+    }
+  };
+
+  const handleEditTemplate = (t: MissionTemplate & { isCustom?: boolean; instruction?: string; context?: string; dispatchMode?: string; schedule?: string }) => {
+    setEditingTemplateId(t.id);
+    setTemplateName(t.name);
+    setTemplateDescription(t.description || "");
+    setTemplateIcon(t.icon);
+    setTemplateColor(t.color);
+    setNewInstruction(t.instruction || "");
+    setNewContext(t.context || "");
+    setNewGoals((t.goals || []).join("\n"));
+    if (t.dispatchMode) setNewDispatch(t.dispatchMode as "save" | "now" | "cron");
+    if (t.schedule) setNewSchedule(t.schedule);
+    setShowTemplateManager(false);
+    setShowTemplateEditor(true);
+  };
+
+  const handleDeleteTemplate = async (templateId: string) => {
+    if (!confirm("Delete this template?")) return;
+    await fetch("/api/templates", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "delete", templateId }),
+    });
+    showToast("Template deleted", "success");
+    fetchData();
+  };
+
+  const handleTemplateSelect = (t: MissionTemplate) => {
+    setNewName(t.name);
+    setNewInstruction(t.instruction);
+    setNewContext(t.context);
+    setNewGoals(t.goals.join("\n"));
+    setNewProfile(t.profile || "");
+    if (t.dispatchMode) setNewDispatch(t.dispatchMode as "save" | "now" | "cron");
+    if (t.schedule) setNewSchedule(t.schedule);
+    setShowCreate(true);
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("Delete this mission and its cron job?")) return;
+    await fetch("/api/missions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "delete", missionId: id }),
+    });
+    showToast("Mission deleted", "success");
+    if (expandedId === id) setExpandedId(null);
+    fetchData();
+  };
+
+  const handleCancel = async (id: string) => {
+    if (!confirm("Cancel this mission? The cron job will be paused.")) return;
+    await fetch("/api/missions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "cancel", missionId: id }),
+    });
+    showToast("Mission cancelled", "success");
+    fetchData();
+    if (expandedId === id) fetchDetail(id);
+  };
+
+  const filtered = missions.filter((m) => {
+    if (filter !== "all" && m.status !== filter) return false;
+    if (search && !m.name.toLowerCase().includes(search.toLowerCase()) && !m.prompt.toLowerCase().includes(search.toLowerCase())) return false;
+    return true;
+  });
+
+  const activeCount = missions.filter((m) => m.status === "queued" || m.status === "dispatched").length;
+  const completedCount = missions.filter((m) => m.status === "successful").length;
+  const failedCount = missions.filter((m) => m.status === "failed").length;
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-dark-950 grid-bg flex items-center justify-center">
+        <Loader2 className="w-8 h-8 text-neon-cyan animate-spin" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-dark-950 grid-bg relative scanlines">
+      {toastElement}
+
+      {/* Header */}
+      <div className="border-b border-white/10 bg-dark-900/50 px-6 py-4 flex items-center justify-between sticky top-0 z-30 backdrop-blur-xl">
+        <div className="flex items-center gap-3">
+          <Rocket className="w-5 h-5 text-neon-cyan" />
+          <div>
+            <h1 className="text-lg font-bold text-white">Missions</h1>
+            <p className="text-xs text-white/40 font-mono">Dispatch and track agent missions</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-3">
+          <button onClick={fetchData} className="p-2 rounded-lg text-white/30 hover:text-white/60 hover:bg-white/5 transition-colors">
+            <RefreshCw className="w-4 h-4" />
+          </button>
+          <Button onClick={() => setShowCreate(true)} size="sm">
+            <Plus className="w-3.5 h-3.5" /> New Mission
+          </Button>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-6 py-6">
+        {/* Stats Row */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+          <div className="rounded-lg border border-white/10 bg-dark-900/50 p-3">
+            <div className="text-[10px] font-mono text-white/40 uppercase">Total</div>
+            <div className="text-xl font-bold font-mono text-white">{missions.length}</div>
+          </div>
+          <div className="rounded-lg border border-orange-500/20 bg-dark-900/50 p-3">
+            <div className="text-[10px] font-mono text-neon-orange uppercase">Active</div>
+            <div className="text-xl font-bold font-mono text-neon-orange">{activeCount}</div>
+          </div>
+          <div className="rounded-lg border border-green-500/20 bg-dark-900/50 p-3">
+            <div className="text-[10px] font-mono text-neon-green uppercase">Completed</div>
+            <div className="text-xl font-bold font-mono text-neon-green">{completedCount}</div>
+          </div>
+          <div className="rounded-lg border border-red-500/20 bg-dark-900/50 p-3">
+            <div className="text-[10px] font-mono text-red-400 uppercase">Failed</div>
+            <div className="text-xl font-bold font-mono text-red-400">{failedCount}</div>
+          </div>
+        </div>
+
+        {/* Quick Deploy Templates */}
+        {!showCreate && (
+          <div className="mb-6">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-sm font-mono text-white/40 uppercase tracking-widest flex items-center gap-2">
+                <Zap className="w-3 h-3 text-neon-cyan" />
+                Quick Deploy - Choose a Template
+              </h2>
+              <button
+                onClick={() => setShowTemplateManager(true)}
+                className="text-[10px] font-mono text-white/30 hover:text-neon-cyan flex items-center gap-1 transition-colors"
+              >
+                <Layers className="w-3 h-3" />
+                Edit Templates
+              </button>
+            </div>
+            {/* Category Accordion */}
+            <div className="space-y-2">
+              {(() => {
+                const grouped: Record<string, MissionTemplate[]> = {};
+                for (const t of templates) {
+                  const cat = t.isCustom ? "Custom" : (t.category || "Other");
+                  if (!grouped[cat]) grouped[cat] = [];
+                  grouped[cat].push(t);
+                }
+                const catOrder = [
+                  "Business - Operations",
+                  "Engineering - QA",
+                  "Engineering - DevOps",
+                  "Engineering - Software",
+                  "Engineering - Data",
+                  "Engineering - Data Science",
+                  "Business - Creative",
+                  "Support",
+                  "Custom",
+                ].filter((c) => grouped[c]);
+                const categoryColors: Record<string, string> = {
+                  "Engineering - QA": "pink", "Engineering - DevOps": "cyan",
+                  "Engineering - Software": "purple", "Engineering - Data": "green",
+                  "Engineering - Data Science": "orange", "Business - Operations": "cyan",
+                  "Business - Creative": "orange", "Support": "blue", "Custom": "purple",
+                };
+                // Apply category filter
+                const filteredCats = categoryFilter === "all"
+                  ? catOrder
+                  : catOrder.filter((c) => c === categoryFilter);
+                return filteredCats.map((cat, i) => {
+                  const items = grouped[cat];
+                  const color = categoryColors[cat] || "cyan";
+                  return (
+                    <CategoryAccordion
+                      key={cat}
+                      name={cat}
+                      count={items.length}
+                      color={color}
+                      expandable={cat === "Custom" && items.length > 6}
+                      defaultOpen={categoryFilter !== "all"}
+                    >
+                      <div className="flex flex-wrap gap-1.5">
+                        {items.map((t) => (
+                          <TemplateCard
+                            key={t.id}
+                            id={t.id}
+                            name={t.name}
+                            icon={t.icon}
+                            color={t.color}
+                            description={t.description}
+                            isCustom={t.isCustom}
+                            compact
+                            onSelect={() => handleTemplateSelect(t)}
+                          />
+                        ))}
+                      </div>
+                    </CategoryAccordion>
+                  );
+                });
+              })()}
+            </div>
+          </div>
+        )}
+
+        {/* Create Form */}
+        {showCreate && (
+          <Card className="mb-6 glow-cyan" padding="lg">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-mono text-neon-cyan uppercase tracking-widest">
+                {(() => {
+                  const existing = editingId ? missions.find(m => m.id === editingId) : null;
+                  if (existing && (existing.status === "successful" || existing.status === "failed")) {
+                    return `Re-Dispatch: ${existing.name}`;
+                  }
+                  if (editingId) return "Edit Mission";
+                  return "New Mission";
+                })()}
+              </h3>
+              <button onClick={() => { setShowCreate(false); setEditingId(null); }} className="text-white/30 hover:text-white/60">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="space-y-3">
+              {editingId && (() => {
+                const existing = missions.find(m => m.id === editingId);
+                  if (existing && (existing.status === "successful" || existing.status === "failed")) {
+                  return (
+                    <div className="rounded-lg bg-neon-cyan/5 border border-neon-cyan/20 p-3 text-xs text-neon-cyan/80 font-mono">
+                      A new mission will be created and dispatched immediately with your changes.
+                      The previous mission record will be kept for history.
+                    </div>
+                  );
+                }
+                return null;
+              })()}
+              <div>
+                <label className="text-xs text-white/40 font-mono block mb-1">Mission Name</label>
+                <input
+                  value={newName}
+                  onChange={(e) => setNewName(e.target.value)}
+                  placeholder="e.g., Research quantum computing trends"
+                  className="w-full bg-dark-800/50 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/20 outline-none focus:border-neon-cyan/50 font-mono"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-white/40 font-mono block mb-1">Instruction Prompt</label>
+                <AutoTextarea
+                  value={newInstruction}
+                  onChange={setNewInstruction}
+                  minRows={4}
+                  maxRows={16}
+                  placeholder="The agent's task instructions - what to do and how to do it..."
+                />
+                <p className="text-[10px] text-white/20 font-mono mt-0.5">
+                  Defines the agent&apos;s role, approach, and step-by-step process. Templates pre-fill this.
+                </p>
+              </div>
+              <div>
+                <label className="text-xs text-white/40 font-mono block mb-1">Context Prompt <span className="text-white/20">(optional)</span></label>
+                <AutoTextarea
+                  value={newContext}
+                  onChange={setNewContext}
+                  minRows={2}
+                  maxRows={8}
+                  placeholder="Additional context, specifics, or direction for this particular run..."
+                />
+                <p className="text-[10px] text-white/20 font-mono mt-0.5">
+                  Added below the instructions as &quot;Additional Context&quot;. Use for topic, URL, code path, or specific requirements.
+                </p>
+              </div>
+              <div>
+                <label className="text-xs text-white/40 font-mono block mb-1">Goals (one per line)</label>
+                <AutoTextarea
+                  value={newGoals}
+                  onChange={setNewGoals}
+                  minRows={2}
+                  maxRows={8}
+                  placeholder="Gather data&#10;Analyze findings&#10;Write report"
+                />
+              </div>
+              {/* Mission Settings */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label className="text-xs text-white/40 font-mono mb-1 block">Mission Scope</label>
+                  <MissionTimeSelector value={newMissionTime} onChange={setNewMissionTime} />
+                </div>
+                <div>
+                  <label className="text-xs text-white/40 font-mono mb-1 block">Agent Profile</label>
+                  <ProfileSelector value={newProfile} onChange={setNewProfile} />
+                </div>
+                <div>
+                  <label className="text-xs text-white/40 font-mono mb-1 block">Timeout (Advanced)</label>
+                  <TimeoutSelector value={newTimeout} onChange={setNewTimeout} />
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <label className="text-xs text-white/40 font-mono">Dispatch:</label>
+                {(["save", "now", "cron"] as const).map((mode) => (
+                  <button
+                    key={mode}
+                    onClick={() => setNewDispatch(mode)}
+                    className={`px-3 py-1 rounded-lg text-xs font-mono border transition-colors ${
+                      newDispatch === mode
+                        ? "border-neon-cyan/50 bg-cyan-500/10 text-neon-cyan"
+                        : "border-white/10 text-white/40 hover:text-white/60"
+                    }`}
+                  >
+                    {mode === "save" ? "Save Draft" : mode === "now" ? "Run Now" : "Recurring"}
+                  </button>
+                ))}
+              </div>
+              {newDispatch === "now" && (
+                <div className="text-[10px] text-white/30 font-mono bg-dark-800/50 rounded-lg px-3 py-2 border border-white/5">
+                  ⚡ Creates a one-shot cron job that fires within ~60 seconds. Results delivered to Discord.
+                </div>
+              )}
+              {newDispatch === "cron" && (
+                <div className="space-y-2">
+                  <label className="text-xs text-white/40 font-mono block">Schedule</label>
+                  <IntervalSelector value={newSchedule} onChange={setNewSchedule} />
+                </div>
+              )}
+              <div className="flex gap-2 pt-1">
+                <Button onClick={handleCreate} disabled={!newName.trim() || !newInstruction.trim() || dispatching} loading={dispatching}>
+                  <Send className="w-3.5 h-3.5" />
+                  {(() => {
+                    const existing = editingId ? missions.find(m => m.id === editingId) : null;
+                    const isReDispatch = existing && (existing.status === "successful" || existing.status === "failed");
+                    if (isReDispatch) return "Re-Dispatch Now";
+                    if (newDispatch === "save") return "Save Mission";
+                    if (newDispatch === "now") return "Dispatch Now";
+                    return "Schedule Mission";
+                  })()}
+                </Button>
+                {newInstruction.trim() && (
+                  <Button variant="secondary" onClick={handleSaveAsTemplate}>
+                    <Save className="w-3.5 h-3.5" /> Save as Template
+                  </Button>
+                )}
+                <Button variant="ghost" onClick={() => { setShowCreate(false); setEditingId(null); }}>Cancel</Button>
+              </div>
+            </div>
+          </Card>
+        )}
+
+        {/* Filter & Search */}
+        <div className="flex flex-wrap items-center gap-3 mb-4">
+          <div className="flex items-center gap-1 bg-dark-900/50 rounded-lg border border-white/10 p-1">
+            {["all", "queued", "dispatched", "successful", "failed"].map((f) => (
+              <button
+                key={f}
+                onClick={() => setFilter(f)}
+                className={`px-2.5 py-1 rounded-md text-[10px] font-mono capitalize transition-colors ${
+                  filter === f ? "bg-white/10 text-white" : "text-white/30 hover:text-white/50"
+                }`}
+              >
+                {f}
+              </button>
+            ))}
+          </div>
+          <div className="relative flex-1 min-w-[200px] max-w-sm">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/20" />
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search missions..."
+              className="w-full bg-dark-900/50 border border-white/10 rounded-lg pl-9 pr-3 py-1.5 text-xs text-white placeholder-white/20 outline-none focus:border-neon-cyan/50 font-mono"
+            />
+          </div>
+        </div>
+
+        {/* Missions List */}
+        {filtered.length === 0 ? (
+          <div className="text-center py-12">
+            <Rocket className="w-10 h-10 text-white/10 mx-auto mb-3" />
+            <div className="text-sm text-white/30">
+              {missions.length === 0 ? "No missions yet - create one to get started" : "No missions match your filter"}
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {filtered.map((mission) => {
+              const sc = statusColors[mission.status] || statusColors.draft;
+              const isExpanded = expandedId === mission.id;
+              return (
+                <div key={mission.id} className="rounded-xl border border-white/10 bg-dark-900/50 overflow-hidden">
+                  {/* Main row - clickable to expand */}
+                  <button
+                    onClick={() => setExpandedId(isExpanded ? null : mission.id)}
+                    className="w-full text-left p-4 hover:bg-white/[0.02] transition-colors"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <StatusDot status={sc.dot} pulse={mission.status === "dispatched"} />
+                          <span className="text-sm font-semibold text-white truncate">{mission.name}</span>
+                          <span className={`text-[10px] font-mono px-2 py-0.5 rounded-full ${sc.bg} ${sc.text}`}>
+                            {titleCase(mission.status)}
+                          </span>
+                          {mission.cronJob && (
+                            <span className={`text-[10px] font-mono px-2 py-0.5 rounded-full ${
+                              mission.cronJob.enabled ? "bg-green-500/10 text-neon-green" : "bg-white/5 text-white/30"
+                            }`}>
+                              cron: {mission.cronJob.enabled ? (titleCase(mission.cronJob.state)) : "Disabled"}
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-xs text-white/40 font-mono line-clamp-1">{mission.prompt}</div>
+                        <div className="flex items-center gap-3 mt-1.5 text-[10px] font-mono text-white/25">
+                          <span className="flex items-center gap-1">
+                            <Clock className="w-3 h-3" />
+                            {timeAgo(mission.createdAt)}
+                          </span>
+                          <span className="capitalize">{mission.dispatchMode}</span>
+                          {mission.cronJob?.lastRun && (
+                            <span>ran {timeAgo(mission.cronJob.lastRun)}</span>
+                          )}
+                          {mission.cronJob?.lastStatus && (
+                            <span className={mission.cronJob.lastStatus === "ok" ? "text-neon-green" : "text-red-400"}>
+                              {mission.cronJob.lastStatus}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1 flex-shrink-0">
+                        {mission.status === "successful" && <CheckCircle2 className="w-4 h-4 text-neon-green" />}
+                        {mission.status === "failed" && <XCircle className="w-4 h-4 text-red-400" />}
+                        {mission.status === "dispatched" && <Loader2 className="w-4 h-4 text-blue-400 animate-spin" />}
+                        {mission.status === "queued" && <Clock className="w-4 h-4 text-neon-orange" />}
+                        <ChevronRight className={`w-4 h-4 text-white/20 transition-transform ${isExpanded ? "rotate-90" : ""}`} />
+                      </div>
+                    </div>
+                  </button>
+
+                  {/* Expanded detail panel */}
+                  {isExpanded && (
+                    <div className="border-t border-white/10 px-4 py-4 bg-dark-800/30">
+                      {detailLoading ? (
+                        <div className="flex items-center justify-center py-6">
+                          <Loader2 className="w-5 h-5 text-neon-cyan animate-spin" />
+                        </div>
+                      ) : detail ? (
+                        <div className="space-y-4">
+                          {/* Prompt */}
+                          <div>
+                            <div className="text-[10px] font-mono text-white/30 uppercase mb-1">Prompt</div>
+                            <div className="text-xs text-white/60 font-mono whitespace-pre-wrap bg-dark-900/50 rounded-lg p-3 border border-white/5">
+                              {detail.mission.prompt}
+                            </div>
+                          </div>
+
+                          {/* Goals */}
+                          {detail.mission.goals.length > 0 && (
+                            <div>
+                              <div className="text-[10px] font-mono text-white/30 uppercase mb-1">Goals</div>
+                              <div className="flex flex-wrap gap-1.5">
+                                {detail.mission.goals.map((goal, i) => (
+                                  <span
+                                    key={i}
+                                    className="text-[10px] font-mono px-2 py-0.5 rounded bg-white/5 text-white/40 border border-white/5"
+                                  >
+                                    {goal}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Cron Job Status */}
+                          {detail.cronJob && (
+                            <div className="rounded-lg border border-orange-500/20 bg-dark-900/50 p-3">
+                              <div className="flex items-center justify-between mb-2">
+                                <div className="flex items-center gap-2">
+                                  <Zap className="w-3.5 h-3.5 text-neon-orange" />
+                                  <span className="text-xs font-mono text-white/60">Cron Job</span>
+                                </div>
+                                <Link href="/cron" className="text-[10px] font-mono text-neon-orange hover:underline flex items-center gap-1">
+                                  view in cron manager <ExternalLink className="w-3 h-3" />
+                                </Link>
+                              </div>
+                              <div className="grid grid-cols-2 gap-2 text-[10px] font-mono">
+                                <div className="flex justify-between">
+                                  <span className="text-white/30">ID</span>
+                                  <span className="text-white/60">{detail.cronJob.id}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-white/30">State</span>
+                                  <span className={detail.cronJob.enabled ? "text-neon-green" : "text-white/40"}>
+                                    {detail.cronJob.enabled ? (titleCase(detail.cronJob.state)) : "Disabled"}
+                                  </span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-white/30">Schedule</span>
+                                  <span className="text-white/60">{detail.cronJob.schedule}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-white/30">Last run</span>
+                                  <span className="text-white/60">{detail.cronJob.lastRun ? timeAgo(detail.cronJob.lastRun) : "Never"}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-white/30">Status</span>
+                                  <span className={
+                                    detail.cronJob.state === "running"
+                                      ? "text-neon-green"
+                                      : detail.cronJob.lastStatus === "ok"
+                                      ? "text-neon-green"
+                                      : detail.cronJob.lastStatus
+                                      ? "text-red-400"
+                                      : "text-neon-orange"
+                                  }>
+                                    {detail.cronJob.state === "running"
+                                      ? "Executing..."
+                                      : detail.cronJob.lastRun && !detail.cronJob.nextRun
+                                      ? `${titleCase(detail.cronJob.lastStatus || "Ok")} ${timeAgo(detail.cronJob.lastRun)}`
+                                      : detail.cronJob.nextRun && new Date(detail.cronJob.nextRun).getTime() > Date.now()
+                                      ? "Next " + timeUntil(detail.cronJob.nextRun)
+                                      : detail.cronJob.lastRun
+                                      ? `Active · Ran ${timeAgo(detail.cronJob.lastRun)}`
+                                      : "Queued"}
+                                  </span>
+                                </div>
+                                {detail.cronJob.lastStatus && (
+                                  <div className="flex justify-between">
+                                    <span className="text-white/30">Last status</span>
+                                    <span className={detail.cronJob.lastStatus === "ok" ? "text-neon-green" : "text-red-400"}>
+                                      {titleCase(detail.cronJob.lastStatus)}
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Sessions */}
+                          {detail.sessions.length > 0 && (
+                            <div>
+                              <div className="text-[10px] font-mono text-white/30 uppercase mb-1">Sessions</div>
+                              <div className="space-y-1">
+                                {detail.sessions.map((s) => (
+                                  <Link
+                                    key={s.id}
+                                    href={"/sessions/" + s.id}
+                                    className="flex items-center justify-between px-3 py-2 rounded-lg bg-dark-900/50 border border-white/5 hover:border-white/20 transition-colors text-[10px] font-mono"
+                                  >
+                                    <span className="text-neon-cyan">{s.id}</span>
+                                    <span className="text-white/30">{timeAgo(s.modified)}</span>
+                                  </Link>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Results */}
+                          {detail.mission.results && (
+                            <div>
+                              <div className="text-[10px] font-mono text-white/30 uppercase mb-1">Results</div>
+                              <div className="text-xs text-white/60 font-mono whitespace-pre-wrap bg-dark-900/50 rounded-lg p-3 border border-white/5 max-h-48 overflow-y-auto">
+                                {detail.mission.results}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Error */}
+                          {detail.mission.error && (
+                            <div className="rounded-lg bg-red-500/5 border border-red-500/10 p-3">
+                              <div className="text-[10px] font-mono text-red-400 uppercase mb-1">Error</div>
+                              <div className="text-xs text-red-400/60 font-mono">{detail.mission.error}</div>
+                            </div>
+                          )}
+
+                          {/* Actions */}
+                          <div className="flex gap-2 pt-1">
+                            {(mission.status === "queued" || mission.status === "successful" || mission.status === "failed") && (
+                              <Button variant="secondary" size="sm" onClick={() => handleEdit(mission)}>
+                                <Edit3 className="w-3.5 h-3.5" /> Edit & Re-Dispatch
+                              </Button>
+                            )}
+                            {(mission.status === "queued" || mission.status === "dispatched") && (
+                              <Button variant="danger" size="sm" onClick={() => handleCancel(mission.id)}>
+                                <StopCircle className="w-3.5 h-3.5" /> Cancel Mission
+                              </Button>
+                            )}
+                            <Button variant="ghost" size="sm" onClick={() => handleDelete(mission.id)}>
+                              <Trash2 className="w-3.5 h-3.5" /> Delete
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="text-xs text-white/30 text-center py-4">Failed to load details</div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Template Manager Modal */}
+      {showTemplateManager && (
+        <Modal
+          open
+          onClose={() => setShowTemplateManager(false)}
+          title="Edit Templates"
+          icon={Layers}
+          iconColor="text-neon-cyan"
+          size="lg"
+          footer={
+            <Button variant="ghost" onClick={() => setShowTemplateManager(false)}>Close</Button>
+          }
+        >
+          <div className="space-y-2">
+            {(() => {
+              const grouped: Record<string, MissionTemplate[]> = {};
+              for (const t of templates) {
+                const cat = t.isCustom ? "Custom" : (t.category || "Other");
+                if (!grouped[cat]) grouped[cat] = [];
+                grouped[cat].push(t);
+              }
+              const catOrder = [
+                "Business - Operations",
+                "Engineering - QA",
+                "Engineering - DevOps",
+                "Engineering - Software",
+                "Engineering - Data",
+                "Engineering - Data Science",
+                "Business - Creative",
+                "Support",
+                "Custom",
+              ].filter((c) => grouped[c]);
+              const categoryColors: Record<string, string> = {
+                "Engineering - QA": "pink", "Engineering - DevOps": "cyan",
+                "Engineering - Software": "purple", "Engineering - Data": "green",
+                "Engineering - Data Science": "orange", "Business - Operations": "cyan",
+                "Business - Creative": "orange", "Support": "blue", "Custom": "purple",
+              };
+              return catOrder.map((cat) => {
+                const items = grouped[cat];
+                const color = categoryColors[cat] || "cyan";
+                return (
+                  <CategoryAccordion
+                    key={cat}
+                    name={cat}
+                    count={items.length}
+                    color={color}
+                    defaultOpen={cat === "Custom"}
+                  >
+                    <div className="space-y-1.5">
+                      {items.map((t) => (
+                        <div
+                          key={t.id}
+                          className="flex items-center justify-between p-2.5 rounded-lg border border-white/5 bg-dark-800/30 hover:border-white/10 transition-colors group"
+                        >
+                          <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                            <div className="text-sm text-white/80 truncate">{t.name}</div>
+                            {!t.isCustom && (
+                              <span className="text-[9px] font-mono text-white/15 flex-shrink-0">built-in</span>
+                            )}
+                          </div>
+                          {t.isCustom && (
+                            <div className="flex items-center gap-1 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <button
+                                onClick={() => handleEditTemplate(t)}
+                                className="p-1.5 rounded text-white/40 hover:text-neon-cyan hover:bg-cyan-500/10 transition-colors"
+                                title="Edit"
+                              >
+                                <Edit3 className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteTemplate(t.id)}
+                                className="p-1.5 rounded text-white/40 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                                title="Delete"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </CategoryAccordion>
+                );
+              });
+            })()}
+          </div>
+        </Modal>
+      )}
+
+      {/* Save/Edit Template Modal */}
+      {showTemplateEditor && (
+        <Modal
+          open
+          onClose={() => setShowTemplateEditor(false)}
+          title={editingTemplateId ? "Edit Template" : "Save as Template"}
+          icon={editingTemplateId ? Edit3 : Save}
+          iconColor="text-neon-cyan"
+          size="lg"
+          footer={
+            <>
+              <Button variant="ghost" onClick={() => { setShowTemplateEditor(false); setEditingTemplateId(null); }}>Cancel</Button>
+              <Button
+                variant="primary"
+                color="cyan"
+                onClick={handleTemplateSave}
+                disabled={!templateName.trim()}
+                loading={templateSaving}
+              >
+                Save Template
+              </Button>
+            </>
+          }
+        >
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs text-white/40 font-mono block mb-1">Template Name</label>
+                <input
+                  value={templateName}
+                  onChange={(e) => setTemplateName(e.target.value)}
+                  placeholder="e.g., My Custom Review"
+                  className="w-full bg-dark-800/50 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/20 outline-none focus:border-neon-cyan/50 font-mono"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-white/40 font-mono block mb-1">Description</label>
+                <input
+                  value={templateDescription}
+                  onChange={(e) => setTemplateDescription(e.target.value)}
+                  placeholder="What this template does"
+                  className="w-full bg-dark-800/50 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/20 outline-none focus:border-neon-cyan/50 font-mono"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="text-xs text-white/40 font-mono block mb-1">Instruction Prompt</label>
+              <AutoTextarea
+                value={newInstruction}
+                onChange={setNewInstruction}
+                minRows={4}
+                maxRows={12}
+                placeholder="The agent's task instructions - role, approach, step-by-step process..."
+              />
+            </div>
+            <div>
+              <label className="text-xs text-white/40 font-mono block mb-1">Context Prompt <span className="text-white/20">(optional)</span></label>
+              <AutoTextarea
+                value={newContext}
+                onChange={setNewContext}
+                minRows={2}
+                maxRows={6}
+                placeholder="Hint for what the user should add (e.g., 'Topic to research:')"
+              />
+            </div>
+            <div>
+              <label className="text-xs text-white/40 font-mono block mb-1">Goals (one per line)</label>
+              <AutoTextarea
+                value={newGoals}
+                onChange={setNewGoals}
+                minRows={2}
+                maxRows={6}
+                placeholder="Step 1&#10;Step 2&#10;Step 3"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-xs text-white/40 font-mono block mb-1">Icon</label>
+                <div className="flex flex-wrap gap-1.5">
+                  {TEMPLATE_ICONS.map((icon) => {
+                    const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
+                      Search, Bug, GitPullRequest, Wrench, PenTool, Zap,
+                      Rocket, Cpu, Activity, Shield, Terminal, Database,
+                      Globe, Code, FileText, Layers,
+                    };
+                    const Icon = iconMap[icon] || Zap;
+                    return (
+                      <button
+                        key={icon}
+                        onClick={() => setTemplateIcon(icon)}
+                        className={`p-1.5 rounded border transition-colors ${
+                          templateIcon === icon
+                            ? "border-neon-cyan/50 bg-cyan-500/10"
+                            : "border-white/10 hover:border-white/20"
+                        }`}
+                        title={icon}
+                      >
+                        <Icon className={`w-4 h-4 ${templateIcon === icon ? "text-neon-cyan" : "text-white/40"}`} />
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+              <div>
+                <label className="text-xs text-white/40 font-mono block mb-1">Color</label>
+                <div className="flex gap-1.5">
+                  {TEMPLATE_COLORS.map((color) => (
+                    <button
+                      key={color}
+                      onClick={() => setTemplateColor(color)}
+                      className={`w-8 h-8 rounded-lg border-2 transition-colors ${
+                        templateColor === color ? "border-white" : "border-transparent"
+                      } ${
+                        color === "cyan" ? "bg-cyan-500/30" :
+                        color === "purple" ? "bg-purple-500/30" :
+                        color === "pink" ? "bg-pink-500/30" :
+                        color === "green" ? "bg-green-500/30" :
+                        "bg-orange-500/30"
+                      }`}
+                      title={color}
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+    </div>
+  );
 }
