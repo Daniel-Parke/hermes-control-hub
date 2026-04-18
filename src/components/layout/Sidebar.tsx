@@ -22,8 +22,6 @@ import {
 
   Terminal,
 
-  Brain,
-
   Settings,
 
   FileText,
@@ -93,7 +91,6 @@ import {
   CheckSquare,
 
   FolderOpen,
-  User,
   Users,
 } from "lucide-react";
 
