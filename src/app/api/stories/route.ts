@@ -470,7 +470,7 @@ async function handleRetryChapter(body: Record<string, unknown>): Promise<NextRe
 // ── Edit Chapter (prompt-based rewrite with cascade) ─────────
 
 async function handleEditChapter(body: Record<string, unknown>): Promise<NextResponse> {
-  const { storyId, chapterNumber, editPrompt, wordCountRange } = body;
+  const { storyId, chapterNumber, editPrompt, wordCountRange, count } = body;
   if (!storyId || !chapterNumber || !editPrompt) {
     return NextResponse.json({ error: "Missing storyId, chapterNumber, or editPrompt" }, { status: 400 });
   }
@@ -533,8 +533,10 @@ async function handleEditChapter(body: Record<string, unknown>): Promise<NextRes
     story.chapters[chIdx].wordCount = content.split(/\s+/).length;
     story.chapters[chIdx].generatedAt = new Date().toISOString();
 
-    // Invalidate downstream chapters (N+1 through end)
-    for (let i = chIdx + 1; i < story.chapters.length; i++) {
+    // Invalidate downstream chapters (limited by count, default all)
+    const cascadeCount = (count as number) || (story.chapters.length - chIdx - 1);
+    const cascadeEnd = Math.min(chIdx + 1 + cascadeCount, story.chapters.length);
+    for (let i = chIdx + 1; i < cascadeEnd; i++) {
       story.chapters[i].status = "pending";
       story.chapters[i].wordCount = 0;
       story.chapters[i].generatedAt = null;

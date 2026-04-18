@@ -541,7 +541,7 @@ function CreateStoryPage() {
         </div>
 
         {/* ═══ SECTION C: Theme (Premise + Tags + Saved Themes) ═══ */}
-        <div className="rounded-xl border border-green-500/15 bg-dark-900/50 p-5">
+        <div className="rounded-xl border border-white/8 bg-dark-900/50 p-5 mt-2">
           <div className="flex items-center justify-between mb-3">
             <label className="text-xs font-mono text-white/40 uppercase tracking-widest">Theme</label>
             <button onClick={() => setShowSaveTheme(true)} disabled={!premise.trim()}
@@ -561,16 +561,16 @@ function CreateStoryPage() {
           {/* Saved themes — prominent at top of Theme section */}
           {savedThemes.length > 0 && (
             <div className="mb-4 pb-4 border-b border-white/5">
-              <label className="text-[10px] font-mono text-green-400/60 uppercase tracking-wider block mb-2">Saved Themes — click to load</label>
+              <label className="text-[10px] font-mono text-white/25 uppercase tracking-wider block mb-2">Saved Themes — click to load</label>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                 {savedThemes.map((t) => (
                   <div key={t.id} className={`relative group p-3 rounded-lg border transition-all cursor-pointer ${
-                    selectedTheme === t.id ? "border-green-500/40 bg-green-500/10" : "border-green-500/10 bg-green-500/[0.02] hover:border-green-500/25 hover:bg-green-500/5"
+                    selectedTheme === t.id ? "border-white/15 bg-white/[0.04]" : "border-white/8 bg-white/[0.02] hover:border-white/15 hover:bg-white/[0.04]"
                   }`} onClick={() => applyTheme(t)}>
-                    <div className="text-xs font-semibold text-green-400/80 mb-0.5">{t.name}</div>
-                    <div className="text-[9px] font-mono text-white/25 truncate">{t.genre?.join(", ") || "Custom"} — {t.era || "Any era"}</div>
+                    <div className="text-xs font-semibold text-white/70 mb-0.5">{t.name}</div>
+                    <div className="text-[9px] font-mono text-white/20 truncate">{t.genre?.join(", ") || "Custom"} — {t.era || "Any era"}</div>
                     <button onClick={(e) => { e.stopPropagation(); deleteTheme(t.id); }}
-                      className="absolute top-1.5 right-1.5 p-1 text-white/10 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                      className="absolute top-1.5 right-1.5 p-1.5 text-white/20 hover:text-red-400 transition-opacity">
                       <Trash2 className="w-3 h-3" />
                     </button>
                   </div>

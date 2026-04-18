@@ -50,6 +50,7 @@ export default function StoryReaderPage() {
   const [editing, setEditing] = useState(false);
   const [editDone, setEditDone] = useState(false);
   const [editWordCount, setEditWordCount] = useState("standard");
+  const [editCount, setEditCount] = useState(3);
 
   // Continue story state
   const [continueModalOpen, setContinueModalOpen] = useState(false);
@@ -142,6 +143,7 @@ export default function StoryReaderPage() {
           chapterNumber: editChapterNum,
           editPrompt: editPrompt.trim(),
           wordCountRange: editWordCount,
+          count: editCount,
         }),
       });
       const d = await res.json();
@@ -156,7 +158,7 @@ export default function StoryReaderPage() {
       setError(e instanceof Error ? e.message : "Edit failed");
       setEditDone(true);
     }
-  }, [storyId, editChapterNum, editPrompt, editWordCount]);
+  }, [storyId, editChapterNum, editPrompt, editWordCount, editCount]);
 
   // Continue story
   const handleContinue = useCallback(async () => {
@@ -229,7 +231,11 @@ export default function StoryReaderPage() {
 
   const handleChapterSelect = async (num: number) => {
     setCurrentChapter(num);
-    contentRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+    // Scroll content area to top after chapter renders
+    requestAnimationFrame(() => {
+      if (contentRef.current) contentRef.current.scrollTop = 0;
+      window.scrollTo({ top: 0 });
+    });
     const updatedChapters = (story?.chapters || []).map((c: Chapter) =>
       c.number === num && c.status === "complete" ? { ...c, readStatus: "read" as const } : c
     );
@@ -329,6 +335,17 @@ export default function StoryReaderPage() {
                 ))}
               </div>
             </div>
+            <div>
+              <label className="text-[10px] font-mono text-white/30 uppercase tracking-wider block mb-1.5">Chapters to Regenerate</label>
+              <div className="flex gap-2">
+                {[2, 3, 4, 5].map(n => (
+                  <button key={n} onClick={() => setEditCount(n)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-mono border transition-all ${
+                      editCount === n ? "border-purple-500/40 bg-purple-500/15 text-neon-purple" : "border-white/8 text-white/30 hover:text-white/50"
+                    }`}>{n}</button>
+                ))}
+              </div>
+            </div>
             <div className="flex gap-2 justify-end">
               <button onClick={() => setEditModalOpen(false)}
                 className="px-4 py-2 text-xs text-white/40 hover:text-white/60 rounded-lg border border-white/10 hover:bg-white/5">
@@ -336,7 +353,7 @@ export default function StoryReaderPage() {
               </button>
               <button onClick={handleEditChapter} disabled={!editPrompt.trim()}
                 className="px-4 py-2 text-xs text-neon-purple rounded-lg border border-purple-500/30 bg-purple-500/10 hover:bg-purple-500/20 disabled:opacity-30 flex items-center gap-2">
-                <PenLine className="w-3 h-3" /> Rewrite Chapter
+                <PenLine className="w-3 h-3" /> Edit Chapter
               </button>
             </div>
           </div>
