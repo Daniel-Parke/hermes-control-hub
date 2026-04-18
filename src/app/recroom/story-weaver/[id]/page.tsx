@@ -48,6 +48,7 @@ export default function StoryReaderPage() {
   const [editChapterNum, setEditChapterNum] = useState(0);
   const [editPrompt, setEditPrompt] = useState("");
   const [editing, setEditing] = useState(false);
+  const [editDone, setEditDone] = useState(false);
 
   // Continue story state
   const [continueModalOpen, setContinueModalOpen] = useState(false);
@@ -140,14 +141,14 @@ export default function StoryReaderPage() {
       const d = await res.json();
       if (d.data?.story) {
         setStory(d.data.story as StoryState);
-        setEditModalOpen(false);
-        setEditPrompt("");
+        setEditDone(true);
       } else if (d.error) {
         setError(d.error);
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Edit failed");
-    } finally { setEditing(false); }
+      setEditDone(true);
+    }
   }, [storyId, editChapterNum, editPrompt]);
 
   // Continue story
@@ -241,6 +242,13 @@ export default function StoryReaderPage() {
     setContinueDone(false);
   }, []);
 
+  const handleEditComplete = useCallback(() => {
+    setEditModalOpen(false);
+    setEditPrompt("");
+    setEditing(false);
+    setEditDone(false);
+  }, []);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-dark-950 flex items-center justify-center">
@@ -271,12 +279,12 @@ export default function StoryReaderPage() {
 
   return (
     <div className="min-h-screen bg-dark-950 grid-bg relative scanlines flex flex-col">
-      {/* Continue story progress overlay */}
+      {/* Progress overlay for continue and edit */}
       <GenerateOverlay
         title={story?.title || "Story"}
-        visible={continuing}
-        done={continueDone}
-        onComplete={handleContinueComplete}
+        visible={continuing || editing}
+        done={continueDone || editDone}
+        onComplete={continuing ? handleContinueComplete : handleEditComplete}
       />
 
       {/* Edit Chapter Modal */}
