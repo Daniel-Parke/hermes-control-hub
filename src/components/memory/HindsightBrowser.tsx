@@ -8,7 +8,7 @@
 import { useState, useCallback, useEffect } from "react";
 import {
   Brain, Search, Plus, Sparkles, List, FileText,
-  Settings, RefreshCw, Clock, Tag,
+  Settings, RefreshCw, Clock, Tag, Trash2, ToggleLeft, ToggleRight, Zap,
 } from "lucide-react";
 import { SearchInput } from "@/components/ui/Input";
 import Button from "@/components/ui/Button";
@@ -24,6 +24,26 @@ interface Memory {
   score?: number;
   created_at?: string;
   metadata?: Record<string, unknown>;
+}
+
+interface Directive {
+  id: string;
+  name: string;
+  content: string;
+  priority: number;
+  is_active: boolean;
+  tags: string[];
+  created_at: string;
+}
+
+interface MentalModel {
+  id: string;
+  name: string;
+  source_query: string;
+  content: string;
+  tags: string[];
+  created_at: string;
+  last_refreshed_at: string;
 }
 
 type Tab = "memories" | "directives" | "mental-models";
@@ -42,6 +62,26 @@ export default function HindsightBrowser() {
   const [newTags, setNewTags] = useState("");
   const [adding, setAdding] = useState(false);
   const [health, setHealth] = useState<{ available: boolean; mode: string; message?: string; error?: string } | null>(null);
+
+  // Directives state
+  const [directives, setDirectives] = useState<Directive[]>([]);
+  const [loadingDirectives, setLoadingDirectives] = useState(false);
+  const [showDirectiveModal, setShowDirectiveModal] = useState(false);
+  const [newDirName, setNewDirName] = useState("");
+  const [newDirContent, setNewDirContent] = useState("");
+  const [newDirPriority, setNewDirPriority] = useState("0");
+  const [newDirTags, setNewDirTags] = useState("");
+  const [creatingDirective, setCreatingDirective] = useState(false);
+
+  // Mental models state
+  const [mentalModels, setMentalModels] = useState<MentalModel[]>([]);
+  const [loadingModels, setLoadingModels] = useState(false);
+  const [showModelModal, setShowModelModal] = useState(false);
+  const [newModelName, setNewModelName] = useState("");
+  const [newModelQuery, setNewModelQuery] = useState("");
+  const [newModelTags, setNewModelTags] = useState("");
+  const [creatingModel, setCreatingModel] = useState(false);
+  const [refreshingModelId, setRefreshingModelId] = useState<string | null>(null);
   const { showToast, toastElement } = useToast();
 
   const fetchHealthOnly = useCallback(async () => {
@@ -192,6 +232,173 @@ export default function HindsightBrowser() {
     }
   };
 
+  // ── Directives ──
+  const loadDirectives = useCallback(async () => {
+    setLoadingDirectives(true);
+    try {
+      const res = await fetch("/api/memory/hindsight?action=directives");
+      const body = await res.json();
+      setDirectives(body.data?.directives || []);
+    } catch {
+      showToast("Failed to load directives", "error");
+    } finally {
+      setLoadingDirectives(false);
+    }
+  }, [showToast]);
+
+  useEffect(() => {
+    if (activeTab === "directives" && directives.length === 0 && !loadingDirectives) {
+      void loadDirectives();
+    }
+  }, [activeTab, directives.length, loadingDirectives, loadDirectives]);
+
+  const handleCreateDirective = async () => {
+    if (!newDirName.trim() || !newDirContent.trim()) return;
+    setCreatingDirective(true);
+    try {
+      const tags = newDirTags.split(",").map(t => t.trim()).filter(Boolean);
+      const res = await fetch("/api/memory/hindsight", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "create-directive",
+          name: newDirName,
+          content: newDirContent,
+          priority: parseInt(newDirPriority) || 0,
+          tags: tags.length > 0 ? tags : undefined,
+        }),
+      });
+      if (!res.ok) throw new Error("Failed");
+      showToast("Directive created", "success");
+      setShowDirectiveModal(false);
+      setNewDirName("");
+      setNewDirContent("");
+      setNewDirPriority("0");
+      setNewDirTags("");
+      await loadDirectives();
+    } catch {
+      showToast("Failed to create directive", "error");
+    } finally {
+      setCreatingDirective(false);
+    }
+  };
+
+  const handleToggleDirective = async (directive: Directive) => {
+    try {
+      const res = await fetch("/api/memory/hindsight", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "update-directive",
+          id: directive.id,
+          is_active: !directive.is_active,
+        }),
+      });
+      if (!res.ok) throw new Error("Failed");
+      showToast(directive.is_active ? "Directive deactivated" : "Directive activated", "success");
+      await loadDirectives();
+    } catch {
+      showToast("Failed to update directive", "error");
+    }
+  };
+
+  const handleDeleteDirective = async (id: string) => {
+    try {
+      const res = await fetch("/api/memory/hindsight", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: "directive", id }),
+      });
+      if (!res.ok) throw new Error("Failed");
+      showToast("Directive deleted", "success");
+      setDirectives(prev => prev.filter(d => d.id !== id));
+    } catch {
+      showToast("Failed to delete directive", "error");
+    }
+  };
+
+  // ── Mental Models ──
+  const loadModels = useCallback(async () => {
+    setLoadingModels(true);
+    try {
+      const res = await fetch("/api/memory/hindsight?action=mental-models");
+      const body = await res.json();
+      setMentalModels(body.data?.models || []);
+    } catch {
+      showToast("Failed to load mental models", "error");
+    } finally {
+      setLoadingModels(false);
+    }
+  }, [showToast]);
+
+  useEffect(() => {
+    if (activeTab === "mental-models" && mentalModels.length === 0 && !loadingModels) {
+      void loadModels();
+    }
+  }, [activeTab, mentalModels.length, loadingModels, loadModels]);
+
+  const handleCreateModel = async () => {
+    if (!newModelName.trim() || !newModelQuery.trim()) return;
+    setCreatingModel(true);
+    try {
+      const tags = newModelTags.split(",").map(t => t.trim()).filter(Boolean);
+      const res = await fetch("/api/memory/hindsight", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "create-model",
+          name: newModelName,
+          query: newModelQuery,
+          tags: tags.length > 0 ? tags : undefined,
+        }),
+      });
+      if (!res.ok) throw new Error("Failed");
+      showToast("Mental model created (generating in background)", "success");
+      setShowModelModal(false);
+      setNewModelName("");
+      setNewModelQuery("");
+      setNewModelTags("");
+      await loadModels();
+    } catch {
+      showToast("Failed to create mental model", "error");
+    } finally {
+      setCreatingModel(false);
+    }
+  };
+
+  const handleRefreshModel = async (id: string) => {
+    setRefreshingModelId(id);
+    try {
+      const res = await fetch("/api/memory/hindsight", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "refresh-model", id }),
+      });
+      if (!res.ok) throw new Error("Failed");
+      showToast("Mental model refresh started", "success");
+      await loadModels();
+    } catch {
+      showToast("Failed to refresh mental model", "error");
+    } finally {
+      setRefreshingModelId(null);
+    }
+  };
+
+  const handleDeleteModel = async (id: string) => {
+    try {
+      const res = await fetch("/api/memory/hindsight", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: "model", id }),
+      });
+      if (!res.ok) throw new Error("Failed");
+      showToast("Mental model deleted", "success");
+      setMentalModels(prev => prev.filter(m => m.id !== id));
+    } catch {
+      showToast("Failed to delete mental model", "error");
+    }
+  };
+
   return (
     <div>
       {toastElement}
@@ -328,19 +535,159 @@ export default function HindsightBrowser() {
       )}
 
       {activeTab === "directives" && (
-        <div className="text-center py-12 text-white/30">
-          <FileText className="w-8 h-8 mx-auto mb-2 opacity-50" />
-          <p className="text-sm">Directives management coming soon</p>
-          <p className="text-xs mt-1">Requires Hindsight client mode</p>
-        </div>
+        <>
+          <div className="flex justify-between items-center mb-4">
+            <div className="text-xs text-white/30">
+              {directives.length} directive{directives.length !== 1 ? "s" : ""} — injected into agent prompts automatically
+            </div>
+            <div className="flex gap-2">
+              <Button variant="ghost" size="sm" icon={RefreshCw} onClick={loadDirectives} disabled={loadingDirectives}>
+                Refresh
+              </Button>
+              <Button variant="primary" color="pink" size="sm" icon={Plus} onClick={() => setShowDirectiveModal(true)}>
+                New Directive
+              </Button>
+            </div>
+          </div>
+          {loadingDirectives ? (
+            <LoadingSpinner text="Loading directives..." />
+          ) : directives.length === 0 ? (
+            <EmptyState
+              icon={FileText}
+              title="No directives yet"
+              description="Directives are hard rules injected into agent prompts. Create one to control agent behavior."
+            />
+          ) : (
+            <div className="space-y-3">
+              {directives.map((d) => (
+                <div
+                  key={d.id}
+                  className={`rounded-xl border p-4 transition-colors ${
+                    d.is_active
+                      ? "border-white/10 bg-dark-900/50 hover:border-pink-500/20"
+                      : "border-white/5 bg-dark-900/20 opacity-60"
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-sm font-medium text-white/90">{d.name}</span>
+                        {d.priority > 0 && (
+                          <Badge color="orange" size="sm">P{d.priority}</Badge>
+                        )}
+                        {!d.is_active && (
+                          <Badge color="gray" size="sm">Inactive</Badge>
+                        )}
+                      </div>
+                      <p className="text-sm text-white/60 leading-relaxed">{d.content}</p>
+                      {d.tags.length > 0 && (
+                        <div className="flex gap-1 mt-2">
+                          {d.tags.map(t => <Badge key={t} color="purple" size="sm">{t}</Badge>)}
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <button
+                        onClick={() => handleToggleDirective(d)}
+                        className="p-1.5 rounded-lg hover:bg-white/5 text-white/40 hover:text-white/70 transition-colors"
+                        title={d.is_active ? "Deactivate" : "Activate"}
+                      >
+                        {d.is_active ? <ToggleRight className="w-4 h-4 text-green-400" /> : <ToggleLeft className="w-4 h-4" />}
+                      </button>
+                      <button
+                        onClick={() => handleDeleteDirective(d.id)}
+                        className="p-1.5 rounded-lg hover:bg-red-500/10 text-white/40 hover:text-red-400 transition-colors"
+                        title="Delete"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </>
       )}
 
       {activeTab === "mental-models" && (
-        <div className="text-center py-12 text-white/30">
-          <Settings className="w-8 h-8 mx-auto mb-2 opacity-50" />
-          <p className="text-sm">Mental models management coming soon</p>
-          <p className="text-xs mt-1">Requires Hindsight client mode</p>
-        </div>
+        <>
+          <div className="flex justify-between items-center mb-4">
+            <div className="text-xs text-white/30">
+              {mentalModels.length} mental model{mentalModels.length !== 1 ? "s" : ""} — cached reflect results with auto-refresh
+            </div>
+            <div className="flex gap-2">
+              <Button variant="ghost" size="sm" icon={RefreshCw} onClick={loadModels} disabled={loadingModels}>
+                Refresh
+              </Button>
+              <Button variant="primary" color="pink" size="sm" icon={Plus} onClick={() => setShowModelModal(true)}>
+                New Model
+              </Button>
+            </div>
+          </div>
+          {loadingModels ? (
+            <LoadingSpinner text="Loading mental models..." />
+          ) : mentalModels.length === 0 ? (
+            <EmptyState
+              icon={Settings}
+              title="No mental models yet"
+              description="Mental models are cached reflect analyses. Create one with a source query and Hindsight will generate and maintain the content."
+            />
+          ) : (
+            <div className="space-y-3">
+              {mentalModels.map((m) => (
+                <div
+                  key={m.id}
+                  className="rounded-xl border border-white/10 bg-dark-900/50 p-4 hover:border-pink-500/20 transition-colors"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-sm font-medium text-white/90">{m.name}</span>
+                        {m.content && <Badge color="green" size="sm">Ready</Badge>}
+                        {!m.content && <Badge color="orange" size="sm">Generating</Badge>}
+                      </div>
+                      <p className="text-xs text-white/40 mb-2 font-mono">Query: {m.source_query}</p>
+                      {m.content && (
+                        <p className="text-sm text-white/60 leading-relaxed line-clamp-3">{m.content}</p>
+                      )}
+                      <div className="flex items-center gap-3 mt-2 text-xs text-white/30">
+                        {m.last_refreshed_at && (
+                          <span className="flex items-center gap-1">
+                            <Clock className="w-3 h-3" />
+                            Updated {new Date(m.last_refreshed_at).toLocaleDateString()}
+                          </span>
+                        )}
+                        {m.tags.length > 0 && (
+                          <span className="flex gap-1">
+                            {m.tags.map(t => <Badge key={t} color="purple" size="sm">{t}</Badge>)}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <button
+                        onClick={() => handleRefreshModel(m.id)}
+                        disabled={refreshingModelId === m.id}
+                        className="p-1.5 rounded-lg hover:bg-white/5 text-white/40 hover:text-white/70 transition-colors disabled:opacity-30"
+                        title="Refresh (re-run reflect)"
+                      >
+                        <Zap className={`w-4 h-4 ${refreshingModelId === m.id ? "animate-pulse text-yellow-400" : ""}`} />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteModel(m.id)}
+                        className="p-1.5 rounded-lg hover:bg-red-500/10 text-white/40 hover:text-red-400 transition-colors"
+                        title="Delete"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </>
       )}
 
       {/* Add Memory Modal */}
@@ -375,6 +722,113 @@ export default function HindsightBrowser() {
               disabled={adding || !newContent.trim()}
             >
               {adding ? "Storing..." : "Store Memory"}
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Create Directive Modal */}
+      <Modal open={showDirectiveModal} onClose={() => setShowDirectiveModal(false)} title="Create Directive" size="md">
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm text-white/50 mb-1">Directive Name</label>
+            <input
+              type="text"
+              value={newDirName}
+              onChange={(e) => setNewDirName(e.target.value)}
+              placeholder="e.g. Always cite sources"
+              className="w-full bg-dark-800 border border-white/10 rounded-lg px-3 py-2 text-sm text-white/80 focus:border-pink-500/50 focus:outline-none"
+            />
+          </div>
+          <div>
+            <label className="block text-sm text-white/50 mb-1">Directive Content</label>
+            <textarea
+              value={newDirContent}
+              onChange={(e) => setNewDirContent(e.target.value)}
+              placeholder="The rule to inject into agent prompts..."
+              className="w-full h-28 bg-dark-800 border border-white/10 rounded-lg p-3 text-sm text-white/80 resize-none focus:border-pink-500/50 focus:outline-none"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm text-white/50 mb-1">Priority</label>
+              <input
+                type="number"
+                value={newDirPriority}
+                onChange={(e) => setNewDirPriority(e.target.value)}
+                placeholder="0"
+                className="w-full bg-dark-800 border border-white/10 rounded-lg px-3 py-2 text-sm text-white/80 focus:border-pink-500/50 focus:outline-none"
+              />
+            </div>
+            <div>
+              <label className="block text-sm text-white/50 mb-1">Tags (comma-separated)</label>
+              <input
+                type="text"
+                value={newDirTags}
+                onChange={(e) => setNewDirTags(e.target.value)}
+                placeholder="e.g. safety, behavior"
+                className="w-full bg-dark-800 border border-white/10 rounded-lg px-3 py-2 text-sm text-white/80 focus:border-pink-500/50 focus:outline-none"
+              />
+            </div>
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button variant="ghost" size="sm" onClick={() => setShowDirectiveModal(false)}>Cancel</Button>
+            <Button
+              variant="primary"
+              color="pink"
+              size="sm"
+              onClick={handleCreateDirective}
+              disabled={creatingDirective || !newDirName.trim() || !newDirContent.trim()}
+            >
+              {creatingDirective ? "Creating..." : "Create Directive"}
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Create Mental Model Modal */}
+      <Modal open={showModelModal} onClose={() => setShowModelModal(false)} title="Create Mental Model" size="md">
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm text-white/50 mb-1">Model Name</label>
+            <input
+              type="text"
+              value={newModelName}
+              onChange={(e) => setNewModelName(e.target.value)}
+              placeholder="e.g. User Communication Style"
+              className="w-full bg-dark-800 border border-white/10 rounded-lg px-3 py-2 text-sm text-white/80 focus:border-pink-500/50 focus:outline-none"
+            />
+          </div>
+          <div>
+            <label className="block text-sm text-white/50 mb-1">Source Query</label>
+            <textarea
+              value={newModelQuery}
+              onChange={(e) => setNewModelQuery(e.target.value)}
+              placeholder="e.g. What are Daniel's communication preferences and working style?"
+              className="w-full h-28 bg-dark-800 border border-white/10 rounded-lg p-3 text-sm text-white/80 resize-none focus:border-pink-500/50 focus:outline-none"
+            />
+            <p className="text-xs text-white/30 mt-1">Hindsight will run reflect with this query to generate the model content.</p>
+          </div>
+          <div>
+            <label className="block text-sm text-white/50 mb-1">Tags (comma-separated)</label>
+            <input
+              type="text"
+              value={newModelTags}
+              onChange={(e) => setNewModelTags(e.target.value)}
+              placeholder="e.g. user, preferences"
+              className="w-full bg-dark-800 border border-white/10 rounded-lg px-3 py-2 text-sm text-white/80 focus:border-pink-500/50 focus:outline-none"
+            />
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button variant="ghost" size="sm" onClick={() => setShowModelModal(false)}>Cancel</Button>
+            <Button
+              variant="primary"
+              color="pink"
+              size="sm"
+              onClick={handleCreateModel}
+              disabled={creatingModel || !newModelName.trim() || !newModelQuery.trim()}
+            >
+              {creatingModel ? "Creating..." : "Create Mental Model"}
             </Button>
           </div>
         </div>

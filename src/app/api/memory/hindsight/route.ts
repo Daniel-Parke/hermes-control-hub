@@ -102,26 +102,101 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST — Retain a new memory
+// POST — Retain memory, create directive, create mental model
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { content, tags, bank = "hermes" } = body;
+    const action = body.action || "retain";
+    const bank = body.bank || "hermes";
 
-    if (!content || typeof content !== "string" || content.trim().length === 0) {
-      return NextResponse.json({ error: "Content is required" }, { status: 400 });
+    let result: Record<string, unknown>;
+
+    switch (action) {
+      case "retain": {
+        const { content, tags } = body;
+        if (!content || typeof content !== "string" || content.trim().length === 0) {
+          return NextResponse.json({ error: "Content is required" }, { status: 400 });
+        }
+        const args: Record<string, string> = { bank, content: content.trim() };
+        if (tags && Array.isArray(tags)) args.tags = tags.join(",");
+        result = await runBridgeAsync("retain", args);
+        break;
+      }
+      case "create-directive": {
+        const { name, content: dirContent, priority, tags } = body;
+        if (!name || !dirContent) {
+          return NextResponse.json({ error: "name and content are required" }, { status: 400 });
+        }
+        const dArgs: Record<string, string | number> = { bank, name, content: dirContent };
+        if (priority !== undefined) dArgs.priority = priority;
+        if (tags && Array.isArray(tags)) dArgs.tags = tags.join(",");
+        result = await runBridgeAsync("create-directive", dArgs);
+        break;
+      }
+      case "create-model": {
+        const { name, query, tags } = body;
+        if (!name || !query) {
+          return NextResponse.json({ error: "name and query are required" }, { status: 400 });
+        }
+        const mArgs: Record<string, string> = { bank, name, query };
+        if (tags && Array.isArray(tags)) mArgs.tags = tags.join(",");
+        result = await runBridgeAsync("create-model", mArgs, 60000);
+        break;
+      }
+      case "update-directive": {
+        const { id, name, content: uContent, priority, is_active, tags } = body;
+        if (!id) {
+          return NextResponse.json({ error: "id is required" }, { status: 400 });
+        }
+        const uArgs: Record<string, string | number> = { bank, id };
+        if (name !== undefined) uArgs.name = name;
+        if (uContent !== undefined) uArgs.content = uContent;
+        if (priority !== undefined) uArgs.priority = priority;
+        if (is_active !== undefined) uArgs["is-active"] = String(is_active);
+        if (tags !== undefined) uArgs.tags = Array.isArray(tags) ? tags.join(",") : tags;
+        result = await runBridgeAsync("update-directive", uArgs);
+        break;
+      }
+      case "refresh-model": {
+        const { id } = body;
+        if (!id) {
+          return NextResponse.json({ error: "id is required" }, { status: 400 });
+        }
+        result = await runBridgeAsync("refresh-model", { bank, id }, 60000);
+        break;
+      }
+      default:
+        return NextResponse.json({ error: `Unknown action: ${action}` }, { status: 400 });
     }
-
-    const args: Record<string, string> = { bank, content: content.trim() };
-    if (tags && Array.isArray(tags)) args.tags = tags.join(",");
-
-    const result = await runBridgeAsync("retain", args);
 
     return NextResponse.json<ApiResponse<Record<string, unknown>>>({ data: result });
   } catch (error) {
-    logApiError("POST /api/memory/hindsight", "retain", error);
+    logApiError("POST /api/memory/hindsight", "action", error);
     return NextResponse.json(
-      { error: `Failed to retain: ${error instanceof Error ? error.message : "Unknown"}` },
+      { error: `Failed: ${error instanceof Error ? error.message : "Unknown"}` },
+      { status: 500 }
+    );
+  }
+}
+
+// DELETE — Remove directive or mental model
+export async function DELETE(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const { type, id, bank = "hermes" } = body;
+
+    if (!id || !type) {
+      return NextResponse.json({ error: "type and id are required" }, { status: 400 });
+    }
+
+    const command = type === "directive" ? "delete-directive" : "delete-model";
+    const result = await runBridgeAsync(command, { bank, id });
+
+    return NextResponse.json<ApiResponse<Record<string, unknown>>>({ data: result });
+  } catch (error) {
+    logApiError("DELETE /api/memory/hindsight", "delete", error);
+    return NextResponse.json(
+      { error: `Failed: ${error instanceof Error ? error.message : "Unknown"}` },
       { status: 500 }
     );
   }
