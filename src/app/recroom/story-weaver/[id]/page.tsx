@@ -1,15 +1,21 @@
-// Story Weaver — Reader (Book UI with settings, mobile layout, continuous scroll)
+// Story Weaver — Reader V2 (retry, edit chapter, continue story)
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { ChevronLeft, ChevronRight, BookOpen, Sparkles, Loader2, Menu, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, BookOpen, Sparkles, Loader2, Menu, X, RefreshCw, PenLine, PlayCircle, AlertTriangle } from "lucide-react";
 import ChapterList from "@/components/story-weaver/ChapterList";
-
 import ReaderSettings, { loadSettings, DEFAULT_SETTINGS, FONTS, THEMES, type ReadingSettings } from "@/components/story-weaver/ReaderSettings";
 
-interface Chapter { number: number; title: string; status: string; wordCount: number; readStatus?: "writing" | "unread" | "read"; generatedAt?: string | null; }
+interface Chapter {
+  number: number;
+  title: string;
+  status: string;
+  wordCount: number;
+  readStatus?: "writing" | "unread" | "read";
+  generatedAt?: string | null;
+  error?: string;
+}
 
-/** Serialized story document from `/api/stories` (load / generate). */
 interface StoryState {
   id: string;
   title: string;
@@ -19,6 +25,8 @@ interface StoryState {
   rollingSummary?: string;
   status?: string;
   masterPrompt?: string;
+  generationError?: string;
+  config?: Record<string, unknown>;
   updatedAt?: string;
 }
 
@@ -32,17 +40,27 @@ export default function StoryReaderPage() {
   const [currentChapter, setCurrentChapter] = useState(1);
   const [generating, setGenerating] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  // Open chapters by default on desktop, closed on mobile
+  // Edit chapter state
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editChapterNum, setEditChapterNum] = useState(0);
+  const [editPrompt, setEditPrompt] = useState("");
+  const [editing, setEditing] = useState(false);
+
+  // Continue story state
+  const [continueModalOpen, setContinueModalOpen] = useState(false);
+  const [continueDirection, setContinueDirection] = useState("");
+  const [continueCount, setContinueCount] = useState(3);
+  const [continuing, setContinuing] = useState(false);
+
   useEffect(() => {
     if (typeof window !== "undefined" && window.innerWidth >= 1024) {
       setSidebarOpen(true);
     }
   }, []);
-  const [settings, setSettings] = useState<ReadingSettings>(DEFAULT_SETTINGS);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  // Load settings from localStorage
+  const [settings, setSettings] = useState<ReadingSettings>(DEFAULT_SETTINGS);
   useEffect(() => { setSettings(loadSettings()); }, []);
 
   const loadStory = useCallback(async () => {
@@ -58,13 +76,11 @@ export default function StoryReaderPage() {
 
   useEffect(() => { loadStory(); }, [loadStory]);
 
-  // Auto-generate next pending chapter — only trigger when NOT generating
-  // and only for the FIRST pending chapter (sequential enforcement)
+  // Auto-generate next pending chapter
   useEffect(() => {
     if (!story || generating) return;
     const firstPending = story.chapters?.find((c: Chapter) => c.status === "pending");
     const anyWriting = story.chapters?.some((c: Chapter) => c.status === "writing");
-    // Only generate if there's a pending chapter AND nothing is currently writing
     if (firstPending && !anyWriting) {
       generateNext();
     }
@@ -73,6 +89,7 @@ export default function StoryReaderPage() {
   const generateNext = useCallback(async () => {
     if (!story) return;
     setGenerating(true);
+    setError(null);
     try {
       const res = await fetch("/api/stories", {
         method: "POST", headers: { "Content-Type": "application/json" },
@@ -80,18 +97,95 @@ export default function StoryReaderPage() {
       });
       const d = await res.json();
       if (d.data?.story) setStory(d.data.story as StoryState);
-      else if (d.error) console.error("Chapter generation error:", d.error);
-    } catch (e) { console.error("Chapter generation failed:", e); }
-    finally { setGenerating(false); }
+      else if (d.error) setError(d.error);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Generation failed");
+    } finally { setGenerating(false); }
   }, [story, storyId]);
 
-  // Mark chapter as read and move to next
+  // Retry a failed chapter
+  const retryChapter = useCallback(async (chapterNumber: number) => {
+    setError(null);
+    setGenerating(true);
+    try {
+      const res = await fetch("/api/stories", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "retry-chapter", storyId, chapterNumber }),
+      });
+      const d = await res.json();
+      if (d.data?.story) setStory(d.data.story as StoryState);
+      else if (d.error) setError(d.error);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Retry failed");
+    } finally { setGenerating(false); }
+  }, [storyId]);
+
+  // Edit chapter with prompt
+  const handleEditChapter = useCallback(async () => {
+    if (!editPrompt.trim()) return;
+    setEditing(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/stories", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "edit-chapter",
+          storyId,
+          chapterNumber: editChapterNum,
+          editPrompt: editPrompt.trim(),
+        }),
+      });
+      const d = await res.json();
+      if (d.data?.story) {
+        setStory(d.data.story as StoryState);
+        setEditModalOpen(false);
+        setEditPrompt("");
+      } else if (d.error) {
+        setError(d.error);
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Edit failed");
+    } finally { setEditing(false); }
+  }, [storyId, editChapterNum, editPrompt]);
+
+  // Continue story
+  const handleContinue = useCallback(async () => {
+    if (!continueDirection.trim()) return;
+    setContinuing(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/stories", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "continue",
+          storyId,
+          direction: continueDirection.trim(),
+          count: continueCount,
+        }),
+      });
+      const d = await res.json();
+      if (d.data) {
+        setStory(d.data as StoryState);
+        setContinueModalOpen(false);
+        setContinueDirection("");
+      } else if (d.error) {
+        setError(d.error);
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Continue failed");
+    } finally { setContinuing(false); }
+  }, [storyId, continueDirection, continueCount]);
+
+  const openEditModal = (chapterNumber: number) => {
+    setEditChapterNum(chapterNumber);
+    setEditPrompt("");
+    setEditModalOpen(true);
+  };
+
   const handleNextChapter = useCallback(async () => {
     if (!story) return;
     const chapters: Chapter[] = story.chapters || [];
     const currentMeta = chapters[currentChapter - 1];
-
-    // Mark current as read
     if (currentMeta?.readStatus !== "read") {
       try {
         const updatedChapters = chapters.map((c: Chapter) =>
@@ -99,23 +193,15 @@ export default function StoryReaderPage() {
         );
         const updatedStory = { ...story, chapters: updatedChapters };
         setStory(updatedStory);
-
-        // Persist read status
         await fetch("/api/stories", {
           method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            action: "update", storyId,
-            chapters: updatedChapters,
-          }),
+          body: JSON.stringify({ action: "update", storyId, chapters: updatedChapters }),
         });
       } catch {}
     }
-
-    // Move to next chapter
     const nextComplete = chapters.find((c: Chapter) => c.number > currentChapter && c.status === "complete");
     if (nextComplete) {
       setCurrentChapter(nextComplete.number);
-      // Mark next as read-status unread if it was pending
       setStory((prev: StoryState | null) => {
         if (!prev) return prev;
         return {
@@ -130,7 +216,6 @@ export default function StoryReaderPage() {
 
   const handleChapterSelect = (num: number) => {
     setCurrentChapter(num);
-    // Mark as read when selecting from sidebar
     setStory((prev: StoryState | null) => {
       if (!prev) return prev;
       return {
@@ -140,7 +225,6 @@ export default function StoryReaderPage() {
         ),
       };
     });
-    // On mobile, close sidebar after selection
     if (window.innerWidth < 768) setSidebarOpen(false);
   };
 
@@ -169,29 +253,137 @@ export default function StoryReaderPage() {
   const chapters: Chapter[] = story.chapters || [];
   const chapterContent = story.chapterContents?.[currentChapter] || "";
   const currentMeta = chapters[currentChapter - 1];
-  const prevComplete = chapters.filter((c: Chapter) => c.number < currentChapter && c.status === "complete");
   const nextComplete = chapters.find((c: Chapter) => c.number > currentChapter && c.status === "complete");
   const prevChapter = currentChapter > 1 ? chapters[currentChapter - 2] : null;
   const nextChapter = nextComplete ? chapters[nextComplete.number - 1] : null;
+  const anyFailed = chapters.some((c: Chapter) => c.status === "failed");
+  const allComplete = chapters.length > 0 && chapters.every((c: Chapter) => c.status === "complete");
 
   return (
     <div className="min-h-screen bg-dark-950 grid-bg relative scanlines flex flex-col">
-      {/* ═══ Reader Header — sticky bar below sidebar top bar ═══ */}
+      {/* Edit Chapter Modal */}
+      {editModalOpen && (
+        <div className="fixed inset-0 z-[60] bg-dark-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-dark-900 border border-purple-500/20 rounded-xl w-full max-w-lg p-6 space-y-4">
+            <h3 className="text-sm font-semibold text-white">Edit Chapter {editChapterNum}</h3>
+            <p className="text-xs text-white/40">Describe what you want changed. The chapter will be rewritten, and all subsequent chapters will regenerate with the updated context.</p>
+            <textarea
+              value={editPrompt}
+              onChange={(e) => setEditPrompt(e.target.value)}
+              rows={4}
+              placeholder="e.g., Make the dialogue more tense, add a plot twist about the captain..."
+              className="w-full bg-dark-800/50 border border-white/10 rounded-lg px-4 py-3 text-sm text-white placeholder-white/20 outline-none focus:border-purple-500/30 font-mono resize-none"
+            />
+            <div className="flex gap-2 justify-end">
+              <button onClick={() => setEditModalOpen(false)}
+                className="px-4 py-2 text-xs text-white/40 hover:text-white/60 rounded-lg border border-white/10 hover:bg-white/5">
+                Cancel
+              </button>
+              <button onClick={handleEditChapter} disabled={!editPrompt.trim() || editing}
+                className="px-4 py-2 text-xs text-neon-purple rounded-lg border border-purple-500/30 bg-purple-500/10 hover:bg-purple-500/20 disabled:opacity-30 flex items-center gap-2">
+                {editing ? <Loader2 className="w-3 h-3 animate-spin" /> : <PenLine className="w-3 h-3" />}
+                {editing ? "Rewriting..." : "Rewrite Chapter"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Continue Story Modal */}
+      {continueModalOpen && (
+        <div className="fixed inset-0 z-[60] bg-dark-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-dark-900 border border-green-500/20 rounded-xl w-full max-w-lg p-6 space-y-4">
+            <h3 className="text-sm font-semibold text-white">Continue Story</h3>
+            <p className="text-xs text-white/40">Describe the direction for the continuation. New chapter outlines will be generated that continue from where the story left off.</p>
+            <textarea
+              value={continueDirection}
+              onChange={(e) => setContinueDirection(e.target.value)}
+              rows={3}
+              placeholder="e.g., A new threat emerges from the east, forcing the heroes to ally with old enemies..."
+              className="w-full bg-dark-800/50 border border-white/10 rounded-lg px-4 py-3 text-sm text-white placeholder-white/20 outline-none focus:border-green-500/30 font-mono resize-none"
+            />
+            <div>
+              <label className="text-[10px] font-mono text-white/30 uppercase tracking-wider block mb-1.5">Additional Chapters</label>
+              <div className="flex gap-2">
+                {[2, 3, 4, 5].map(n => (
+                  <button key={n} onClick={() => setContinueCount(n)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-mono border transition-all ${
+                      continueCount === n ? "border-green-500/40 bg-green-500/15 text-green-400" : "border-white/8 text-white/30 hover:text-white/50"
+                    }`}>{n}</button>
+                ))}
+              </div>
+            </div>
+            <div className="flex gap-2 justify-end">
+              <button onClick={() => setContinueModalOpen(false)}
+                className="px-4 py-2 text-xs text-white/40 hover:text-white/60 rounded-lg border border-white/10 hover:bg-white/5">
+                Cancel
+              </button>
+              <button onClick={handleContinue} disabled={!continueDirection.trim() || continuing}
+                className="px-4 py-2 text-xs text-green-400 rounded-lg border border-green-500/30 bg-green-500/10 hover:bg-green-500/20 disabled:opacity-30 flex items-center gap-2">
+                {continuing ? <Loader2 className="w-3 h-3 animate-spin" /> : <PlayCircle className="w-3 h-3" />}
+                {continuing ? "Generating..." : "Continue Story"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Error banner */}
+      {error && (
+        <div className="sticky top-0 z-50 bg-red-500/10 border-b border-red-500/20 px-4 py-2 flex items-center gap-2">
+          <AlertTriangle className="w-4 h-4 text-red-400 flex-shrink-0" />
+          <span className="text-xs text-red-300 flex-1">{error}</span>
+          <button onClick={() => setError(null)} className="text-red-400/50 hover:text-red-400"><X className="w-4 h-4" /></button>
+        </div>
+      )}
+
+      {/* Story generation error banner */}
+      {story.status === "failed" && story.generationError && (
+        <div className="sticky top-0 z-50 bg-red-500/10 border-b border-red-500/20 px-4 py-3 flex items-center gap-3">
+          <AlertTriangle className="w-5 h-5 text-red-400 flex-shrink-0" />
+          <div className="flex-1">
+            <p className="text-xs text-red-300 font-semibold">Story generation failed</p>
+            <p className="text-xs text-red-300/60">{story.generationError}</p>
+          </div>
+          <button onClick={() => router.push("/recroom/story-weaver/create")}
+            className="px-3 py-1.5 text-xs text-red-300 rounded-lg border border-red-500/30 bg-red-500/10 hover:bg-red-500/20">
+            Retry from Create
+          </button>
+        </div>
+      )}
+
+      {/* Reader Header */}
       <div className="sticky top-0 lg:top-0 z-30 border-b border-white/10 bg-dark-950/95 backdrop-blur-xl flex-shrink-0">
         <div className="flex items-center justify-between px-3 md:px-6 h-12">
-          {/* Left: Back */}
           <button onClick={() => router.push("/recroom/story-weaver")}
             className="p-2.5 rounded-lg text-white/40 hover:text-white/70 hover:bg-white/5 transition-colors flex-shrink-0 min-w-[44px] min-h-[44px] flex items-center justify-center">
             <ChevronLeft className="w-5 h-5" />
           </button>
-
-          {/* Centre: Title */}
           <h1 className="text-sm font-semibold text-white truncate mx-2 flex-1 text-center min-w-0">
             {story.title}
           </h1>
-
-          {/* Right: Chapters toggle + Settings */}
           <div className="flex items-center gap-1.5 flex-shrink-0">
+            {/* Continue button for complete stories */}
+            {allComplete && (
+              <button onClick={() => setContinueModalOpen(true)}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-green-500/20 text-xs font-bold text-green-400 hover:bg-green-500/10 transition-colors min-h-[44px]"
+                title="Continue this story">
+                <PlayCircle className="w-4 h-4" />
+                <span className="hidden md:inline">Continue</span>
+              </button>
+            )}
+            {/* Retry all failed chapters */}
+            {anyFailed && (
+              <button onClick={() => {
+                const failed = chapters.find((c: Chapter) => c.status === "failed");
+                if (failed) retryChapter(failed.number);
+              }}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-orange-500/20 text-xs font-bold text-orange-400 hover:bg-orange-500/10 transition-colors min-h-[44px]"
+                title="Retry failed chapters">
+                <RefreshCw className="w-4 h-4" />
+                <span className="hidden md:inline">Retry</span>
+              </button>
+            )}
             <button onClick={() => setSidebarOpen(!sidebarOpen)}
               className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-white/10 text-xs font-bold text-white/70 hover:text-white hover:bg-white/5 transition-colors min-w-[44px] min-h-[44px] justify-center"
               title={sidebarOpen ? "Hide Chapters" : "Show Chapters"}>
@@ -209,13 +401,13 @@ export default function StoryReaderPage() {
               className={`w-2 h-2 rounded-full transition-all ${
                 i + 1 === currentChapter ? "scale-150" : "opacity-40 hover:opacity-70"
               }`}
-              style={{ background: ch.status === "complete" ? (i + 1 === currentChapter ? theme.accent : "#4a3f35") : "#2a2520" }}
-              title={`Chapter ${i + 1}: ${ch.title}`} />
+              style={{ background: ch.status === "complete" ? (i + 1 === currentChapter ? theme.accent : "#4a3f35") : ch.status === "failed" ? "#7f1d1d" : "#2a2520" }}
+              title={`Chapter ${i + 1}: ${ch.title} (${ch.status})`} />
           ))}
         </div>
       </div>
 
-      {/* ═══ Body ═══ */}
+      {/* Body */}
       <div className="flex-1 flex overflow-hidden">
         {/* Chapter Sidebar */}
         {sidebarOpen && (
@@ -226,17 +418,32 @@ export default function StoryReaderPage() {
           </div>
         )}
 
-        {/* Book Content — continuous scroll */}
+        {/* Book Content */}
         <div className="flex-1 flex flex-col overflow-hidden">
           <div className="flex-1 w-full overflow-y-auto" style={{ background: theme.bg, filter: `brightness(${settings.brightness})` }}>
             {chapterContent ? (
               <div className="max-w-3xl mx-auto px-6 md:px-16 py-8 md:py-10">
-                <h2 className="mb-8 pb-4 border-b" style={{
-                  color: theme.text, borderColor: settings.pageTheme === "light" ? "#d4ccc0" : "#2a2520",
-                  fontFamily: fontObj.family, fontSize: `${settings.fontSize + 6}px`, fontWeight: 600,
+                <div className="flex items-center justify-between mb-8 pb-4 border-b" style={{
+                  borderColor: settings.pageTheme === "light" ? "#d4ccc0" : "#2a2520",
                 }}>
-                  Chapter {currentChapter}: {currentMeta?.title}
-                </h2>
+                  <h2 style={{
+                    color: theme.text,
+                    fontFamily: fontObj.family,
+                    fontSize: `${settings.fontSize + 6}px`,
+                    fontWeight: 600,
+                  }}>
+                    Chapter {currentChapter}: {currentMeta?.title}
+                  </h2>
+                  {/* Edit button on completed chapters */}
+                  {currentMeta?.status === "complete" && (
+                    <button onClick={() => openEditModal(currentChapter)}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-white/10 text-[10px] font-mono text-white/40 hover:text-neon-purple hover:border-purple-500/30 transition-colors flex-shrink-0"
+                      title="Edit this chapter">
+                      <PenLine className="w-3 h-3" />
+                      Edit
+                    </button>
+                  )}
+                </div>
                 <div className="whitespace-pre-wrap text-justify" style={{
                   color: theme.text, fontFamily: fontObj.family,
                   fontSize: `${settings.fontSize}px`, lineHeight: settings.lineHeight,
@@ -253,6 +460,24 @@ export default function StoryReaderPage() {
                 <p className="text-xs mt-2" style={{ color: theme.text, opacity: 0.3 }}>
                   Chapter {currentChapter} is being written
                 </p>
+              </div>
+            ) : currentMeta?.status === "failed" ? (
+              <div className="flex flex-col items-center justify-center h-full min-h-[400px] px-6">
+                <AlertTriangle className="w-8 h-8 mb-4 text-red-400" />
+                <p className="text-sm text-red-300 mb-2">Chapter {currentChapter} failed to generate</p>
+                {currentMeta.error && (
+                  <p className="text-xs text-red-300/50 mb-4 max-w-md text-center">{currentMeta.error}</p>
+                )}
+                <div className="flex gap-2">
+                  <button onClick={() => retryChapter(currentChapter)}
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg border border-orange-500/30 text-xs text-orange-400 bg-orange-500/10 hover:bg-orange-500/20">
+                    <RefreshCw className="w-3 h-3" /> Retry Chapter
+                  </button>
+                  <button onClick={() => openEditModal(currentChapter)}
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg border border-purple-500/30 text-xs text-neon-purple bg-purple-500/10 hover:bg-purple-500/20">
+                    <PenLine className="w-3 h-3" /> Rewrite with Prompt
+                  </button>
+                </div>
               </div>
             ) : (
               <div className="flex items-center justify-center h-full min-h-[400px]">
@@ -271,12 +496,11 @@ export default function StoryReaderPage() {
               <span className="truncate">{prevChapter ? prevChapter.title : "Prev"}</span>
             </button>
 
-            {/* Chapter dots */}
             <div className="flex gap-1.5 overflow-x-auto max-w-[200px] md:max-w-none">
               {chapters.map((ch, i) => (
                 <button key={i} onClick={() => ch.status === "complete" && handleChapterSelect(i + 1)}
                   className={`w-2.5 h-2.5 rounded-full transition-all flex-shrink-0 ${i + 1 === currentChapter ? "scale-125" : "opacity-40 hover:opacity-70"}`}
-                  style={{ background: ch.status === "complete" ? (i + 1 === currentChapter ? theme.accent : "#4a3f35") : "#2a2520" }} />
+                  style={{ background: ch.status === "complete" ? (i + 1 === currentChapter ? theme.accent : "#4a3f35") : ch.status === "failed" ? "#7f1d1d" : "#2a2520" }} />
               ))}
             </div>
 
@@ -288,7 +512,6 @@ export default function StoryReaderPage() {
               <ChevronRight className="w-4 h-4 flex-shrink-0" />
             </button>
           </div>
-
         </div>
       </div>
 

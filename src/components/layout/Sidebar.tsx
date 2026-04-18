@@ -229,6 +229,10 @@ const mainSections: SidebarSection[] = [
 
           { label: "Create", href: "/recroom/story-weaver/create" },
 
+          { label: "Characters", href: "/recroom/story-weaver/characters" },
+
+          { label: "Prompts", href: "/recroom/story-weaver/prompts" },
+
         ],
 
       },

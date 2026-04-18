@@ -1,16 +1,31 @@
-// Story Weaver — Create Story
+// Story Weaver — Create Story V2 (drafts, load from characters/prompts)
 "use client";
-import { useState, useCallback } from "react";
-import { useRouter } from "next/navigation";
-import { ChevronLeft, Sparkles, Plus, X } from "lucide-react";
+import { useState, useCallback, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { ChevronLeft, Sparkles, Plus, X, Save, FolderOpen, Users, FileText } from "lucide-react";
 import { STORY_TEMPLATES } from "@/types/recroom";
-import type { StoryCharacter } from "@/types/recroom";
+import type { StoryCharacter, CharacterSheet, SavedPrompt } from "@/types/recroom";
 import GenerateOverlay from "@/components/story-weaver/GenerateOverlay";
 
 const DEFAULT_GENRES = ["Sci-Fi", "Mystery", "Fantasy", "Romance", "Crime", "Horror", "Adventure", "Historical"];
 const DEFAULT_ERAS = ["Ancient", "Medieval", "Modern", "Near Future", "Far Future", "Timeless"];
 const DEFAULT_MOODS = ["Tense", "Wonder", "Humorous", "Dark", "Hopeful", "Melancholy", "Suspenseful", "Whimsical"];
 const DEFAULT_SETTINGS = ["Space Station", "Medieval Castle", "Modern City", "Underwater", "Forest", "Desert", "Island", "Train"];
+const DRAFT_KEY = "story-weaver-draft";
+
+interface Draft {
+  title: string;
+  premise: string;
+  genres: string[];
+  era: string;
+  moods: string[];
+  setting: string;
+  pov: string;
+  length: string;
+  wordCountRange: string;
+  characters: StoryCharacter[];
+  savedAt: string;
+}
 
 function Tags({ label, options, selected, onToggle, onAdd }: {
   label: string; options: string[]; selected: string[];
@@ -44,11 +59,23 @@ function Tags({ label, options, selected, onToggle, onAdd }: {
   );
 }
 
-export default function CreateStoryPage() {
+export default function CreateStoryPageWrapper() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-dark-950 flex items-center justify-center"><Sparkles className="w-8 h-8 text-neon-purple animate-spin" /></div>}>
+      <CreateStoryPage />
+    </Suspense>
+  );
+}
+
+function CreateStoryPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+
   const [generating, setGenerating] = useState(false);
   const [genDone, setGenDone] = useState(false);
   const [genStoryId, setGenStoryId] = useState<string | null>(null);
+  const [genError, setGenError] = useState<string | null>(null);
+
   const [title, setTitle] = useState("");
   const [titleManuallyEdited, setTitleManuallyEdited] = useState(false);
   const [premise, setPremise] = useState(STORY_TEMPLATES[0].premise);
@@ -66,18 +93,109 @@ export default function CreateStoryPage() {
   const [moodOpts, setMoodOpts] = useState([...DEFAULT_MOODS]);
   const [settingOpts, setSettingOpts] = useState([...DEFAULT_SETTINGS]);
 
+  // Load from characters/prompts
+  const [savedCharacters, setSavedCharacters] = useState<CharacterSheet[]>([]);
+  const [savedPrompts, setSavedPrompts] = useState<SavedPrompt[]>([]);
+  const [showCharPicker, setShowCharPicker] = useState(false);
+  const [showPromptPicker, setShowPromptPicker] = useState(false);
+  const [hasDraft, setHasDraft] = useState(false);
+
+  // Check for drafts and load saved data on mount
+  useEffect(() => {
+    setHasDraft(!!localStorage.getItem(DRAFT_KEY));
+    // Load saved characters
+    fetch("/api/stories", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "characters", subAction: "list" }),
+    }).then(r => r.json()).then(d => {
+      if (d.data?.characters) setSavedCharacters(d.data.characters);
+    }).catch(() => {});
+    // Load saved prompts
+    fetch("/api/stories", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "prompts", subAction: "list" }),
+    }).then(r => r.json()).then(d => {
+      if (d.data?.prompts) setSavedPrompts(d.data.prompts);
+    }).catch(() => {});
+
+    // Load from URL params (from prompt page "Use Prompt")
+    const promptId = searchParams.get("promptId");
+    if (promptId) {
+      fetch("/api/stories", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "prompts", subAction: "list" }),
+      }).then(r => r.json()).then(d => {
+        const prompt = d.data?.prompts?.find((p: SavedPrompt) => p.id === promptId);
+        if (prompt) applySavedPrompt(prompt);
+      }).catch(() => {});
+    }
+  }, [searchParams]);
+
+  // Auto-save draft to localStorage
+  useEffect(() => {
+    if (generating) return;
+    const draft: Draft = {
+      title, premise, genres, era, moods, setting, pov, length, wordCountRange, characters,
+      savedAt: new Date().toISOString(),
+    };
+    localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+  }, [title, premise, genres, era, moods, setting, pov, length, wordCountRange, characters, generating]);
+
+  const loadDraft = () => {
+    const raw = localStorage.getItem(DRAFT_KEY);
+    if (!raw) return;
+    try {
+      const d: Draft = JSON.parse(raw);
+      setTitle(d.title); setTitleManuallyEdited(!!d.title);
+      setPremise(d.premise); setGenres(d.genres);
+      setEra(d.era); setMoods(d.moods);
+      setSetting(d.setting); setPov(d.pov);
+      setLength(d.length); setWordCountRange(d.wordCountRange || "standard");
+      setCharacters(d.characters);
+      setSelectedTemplate("");
+      setHasDraft(false);
+    } catch {}
+  };
+
+  const clearDraft = () => {
+    localStorage.removeItem(DRAFT_KEY);
+    setHasDraft(false);
+  };
+
   const applyTemplate = (id: string) => {
     setSelectedTemplate(id);
     const t = STORY_TEMPLATES.find((tmpl) => tmpl.id === id);
     if (!t) return;
     setPremise(t.premise); setGenres([...t.genre]); setEra(t.era); setMoods([...t.moods]);
     setSetting(t.setting); setPov(t.pov); setLength(t.length); setCharacters([...t.characters]);
-    // Only set title if user hasn't manually edited it
+    setWordCountRange("standard");
     if (!titleManuallyEdited) setTitle(t.name);
+  };
+
+  const applySavedPrompt = (p: SavedPrompt) => {
+    setTitle(p.name); setTitleManuallyEdited(true);
+    setPremise(p.premise);
+    if (p.genre.length) setGenres([...p.genre]);
+    if (p.era) setEra(p.era);
+    if (p.setting) setSetting(p.setting);
+    if (p.mood.length) setMoods([...p.mood]);
+    setSelectedTemplate("");
+  };
+
+  const importCharacter = (cs: CharacterSheet) => {
+    // Don't add duplicates
+    if (characters.some(c => c.name === cs.name)) return;
+    setCharacters(prev => [...prev, {
+      name: cs.name,
+      role: (cs.role as StoryCharacter["role"]) || "supporting",
+      description: cs.description || cs.backstory?.slice(0, 100) || "",
+    }]);
+    setShowCharPicker(false);
   };
 
   const toggle = (list: string[], set: (v: string[]) => void, tag: string) =>
     set(list.includes(tag) ? list.filter((t) => t !== tag) : [...list, tag]);
+
   const addOpt = (opts: string[], set: (v: string[]) => void, tag: string) =>
     { if (!opts.includes(tag)) set([...opts, tag]); };
 
@@ -86,6 +204,7 @@ export default function CreateStoryPage() {
     setGenerating(true);
     setGenDone(false);
     setGenStoryId(null);
+    setGenError(null);
 
     try {
       const res = await fetch("/api/stories", {
@@ -99,14 +218,16 @@ export default function CreateStoryPage() {
       const d = await res.json();
       if (d.error) throw new Error(d.error);
 
-      // Signal done — overlay will animate to 100%, show success, then navigate
+      // Clear draft on success
+      localStorage.removeItem(DRAFT_KEY);
+      setHasDraft(false);
       setGenStoryId(d.data.id);
       setGenDone(true);
     } catch (err) {
       setGenerating(false);
-      alert("Failed to create story: " + (err instanceof Error ? err.message : "Unknown error"));
+      setGenError(err instanceof Error ? err.message : "Unknown error");
     }
-  }, [title, premise, genres, era, setting, moods, pov, length, characters]);
+  }, [title, premise, genres, era, setting, moods, pov, length, characters, wordCountRange]);
 
   const handleGenComplete = useCallback(() => {
     if (genStoryId) {
@@ -119,12 +240,89 @@ export default function CreateStoryPage() {
       {/* Generate overlay */}
       <GenerateOverlay title={title || "Your Story"} visible={generating} done={genDone} onComplete={handleGenComplete} />
 
+      {/* Error banner */}
+      {genError && (
+        <div className="sticky top-0 z-50 bg-red-500/10 border-b border-red-500/20 px-4 py-3 flex items-center gap-3">
+          <div className="flex-1">
+            <p className="text-xs text-red-300 font-semibold">Story generation failed</p>
+            <p className="text-xs text-red-300/60">{genError}</p>
+            <p className="text-xs text-red-300/40 mt-1">Your configuration has been saved. You can retry without re-entering everything.</p>
+          </div>
+          <button onClick={() => setGenError(null)} className="text-red-400/50 hover:text-red-400"><X className="w-4 h-4" /></button>
+        </div>
+      )}
+
+      {/* Character Picker Modal */}
+      {showCharPicker && (
+        <div className="fixed inset-0 z-[60] bg-dark-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-dark-900 border border-purple-500/20 rounded-xl w-full max-w-lg p-6 space-y-4 max-h-[80vh] overflow-y-auto">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-white">Import Character</h3>
+              <button onClick={() => setShowCharPicker(false)} className="text-white/30 hover:text-white/60"><X className="w-4 h-4" /></button>
+            </div>
+            {savedCharacters.length === 0 ? (
+              <p className="text-xs text-white/30">No saved characters. Create some in the Characters page first.</p>
+            ) : (
+              <div className="space-y-2">
+                {savedCharacters.map(cs => (
+                  <button key={cs.id} onClick={() => importCharacter(cs)}
+                    disabled={characters.some(c => c.name === cs.name)}
+                    className="w-full text-left p-3 rounded-lg border border-white/5 hover:border-purple-500/20 bg-white/[0.02] hover:bg-purple-500/5 transition-all disabled:opacity-30">
+                    <div className="text-xs font-semibold text-white/80">{cs.name}</div>
+                    <div className="text-[10px] text-white/30 font-mono">{cs.role} — {cs.description?.slice(0, 80)}</div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Prompt Picker Modal */}
+      {showPromptPicker && (
+        <div className="fixed inset-0 z-[60] bg-dark-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-dark-900 border border-green-500/20 rounded-xl w-full max-w-lg p-6 space-y-4 max-h-[80vh] overflow-y-auto">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-white">Load Story Prompt</h3>
+              <button onClick={() => setShowPromptPicker(false)} className="text-white/30 hover:text-white/60"><X className="w-4 h-4" /></button>
+            </div>
+            {savedPrompts.length === 0 ? (
+              <p className="text-xs text-white/30">No saved prompts. Create some in the Prompts page first.</p>
+            ) : (
+              <div className="space-y-2">
+                {savedPrompts.map(p => (
+                  <button key={p.id} onClick={() => { applySavedPrompt(p); setShowPromptPicker(false); }}
+                    className="w-full text-left p-3 rounded-lg border border-white/5 hover:border-green-500/20 bg-white/[0.02] hover:bg-green-500/5 transition-all">
+                    <div className="text-xs font-semibold text-white/80">{p.name}</div>
+                    <div className="text-[10px] text-white/30 font-mono">{p.genre?.join(", ")} — {p.premise?.slice(0, 80)}</div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="border-b border-white/10 bg-dark-900/50 px-6 py-4 backdrop-blur-xl">
         <div className="flex items-center gap-3">
           <button onClick={() => router.push("/recroom/story-weaver")} className="p-1.5 rounded-lg text-white/30 hover:text-white/60 hover:bg-white/5"><ChevronLeft className="w-4 h-4" /></button>
           <Sparkles className="w-5 h-5 text-neon-purple" />
           <h1 className="text-lg font-bold text-white">Create Story</h1>
+          <div className="flex-1" />
+          {/* Draft / Load buttons */}
+          {hasDraft && (
+            <button onClick={loadDraft}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-orange-500/20 text-[10px] font-mono text-orange-400 hover:bg-orange-500/10">
+              <FolderOpen className="w-3 h-3" /> Load Draft
+            </button>
+          )}
+          {savedPrompts.length > 0 && (
+            <button onClick={() => setShowPromptPicker(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-green-500/20 text-[10px] font-mono text-green-400 hover:bg-green-500/10">
+              <FileText className="w-3 h-3" /> Load Prompt
+            </button>
+          )}
         </div>
       </div>
 
@@ -142,7 +340,9 @@ export default function CreateStoryPage() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
             {STORY_TEMPLATES.map((t) => (
               <button key={t.id} onClick={() => applyTemplate(t.id)}
-                className={`text-left p-3 rounded-lg border transition-all ${selectedTemplate === t.id ? "border-purple-500/40 bg-purple-500/10" : "border-white/5 bg-white/[0.02] hover:border-white/15"}`}>
+                className={`text-left p-3 rounded-lg border transition-all ${
+                  selectedTemplate === t.id ? "border-purple-500/40 bg-purple-500/10" : "border-white/5 bg-white/[0.02] hover:border-white/15"
+                }`}>
                 <div className="text-xs font-semibold text-white/80 mb-0.5">{t.name}</div>
                 <div className="text-[9px] font-mono text-white/30">{t.genre.join(", ")}</div>
               </button>
@@ -169,8 +369,18 @@ export default function CreateStoryPage() {
         <div className="rounded-xl border border-white/8 bg-dark-900/50 p-5">
           <div className="flex items-center justify-between mb-3">
             <label className="text-xs font-mono text-white/40 uppercase tracking-widest">Characters</label>
-            <button onClick={() => setCharacters((p) => [...p, { name: "", role: "supporting", description: "" }])}
-              className="text-[10px] font-mono text-neon-purple flex items-center gap-1"><Plus className="w-3 h-3" /> Add</button>
+            <div className="flex items-center gap-2">
+              {savedCharacters.length > 0 && (
+                <button onClick={() => setShowCharPicker(true)}
+                  className="text-[10px] font-mono text-neon-purple flex items-center gap-1">
+                  <Users className="w-3 h-3" /> Import
+                </button>
+              )}
+              <button onClick={() => setCharacters((p) => [...p, { name: "", role: "supporting", description: "" }])}
+                className="text-[10px] font-mono text-neon-purple flex items-center gap-1">
+                <Plus className="w-3 h-3" /> Add
+              </button>
+            </div>
           </div>
           <div className="space-y-2">
             {characters.map((ch, i) => (

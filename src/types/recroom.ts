@@ -52,6 +52,38 @@ export interface StoryArc {
   chapterOutlines: ChapterOutline[];
 }
 
+// ── Character Sheets (V2) ─────────────────────────────────────
+
+export interface CharacterSheet {
+  id: string;
+  name: string;
+  role: string;
+  description: string;
+  personality: string[];
+  backstory: string;
+  appearance: string;
+  speechPatterns: string;
+  relationships: string;
+  tags: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+// ── Saved Story Prompts (V2) ──────────────────────────────────
+
+export interface SavedPrompt {
+  id: string;
+  name: string;
+  premise: string;
+  genre: string[];
+  era: string;
+  setting: string;
+  mood: string[];
+  notes: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export const STORY_TEMPLATES: StoryTemplate[] = [
   {
     id: "cosmic-voyager",
