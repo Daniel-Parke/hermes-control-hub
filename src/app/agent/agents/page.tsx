@@ -354,7 +354,7 @@ export default function BehaviourPage() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          color="red"
+                          color="orange"
                           icon={Trash2}
                           onClick={() => setDeleteTarget(profile.id)}
                         >
@@ -462,6 +462,95 @@ export default function BehaviourPage() {
             </div>
           </div>
         )}
+        {/* Create Profile Modal */}
+        <Modal
+          open={showCreate}
+          onClose={() => { setShowCreate(false); setCreateName(""); setCreateDescription(""); setCreateCloneFrom("default"); }}
+          title="New Agent Profile"
+          icon={Plus}
+          iconColor="text-neon-purple"
+          size="md"
+          footer={
+            <>
+              <Button variant="ghost" size="sm" onClick={() => setShowCreate(false)}>Cancel</Button>
+              <Button
+                variant="primary"
+                color="purple"
+                size="sm"
+                icon={Plus}
+                onClick={handleCreate}
+                disabled={!createName.trim() || creating}
+              >
+                {creating ? "Creating..." : "Create"}
+              </Button>
+            </>
+          }
+        >
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm text-white/50 mb-1">Name</label>
+              <input
+                type="text"
+                value={createName}
+                onChange={(e) => setCreateName(e.target.value)}
+                placeholder="e.g. Research Assistant"
+                className="w-full bg-dark-800 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:border-purple-500/50 focus:outline-none"
+              />
+            </div>
+            <div>
+              <label className="block text-sm text-white/50 mb-1">Description</label>
+              <input
+                type="text"
+                value={createDescription}
+                onChange={(e) => setCreateDescription(e.target.value)}
+                placeholder="e.g. Academic research and analysis"
+                className="w-full bg-dark-800 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:border-purple-500/50 focus:outline-none"
+              />
+            </div>
+            <div>
+              <label className="block text-sm text-white/50 mb-1">Clone From</label>
+              <select
+                value={createCloneFrom}
+                onChange={(e) => setCreateCloneFrom(e.target.value)}
+                className="w-full bg-dark-800 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:border-purple-500/50 focus:outline-none"
+              >
+                <option value="default">Default (Bob)</option>
+                {profiles.filter(p => !p.isDefault).map((p) => (
+                  <option key={p.id} value={p.id}>{p.name}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </Modal>
+
+        {/* Delete Confirmation Modal */}
+        <Modal
+          open={deleteTarget !== null}
+          onClose={() => setDeleteTarget(null)}
+          title="Delete Profile"
+          icon={Trash2}
+          iconColor="text-red-400"
+          size="sm"
+          footer={
+            <>
+              <Button variant="ghost" size="sm" onClick={() => setDeleteTarget(null)}>Cancel</Button>
+              <Button
+                variant="primary"
+                color="orange"
+                size="sm"
+                icon={Trash2}
+                onClick={handleDelete}
+                disabled={deleting}
+              >
+                {deleting ? "Deleting..." : "Delete"}
+              </Button>
+            </>
+          }
+        >
+          <p className="text-sm text-white/70">
+            This will permanently delete the profile and all its files. This action cannot be undone.
+          </p>
+        </Modal>
       </div>
     </div>
   );

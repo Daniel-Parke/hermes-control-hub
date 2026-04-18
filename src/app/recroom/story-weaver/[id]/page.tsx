@@ -49,6 +49,7 @@ export default function StoryReaderPage() {
   const [editPrompt, setEditPrompt] = useState("");
   const [editing, setEditing] = useState(false);
   const [editDone, setEditDone] = useState(false);
+  const [editWordCount, setEditWordCount] = useState("standard");
 
   // Continue story state
   const [continueModalOpen, setContinueModalOpen] = useState(false);
@@ -56,6 +57,7 @@ export default function StoryReaderPage() {
   const [continueCount, setContinueCount] = useState(3);
   const [continuing, setContinuing] = useState(false);
   const [continueDone, setContinueDone] = useState(false);
+  const [continueWordCount, setContinueWordCount] = useState("standard");
 
   useEffect(() => {
     if (typeof window !== "undefined" && window.innerWidth >= 1024) {
@@ -126,6 +128,7 @@ export default function StoryReaderPage() {
   // Edit chapter with prompt
   const handleEditChapter = useCallback(async () => {
     if (!editPrompt.trim()) return;
+    setEditModalOpen(false);
     setEditing(true);
     setError(null);
     try {
@@ -136,6 +139,7 @@ export default function StoryReaderPage() {
           storyId,
           chapterNumber: editChapterNum,
           editPrompt: editPrompt.trim(),
+          wordCountRange: editWordCount,
         }),
       });
       const d = await res.json();
@@ -144,16 +148,18 @@ export default function StoryReaderPage() {
         setEditDone(true);
       } else if (d.error) {
         setError(d.error);
+        setEditDone(true);
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Edit failed");
       setEditDone(true);
     }
-  }, [storyId, editChapterNum, editPrompt]);
+  }, [storyId, editChapterNum, editPrompt, editWordCount]);
 
   // Continue story
   const handleContinue = useCallback(async () => {
     if (!continueDirection.trim()) return;
+    setContinueModalOpen(false);
     setContinuing(true);
     setError(null);
     try {
@@ -164,6 +170,7 @@ export default function StoryReaderPage() {
           storyId,
           direction: continueDirection.trim(),
           count: continueCount,
+          wordCountRange: continueWordCount,
         }),
       });
       const d = await res.json();
@@ -172,13 +179,13 @@ export default function StoryReaderPage() {
         setContinueDone(true);
       } else if (d.error) {
         setError(d.error);
-        setContinueDone(true); // Let overlay finish so user can dismiss
+        setContinueDone(true);
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Continue failed");
       setContinueDone(true);
     }
-  }, [storyId, continueDirection, continueCount]);
+  }, [storyId, continueDirection, continueCount, continueWordCount]);
 
   const openEditModal = (chapterNumber: number) => {
     setEditChapterNum(chapterNumber);
@@ -300,15 +307,29 @@ export default function StoryReaderPage() {
               placeholder="e.g., Make the dialogue more tense, add a plot twist about the captain..."
               className="w-full bg-dark-800/50 border border-white/10 rounded-lg px-4 py-3 text-sm text-white placeholder-white/20 outline-none focus:border-purple-500/30 font-mono resize-none"
             />
+            <div>
+              <label className="text-[10px] font-mono text-white/30 uppercase tracking-wider block mb-1.5">Chapter Length</label>
+              <div className="flex flex-wrap gap-2">
+                {[
+                  { id: "short", label: "800-1.2k" }, { id: "medium", label: "1.2-1.8k" },
+                  { id: "standard", label: "1.8-2.5k" }, { id: "long", label: "2.5-3.5k" },
+                  { id: "epic", label: "3.5-5k" }, { id: "marathon", label: "5k+" },
+                ].map((opt) => (
+                  <button key={opt.id} onClick={() => setEditWordCount(opt.id)}
+                    className={`px-2 py-1 rounded text-[10px] font-mono border transition-all ${
+                      editWordCount === opt.id ? "border-purple-500/40 bg-purple-500/15 text-neon-purple" : "border-white/8 text-white/30 hover:text-white/50"
+                    }`}>{opt.label}</button>
+                ))}
+              </div>
+            </div>
             <div className="flex gap-2 justify-end">
               <button onClick={() => setEditModalOpen(false)}
                 className="px-4 py-2 text-xs text-white/40 hover:text-white/60 rounded-lg border border-white/10 hover:bg-white/5">
                 Cancel
               </button>
-              <button onClick={handleEditChapter} disabled={!editPrompt.trim() || editing}
+              <button onClick={handleEditChapter} disabled={!editPrompt.trim()}
                 className="px-4 py-2 text-xs text-neon-purple rounded-lg border border-purple-500/30 bg-purple-500/10 hover:bg-purple-500/20 disabled:opacity-30 flex items-center gap-2">
-                {editing ? <Loader2 className="w-3 h-3 animate-spin" /> : <PenLine className="w-3 h-3" />}
-                {editing ? "Rewriting..." : "Rewrite Chapter"}
+                <PenLine className="w-3 h-3" /> Rewrite Chapter
               </button>
             </div>
           </div>
@@ -339,15 +360,29 @@ export default function StoryReaderPage() {
                 ))}
               </div>
             </div>
+            <div>
+              <label className="text-[10px] font-mono text-white/30 uppercase tracking-wider block mb-1.5">Chapter Length</label>
+              <div className="flex flex-wrap gap-2">
+                {[
+                  { id: "short", label: "800-1.2k" }, { id: "medium", label: "1.2-1.8k" },
+                  { id: "standard", label: "1.8-2.5k" }, { id: "long", label: "2.5-3.5k" },
+                  { id: "epic", label: "3.5-5k" }, { id: "marathon", label: "5k+" },
+                ].map((opt) => (
+                  <button key={opt.id} onClick={() => setContinueWordCount(opt.id)}
+                    className={`px-2 py-1 rounded text-[10px] font-mono border transition-all ${
+                      continueWordCount === opt.id ? "border-green-500/40 bg-green-500/15 text-green-400" : "border-white/8 text-white/30 hover:text-white/50"
+                    }`}>{opt.label}</button>
+                ))}
+              </div>
+            </div>
             <div className="flex gap-2 justify-end">
               <button onClick={() => setContinueModalOpen(false)}
                 className="px-4 py-2 text-xs text-white/40 hover:text-white/60 rounded-lg border border-white/10 hover:bg-white/5">
                 Cancel
               </button>
-              <button onClick={handleContinue} disabled={!continueDirection.trim() || continuing}
+              <button onClick={handleContinue} disabled={!continueDirection.trim()}
                 className="px-4 py-2 text-xs text-green-400 rounded-lg border border-green-500/30 bg-green-500/10 hover:bg-green-500/20 disabled:opacity-30 flex items-center gap-2">
-                {continuing ? <Loader2 className="w-3 h-3 animate-spin" /> : <PlayCircle className="w-3 h-3" />}
-                {continuing ? "Generating..." : "Continue Story"}
+                <PlayCircle className="w-3 h-3" /> Continue Story
               </button>
             </div>
           </div>
@@ -427,7 +462,7 @@ export default function StoryReaderPage() {
               className={`w-2 h-2 rounded-full transition-all ${
                 i + 1 === currentChapter ? "scale-150" : "opacity-40 hover:opacity-70"
               }`}
-              style={{ background: ch.status === "complete" ? (i + 1 === currentChapter ? theme.accent : "#4a3f35") : ch.status === "failed" ? "#7f1d1d" : "#2a2520" }}
+              style={{ background: ch.status === "complete" ? (i + 1 === currentChapter ? theme.accent : "#4a3f35") : ch.status === "writing" ? "#3b82f6" : ch.status === "pending" ? "#f59e0b" : ch.status === "failed" ? "#7f1d1d" : "#2a2520" }}
               title={`Chapter ${i + 1}: ${ch.title} (${ch.status})`} />
           ))}
         </div>
