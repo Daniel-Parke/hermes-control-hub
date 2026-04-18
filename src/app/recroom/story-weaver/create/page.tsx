@@ -103,22 +103,16 @@ function CharacterCard({ char, index, onUpdate, onRemove, onSave, expanded, onTo
         <div className="px-3 pb-3 space-y-2 border-t border-white/5 pt-3">
           {[
             { field: "personality" as const, label: "Personality Traits", ph: "e.g., Pragmatic, Protective, Stubborn" },
-            { field: "appearance" as const, label: "Appearance", ph: "Physical description..." },
-            { field: "backstory" as const, label: "Backstory", ph: "Their history, motivations...", textarea: true },
-            { field: "speechPatterns" as const, label: "Speech Patterns", ph: "How they talk — formal, slang, accent..." },
-            { field: "relationships" as const, label: "Relationships", ph: "Connections to other characters..." },
-          ].map(({ field, label, ph, textarea }) => (
+            { field: "appearance" as const, label: "Appearance", ph: "Physical description — build, features, distinguishing marks..." },
+            { field: "backstory" as const, label: "Backstory", ph: "Their history, motivations, what drives them..." },
+            { field: "speechPatterns" as const, label: "Speech Patterns", ph: "How they talk — formal, slang, accent, verbal tics..." },
+            { field: "relationships" as const, label: "Relationships", ph: "Connections to other characters — allies, enemies, bonds..." },
+          ].map(({ field, label, ph }) => (
             <div key={field}>
-              <label className="text-[9px] font-mono text-white/20 uppercase block mb-1">{label}</label>
-              {textarea ? (
-                <textarea value={char[field] || ""} onChange={(e) => onUpdate(index, field, e.target.value)}
-                  rows={2} placeholder={ph}
-                  className="w-full bg-dark-700/30 border border-white/5 rounded px-2 py-1.5 text-xs text-white/60 placeholder-white/15 outline-none font-mono resize-none" />
-              ) : (
-                <input value={char[field] || ""} onChange={(e) => onUpdate(index, field, e.target.value)}
-                  placeholder={ph}
-                  className="w-full bg-dark-700/30 border border-white/5 rounded px-2 py-1.5 text-xs text-white/60 placeholder-white/15 outline-none font-mono" />
-              )}
+              <label className="text-[10px] font-mono text-white/25 uppercase block mb-1">{label}</label>
+              <textarea value={char[field] || ""} onChange={(e) => onUpdate(index, field, e.target.value)}
+                rows={2} placeholder={ph}
+                className="w-full bg-dark-700/30 border border-white/5 rounded-lg px-3 py-2 text-sm text-white/70 placeholder-white/15 outline-none font-mono resize-none leading-relaxed" />
             </div>
           ))}
         </div>
@@ -320,7 +314,14 @@ function CreateStoryPage() {
         }),
       });
       const d = await res.json();
-      if (d.data?.themes) setSavedThemes(d.data.themes);
+      if (d.data?.id) {
+        const listRes = await fetch("/api/stories", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "themes", subAction: "list" }),
+        });
+        const listD = await listRes.json();
+        if (listD.data?.themes) setSavedThemes(listD.data.themes);
+      }
       setShowSaveTheme(false);
       setNewThemeName("");
     } catch {}

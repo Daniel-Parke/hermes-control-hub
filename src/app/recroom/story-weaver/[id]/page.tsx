@@ -225,17 +225,22 @@ export default function StoryReaderPage() {
     }
   }, [story, currentChapter, storyId]);
 
-  const handleChapterSelect = (num: number) => {
+  const handleChapterSelect = async (num: number) => {
     setCurrentChapter(num);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    const updatedChapters = (story?.chapters || []).map((c: Chapter) =>
+      c.number === num && c.status === "complete" ? { ...c, readStatus: "read" as const } : c
+    );
     setStory((prev: StoryState | null) => {
       if (!prev) return prev;
-      return {
-        ...prev,
-        chapters: prev.chapters.map((c: Chapter) =>
-          c.number === num && c.status === "complete" ? { ...c, readStatus: "read" as const } : c
-        ),
-      };
+      return { ...prev, chapters: updatedChapters };
     });
+    try {
+      await fetch("/api/stories", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "update", storyId, chapters: updatedChapters }),
+      });
+    } catch {}
     if (window.innerWidth < 768) setSidebarOpen(false);
   };
 
@@ -472,7 +477,7 @@ export default function StoryReaderPage() {
       <div className="flex-1 flex overflow-hidden">
         {/* Chapter Sidebar */}
         {sidebarOpen && (
-          <div className="w-56 flex-shrink-0 border-r border-white/5 overflow-y-auto hidden md:block" style={{ background: theme.panel }}>
+          <div className="w-56 flex-shrink-0 border-r border-white/5 sticky top-0 h-screen overflow-y-auto hidden md:block" style={{ background: theme.panel }}>
             <div className="p-4">
               <ChapterList chapters={chapters} currentChapter={currentChapter} onSelect={handleChapterSelect} />
             </div>
