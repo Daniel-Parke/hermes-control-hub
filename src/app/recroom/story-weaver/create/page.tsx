@@ -62,59 +62,97 @@ function Tags({ label, options, selected, onToggle, onAdd }: {
   );
 }
 
-function CharacterCard({ char, index, onUpdate, onRemove, onSave, expanded, onToggle }: {
+function CharacterCard({ char, index, onUpdate, onRemove, onSave, saved, expanded, onToggle }: {
   char: StoryCharacter;
   index: number;
   onUpdate: (idx: number, field: keyof StoryCharacter, value: string) => void;
   onRemove: (idx: number) => void;
   onSave: (char: StoryCharacter) => void;
+  saved: boolean;
   expanded: boolean;
   onToggle: (idx: number) => void;
 }) {
   const canSave = char.name.trim() && char.description.trim();
   return (
     <div className="rounded-lg border border-white/5 bg-dark-800/30 overflow-hidden">
-      <div className="flex items-center gap-2 p-3 cursor-pointer hover:bg-white/[0.02]" onClick={() => onToggle(index)}>
-        <input value={char.name} onChange={(e) => { e.stopPropagation(); onUpdate(index, "name", e.target.value); }}
-          onClick={(e) => e.stopPropagation()} placeholder="Character name"
-          className="flex-1 bg-transparent text-sm text-white placeholder-white/20 outline-none font-semibold" />
-        <select value={char.role} onChange={(e) => { e.stopPropagation(); onUpdate(index, "role", e.target.value); }}
-          onClick={(e) => e.stopPropagation()}
-          className="bg-dark-700/50 border border-white/8 rounded px-2 py-1 text-[10px] text-white/70 outline-none font-mono w-28">
-          {ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
-        </select>
-        {expanded && (
-          <button onClick={(e) => { e.stopPropagation(); onSave(char); }} disabled={!canSave}
-            className="p-1 text-white/20 hover:text-green-400 disabled:opacity-30" title="Save to library">
-            <Save className="w-3.5 h-3.5" />
-          </button>
-        )}
-        <button onClick={(e) => { e.stopPropagation(); onRemove(index); }} className="p-1 text-white/20 hover:text-red-400">
-          <X className="w-3.5 h-3.5" />
-        </button>
-        {expanded ? <ChevronUp className="w-4 h-4 text-white/30" /> : <ChevronDown className="w-4 h-4 text-white/30" />}
+      {/* Collapsed header — entire row is tappable to expand */}
+      <div className="flex items-center gap-3 p-3 cursor-pointer hover:bg-white/[0.03] min-h-[48px]"
+        onClick={() => onToggle(index)}>
+        <div className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-mono ${
+          expanded ? "bg-purple-500/20 text-purple-400" : "bg-white/5 text-white/30"
+        }`}>
+          {expanded ? "−" : "+"}
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="text-sm font-semibold text-white/90 truncate">{char.name || "New Character"}</div>
+          {!expanded && char.description && (
+            <div className="text-[10px] text-white/30 truncate">{char.description}</div>
+          )}
+        </div>
+        <span className="flex-shrink-0 px-2 py-0.5 rounded text-[9px] font-mono border border-white/8 text-white/40">{char.role}</span>
       </div>
-      <div className="px-3 pb-2 -mt-1">
-        <input value={char.description} onChange={(e) => onUpdate(index, "description", e.target.value)}
-          placeholder="Short description..."
-          className="w-full bg-transparent text-xs text-white/50 placeholder-white/15 outline-none" />
-      </div>
+
+      {/* Expanded content */}
       {expanded && (
-        <div className="px-3 pb-3 space-y-2 border-t border-white/5 pt-3">
+        <div className="px-3 pb-3 space-y-3 border-t border-white/5 pt-3">
+          {/* Name + Role row */}
+          <div className="flex gap-2">
+            <div className="flex-1">
+              <label className="text-[10px] font-mono text-white/25 uppercase block mb-1">Name</label>
+              <input value={char.name} onChange={(e) => onUpdate(index, "name", e.target.value)}
+                placeholder="Character name..."
+                className="w-full bg-dark-700/30 border border-white/5 rounded-lg px-3 py-2.5 text-sm text-white placeholder-white/15 outline-none font-semibold" />
+            </div>
+            <div className="w-32">
+              <label className="text-[10px] font-mono text-white/25 uppercase block mb-1">Role</label>
+              <select value={char.role} onChange={(e) => onUpdate(index, "role", e.target.value)}
+                className="w-full bg-dark-700/30 border border-white/5 rounded-lg px-3 py-2.5 text-sm text-white outline-none font-mono">
+                {ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
+              </select>
+            </div>
+          </div>
+
+          {/* Description */}
+          <div>
+            <label className="text-[10px] font-mono text-white/25 uppercase block mb-1">Description</label>
+            <textarea value={char.description} onChange={(e) => onUpdate(index, "description", e.target.value)}
+              rows={2} placeholder="A brief summary of who they are..."
+              className="w-full bg-dark-700/30 border border-white/5 rounded-lg px-3 py-2.5 text-sm text-white/70 placeholder-white/15 outline-none font-mono resize-y min-h-[60px] leading-relaxed" />
+          </div>
+
+          {/* Detail fields */}
           {[
-            { field: "personality" as const, label: "Personality Traits", ph: "e.g., Pragmatic, Protective, Stubborn" },
-            { field: "appearance" as const, label: "Appearance", ph: "Physical description — build, features, distinguishing marks..." },
+            { field: "personality" as const, label: "Personality Traits", ph: "e.g., Pragmatic, Protective, Stubborn — how they think and react" },
+            { field: "appearance" as const, label: "Appearance", ph: "Physical description — build, features, distinguishing marks" },
             { field: "backstory" as const, label: "Backstory", ph: "Their history, motivations, what drives them..." },
-            { field: "speechPatterns" as const, label: "Speech Patterns", ph: "How they talk — formal, slang, accent, verbal tics..." },
-            { field: "relationships" as const, label: "Relationships", ph: "Connections to other characters — allies, enemies, bonds..." },
+            { field: "speechPatterns" as const, label: "Speech Patterns", ph: "How they talk — formal, slang, accent, verbal tics" },
+            { field: "relationships" as const, label: "Relationships", ph: "Connections to other characters — allies, enemies, bonds" },
           ].map(({ field, label, ph }) => (
             <div key={field}>
               <label className="text-[10px] font-mono text-white/25 uppercase block mb-1">{label}</label>
               <textarea value={char[field] || ""} onChange={(e) => onUpdate(index, field, e.target.value)}
                 rows={2} placeholder={ph}
-                className="w-full bg-dark-700/30 border border-white/5 rounded-lg px-3 py-2 text-sm text-white/70 placeholder-white/15 outline-none font-mono resize-none leading-relaxed" />
+                className="w-full bg-dark-700/30 border border-white/5 rounded-lg px-3 py-2.5 text-sm text-white/70 placeholder-white/15 outline-none font-mono resize-y min-h-[60px] leading-relaxed" />
             </div>
           ))}
+
+          {/* Action buttons */}
+          <div className="flex items-center gap-2 pt-2 border-t border-white/5">
+            <button onClick={() => onSave(char)} disabled={!canSave}
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-mono border transition-all min-h-[40px] ${
+                saved ? "border-green-500/30 bg-green-500/10 text-green-400" :
+                canSave ? "border-green-500/20 text-green-400/60 hover:bg-green-500/10 hover:text-green-400" :
+                "border-white/5 text-white/20 opacity-50"
+              }`}>
+              <Save className="w-3.5 h-3.5" />
+              {saved ? "Saved!" : "Save to Library"}
+            </button>
+            <div className="flex-1" />
+            <button onClick={() => onRemove(index)}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-mono border border-red-500/10 text-red-400/40 hover:bg-red-500/10 hover:text-red-400 transition-all min-h-[40px]">
+              <X className="w-3.5 h-3.5" /> Remove
+            </button>
+          </div>
         </div>
       )}
     </div>
@@ -151,6 +189,7 @@ function CreateStoryPage() {
   const [characters, setCharacters] = useState<StoryCharacter[]>([...STORY_TEMPLATES[0].characters]);
   const [selectedTheme, setSelectedTheme] = useState("cosmic-voyager");
   const [expandedChars, setExpandedChars] = useState<Record<number, boolean>>({});
+  const [savedChars, setSavedChars] = useState<Record<number, boolean>>({});
   const [genreOpts, setGenreOpts] = useState([...DEFAULT_GENRES]);
   const [eraOpts, setEraOpts] = useState([...DEFAULT_ERAS]);
   const [moodOpts, setMoodOpts] = useState([...DEFAULT_MOODS]);
@@ -287,6 +326,9 @@ function CreateStoryPage() {
       });
       const d = await res.json();
       if (d.data?.id) {
+        // Mark as saved for feedback
+        setSavedChars(prev => ({ ...prev, [characters.indexOf(char)]: true }));
+        setTimeout(() => setSavedChars(prev => { const n = { ...prev }; delete n[characters.indexOf(char)]; return n; }), 2000);
         // Refresh saved characters list
         const listRes = await fetch("/api/stories", {
           method: "POST", headers: { "Content-Type": "application/json" },
@@ -516,19 +558,20 @@ function CreateStoryPage() {
             <Tags label="Mood" options={moodOpts} selected={moods} onToggle={(t) => toggle(moods, setMoods, t)} onAdd={(t) => addOpt(moodOpts, setMoodOpts, t)} />
             <Tags label="Setting" options={settingOpts} selected={[setting]} onToggle={(t) => setSetting(t === setting ? "" : t)} onAdd={(t) => addOpt(settingOpts, setSettingOpts, t)} />
           </div>
-          {/* Saved themes */}
+          {/* Saved themes — prominent at top of Theme section */}
           {savedThemes.length > 0 && (
-            <div className="mt-4 pt-4 border-t border-white/5">
-              <label className="text-[10px] font-mono text-white/20 uppercase tracking-wider block mb-2">Saved Themes</label>
-              <div className="flex flex-wrap gap-2">
+            <div className="mb-4 pb-4 border-b border-white/5">
+              <label className="text-[10px] font-mono text-green-400/60 uppercase tracking-wider block mb-2">Saved Themes — click to load</label>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                 {savedThemes.map((t) => (
-                  <div key={t.id} className={`relative group px-3 py-1.5 rounded-lg border transition-all cursor-pointer ${
-                    selectedTheme === t.id ? "border-green-500/40 bg-green-500/10" : "border-green-500/10 bg-green-500/[0.02] hover:border-green-500/25"
+                  <div key={t.id} className={`relative group p-3 rounded-lg border transition-all cursor-pointer ${
+                    selectedTheme === t.id ? "border-green-500/40 bg-green-500/10" : "border-green-500/10 bg-green-500/[0.02] hover:border-green-500/25 hover:bg-green-500/5"
                   }`} onClick={() => applyTheme(t)}>
-                    <span className="text-[10px] font-mono text-green-400/80">{t.name}</span>
+                    <div className="text-xs font-semibold text-green-400/80 mb-0.5">{t.name}</div>
+                    <div className="text-[9px] font-mono text-white/25 truncate">{t.genre?.join(", ") || "Custom"} — {t.era || "Any era"}</div>
                     <button onClick={(e) => { e.stopPropagation(); deleteTheme(t.id); }}
-                      className="absolute -top-1 -right-1 p-0.5 text-white/10 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Trash2 className="w-2.5 h-2.5" />
+                      className="absolute top-1.5 right-1.5 p-1 text-white/10 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Trash2 className="w-3 h-3" />
                     </button>
                   </div>
                 ))}
@@ -571,6 +614,7 @@ function CreateStoryPage() {
                   onUpdate={updateCharacter}
                   onRemove={removeCharacter}
                   onSave={saveCharacter}
+                  saved={!!savedChars[i]}
                   expanded={!!expandedChars[i]}
                   onToggle={toggleCharExpand}
                 />

@@ -1,6 +1,6 @@
 // Story Weaver — Reader V2 (retry, edit chapter, continue story)
 "use client";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { ChevronLeft, ChevronRight, BookOpen, Sparkles, Loader2, Menu, X, RefreshCw, PenLine, PlayCircle, AlertTriangle } from "lucide-react";
 import ChapterList from "@/components/story-weaver/ChapterList";
@@ -58,6 +58,8 @@ export default function StoryReaderPage() {
   const [continuing, setContinuing] = useState(false);
   const [continueDone, setContinueDone] = useState(false);
   const [continueWordCount, setContinueWordCount] = useState("standard");
+
+  const contentRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (typeof window !== "undefined" && window.innerWidth >= 1024) {
@@ -227,7 +229,7 @@ export default function StoryReaderPage() {
 
   const handleChapterSelect = async (num: number) => {
     setCurrentChapter(num);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    contentRef.current?.scrollTo({ top: 0, behavior: "smooth" });
     const updatedChapters = (story?.chapters || []).map((c: Chapter) =>
       c.number === num && c.status === "complete" ? { ...c, readStatus: "read" as const } : c
     );
@@ -425,9 +427,10 @@ export default function StoryReaderPage() {
             className="p-2.5 rounded-lg text-white/40 hover:text-white/70 hover:bg-white/5 transition-colors flex-shrink-0 min-w-[44px] min-h-[44px] flex items-center justify-center">
             <ChevronLeft className="w-5 h-5" />
           </button>
-          <h1 className="text-sm font-semibold text-white truncate mx-2 flex-1 text-center min-w-0">
-            {story.title}
-          </h1>
+          <div className="flex-1 min-w-0 mx-2 text-center">
+            <div className="text-[9px] font-mono text-white/20 uppercase tracking-wider">Story Weaver</div>
+            <h1 className="text-sm font-semibold text-white truncate">{story.title}</h1>
+          </div>
           <div className="flex items-center gap-1.5 flex-shrink-0">
             {/* Continue button for complete stories */}
             {allComplete && (
@@ -474,7 +477,7 @@ export default function StoryReaderPage() {
       </div>
 
       {/* Body */}
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex" style={{ height: "calc(100vh - 120px)" }}>
         {/* Chapter Sidebar */}
         {sidebarOpen && (
           <div className="w-56 flex-shrink-0 border-r border-white/5 sticky top-0 h-screen overflow-y-auto hidden md:block" style={{ background: theme.panel }}>
@@ -486,7 +489,7 @@ export default function StoryReaderPage() {
 
         {/* Book Content */}
         <div className="flex-1 flex flex-col overflow-hidden">
-          <div className="flex-1 w-full overflow-y-auto" style={{ background: theme.bg, filter: `brightness(${settings.brightness})` }}>
+          <div ref={contentRef} className="flex-1 w-full overflow-y-auto" style={{ background: theme.bg, filter: `brightness(${settings.brightness})` }}>
             {chapterContent ? (
               <div className="max-w-3xl mx-auto px-6 md:px-16 py-8 md:py-10">
                 <div className="flex items-center justify-between mb-8 pb-4 border-b" style={{
