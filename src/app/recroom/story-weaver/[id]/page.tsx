@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { ChevronLeft, ChevronRight, BookOpen, Sparkles, Loader2, Menu, X, RefreshCw, PenLine, PlayCircle, AlertTriangle } from "lucide-react";
 import ChapterList from "@/components/story-weaver/ChapterList";
+import GenerateOverlay from "@/components/story-weaver/GenerateOverlay";
 import ReaderSettings, { loadSettings, DEFAULT_SETTINGS, FONTS, THEMES, type ReadingSettings } from "@/components/story-weaver/ReaderSettings";
 
 interface Chapter {
@@ -53,6 +54,7 @@ export default function StoryReaderPage() {
   const [continueDirection, setContinueDirection] = useState("");
   const [continueCount, setContinueCount] = useState(3);
   const [continuing, setContinuing] = useState(false);
+  const [continueDone, setContinueDone] = useState(false);
 
   useEffect(() => {
     if (typeof window !== "undefined" && window.innerWidth >= 1024) {
@@ -166,14 +168,15 @@ export default function StoryReaderPage() {
       const d = await res.json();
       if (d.data) {
         setStory(d.data as StoryState);
-        setContinueModalOpen(false);
-        setContinueDirection("");
+        setContinueDone(true);
       } else if (d.error) {
         setError(d.error);
+        setContinueDone(true); // Let overlay finish so user can dismiss
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Continue failed");
-    } finally { setContinuing(false); }
+      setContinueDone(true);
+    }
   }, [storyId, continueDirection, continueCount]);
 
   const openEditModal = (chapterNumber: number) => {
@@ -257,10 +260,25 @@ export default function StoryReaderPage() {
   const prevChapter = currentChapter > 1 ? chapters[currentChapter - 2] : null;
   const nextChapter = nextComplete ? chapters[nextComplete.number - 1] : null;
   const anyFailed = chapters.some((c: Chapter) => c.status === "failed");
+  const handleContinueComplete = useCallback(() => {
+    setContinueModalOpen(false);
+    setContinueDirection("");
+    setContinuing(false);
+    setContinueDone(false);
+  }, []);
+
   const allComplete = chapters.length > 0 && chapters.every((c: Chapter) => c.status === "complete");
 
   return (
     <div className="min-h-screen bg-dark-950 grid-bg relative scanlines flex flex-col">
+      {/* Continue story progress overlay */}
+      <GenerateOverlay
+        title={story?.title || "Story"}
+        visible={continuing}
+        done={continueDone}
+        onComplete={handleContinueComplete}
+      />
+
       {/* Edit Chapter Modal */}
       {editModalOpen && (
         <div className="fixed inset-0 z-[60] bg-dark-950/80 backdrop-blur-sm flex items-center justify-center p-4">
