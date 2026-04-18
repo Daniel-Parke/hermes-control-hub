@@ -68,14 +68,9 @@ export const mainSections: SidebarSection[] = [
     ],
   },
   {
-    label: "Agents",
-    links: [
-      { icon: Users, label: "Agents", href: "/agent/agents", color: "purple" },
-    ],
-  },
-  {
     label: "Operations",
     links: [
+      { icon: Users, label: "Agents", href: "/agent/agents", color: "purple" },
       { icon: FileText, label: "Skills", href: "/skills", color: "green" },
       { icon: Wrench, label: "Tools", href: "/agent/tools", color: "purple" },
       { icon: Sparkles, label: "Personalities", href: "/personalities", color: "purple" },
