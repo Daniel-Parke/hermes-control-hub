@@ -9,7 +9,8 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const logName = searchParams.get("name") || "agent";
-    const maxLines = Math.min(parseInt(searchParams.get("lines") || "200"), 1000);
+    const parsedLines = parseInt(searchParams.get("lines") || "200", 10);
+    const maxLines = Number.isFinite(parsedLines) ? Math.min(parsedLines, 1000) : 200;
 
     const logsDir = PATHS.logs;
     if (!existsSync(logsDir)) {

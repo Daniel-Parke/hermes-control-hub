@@ -1,6 +1,6 @@
 # Code Standards Enforcement Report
 
-**Date:** April 19, 2026 (updated 13:22 UTC)
+**Date:** April 19, 2026 (updated 13:40 UTC)
 **Area:** ~/control-hub/
 **Agent:** DevOps Engineer (Hermes Agent)
 
@@ -8,9 +8,34 @@
 
 Performed comprehensive code standards enforcement on the Control Hub codebase. All linters pass clean — 0 ESLint errors, 0 warnings, build succeeds, 207/207 tests pass.
 
-## Latest Sweep (13:22 UTC)
+## Latest Sweep (13:40 UTC)
 
-### Violation Fixed: `require()` in personalities route
+### Violation Fixed: `console.error` in API route helper (4 occurrences)
+
+**File:** `src/app/api/skills/route.ts` (lines 95, 128, 134, 140)
+**Issue:** The `scanSkills()` helper function used raw `console.error()` instead of the project's standard `logApiError()` from `@/lib/api-logger`. Every other API route in the codebase consistently uses `logApiError(route, context, error)` — this was the only outlier.
+**Fix:** Replaced all 4 `console.error` calls with `logApiError("GET /api/skills", context, error)`, matching the convention used across all other API routes.
+
+### Deep Scan Results (no additional fixes needed)
+
+| Check | Result |
+|-------|--------|
+| `: any` type annotations | ✅ None found |
+| `@ts-ignore` / `@ts-expect-error` | ✅ None found |
+| `require()` calls | ✅ None found |
+| `path.join` usage (Turbopack convention) | ✅ None (only `Array.join` on route params) |
+| `console.error` in API routes | ✅ 4 found, fixed |
+| Unused imports | ✅ Clean (ESLint enforced) |
+| Silent `.catch(() => {})` | ⚠️ 11 occurrences — acceptable for polling/abort-controller patterns |
+| TODO/FIXME/HACK | ✅ Only in mission template text (not code) |
+| ESLint disable comments | ✅ 2 occurrences — both with documented justification |
+
+### Verification
+
+- ✅ **ESLint:** 0 errors, 0 warnings
+- ✅ **TypeScript:** Clean compilation
+- ✅ **Tests:** 207/207 passed (31 suites)
+- ✅ **Build:** Successful production build
 
 **File:** `src/app/api/personalities/route.ts:19`
 **Issue:** Used `require("js-yaml")` with an `eslint-disable` comment instead of a proper ES import. The `js-yaml` package is already a declared dependency with `@types/js-yaml` installed.
