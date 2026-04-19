@@ -3,11 +3,11 @@
 // ═══════════════════════════════════════════════════════════════
 
 import {
-  Terminal, Settings, FileText, Database, Clock, Shield, Zap,
+  Terminal, FileText, Database, Clock, Shield, Zap,
   Cpu, Activity, Layers, HardDrive, Wrench, ListTodo, Globe,
   ScrollText, Sparkles, Rocket, Volume2, Mic, GitBranch,
-  RotateCcw, ShieldCheck, MessageSquare, Lock, Code, RefreshCw,
-  AlertTriangle, Check, Download, BookOpen, Workflow, CheckSquare,
+  RotateCcw, ShieldCheck, MessageSquare, Lock, Code,
+  BookOpen, Workflow, CheckSquare,
   FolderOpen, Users,
 } from "lucide-react";
 

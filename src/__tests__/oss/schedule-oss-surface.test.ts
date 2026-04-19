@@ -20,8 +20,14 @@ describe("parseScheduleOss (OSS schedule surface)", () => {
     expect(r.kind).toBe("invalid");
   });
 
-  it("treats every-Nd / every-Nw as invalid on OSS surface", () => {
-    expect(parseScheduleOss("every 2d").kind).toBe("invalid");
+  it("accepts every-Nd as valid day interval", () => {
+    expect(parseScheduleOss("every 2d")).toMatchObject({
+      kind: "interval",
+      minutes: 2880,
+    });
+  });
+
+  it("treats every-Nw as invalid on OSS surface", () => {
     expect(parseScheduleOss("every 1w").kind).toBe("invalid");
   });
 });

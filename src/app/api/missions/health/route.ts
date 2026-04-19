@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { execSync } from "child_process";
-import { HERMES_HOME, PATHS } from "@/lib/hermes";
-import { existsSync, readFileSync, readdirSync, statSync } from "fs";
+import { PATHS } from "@/lib/hermes";
+import { existsSync, readFileSync, readdirSync } from "fs";
 import { logApiError } from "@/lib/api-logger";
 
 const DATA_DIR = PATHS.missions;

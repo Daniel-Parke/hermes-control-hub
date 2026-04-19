@@ -4,7 +4,7 @@
 
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import {
   Rocket,
@@ -107,7 +107,44 @@ interface MissionDetail {
   sessions: Array<{ id: string; modified: string; size: number }>;
 }
 
-// Template icons resolved at render time via name lookup
+// ── Module-level constants (avoid re-creation on every render) ──
+
+const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
+  Search, Bug, GitPullRequest, Wrench, PenTool, Zap,
+  Rocket, Cpu, Activity, Shield, Terminal, Database,
+  Globe, Code, FileText, Layers,
+};
+
+const CATEGORY_ORDER = [
+  "Business - Operations",
+  "Engineering - QA",
+  "Engineering - DevOps",
+  "Engineering - Software",
+  "Engineering - Data",
+  "Engineering - Data Science",
+  "Business - Creative",
+  "Support",
+  "Custom",
+];
+
+const CATEGORY_COLORS: Record<string, string> = {
+  "Engineering - QA": "pink", "Engineering - DevOps": "cyan",
+  "Engineering - Software": "purple", "Engineering - Data": "green",
+  "Engineering - Data Science": "orange", "Business - Operations": "cyan",
+  "Business - Creative": "orange", "Support": "blue", "Custom": "purple",
+};
+
+function groupTemplates(templates: MissionTemplate[]): [string, MissionTemplate[]][] {
+  const grouped: Record<string, MissionTemplate[]> = {};
+  for (const t of templates) {
+    const cat = t.isCustom ? "Custom" : (t.category || "Other");
+    if (!grouped[cat]) grouped[cat] = [];
+    grouped[cat].push(t);
+  }
+  return CATEGORY_ORDER
+    .filter((c) => grouped[c])
+    .map((cat) => [cat, grouped[cat]]);
+}
 
 const statusColors: Record<string, { dot: "online" | "warning" | "error" | "idle"; bg: string; text: string }> = {
   queued: { dot: "warning", bg: "bg-orange-500/10", text: "text-neon-orange" },
@@ -115,6 +152,8 @@ const statusColors: Record<string, { dot: "online" | "warning" | "error" | "idle
   successful: { dot: "online", bg: "bg-green-500/10", text: "text-neon-green" },
   failed: { dot: "error", bg: "bg-red-500/10", text: "text-red-400" },
 };
+
+const defaultStatusColor = { dot: "idle" as const, bg: "bg-white/5", text: "text-white/40" };
 
 export default function MissionsPage() {
   const { fetchMissions, fetchTemplates, fetchMissionDetail } = useMissionsApi();
@@ -152,12 +191,14 @@ export default function MissionsPage() {
   const [newTimeout, setNewTimeout] = useState(10);
   const [newProfile, setNewProfile] = useState("");
   const [dispatching, setDispatching] = useState(false);
-  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [categoryFilter, _setCategoryFilter] = useState("all");
 
   const fetchData = useCallback(() => {
     fetchMissions()
       .then((list) => setMissions(list))
-      .catch(() => {});
+      .catch((error) => {
+        console.error("Failed to load missions:", error);
+      });
 
     fetchTemplates()
       .then((loaded) => {
@@ -179,7 +220,9 @@ export default function MissionsPage() {
           }
         }
       })
-      .catch(() => {});
+      .catch((error) => {
+        console.error("Failed to load templates:", error);
+      });
   }, [fetchMissions, fetchTemplates]);
 
   const fetchDetail = useCallback(
@@ -189,7 +232,9 @@ export default function MissionsPage() {
         .then((data) => {
           if (data) setDetail(data);
         })
-        .catch(() => {})
+        .catch((error) => {
+          console.error("Failed to load mission detail:", error);
+        })
         .finally(() => {
           if (showLoading) setDetailLoading(false);
         });
@@ -241,6 +286,7 @@ export default function MissionsPage() {
 
     const fullPrompt = buildPrompt();
 
+    try {
     // Update existing mission (only for active missions with a live cron job)
     if (editingId) {
       const existingMission = missions.find(m => m.id === editingId);
@@ -298,6 +344,7 @@ export default function MissionsPage() {
 
       if (res.ok) {
         showToast("Mission re-dispatched! Returning to dashboard...", "success");
+        setDispatching(false);
         setTimeout(() => router.push("/"), 2000);
       } else {
         showToast("Failed to re-dispatch mission", "error");
@@ -326,7 +373,7 @@ export default function MissionsPage() {
     });
 
     if (res.ok) {
-      const d = await res.json();
+      const _res = await res.json();
       if (newDispatch === "save") {
         showToast("Mission saved as draft", "success");
         setNewName("");
@@ -338,13 +385,19 @@ export default function MissionsPage() {
         setDispatching(false);
       } else if (newDispatch === "now") {
         showToast("Mission dispatched! Returning to dashboard...", "success");
+        setDispatching(false);
         setTimeout(() => router.push("/"), 2000);
       } else {
         showToast(`Mission scheduled - ${newSchedule}`, "success");
+        setDispatching(false);
         setTimeout(() => router.push("/"), 2000);
       }
     } else {
       showToast("Failed to create mission", "error");
+      setDispatching(false);
+    }
+    } catch {
+      showToast("Network error — please try again", "error");
       setDispatching(false);
     }
   };
@@ -353,16 +406,17 @@ export default function MissionsPage() {
     setEditingId(m.id);
     setNewName(m.name);
     // Split prompt back into instruction + context (best effort)
-    // The stored prompt has injected sections: Goals header, TIME BUDGET, DELEGATION RULES
+    // The stored prompt has injected sections from buildMissionPrompt:
+    // Goals header, MISSION SCOPE, SAFETY LIMITS
     // We need to strip these and recover the original instruction
     let rawPrompt = m.prompt;
 
     // Remove ## Goals tracking header block
-    rawPrompt = rawPrompt.replace(/^## Goals \(complete each in order\)\n[\s\S]*?GOAL_DONE:.*\n\n---\n\n/m, "");
-    // Remove TIME BUDGET section
-    rawPrompt = rawPrompt.replace(/## TIME BUDGET\n[^\n]*\n[^\n]*\n\n/g, "");
-    // Remove DELEGATION RULES section
-    rawPrompt = rawPrompt.replace(/## DELEGATION RULES\n(?:- [^\n]*\n){4}\n/g, "");
+    rawPrompt = rawPrompt.replace(/^## Goals \(complete each in order\)\n[\s\S]*?Mark each goal as done.*\n\n---\n\n/m, "");
+    // Remove ## MISSION SCOPE section (injected by buildMissionPrompt)
+    rawPrompt = rawPrompt.replace(/## MISSION SCOPE\n[\s\S]*?(?=\n## |\n\n---|\n\n[A-Z])/m, "\n");
+    // Remove ## SAFETY LIMITS section (injected by buildMissionPrompt)
+    rawPrompt = rawPrompt.replace(/## SAFETY LIMITS\n[\s\S]*?(?=\n## |\n\n---|\n\n[A-Z])/m, "\n");
 
     const parts = rawPrompt.split("\n---\n");
     setNewInstruction(parts[0]?.trim() || rawPrompt);
@@ -447,15 +501,20 @@ export default function MissionsPage() {
 
   const handleDeleteTemplate = async (templateId: string) => {
     if (!confirm("Delete this template?")) return;
-    await fetch("/api/templates", {
+    const res = await fetch("/api/templates", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ action: "delete", templateId }),
     });
-    showToast("Template deleted", "success");
-    fetchData();
+    if (res.ok) {
+      showToast("Template deleted", "success");
+      setShowTemplateManager(false);
+      fetchData();
+    } else {
+      const body = await res.json().catch(() => null);
+      showToast(body?.error || "Failed to delete template", "error");
+    }
   };
-
   const handleTemplateSelect = (t: MissionTemplate) => {
     setNewName(t.name);
     setNewInstruction(t.instruction);
@@ -469,37 +528,47 @@ export default function MissionsPage() {
 
   const handleDelete = async (id: string) => {
     if (!confirm("Delete this mission and its cron job?")) return;
-    await fetch("/api/missions", {
+    const res = await fetch("/api/missions", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ action: "delete", missionId: id }),
     });
-    showToast("Mission deleted", "success");
-    if (expandedId === id) setExpandedId(null);
-    fetchData();
+    if (res.ok) {
+      showToast("Mission deleted", "success");
+      if (expandedId === id) setExpandedId(null);
+      fetchData();
+    } else {
+      const body = await res.json().catch(() => null);
+      showToast(body?.error || "Failed to delete mission", "error");
+    }
   };
 
   const handleCancel = async (id: string) => {
     if (!confirm("Cancel this mission? The cron job will be paused.")) return;
-    await fetch("/api/missions", {
+    const res = await fetch("/api/missions", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ action: "cancel", missionId: id }),
     });
-    showToast("Mission cancelled", "success");
-    fetchData();
-    if (expandedId === id) fetchDetail(id);
+    if (res.ok) {
+      showToast("Mission cancelled", "success");
+      fetchData();
+      if (expandedId === id) fetchDetail(id);
+    } else {
+      const body = await res.json().catch(() => null);
+      showToast(body?.error || "Failed to cancel mission", "error");
+    }
   };
 
-  const filtered = missions.filter((m) => {
+  const filtered = useMemo(() => missions.filter((m) => {
     if (filter !== "all" && m.status !== filter) return false;
     if (search && !m.name.toLowerCase().includes(search.toLowerCase()) && !m.prompt.toLowerCase().includes(search.toLowerCase())) return false;
     return true;
-  });
+  }), [missions, filter, search]);
 
-  const activeCount = missions.filter((m) => m.status === "queued" || m.status === "dispatched").length;
-  const completedCount = missions.filter((m) => m.status === "successful").length;
-  const failedCount = missions.filter((m) => m.status === "failed").length;
+  const activeCount = useMemo(() => missions.filter((m) => m.status === "queued" || m.status === "dispatched").length, [missions]);
+  const completedCount = useMemo(() => missions.filter((m) => m.status === "successful").length, [missions]);
+  const failedCount = useMemo(() => missions.filter((m) => m.status === "failed").length, [missions]);
 
   if (loading) {
     return (
@@ -572,36 +641,13 @@ export default function MissionsPage() {
             {/* Category Accordion */}
             <div className="space-y-2">
               {(() => {
-                const grouped: Record<string, MissionTemplate[]> = {};
-                for (const t of templates) {
-                  const cat = t.isCustom ? "Custom" : (t.category || "Other");
-                  if (!grouped[cat]) grouped[cat] = [];
-                  grouped[cat].push(t);
-                }
-                const catOrder = [
-                  "Business - Operations",
-                  "Engineering - QA",
-                  "Engineering - DevOps",
-                  "Engineering - Software",
-                  "Engineering - Data",
-                  "Engineering - Data Science",
-                  "Business - Creative",
-                  "Support",
-                  "Custom",
-                ].filter((c) => grouped[c]);
-                const categoryColors: Record<string, string> = {
-                  "Engineering - QA": "pink", "Engineering - DevOps": "cyan",
-                  "Engineering - Software": "purple", "Engineering - Data": "green",
-                  "Engineering - Data Science": "orange", "Business - Operations": "cyan",
-                  "Business - Creative": "orange", "Support": "blue", "Custom": "purple",
-                };
+                const grouped = groupTemplates(templates);
                 // Apply category filter
-                const filteredCats = categoryFilter === "all"
-                  ? catOrder
-                  : catOrder.filter((c) => c === categoryFilter);
-                return filteredCats.map((cat, i) => {
-                  const items = grouped[cat];
-                  const color = categoryColors[cat] || "cyan";
+                const filteredGrouped = categoryFilter === "all"
+                  ? grouped
+                  : grouped.filter(([cat]) => cat === categoryFilter);
+                return filteredGrouped.map(([cat, items]) => {
+                  const color = CATEGORY_COLORS[cat] || "cyan";
                   return (
                     <CategoryAccordion
                       key={cat}
@@ -812,7 +858,7 @@ export default function MissionsPage() {
         ) : (
           <div className="space-y-2">
             {filtered.map((mission) => {
-              const sc = statusColors[mission.status] || statusColors.draft;
+              const sc = statusColors[mission.status] || defaultStatusColor;
               const isExpanded = expandedId === mission.id;
               return (
                 <div key={mission.id} className="rounded-xl border border-white/10 bg-dark-900/50 overflow-hidden">
@@ -1044,32 +1090,9 @@ export default function MissionsPage() {
         >
           <div className="space-y-2">
             {(() => {
-              const grouped: Record<string, MissionTemplate[]> = {};
-              for (const t of templates) {
-                const cat = t.isCustom ? "Custom" : (t.category || "Other");
-                if (!grouped[cat]) grouped[cat] = [];
-                grouped[cat].push(t);
-              }
-              const catOrder = [
-                "Business - Operations",
-                "Engineering - QA",
-                "Engineering - DevOps",
-                "Engineering - Software",
-                "Engineering - Data",
-                "Engineering - Data Science",
-                "Business - Creative",
-                "Support",
-                "Custom",
-              ].filter((c) => grouped[c]);
-              const categoryColors: Record<string, string> = {
-                "Engineering - QA": "pink", "Engineering - DevOps": "cyan",
-                "Engineering - Software": "purple", "Engineering - Data": "green",
-                "Engineering - Data Science": "orange", "Business - Operations": "cyan",
-                "Business - Creative": "orange", "Support": "blue", "Custom": "purple",
-              };
-              return catOrder.map((cat) => {
-                const items = grouped[cat];
-                const color = categoryColors[cat] || "cyan";
+              const grouped = groupTemplates(templates);
+              return grouped.map(([cat, items]) => {
+                const color = CATEGORY_COLORS[cat] || "cyan";
                 return (
                   <CategoryAccordion
                     key={cat}
@@ -1199,12 +1222,7 @@ export default function MissionsPage() {
                 <label className="text-xs text-white/40 font-mono block mb-1">Icon</label>
                 <div className="flex flex-wrap gap-1.5">
                   {TEMPLATE_ICONS.map((icon) => {
-                    const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
-                      Search, Bug, GitPullRequest, Wrench, PenTool, Zap,
-                      Rocket, Cpu, Activity, Shield, Terminal, Database,
-                      Globe, Code, FileText, Layers,
-                    };
-                    const Icon = iconMap[icon] || Zap;
+                    const Icon = ICON_MAP[icon] || Zap;
                     return (
                       <button
                         key={icon}

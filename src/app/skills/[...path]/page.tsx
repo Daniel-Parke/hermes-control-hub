@@ -12,11 +12,9 @@ import {
   FileText,
   Clock,
   HardDrive,
-  Tag,
   Folder,
-  ExternalLink,
 } from "lucide-react";
-import { LoadingSpinner, ErrorBanner } from "@/components/ui/LoadingSpinner";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 
 interface SkillData {
   name: string;

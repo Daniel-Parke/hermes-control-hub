@@ -69,7 +69,7 @@ function scanSkills(dir: string, category: string, disabled: Set<string>): Skill
             const content = readFileSync(skillPath, "utf-8");
             const stats = statSync(skillPath);
             let description = "";
-            const descMatch = content.match(/description:\s*["'](.+?)["']/);
+            const descMatch = content.match(/description:\s*[\"'](.+?)[\"']/);
             if (descMatch) description = descMatch[1];
             else {
               const lines = content.split("\n");
@@ -91,7 +91,9 @@ function scanSkills(dir: string, category: string, disabled: Set<string>): Skill
               size: stats.size,
               lastModified: stats.mtime.toISOString(),
             });
-          } catch {}
+          } catch (error) {
+            console.error(`Failed to read skill ${skillPath}:`, error);
+          }
         }
 
         // Check for DESCRIPTION.md (category description)
@@ -106,31 +108,37 @@ function scanSkills(dir: string, category: string, disabled: Set<string>): Skill
               if (sub.isDirectory()) {
                 const subSkillPath = fullPath + "/" + sub.name + "/SKILL.md";
                 if (existsSync(subSkillPath)) {
-                  try {
-                    const content = readFileSync(subSkillPath, "utf-8");
-                    const stats = statSync(subSkillPath);
-                    let description = "";
-                    const descMatch = content.match(/description:\s*["'](.+?)["']/);
-                    if (descMatch) description = descMatch[1];
+              try {
+                const content = readFileSync(subSkillPath, "utf-8");
+                const stats = statSync(subSkillPath);
+                let description = "";
+                const descMatch = content.match(/description:\s*[\"'](.+?)[\"']/);
+                if (descMatch) description = descMatch[1];
 
-                    skills.push({
-                      name: sub.name,
-                      category: category ? category + "/" + item.name : item.name,
-                      path: subSkillPath,
-                      description,
-                      enabled: !disabled.has(sub.name),
-                      size: stats.size,
-                      lastModified: stats.mtime.toISOString(),
-                    });
-                  } catch {}
+                skills.push({
+                  name: sub.name,
+                  category: category ? category + "/" + item.name : item.name,
+                  path: subSkillPath,
+                  description,
+                  enabled: !disabled.has(sub.name),
+                  size: stats.size,
+                  lastModified: stats.mtime.toISOString(),
+                });
+              } catch (error) {
+                console.error(`Failed to read sub-skill ${subSkillPath}:`, error);
+              }
                 }
               }
             }
-          } catch {}
+          } catch (error) {
+            console.error(`Failed to read sub-skills in ${fullPath}:`, error);
+          }
         }
       }
     }
-  } catch {}
+  } catch (error) {
+    console.error(`Failed to read skills directory ${dir}:`, error);
+  }
   return skills;
 }
 

@@ -1,6 +1,6 @@
 import { NextResponse, NextRequest } from "next/server";
 
-import { readFileSync, existsSync, statSync, readdirSync, writeFileSync, mkdirSync, rmSync } from "fs";
+import { readFileSync, existsSync, statSync, readdirSync, writeFileSync, mkdirSync } from "fs";
 
 
 
@@ -336,7 +336,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { name, description, cloneFrom } = body as {
+    const { name, description: _description, cloneFrom } = body as {
       name?: string;
       description?: string;
       cloneFrom?: string;

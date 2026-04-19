@@ -23,11 +23,18 @@ export function parseScheduleOss(raw: string): ParsedSchedule {
     return { kind: "invalid", raw: "", message: "Schedule is empty" };
   }
 
-  const simpleIntervalMatch = s.match(/^(?:every\s+)?(\d+)\s*(m|min|minutes?|h|hr|hours?)$/i);
+  const simpleIntervalMatch = s.match(/^(?:every\s+)?(\d+)\s*(m|min|minutes?|h|hr|hours?|d|day|days?)$/i);
   if (simpleIntervalMatch) {
     const n = parseInt(simpleIntervalMatch[1], 10);
     const unit = simpleIntervalMatch[2].toLowerCase();
-    const minutes = unit.startsWith("h") ? n * 60 : n;
+    let minutes: number;
+    if (unit.startsWith("h")) {
+      minutes = n * 60; // hours to minutes
+    } else if (unit.startsWith("d")) {
+      minutes = n * 1440; // days to minutes
+    } else {
+      minutes = n; // already minutes
+    }
     return { kind: "interval", minutes, display: `every ${minutes}m` };
   }
 

@@ -1,7 +1,8 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { existsSync, mkdirSync, readFileSync, writeFileSync, readdirSync, unlinkSync } from "fs";
 import { PATHS } from "@/lib/hermes";
 import { logApiError } from "@/lib/api-logger";
+import { requireMcApiKey, requireNotReadOnly } from "@/lib/api-auth";
 import { getStoryPrompt } from "@/lib/story-weaver/prompts";
 import type { StoryArc as StoryArcType, ChapterOutline } from "@/types/recroom";
 
@@ -142,7 +143,13 @@ function buildMasterPrompt(config: Record<string, unknown>): string {
 
 // ── POST Handler ─────────────────────────────────────────────
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+  // Authentication checks
+  const ro = requireNotReadOnly();
+  if (ro) return ro;
+  const auth = requireMcApiKey(request);
+  if (auth) return auth;
+
   try {
     const body = await request.json();
     const { action } = body;
@@ -767,6 +774,11 @@ The outlines must:
         keyBeats: [`Continuation event for chapter ${startNum + i}`],
         emotionalTone: "Engaging",
       }));
+    }
+
+    // Truncate if LLM generated more than requested
+    if (outlines.length > addCount) {
+      outlines = outlines.slice(0, addCount);
     }
 
     // Append to story arc and chapters

@@ -2,7 +2,7 @@
 "use client";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { ChevronLeft, ChevronRight, BookOpen, Sparkles, Loader2, Menu, X, RefreshCw, PenLine, PlayCircle, AlertTriangle } from "lucide-react";
+import { ChevronLeft, ChevronRight, BookOpen, Sparkles, Loader2, X, RefreshCw, PenLine, PlayCircle, AlertTriangle } from "lucide-react";
 import ChapterList from "@/components/story-weaver/ChapterList";
 import GenerateOverlay from "@/components/story-weaver/GenerateOverlay";
 import ReaderSettings, { loadSettings, DEFAULT_SETTINGS, FONTS, THEMES, type ReadingSettings } from "@/components/story-weaver/ReaderSettings";
@@ -84,16 +84,6 @@ export default function StoryReaderPage() {
 
   useEffect(() => { loadStory(); }, [loadStory]);
 
-  // Auto-generate next pending chapter
-  useEffect(() => {
-    if (!story || generating) return;
-    const firstPending = story.chapters?.find((c: Chapter) => c.status === "pending");
-    const anyWriting = story.chapters?.some((c: Chapter) => c.status === "writing");
-    if (firstPending && !anyWriting) {
-      generateNext();
-    }
-  }, [story?.chapters]);
-
   const generateNext = useCallback(async () => {
     if (!story) return;
     setGenerating(true);
@@ -110,6 +100,16 @@ export default function StoryReaderPage() {
       setError(e instanceof Error ? e.message : "Generation failed");
     } finally { setGenerating(false); }
   }, [story, storyId]);
+
+  // Auto-generate next pending chapter
+  useEffect(() => {
+    if (!story || generating) return;
+    const firstPending = story.chapters?.find((c: Chapter) => c.status === "pending");
+    const anyWriting = story.chapters?.some((c: Chapter) => c.status === "writing");
+    if (firstPending && !anyWriting) {
+      generateNext();
+    }
+  }, [story, story?.chapters, generating, generateNext]);
 
   // Retry a failed chapter
   const retryChapter = useCallback(async (chapterNumber: number) => {

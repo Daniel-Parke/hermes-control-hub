@@ -55,7 +55,9 @@ export default function SkillsPage() {
         }));
         setProfiles(ps);
       })
-      .catch(() => {});
+      .catch((error) => {
+        console.error("Failed to load profiles:", error);
+      });
   }, []);
 
   const loadSkills = useCallback(async () => {

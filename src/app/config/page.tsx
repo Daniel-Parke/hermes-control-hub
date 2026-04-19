@@ -35,7 +35,6 @@ import {
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { CONFIG_SECTIONS } from "@/lib/config-schema";
 import { iconColorMap, colorBorderMap } from "@/lib/theme";
-import type { AccentColor } from "@/types/hermes";
 
 // Map icon names to components
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {

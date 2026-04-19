@@ -6,7 +6,7 @@
 
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo, memo as reactMemo } from "react";
 import Link from "next/link";
 import {
   // Dashboard icons
@@ -59,6 +59,26 @@ interface MissionBrief {
   cronJob?: { state: string; enabled: boolean; lastRun: string | null; lastStatus: string | null };
   latestSession?: { id: string; modified: string } | null;
 }
+
+// ── Live Clock (isolated re-render) ───────────────────────────
+
+const LiveClock = reactMemo(function LiveClock() {
+  const [time, setTime] = useState<Date>(new Date());
+  useEffect(() => {
+    const id = setInterval(() => setTime(new Date()), 1000);
+    return () => clearInterval(id);
+  }, []);
+  return (
+    <>
+      <div className="text-sm font-mono text-neon-cyan" suppressHydrationWarning>
+        {time.toLocaleTimeString("en-US", { hour12: false })}
+      </div>
+      <div className="text-xs text-white/40" suppressHydrationWarning>
+        {time.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}
+      </div>
+    </>
+  );
+});
 
 // ── Status Badge ──────────────────────────────────────────────
 function MissionStatusBadge({ status }: { status: string }) {
@@ -181,7 +201,6 @@ export default function Dashboard() {
   const [monitor, setMonitor] = useState<MonitorData | null>(null);
   const [agents, setAgents] = useState<AgentRun[]>([]);
   const [missions, setMissions] = useState<MissionBrief[]>([]);
-  const [time, setTime] = useState<Date | null>(null);
   const [config, setConfig] = useState<Record<string, unknown> | null>(null);
   const [templates, setTemplates] = useState<Array<{ id: string; name: string; icon: string; color: string; category: string; profile: string; description: string; isCustom?: boolean }>>([]);
   const [dispatchExpanded, setDispatchExpanded] = useState(false);
@@ -190,16 +209,21 @@ export default function Dashboard() {
   const handleCancelMission = useCallback(async (missionId: string, missionName: string) => {
     if (!confirm(`Cancel "${missionName}"? The cron job will be paused.`)) return;
     try {
-      await fetch("/api/missions", {
+      const res = await fetch("/api/missions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "cancel", missionId }),
       });
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        console.error("Failed to cancel mission:", body?.error || res.statusText);
+        return;
+      }
       // Refresh missions
-      const res = await fetch("/api/missions");
-      const d = await res.json();
+      const data = await fetch("/api/missions");
+      const d = await data.json();
       if (d.data) setMissions(d.data.missions || []);
-    } catch {}
+    } catch (e) { console.error("Failed to cancel mission:", e); }
   }, []);
 
   // Update cron job schedule inline
@@ -214,35 +238,51 @@ export default function Dashboard() {
       const res = await fetch("/api/monitor");
       const d = await res.json();
       if (d.data) setMonitor(d.data);
-    } catch {}
+    } catch (error) {
+      console.error("Failed to update cron schedule:", error);
+    }
   }, []);
 
   useEffect(() => {
-    setTime(new Date());
-    const clockInterval = setInterval(() => setTime(new Date()), 1000);
+    const controller = new AbortController();
+    const signal = controller.signal;
 
-    fetch("/api/status").then((r) => r.json()).then((d) => setStatus(d.data)).catch(() => setStatus(null));
-    fetch("/api/config").then((r) => r.json()).then((d) => setConfig(d.data)).catch(() => setConfig(null));
-    fetch("/api/missions?action=templates").then((r) => r.json()).then((d) => setTemplates(d.data?.templates || [])).catch(() => setTemplates([]));
+    // One-shot fetches (fire-and-forget with abort support)
+    fetch("/api/status", { signal }).then((r) => r.json()).then((d) => setStatus(d.data)).catch(() => {});
+    fetch("/api/config", { signal }).then((r) => r.json()).then((d) => setConfig(d.data)).catch(() => {});
+    fetch("/api/missions?action=templates", { signal }).then((r) => r.json()).then((d) => setTemplates(d.data?.templates || [])).catch(() => {});
 
-    const refreshMonitor = () => {
-      fetch("/api/monitor").then((r) => r.json()).then((d) => setMonitor(d.data)).catch(() => setMonitor(null));
-      fetch("/api/agents").then((r) => r.json()).then((d) => setAgents(d.data?.agents || d.agents || [])).catch(() => setAgents([]));
-      fetch("/api/missions").then((r) => r.json()).then((d) => setMissions(d.data?.missions || [])).catch(() => setMissions([]));
+    // Staggered polling — avoid burst load from simultaneous API calls
+    fetch("/api/monitor", { signal }).then((r) => r.json()).then((d) => setMonitor(d.data)).catch(() => {});
+    const monitorInterval = setInterval(() => {
+      if (!signal.aborted) fetch("/api/monitor", { signal }).then((r) => r.json()).then((d) => setMonitor(d.data)).catch(() => {});
+    }, 10000);
+
+    // Agents + missions poll at offset intervals to spread network load
+    const fetchAgents = () => {
+      if (!signal.aborted) fetch("/api/agents", { signal }).then((r) => r.json()).then((d) => setAgents(d.data?.agents || d.agents || [])).catch(() => {});
     };
-    refreshMonitor();
-    const monitorInterval = setInterval(refreshMonitor, 10000);
+    const fetchMissions = () => {
+      if (!signal.aborted) fetch("/api/missions", { signal }).then((r) => r.json()).then((d) => setMissions(d.data?.missions || [])).catch(() => {});
+    };
+    fetchAgents();
+    fetchMissions();
+    const agentsInterval = setInterval(fetchAgents, 15000);
+    const missionsInterval = setInterval(fetchMissions, 15000);
 
     return () => {
-      clearInterval(clockInterval);
+      controller.abort();
       clearInterval(monitorInterval);
+      clearInterval(agentsInterval);
+      clearInterval(missionsInterval);
     };
   }, []);
 
   const modelConfig = config?.model as Record<string, unknown> | undefined;
   const currentModel = (modelConfig?.default as string) || "-";
   const currentProvider = (modelConfig?.provider as string) || "";
-  const activeAgents = agents.filter((a) => a.status === "running");
+  const activeAgents = useMemo(() => agents.filter((a) => a.status === "running"), [agents]);
+  const activeMissions = useMemo(() => missions.filter((m) => m.status === "queued" || m.status === "dispatched"), [missions]);
 
   return (
     <div className="min-h-screen bg-dark-950 grid-bg relative scanlines">
@@ -260,14 +300,7 @@ export default function Dashboard() {
         </div>
         <div className="flex items-center gap-6">
           <div className="text-right">
-            <div className="text-sm font-mono text-neon-cyan" suppressHydrationWarning>
-              {time ? time.toLocaleTimeString("en-US", { hour12: false }) : "--:--:--"}
-            </div>
-            <div className="text-xs text-white/40" suppressHydrationWarning>
-              {time
-                ? time.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })
-                : "---"}
-            </div>
+            <LiveClock />
           </div>
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-neon-green pulse-glow" />
@@ -458,14 +491,14 @@ export default function Dashboard() {
         </div>
 
         {/* ═══ Active Missions ═══ */}
-        {missions.filter((m) => m.status === "queued" || m.status === "dispatched").length > 0 && (
+        {activeMissions.length > 0 && (
           <div className="rounded-xl border border-cyan-500/20 bg-dark-900/50 overflow-hidden">
             <div className="flex items-center justify-between px-4 py-2 border-b border-white/10 bg-dark-800/50">
               <div className="flex items-center gap-2">
                 <Rocket className="w-3.5 h-3.5 text-neon-cyan" />
                 <span className="text-xs font-mono text-white/60">Active Missions</span>
                 <span className="text-[10px] font-mono text-white/25">
-                  ({missions.filter((m) => m.status === "queued" || m.status === "dispatched").length})
+                  ({activeMissions.length})
                 </span>
               </div>
               <Link href="/missions" className="text-[10px] font-mono text-neon-cyan hover:underline flex items-center gap-1">
@@ -473,8 +506,7 @@ export default function Dashboard() {
               </Link>
             </div>
             <div className="divide-y divide-white/5">
-              {missions
-                .filter((m) => m.status === "queued" || m.status === "dispatched")
+              {activeMissions
                 .map((m) => (
                   <div key={m.id} className="flex items-center justify-between px-4 py-2.5 hover:bg-white/[0.02] transition-colors">
                     <div className="flex items-center gap-2 min-w-0">

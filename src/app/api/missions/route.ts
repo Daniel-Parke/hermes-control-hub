@@ -783,9 +783,12 @@ export async function POST(request: NextRequest) {
 
       const mission = loadMission(missionId);
 
+      if (!mission) {
+        return NextResponse.json({ error: "Mission not found" }, { status: 404 });
+      }
 
 
-      if (mission?.cronJobId) {
+      if (mission.cronJobId) {
 
         const w = await withJobsFileLock(
 

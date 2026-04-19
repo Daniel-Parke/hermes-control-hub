@@ -10,7 +10,6 @@ import {
   Clock,
   MessageSquare,
   HardDrive,
-  Cpu,
   ChevronRight,
   Filter,
 } from "lucide-react";

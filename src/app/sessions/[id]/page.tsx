@@ -12,7 +12,6 @@ import {
   User,
   Bot,
   Wrench,
-  Clock,
   HardDrive,
   Cpu,
   Copy,
@@ -21,7 +20,7 @@ import {
   ChevronRight,
   MessageSquare,
 } from "lucide-react";
-import { LoadingSpinner, ErrorBanner } from "@/components/ui/LoadingSpinner";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { messageSummary } from "@/lib/utils";
 
 interface SessionMessage {

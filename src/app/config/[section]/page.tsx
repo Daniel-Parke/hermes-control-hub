@@ -6,7 +6,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useParams } from "next/navigation";
-import { Save, Check, Loader2, RotateCcw, AlertCircle } from "lucide-react";
+import { Save, Check, RotateCcw, AlertCircle } from "lucide-react";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import Button from "@/components/ui/Button";
@@ -14,7 +14,6 @@ import { Toggle, Select, NumberInput, TextInput } from "@/components/ui/Input";
 import { LoadingSpinner, ErrorBanner } from "@/components/ui/LoadingSpinner";
 import { getSectionDef, type FieldDef } from "@/lib/config-schema";
 import { iconColorMap } from "@/lib/theme";
-import { HERMES_HOME } from "@/lib/hermes";
 
 export default function ConfigSectionPage() {
   const params = useParams();

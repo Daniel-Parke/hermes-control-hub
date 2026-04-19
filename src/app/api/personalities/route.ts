@@ -1,8 +1,8 @@
-import yaml from "js-yaml";
 import { NextRequest, NextResponse } from "next/server";
 import { readFileSync, writeFileSync, existsSync } from "fs";
+import * as yaml from "js-yaml";
 
-import { HERMES_HOME, PATHS } from "@/lib/hermes";
+import { PATHS } from "@/lib/hermes";
 import { logApiError } from "@/lib/api-logger";
 const CONFIG_PATH = PATHS.config;
 
@@ -16,10 +16,8 @@ function readPersonalities(): Record<string, string> {
   try {
     const content = readFileSync(CONFIG_PATH, "utf-8");
     // Use js-yaml to parse — handles multi-line quoted strings properly
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const yaml = require("js-yaml");
-    const config = yaml.load(content);
-    const raw = (config?.agent?.personalities as Record<string, unknown>) || {};
+    const parsed = yaml.load(content) as Record<string, unknown> | undefined;
+    const raw = ((parsed?.agent as Record<string, unknown>)?.personalities as Record<string, unknown>) || {};
     const result: Record<string, string> = {};
     for (const [key, val] of Object.entries(raw)) {
       result[key] = String(val);
@@ -37,7 +35,6 @@ function writePersonalities(personalities: Record<string, string>): boolean {
     const lines = content.split("\n");
     const result: string[] = [];
     let inAgent = false;
-    let inPersonalities = false;
     let skippingPersonalities = false;
     let personalitiesInserted = false;
 
@@ -69,14 +66,12 @@ function writePersonalities(personalities: Record<string, string>): boolean {
           personalitiesInserted = true;
         }
         inAgent = false;
-        inPersonalities = false;
         skippingPersonalities = false;
         result.push(line);
         continue;
       }
 
       if (inAgent && line.trim() === "personalities:") {
-        inPersonalities = true;
         skippingPersonalities = true;
         // Write new personalities block
         result.push("  personalities:");
@@ -101,7 +96,6 @@ function writePersonalities(personalities: Record<string, string>): boolean {
           continue;
         } else {
           skippingPersonalities = false;
-          inPersonalities = false;
           // Don't skip this line — it's the next config key
           result.push(line);
         }
