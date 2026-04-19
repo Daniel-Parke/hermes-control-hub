@@ -34,6 +34,14 @@ export async function GET(request: Request) {
       }
     } catch (err) { logApiError("GET /api/logs", "listing available logs", err); }
 
+    // Sort: agent first, errors second, gateway third, then alphabetical
+    const LOG_PRIORITY: Record<string, number> = { agent: 0, errors: 1, gateway: 2 };
+    availableLogs.sort((a, b) => {
+      const pa = LOG_PRIORITY[a.name] ?? 10;
+      const pb = LOG_PRIORITY[b.name] ?? 10;
+      return pa !== pb ? pa - pb : a.name.localeCompare(b.name);
+    });
+
     // Read requested log file
     const safeName = logName.replace(/[^a-zA-Z_-]/g, "");
     const logPath = resolve(logsDir, safeName + ".log");

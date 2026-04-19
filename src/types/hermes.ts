@@ -228,6 +228,8 @@ export interface AgentProfile {
 
   isDefault: boolean;
 
+  isBundled: boolean;
+
   skillsCount: number;
 
   toolsCount: number;

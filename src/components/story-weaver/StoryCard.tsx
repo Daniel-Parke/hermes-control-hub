@@ -30,8 +30,16 @@ export default function StoryCard({ story, onRead, onDelete }: StoryCardProps) {
             {story.config?.genre || "General"} · {timeAgo(story.updatedAt || story.createdAt || "")}
           </div>
         </div>
-        <div className={`text-[9px] font-mono px-2 py-0.5 rounded-full ${isComplete ? "bg-green-500/10 text-neon-green" : "bg-purple-500/10 text-neon-purple"}`}>
-          {isComplete ? "Complete" : `${completeChapters}/${totalChapters}`}
+        <div className={`text-[9px] font-mono px-2 py-0.5 rounded-full ${
+          story.status === "complete" ? "bg-green-500/10 text-neon-green" :
+          story.status === "failed" ? "bg-red-500/10 text-red-400" :
+          story.status === "generating" ? "bg-orange-500/10 text-orange-400" :
+          "bg-purple-500/10 text-neon-purple"
+        }`}>
+          {story.status === "complete" ? "Complete" :
+           story.status === "failed" ? "Failed" :
+           story.status === "generating" ? "Generating..." :
+           `${completeChapters}/${totalChapters}`}
         </div>
       </div>
       {story.premise && (

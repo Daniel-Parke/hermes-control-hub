@@ -134,6 +134,9 @@ export async function GET() {
           const ageMs = Date.now() - st.mtimeMs;
           const isRunning = ageMs < 15 * 60 * 1000;
 
+          // Skip stale cron sessions (older than 24 hours)
+          if (ageMs > 24 * 60 * 60 * 1000) continue;
+
           agents.push({
             id: `cron-${jobId}`,
             type: "cron",

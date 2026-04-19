@@ -1,161 +1,443 @@
-import { NextResponse } from "next/server";
-import { readFileSync, existsSync, statSync, readdirSync } from "fs";
-
-import { HERMES_HOME } from "@/lib/hermes";
-import { logApiError } from "@/lib/api-logger";
-import type { ApiResponse } from "@/types/hermes";
-
-export interface AgentProfile {
-  id: string;
-  name: string;
-  description: string;
-  personality: string;
-  isDefault: boolean;
-  skillsCount: number;
-  toolsCount: number;
-  files: Array<{
-    key: string;
-    name: string;
-    path: string;
-    exists: boolean;
-    size: number;
-    lastModified: string | null;
-  }>;
-}
-
-function loadYamlPersonality(content: string): string {
-  const lines = content.split("\n");
-  let inAgent = false;
-  for (const line of lines) {
-    if (line.trim().startsWith("agent:")) {
-      inAgent = true;
-      continue;
-    }
-    if (inAgent && !line.startsWith(" ") && line.trim()) break;
-    if (inAgent && line.includes("personality:")) {
-      return line.split("personality:")[1].trim().replace(/['"]/g, "") || "technical";
-    }
-  }
-  return "technical";
-}
-
-const PROFILE_DESCRIPTIONS: Record<string, string> = {
-  "ch-creative-lead": "Creative content and design direction",
-  "ch-data-engineer": "Data pipeline and infrastructure engineering",
-  "ch-data-scientist": "Machine learning and data science research",
-  "ch-devops-engineer": "Infrastructure, CI/CD, and operations",
-  "ch-ops-director": "Operations management and coordination",
-  "ch-qa-engineer": "Quality assurance and testing",
-  "ch-support-agent": "User support and troubleshooting",
-  "ch-swe-engineer": "Software engineering and development",
-};
-
-function getProfileFiles(profileDir: string): AgentProfile["files"] {
-  const files: AgentProfile["files"] = [];
-  const fileDefs = [
-    { key: "soul", name: "SOUL.md", relPath: "SOUL.md" },
-    { key: "agents", name: "AGENTS.md", relPath: "AGENTS.md" },
-    { key: "user", name: "USER.md", relPath: "memories/USER.md" },
-    { key: "memory", name: "MEMORY.md", relPath: "memories/MEMORY.md" },
-  ];
-
-  for (const def of fileDefs) {
-    const fullPath = profileDir + "/" + def.relPath;
-    const exists = existsSync(fullPath);
-    let size = 0;
-    let lastModified: string | null = null;
-    if (exists) {
-      try {
-        const stats = statSync(fullPath);
-        size = stats.size;
-        lastModified = stats.mtime.toISOString();
-      } catch {}
-    }
-    files.push({ key: def.key, name: def.name, path: fullPath, exists, size, lastModified });
-  }
-  return files;
-}
-
-function countProfileSkills(profileDir: string): number {
-  const skillsDir = profileDir + "/skills";
-  if (!existsSync(skillsDir)) return 0;
-  let count = 0;
-  try {
-    const walk = (dir: string) => {
-      for (const item of readdirSync(dir)) {
-        const fullPath = dir + "/" + item;
-        try {
-          const st = statSync(fullPath);
-          if (st.isDirectory()) {
-            if (existsSync(fullPath + "/SKILL.md")) count++;
-            else walk(fullPath);
-          }
-        } catch {}
-      }
-    };
-    walk(skillsDir);
-  } catch {}
-  return count;
-}
-
-export async function GET() {
-  try {
-    const profiles: AgentProfile[] = [];
-
-    // Default agent (main)
-    const defaultPersonality = loadYamlPersonality(
-      existsSync(HERMES_HOME + "/config.yaml")
-        ? readFileSync(HERMES_HOME + "/config.yaml", "utf-8")
-        : ""
-    );
-
-    profiles.push({
-      id: "default",
-      name: "Bob",
-      description: "Main agent — full access to all tools and skills",
-      personality: defaultPersonality,
-      isDefault: true,
-      skillsCount: countProfileSkills(HERMES_HOME),
-      toolsCount: 0,
-      files: getProfileFiles(HERMES_HOME),
-    });
-
-    // Named profiles
-    const profilesDir = HERMES_HOME + "/profiles";
-    if (existsSync(profilesDir)) {
-      for (const entry of readdirSync(profilesDir)) {
-        const profileDir = profilesDir + "/" + entry;
-        try {
-          const st = statSync(profileDir);
-          if (!st.isDirectory()) continue;
-        } catch {
-          continue;
-        }
-
-        const configPath = profileDir + "/config.yaml";
-        let personality = "technical";
-        if (existsSync(configPath)) {
-          personality = loadYamlPersonality(readFileSync(configPath, "utf-8"));
-        }
-
-        profiles.push({
-          id: entry,
-          name: entry.replace("ch-", "").replace(/-/g, " ").replace(/\b\w/g, c => c.toUpperCase()),
-          description: PROFILE_DESCRIPTIONS[entry] || "Agent profile",
-          personality,
-          isDefault: false,
-          skillsCount: countProfileSkills(profileDir),
-          toolsCount: 0,
-          files: getProfileFiles(profileDir),
-        });
-      }
-    }
-
-    return NextResponse.json<ApiResponse<{ profiles: AgentProfile[] }>>({
-      data: { profiles },
-    });
-  } catch (error) {
-    logApiError("GET /api/agent/profiles", "listing profiles", error);
-    return NextResponse.json({ error: "Failed to list profiles" }, { status: 500 });
-  }
-}
+import { NextResponse, NextRequest } from "next/server";
+
+import { readFileSync, existsSync, statSync, readdirSync, writeFileSync, mkdirSync, rmSync } from "fs";
+
+
+
+import { HERMES_HOME } from "@/lib/hermes";
+
+import { logApiError } from "@/lib/api-logger";
+
+import { resolveSafeProfileName } from "@/lib/path-security";
+
+import { requireMcApiKey, requireNotReadOnly } from "@/lib/api-auth";
+
+import { appendAuditLine } from "@/lib/audit-log";
+
+import type { ApiResponse } from "@/types/hermes";
+
+
+
+export interface AgentProfile {
+
+  id: string;
+
+  name: string;
+
+  description: string;
+
+  personality: string;
+
+  isDefault: boolean;
+
+  isBundled: boolean;
+
+  skillsCount: number;
+
+  toolsCount: number;
+
+  files: Array<{
+
+    key: string;
+
+    name: string;
+
+    path: string;
+
+    exists: boolean;
+
+    size: number;
+
+    lastModified: string | null;
+
+  }>;
+
+}
+
+
+
+function loadYamlPersonality(content: string): string {
+
+  const lines = content.split("\n");
+
+  let inAgent = false;
+
+  for (const line of lines) {
+
+    if (line.trim().startsWith("agent:")) {
+
+      inAgent = true;
+
+      continue;
+
+    }
+
+    if (inAgent && !line.startsWith(" ") && line.trim()) break;
+
+    if (inAgent && line.includes("personality:")) {
+
+      return line.split("personality:")[1].trim().replace(/['"]/g, "") || "technical";
+
+    }
+
+  }
+
+  return "technical";
+
+}
+
+
+
+const PROFILE_DESCRIPTIONS: Record<string, string> = {
+  "qa-engineer": "Quality assurance and testing",
+  "devops-engineer": "Infrastructure, CI/CD, and operations",
+  "swe-engineer": "Software engineering and development",
+  "data-engineer": "Data pipeline and infrastructure engineering",
+  "data-scientist": "Machine learning and data science research",
+  "ops-director": "Operations management and coordination",
+  "creative-lead": "Creative content and design direction",
+  "support-agent": "User support and troubleshooting",
+};
+
+const BUNDLED_PROFILES = new Set([
+  "qa-engineer",
+  "devops-engineer",
+  "swe-engineer",
+]);
+
+
+
+function getProfileFiles(profileDir: string): AgentProfile["files"] {
+
+  const files: AgentProfile["files"] = [];
+
+  const fileDefs = [
+
+    { key: "soul", name: "SOUL.md", relPath: "SOUL.md" },
+
+    { key: "agents", name: "AGENTS.md", relPath: "AGENTS.md" },
+
+    { key: "user", name: "USER.md", relPath: "memories/USER.md" },
+
+    { key: "memory", name: "MEMORY.md", relPath: "memories/MEMORY.md" },
+
+  ];
+
+
+
+  for (const def of fileDefs) {
+
+    const fullPath = profileDir + "/" + def.relPath;
+
+    const exists = existsSync(fullPath);
+
+    let size = 0;
+
+    let lastModified: string | null = null;
+
+    if (exists) {
+
+      try {
+
+        const stats = statSync(fullPath);
+
+        size = stats.size;
+
+        lastModified = stats.mtime.toISOString();
+
+      } catch {}
+
+    }
+
+    files.push({ key: def.key, name: def.name, path: fullPath, exists, size, lastModified });
+
+  }
+
+  return files;
+
+}
+
+
+
+function countProfileSkills(profileDir: string): number {
+
+  const skillsDir = profileDir + "/skills";
+
+  if (!existsSync(skillsDir)) return 0;
+
+  let count = 0;
+
+  try {
+
+    const walk = (dir: string) => {
+
+      for (const item of readdirSync(dir)) {
+
+        const fullPath = dir + "/" + item;
+
+        try {
+
+          const st = statSync(fullPath);
+
+          if (st.isDirectory()) {
+
+            if (existsSync(fullPath + "/SKILL.md")) count++;
+
+            else walk(fullPath);
+
+          }
+
+        } catch {}
+
+      }
+
+    };
+
+    walk(skillsDir);
+
+  } catch {}
+
+  return count;
+
+}
+
+
+
+export async function GET() {
+
+  try {
+
+    const profiles: AgentProfile[] = [];
+
+
+
+    // Default agent (main)
+
+    const defaultPersonality = loadYamlPersonality(
+
+      existsSync(HERMES_HOME + "/config.yaml")
+
+        ? readFileSync(HERMES_HOME + "/config.yaml", "utf-8")
+
+        : ""
+
+    );
+
+
+
+    profiles.push({
+
+      id: "default",
+
+      name: "Bob",
+
+      description: "Main agent — full access to all tools and skills",
+
+      personality: defaultPersonality,
+
+      isDefault: true,
+
+      isBundled: false,
+
+      skillsCount: countProfileSkills(HERMES_HOME),
+
+      toolsCount: 0,
+
+      files: getProfileFiles(HERMES_HOME),
+
+    });
+
+
+
+    // Named profiles
+
+    const profilesDir = HERMES_HOME + "/profiles";
+
+    if (existsSync(profilesDir)) {
+
+      for (const entry of readdirSync(profilesDir)) {
+
+        const profileDir = profilesDir + "/" + entry;
+
+        try {
+
+          const st = statSync(profileDir);
+
+          if (!st.isDirectory()) continue;
+
+        } catch {
+
+          continue;
+
+        }
+
+
+
+        const configPath = profileDir + "/config.yaml";
+
+        let personality = "technical";
+
+        if (existsSync(configPath)) {
+
+          personality = loadYamlPersonality(readFileSync(configPath, "utf-8"));
+
+        }
+
+
+
+        profiles.push({
+
+          id: entry,
+
+          name: entry.replace(/-/g, " ").replace(/\b\w/g, c => c.toUpperCase()),
+
+          description: PROFILE_DESCRIPTIONS[entry] || "Agent profile",
+
+          personality,
+
+          isDefault: false,
+
+          isBundled: BUNDLED_PROFILES.has(entry),
+
+          skillsCount: countProfileSkills(profileDir),
+
+          toolsCount: 0,
+
+          files: getProfileFiles(profileDir),
+
+        });
+
+      }
+
+    }
+
+
+
+    return NextResponse.json<ApiResponse<{ profiles: AgentProfile[] }>>({
+
+      data: { profiles },
+
+    });
+
+  } catch (error) {
+
+    logApiError("GET /api/agent/profiles", "listing profiles", error);
+    return NextResponse.json({ error: "Failed to list profiles" }, { status: 500 });
+  }
+}
+
+// ── POST — Create a new profile ──────────────────────────────────
+
+export async function POST(request: NextRequest) {
+  const ro = requireNotReadOnly();
+  if (ro) return ro;
+  const auth = requireMcApiKey(request);
+  if (auth) return auth;
+
+  try {
+    const body = await request.json();
+    const { name, description, cloneFrom } = body as {
+      name?: string;
+      description?: string;
+      cloneFrom?: string;
+    };
+
+    if (!name || typeof name !== "string" || name.trim().length < 2) {
+      return NextResponse.json(
+        { error: "Name is required (min 2 characters)" },
+        { status: 400 }
+      );
+    }
+
+    // Derive slug from name
+    const slug = name
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "");
+
+    if (!slug || slug.length < 2) {
+      return NextResponse.json(
+        { error: "Profile name must contain alphanumeric characters" },
+        { status: 400 }
+      );
+    }
+
+    const prof = resolveSafeProfileName(slug);
+    if (!prof.ok) {
+      return NextResponse.json({ error: prof.error }, { status: 400 });
+    }
+
+    const profileDir = HERMES_HOME + "/profiles/" + slug;
+
+    if (existsSync(profileDir)) {
+      return NextResponse.json(
+        { error: `Profile "${slug}" already exists` },
+        { status: 409 }
+      );
+    }
+
+    // Create directory structure
+    mkdirSync(profileDir, { recursive: true });
+    mkdirSync(profileDir + "/memories", { recursive: true });
+    mkdirSync(profileDir + "/sessions", { recursive: true });
+    mkdirSync(profileDir + "/skills", { recursive: true });
+    mkdirSync(profileDir + "/skins", { recursive: true });
+    mkdirSync(profileDir + "/logs", { recursive: true });
+    mkdirSync(profileDir + "/plans", { recursive: true });
+    mkdirSync(profileDir + "/workspace", { recursive: true });
+    mkdirSync(profileDir + "/cron", { recursive: true });
+
+    // Copy config and .env from default or cloneFrom
+    const sourceDir =
+      cloneFrom && cloneFrom !== "default"
+        ? HERMES_HOME + "/profiles/" + cloneFrom
+        : HERMES_HOME;
+
+    if (existsSync(sourceDir + "/config.yaml")) {
+      writeFileSync(
+        profileDir + "/config.yaml",
+        readFileSync(sourceDir + "/config.yaml", "utf-8")
+      );
+    }
+    if (existsSync(sourceDir + "/.env")) {
+      writeFileSync(
+        profileDir + "/.env",
+        readFileSync(sourceDir + "/.env", "utf-8")
+      );
+    }
+    if (existsSync(sourceDir + "/auth.json")) {
+      writeFileSync(
+        profileDir + "/auth.json",
+        readFileSync(sourceDir + "/auth.json", "utf-8")
+      );
+    }
+
+    const soulContent = cloneFrom && cloneFrom !== "default" && existsSync(sourceDir + "/SOUL.md")
+      ? readFileSync(sourceDir + "/SOUL.md", "utf-8")
+      : "# " + name.trim() + "\n\nA specialist agent profile.\n";
+    writeFileSync(profileDir + "/SOUL.md", soulContent, "utf-8");
+
+    const agentsContent = cloneFrom && cloneFrom !== "default" && existsSync(sourceDir + "/AGENTS.md")
+      ? readFileSync(sourceDir + "/AGENTS.md", "utf-8")
+      : "# " + name.trim() + " — Development Guide\n\n";
+    writeFileSync(profileDir + "/AGENTS.md", agentsContent, "utf-8");
+
+    appendAuditLine({
+      action: "agent.profile.create",
+      resource: slug,
+      ok: true,
+    });
+
+    return NextResponse.json<ApiResponse<{ slug: string }>>({
+      data: { slug },
+    });
+  } catch (error) {
+    logApiError("POST /api/agent/profiles", "creating profile", error);
+    return NextResponse.json(
+      { error: "Failed to create profile" },
+      { status: 500 }
+    );
+  }
+}
+

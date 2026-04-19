@@ -207,7 +207,7 @@ if hermes_cli_ok && [ -f "$HERMES_HOME/config.yaml" ]; then
     echo ""
     info "Setting up Control Hub agent profiles..."
     PROFILE_TEMPLATES="$INSTALL_DIR/scripts/profiles"
-    PROFILES=("ch-qa-engineer" "ch-devops-engineer" "ch-swe-engineer" "ch-data-engineer" "ch-data-scientist" "ch-ops-director" "ch-creative-lead" "ch-support-agent")
+    PROFILES=("qa-engineer" "devops-engineer" "swe-engineer")
     for profile in "${PROFILES[@]}"; do
         PROFILE_DIR="$HERMES_HOME/profiles/$profile"
         if [ -d "$PROFILE_DIR" ]; then

@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import { existsSync, readFileSync, readdirSync, statSync } from "fs";
+import { exec } from "child_process";
 import yaml from "js-yaml";
 
 // Use string concatenation to avoid Turbopack NFT tracing issues
-import { PATHS } from "@/lib/hermes";
+import { PATHS, HERMES_HOME } from "@/lib/hermes";
 import { logApiError } from "@/lib/api-logger";
 import { readJobsFile } from "@/lib/jobs-repository";
 import type { CronJobData } from "@/lib/utils";
@@ -240,11 +241,30 @@ export async function GET() {
           }
         }
       }
-      // Hindsight — embedded mode (no external server to check)
+      // Hindsight — query bridge for fact count
       else if (providerType === "hindsight") {
         data.memory.provider = "Hindsight (embedded)";
         data.memory.dbSize = "In-agent";
-        data.memory.factCount = -1; // Unknown without agent interaction
+        // Fetch fact count via bridge (lightweight: limit=1, reads total field)
+        try {
+          const bridgeResult = await new Promise<{ count?: number; error?: string }>((resolve) => {
+            const cmd = HERMES_HOME + "/hermes-agent/venv/bin/python3 " + HERMES_HOME + "/scripts/hindsight_bridge.py count";
+            exec(cmd, { timeout: 8000, env: { ...process.env, PYTHONPATH: HERMES_HOME + "/hermes-agent" } }, (err, stdout) => {
+              if (err || !stdout) {
+                resolve({ count: 0, error: err?.message || "No output" });
+                return;
+              }
+              try {
+                resolve(JSON.parse(stdout));
+              } catch {
+                resolve({ count: 0, error: "Invalid JSON" });
+              }
+            });
+          });
+          data.memory.factCount = typeof bridgeResult.count === "number" ? bridgeResult.count : 0;
+        } catch {
+          data.memory.factCount = 0;
+        }
       }
     } catch (error) { logApiError("GET /api/monitor", "reading memory stats", error); }
 

@@ -6,18 +6,24 @@ import { getStoryPrompt } from "@/lib/story-weaver/prompts";
 import type { StoryArc as StoryArcType, ChapterOutline } from "@/types/recroom";
 
 // ═══════════════════════════════════════════════════════════════
-// Stories API — Story Arc Pipeline (2-LLM-call creation)
+// Stories API — V2 (reliability, edit, continue, characters, prompts)
 // ═══════════════════════════════════════════════════════════════
 
 const SAVE_DIR = PATHS.stories;
 const GATEWAY_API = "http://127.0.0.1:8642/v1/chat/completions";
+const CHARACTERS_FILE = SAVE_DIR + "/characters.json";
+const THEMES_FILE = SAVE_DIR + "/themes.json";
+
+const wordRanges: Record<string, string> = {
+  short: "800-1200", medium: "1200-1800", standard: "1800-2500",
+  long: "2500-3500", epic: "3500-5000", marathon: "5000+",
+};
 
 function ensureDir() {
   if (!existsSync(SAVE_DIR)) mkdirSync(SAVE_DIR, { recursive: true });
 }
 
 function sanitizeId(id: string): string {
-  // Only allow alphanumeric, hyphens, underscores — block path traversal
   return id.replace(/[^a-zA-Z0-9_-]/g, "");
 }
 
@@ -25,13 +31,13 @@ function getPath(id: string): string {
   return SAVE_DIR + "/" + sanitizeId(id) + ".json";
 }
 
-// ── LLM Call ─────────────────────────────────────────────────
+// ── LLM Call (increased timeout for long stories) ────────────
 
-async function callLLM(system: string, user: string): Promise<string> {
+async function callLLM(system: string, user: string, timeoutMs = 300_000): Promise<string> {
   const maxRetries = 3;
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 180_000);
+    const timeout = setTimeout(() => controller.abort(), timeoutMs);
     try {
       const resp = await fetch(GATEWAY_API, {
         method: "POST",
@@ -60,7 +66,9 @@ async function callLLM(system: string, user: string): Promise<string> {
       }
       return content;
     } catch (err) {
-      if (err instanceof Error && err.name === "AbortError") throw new Error("Request timed out (180s). Please try again.");
+      if (err instanceof Error && err.name === "AbortError") {
+        throw new Error(`Request timed out (${Math.round(timeoutMs / 1000)}s). Please try again.`);
+      }
       if (attempt === maxRetries) throw err;
       await new Promise(r => setTimeout(r, 3_000 * attempt));
     } finally { clearTimeout(timeout); }
@@ -85,7 +93,7 @@ function validateChapterOutput(raw: string): string {
   }
 
   const metaSuffixes = [
-    /\s*(?:i hope|let me know|i trust|this should|feel free)[^.!?]*[.!?]\s*$/i,
+    /\s*(?:i hope|let me know|i trust|this should|feel free)[^.!?]*[.!?\s]*$/i,
     /\s*---+\s*(?:end of chapter|chapter \d+ ends?)[^.]*$/i,
   ];
   for (const suffix of metaSuffixes) {
@@ -102,16 +110,18 @@ function validateChapterOutput(raw: string): string {
 // ── Build Master Prompt ──────────────────────────────────────
 
 function buildMasterPrompt(config: Record<string, unknown>): string {
-  const wordRanges: Record<string, string> = {
-    short: "800-1200", medium: "1200-1800", standard: "1800-2500",
-    long: "2500-3500", epic: "3500-5000", marathon: "5000+",
-  };
   const wcRange = wordRanges[(config.wordCountRange as string) || "standard"] || "1800-2500";
 
   const characters = (config.characters as Array<Record<string, string>>) || [];
-  const charProfiles = characters.map(c =>
-    `- ${c.name} (${c.role}): ${c.description}`
-  ).join("\n");
+  const charProfiles = characters.map(c => {
+    const parts = [`- ${c.name} (${c.role}): ${c.description}`];
+    if (c.personality) parts.push(`  Personality: ${c.personality}`);
+    if (c.appearance) parts.push(`  Appearance: ${c.appearance}`);
+    if (c.backstory) parts.push(`  Backstory: ${c.backstory}`);
+    if (c.speechPatterns) parts.push(`  Speech Patterns: ${c.speechPatterns}`);
+    if (c.relationships) parts.push(`  Relationships: ${c.relationships}`);
+    return parts.join('\n');
+  }).join('\n\n');
 
   return [
     `STORY CONFIGURATION:`,
@@ -141,10 +151,15 @@ export async function POST(request: Request) {
       case "list": return handleList();
       case "load": return handleLoad(body);
       case "generate-chapter": return handleGenerateChapter(body);
+      case "retry-chapter": return handleRetryChapter(body);
       case "rewrite-chapter": return handleRewriteChapter(body);
+      case "edit-chapter": return handleEditChapter(body);
       case "extend": return handleExtend(body);
+      case "continue": return handleContinue(body);
       case "update": return handleUpdate(body);
       case "delete": return handleDelete(body);
+      case "characters": return handleCharacters(body);
+      case "themes": return handleThemes(body);
       default: return NextResponse.json({ error: "Unknown action: " + action }, { status: 400 });
     }
   } catch (err) {
@@ -153,7 +168,9 @@ export async function POST(request: Request) {
   }
 }
 
-// ── Create: Arc + Chapter 1 in one call, then Summary ────────
+// ═══════════════════════════════════════════════════════════════
+// Story Creation — saves draft first for recovery
+// ═══════════════════════════════════════════════════════════════
 
 async function handleCreate(body: Record<string, unknown>): Promise<NextResponse> {
   ensureDir();
@@ -164,6 +181,24 @@ async function handleCreate(body: Record<string, unknown>): Promise<NextResponse
 
   const cfg = config as Record<string, unknown>;
   const masterPrompt = buildMasterPrompt({ ...cfg, title });
+  const storyId = "story_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 6);
+  const storyTitle = (title as string) || "Untitled Story";
+
+  // Save draft BEFORE LLM calls — allows recovery on failure
+  const draftStory = {
+    id: storyId,
+    title: storyTitle,
+    masterPrompt,
+    storyArc: null,
+    rollingSummary: "",
+    chapters: [],
+    chapterContents: {},
+    config: cfg,
+    status: "generating",
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+  writeFileSync(getPath(storyId), JSON.stringify(draftStory, null, 2));
 
   try {
     // ── Step 1: Generate Story Arc + Chapter 1 (single LLM call) ──
@@ -186,7 +221,6 @@ async function handleCreate(body: Record<string, unknown>): Promise<NextResponse
         const jsonStr = arcMatch[1].trim();
         storyArc = JSON.parse(jsonStr);
       } catch {
-        // Try extracting JSON from the arc section
         const jsonExtract = arcMatch[1].match(/\{[\s\S]*\}/);
         if (jsonExtract) {
           try { storyArc = JSON.parse(jsonExtract[0]); } catch {}
@@ -206,13 +240,38 @@ async function handleCreate(body: Record<string, unknown>): Promise<NextResponse
       }
     }
     if (!chapter1 && !storyArc) {
-      // Everything is chapter text
       chapter1 = validateChapterOutput(raw);
+    }
+
+    // If chapter 1 looks like a summary/outline instead of prose (< 400 words), regenerate
+    if (chapter1) {
+      const wordCount = chapter1.split(/\s+/).filter(Boolean).length;
+      const looksLikeOutline = /\*\*chapter|## chapter|\d+\.\s+\*\*|the chapter opens with|shall i continue/i.test(chapter1);
+      if (wordCount < 400 || looksLikeOutline) {
+        try {
+          const regenUser = `Write ONLY the full prose text of Chapter 1 of this story. No summaries, no outlines, no meta-commentary. At least 800 words of actual narrative prose.\n\nStory: ${cfg.premise}`;
+          chapter1 = validateChapterOutput(await callLLM(system, regenUser));
+        } catch {}
+      }
+    }
+
+    // Validate arc has enough chapter outlines, rebuild if not
+    const expectedChapters = getChapterCount(cfg.length as string);
+    if (storyArc && (!storyArc.chapterOutlines || storyArc.chapterOutlines.length < expectedChapters)) {
+      const existing = storyArc.chapterOutlines || [];
+      storyArc.chapterOutlines = Array.from({ length: expectedChapters }, (_, i) => {
+        if (existing[i]) return existing[i];
+        return {
+          number: i + 1, title: `Chapter ${i + 1}`,
+          purpose: i === 0 ? "Introduction" : i === expectedChapters - 1 ? "Resolution" : "Development",
+          keyBeats: [`Key event for chapter ${i + 1}`], emotionalTone: "Engaging",
+        };
+      });
     }
 
     // Build fallback arc if parsing failed
     if (!storyArc) {
-      const chapterCount = getChapterCount(cfg.length as string);
+      const chapterCount = expectedChapters;
       storyArc = {
         storyArc: `A ${cfg.genre || "general"} story with beginning, middle, and end.`,
         fixedPlotPoints: Array.from({ length: chapterCount }, (_, i) => ({
@@ -243,9 +302,16 @@ async function handleCreate(body: Record<string, unknown>): Promise<NextResponse
       rollingSummary = `Chapter 1 introduces the story. ${chapter1.slice(0, 200)}...`;
     }
 
-    // ── Build Story Object ──
-    const storyId = "story_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 6);
-    const storyTitle = (title as string) || "Untitled Story";
+    // ── Build Final Story Object ──
+    const chapters = storyArc.chapterOutlines.map((ch: ChapterOutline, i: number) => ({
+      number: i + 1,
+      title: ch.title,
+      status: i === 0 ? "complete" : "pending",
+      wordCount: i === 0 ? chapter1.split(/\s+/).length : 0,
+      generatedAt: i === 0 ? new Date().toISOString() : null,
+    }));
+
+    const allComplete = chapters.every((c: { status: string }) => c.status === "complete");
 
     const story = {
       id: storyId,
@@ -253,16 +319,10 @@ async function handleCreate(body: Record<string, unknown>): Promise<NextResponse
       masterPrompt,
       storyArc,
       rollingSummary,
-      chapters: storyArc.chapterOutlines.map((ch: ChapterOutline, i: number) => ({
-        number: i + 1,
-        title: ch.title,
-        status: i === 0 ? "complete" : "pending",
-        wordCount: i === 0 ? chapter1.split(/\s+/).length : 0,
-        generatedAt: i === 0 ? new Date().toISOString() : null,
-      })),
+      chapters,
       chapterContents: chapter1 ? { "1": chapter1 } : {},
       config: cfg,
-      status: "active",
+      status: allComplete ? "complete" : "active",
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
@@ -270,8 +330,19 @@ async function handleCreate(body: Record<string, unknown>): Promise<NextResponse
     writeFileSync(getPath(storyId), JSON.stringify(story, null, 2));
     return NextResponse.json({ data: story });
   } catch (err) {
+    // Save error state — story persists for recovery
+    const errorStory = {
+      ...draftStory,
+      status: "failed",
+      generationError: err instanceof Error ? err.message : "Creation failed",
+      updatedAt: new Date().toISOString(),
+    };
+    writeFileSync(getPath(storyId), JSON.stringify(errorStory, null, 2));
     logApiError("POST /api/stories", "create", err);
-    return NextResponse.json({ error: err instanceof Error ? err.message : "Creation failed" }, { status: 500 });
+    return NextResponse.json({
+      error: err instanceof Error ? err.message : "Creation failed",
+      data: errorStory,
+    }, { status: 500 });
   }
 }
 
@@ -322,11 +393,32 @@ async function handleGenerateChapter(body: Record<string, unknown>): Promise<Nex
   const story = JSON.parse(readFileSync(path, "utf-8"));
 
   const nextIdx = story.chapters.findIndex((c: Record<string, unknown>) => c.status === "pending");
-  if (nextIdx === -1) return NextResponse.json({ error: "All chapters complete" }, { status: 400 });
+  if (nextIdx === -1) {
+    // All chapters complete — return success, not error
+    story.status = "complete";
+    story.updatedAt = new Date().toISOString();
+    writeFileSync(path, JSON.stringify(story, null, 2));
+    return NextResponse.json({ data: { message: "All chapters complete", story } });
+  }
 
   const nextNum = nextIdx + 1;
 
   // Server-side lock
+  // Auto-reset stale "writing" locks (older than 5 minutes)
+  const now = Date.now();
+  let staleLockReset = false;
+  story.chapters.forEach((c: Record<string, unknown>) => {
+    if (c.status === "writing" && c.generatedAt) {
+      const elapsed = now - new Date(c.generatedAt as string).getTime();
+      if (elapsed > 5 * 60 * 1000) {
+        c.status = "pending";
+        c.generatedAt = null;
+        staleLockReset = true;
+      }
+    }
+  });
+  if (staleLockReset) writeFileSync(path, JSON.stringify(story, null, 2));
+
   const anyWriting = story.chapters.some((c: Record<string, unknown>) => c.status === "writing");
   if (anyWriting) {
     return NextResponse.json({ error: "A chapter is already being generated. Please wait." }, { status: 409 });
@@ -373,13 +465,155 @@ async function handleGenerateChapter(body: Record<string, unknown>): Promise<Nex
     return NextResponse.json({ data: { chapter: nextNum, content, story } });
   } catch (err) {
     story.chapters[nextIdx].status = "failed";
+    story.chapters[nextIdx].error = err instanceof Error ? err.message : "Generation failed";
     writeFileSync(path, JSON.stringify(story, null, 2));
     logApiError("POST /api/stories", "generate-chapter", err);
-    return NextResponse.json({ error: err instanceof Error ? err.message : "Generation failed" }, { status: 500 });
+    return NextResponse.json({
+      error: err instanceof Error ? err.message : "Generation failed",
+      data: { chapter: nextNum, story },
+    }, { status: 500 });
   }
 }
 
-// ── Rewrite Chapter ──────────────────────────────────────────
+// ── Retry Failed Chapter ─────────────────────────────────────
+
+async function handleRetryChapter(body: Record<string, unknown>): Promise<NextResponse> {
+  const { storyId, chapterNumber } = body;
+  if (!storyId || !chapterNumber) {
+    return NextResponse.json({ error: "Missing storyId or chapterNumber" }, { status: 400 });
+  }
+
+  const path = getPath(storyId as string);
+  if (!existsSync(path)) return NextResponse.json({ error: "Story not found" }, { status: 404 });
+
+  const story = JSON.parse(readFileSync(path, "utf-8"));
+  const chNum = chapterNumber as number;
+  const chIdx = chNum - 1;
+
+  if (chIdx < 0 || chIdx >= story.chapters.length) {
+    return NextResponse.json({ error: "Invalid chapter number" }, { status: 400 });
+  }
+
+  const chapter = story.chapters[chIdx];
+  if (chapter.status !== "failed") {
+    return NextResponse.json({ error: "Chapter is not in failed state" }, { status: 400 });
+  }
+
+  // Reset to pending so generate-chapter picks it up
+  story.chapters[chIdx].status = "pending";
+  story.chapters[chIdx].error = null;
+  writeFileSync(path, JSON.stringify(story, null, 2));
+
+  // Immediately trigger generation
+  return handleGenerateChapter({ storyId });
+}
+
+// ── Edit Chapter (prompt-based rewrite with cascade) ─────────
+
+async function handleEditChapter(body: Record<string, unknown>): Promise<NextResponse> {
+  const { storyId, chapterNumber, editPrompt, wordCountRange, count } = body;
+  if (!storyId || !chapterNumber || !editPrompt) {
+    return NextResponse.json({ error: "Missing storyId, chapterNumber, or editPrompt" }, { status: 400 });
+  }
+
+  const path = getPath(storyId as string);
+  if (!existsSync(path)) return NextResponse.json({ error: "Story not found" }, { status: 404 });
+
+  const story = JSON.parse(readFileSync(path, "utf-8"));
+  const chNum = chapterNumber as number;
+  const chIdx = chNum - 1;
+
+  if (chIdx < 0 || chIdx >= story.chapters.length) {
+    return NextResponse.json({ error: "Invalid chapter number" }, { status: 400 });
+  }
+
+  // Build edit prompt with existing chapter context
+  const existingChapter = story.chapterContents[String(chNum)] || "";
+  const arc: StoryArcType = story.storyArc;
+  const chapterOutline = arc.chapterOutlines?.[chIdx] || {
+    number: chNum, title: story.chapters[chIdx].title, purpose: "Continue the story",
+    keyBeats: [], emotionalTone: "Engaging",
+  };
+
+  const editSystem = getStoryPrompt("chapter");
+  const editUser = [
+    "===EDIT INSTRUCTIONS===",
+    editPrompt,
+    "",
+    "===EXISTING CHAPTER===",
+    existingChapter,
+    "",
+    "===MASTER PROMPT===",
+    story.masterPrompt,
+    "",
+    "===STORY ARC===",
+    JSON.stringify(arc, null, 2),
+    "",
+    "===CHAPTER OUTLINE===",
+    `Title: ${chapterOutline.title}`,
+    `Purpose: ${chapterOutline.purpose}`,
+    `Key Beats: ${chapterOutline.keyBeats.join("; ")}`,
+    `Emotional Tone: ${chapterOutline.emotionalTone}`,
+    "",
+    "Rewrite this chapter incorporating the edit instructions. Return ONLY prose.",
+    "",
+    `Target length: ${(wordRanges as Record<string,string>)[(wordCountRange as string) || "standard"] || "1800-2500"} words.`,
+  ].join("\n");
+
+  // Mark chapter as writing
+  story.chapters[chIdx].status = "writing";
+  writeFileSync(path, JSON.stringify(story, null, 2));
+
+  try {
+    const raw = await callLLM(editSystem, editUser);
+    const content = validateChapterOutput(raw);
+
+    // Update the edited chapter
+    story.chapterContents[String(chNum)] = content;
+    story.chapters[chIdx].status = "complete";
+    story.chapters[chIdx].wordCount = content.split(/\s+/).length;
+    story.chapters[chIdx].generatedAt = new Date().toISOString();
+
+    // Invalidate downstream chapters (limited by count, default all)
+    const cascadeCount = (count as number) || (story.chapters.length - chIdx - 1);
+    const cascadeEnd = Math.min(chIdx + 1 + cascadeCount, story.chapters.length);
+    for (let i = chIdx + 1; i < cascadeEnd; i++) {
+      story.chapters[i].status = "pending";
+      story.chapters[i].wordCount = 0;
+      story.chapters[i].generatedAt = null;
+      delete story.chapterContents[String(i + 1)];
+    }
+
+    // Recompute rolling summary from chapters up to and including the edited one
+    try {
+      const summarySystem = getStoryPrompt("summary");
+      const chaptersUpToN = Object.entries(story.chapterContents as Record<string, string>)
+        .sort(([a], [b]) => Number(a) - Number(b))
+        .map(([num, text]) => `Chapter ${num}:\n${text}`)
+        .join("\n\n");
+      story.rollingSummary = await callLLM(summarySystem,
+        `Create a rolling summary of these chapters:\n\n${chaptersUpToN}`);
+    } catch {
+      story.rollingSummary = `Chapter ${chNum} was edited. ${content.slice(0, 200)}...`;
+    }
+
+    story.status = "active";
+    story.updatedAt = new Date().toISOString();
+    writeFileSync(path, JSON.stringify(story, null, 2));
+    return NextResponse.json({ data: { chapter: chNum, content, story } });
+  } catch (err) {
+    story.chapters[chIdx].status = "failed";
+    story.chapters[chIdx].error = err instanceof Error ? err.message : "Edit failed";
+    writeFileSync(path, JSON.stringify(story, null, 2));
+    logApiError("POST /api/stories", "edit-chapter", err);
+    return NextResponse.json({
+      error: err instanceof Error ? err.message : "Edit failed",
+      data: { chapter: chNum, story },
+    }, { status: 500 });
+  }
+}
+
+// ── Rewrite Chapter (existing forward-invalidation) ──────────
 
 async function handleRewriteChapter(body: Record<string, unknown>): Promise<NextResponse> {
   const { storyId, chapterNumber } = body;
@@ -455,6 +689,110 @@ async function handleExtend(body: Record<string, unknown>): Promise<NextResponse
   return NextResponse.json({ data: story });
 }
 
+// ── Continue Story (V2 — LLM-generated continuation) ────────
+
+async function handleContinue(body: Record<string, unknown>): Promise<NextResponse> {
+  const { storyId, direction, count, wordCountRange } = body;
+  if (!storyId || !direction) {
+    return NextResponse.json({ error: "Missing storyId or direction" }, { status: 400 });
+  }
+
+  const path = getPath(storyId as string);
+  if (!existsSync(path)) return NextResponse.json({ error: "Story not found" }, { status: 404 });
+
+  const story = JSON.parse(readFileSync(path, "utf-8"));
+  if (story.status !== "complete") {
+    return NextResponse.json({ error: "Can only continue completed stories" }, { status: 400 });
+  }
+
+  const addCount = (count as number) || 3;
+  const startNum = story.chapters.length + 1;
+
+  // Use LLM to generate new chapter outlines that fit the existing story
+  const continueSystem = `You are a story architect. Given the existing story arc, rolling summary, and a new direction, generate chapter outlines for a continuation.
+
+Return ONLY a JSON array of chapter outlines. Each outline must have: number, title, purpose, keyBeats (array of strings), emotionalTone.
+
+The outlines must:
+- Continue naturally from where the story left off
+- Respect all established characters, world rules, and themes
+- Incorporate the new direction provided by the user
+- Include specific, detailed key beats (not vague descriptions)
+- Build toward a satisfying conclusion`;
+
+  const continueUser = [
+    "===EXISTING STORY ARC===",
+    JSON.stringify(story.storyArc, null, 2),
+    "",
+    "===ROLLING SUMMARY===",
+    story.rollingSummary,
+    "",
+    "===CONTINUATION DIRECTION===",
+    direction,
+    "",
+    `Generate ${addCount} new chapter outlines starting from chapter ${startNum}. Each chapter should be ${(wordRanges as Record<string,string>)[(wordCountRange as string) || "standard"] || "1800-2500"} words.`,
+  ].join("\n");
+
+  try {
+    const raw = await callLLM(continueSystem, continueUser);
+
+    // Parse outlines from response
+    let outlines: ChapterOutline[] = [];
+    const jsonMatch = raw.match(/\[[\s\S]*\]/);
+    if (jsonMatch) {
+      try {
+        outlines = JSON.parse(jsonMatch[0]);
+      } catch {}
+    }
+
+    // Validate outline count, pad if LLM generated fewer
+    if (outlines.length < addCount) {
+      for (let i = outlines.length; i < addCount; i++) {
+        outlines.push({
+          number: startNum + i,
+          title: `Chapter ${startNum + i}`,
+          purpose: "Continue the story",
+          keyBeats: [`Continuation event for chapter ${startNum + i}`],
+          emotionalTone: "Engaging",
+        });
+      }
+    }
+
+    // Fallback if parsing fails completely
+    if (!outlines.length) {
+      outlines = Array.from({ length: addCount }, (_, i) => ({
+        number: startNum + i,
+        title: `Chapter ${startNum + i}`,
+        purpose: "Continue the story",
+        keyBeats: [`Continuation event for chapter ${startNum + i}`],
+        emotionalTone: "Engaging",
+      }));
+    }
+
+    // Append to story arc and chapters
+    for (const outline of outlines) {
+      story.storyArc.chapterOutlines.push(outline);
+      story.chapters.push({
+        number: outline.number,
+        title: outline.title,
+        status: "pending",
+        wordCount: 0,
+        generatedAt: null,
+      });
+    }
+
+    story.status = "active";
+    story.updatedAt = new Date().toISOString();
+    writeFileSync(path, JSON.stringify(story, null, 2));
+    return NextResponse.json({ data: story });
+  } catch (err) {
+    logApiError("POST /api/stories", "continue", err);
+    return NextResponse.json({
+      error: err instanceof Error ? err.message : "Continuation failed",
+    }, { status: 500 });
+  }
+}
+
 // ── Helpers ──────────────────────────────────────────────────
 
 function getChapterCount(length: string): number {
@@ -471,14 +809,15 @@ function getChapterCount(length: string): number {
 async function handleList(): Promise<NextResponse> {
   ensureDir();
   try {
-    const files = readdirSync(SAVE_DIR).filter(f => f.endsWith(".json"));
+    const files = readdirSync(SAVE_DIR).filter(f => f.endsWith(".json") && f !== "characters.json" && f !== "themes.json");
     const stories = files.map(f => {
       try {
         const s = JSON.parse(readFileSync(SAVE_DIR + "/" + f, "utf-8"));
         return {
           id: s.id, title: s.title, status: s.status,
+          generationError: s.generationError || null,
           chapters: s.chapters?.map((c: Record<string, unknown>) => ({
-            number: c.number, title: c.title, status: c.status, wordCount: c.wordCount
+            number: c.number, title: c.title, status: c.status, wordCount: c.wordCount, error: c.error
           })),
           config: s.config, createdAt: s.createdAt, updatedAt: s.updatedAt,
         };
@@ -513,6 +852,7 @@ async function handleUpdate(body: Record<string, unknown>): Promise<NextResponse
   if (f.title) story.title = f.title;
   if (f.chapters) story.chapters = f.chapters;
   if (f.rollingSummary) story.rollingSummary = f.rollingSummary;
+  if (f.status) story.status = f.status;
   story.updatedAt = new Date().toISOString();
   writeFileSync(path, JSON.stringify(story, null, 2));
   return NextResponse.json({ data: story });
@@ -527,4 +867,176 @@ async function handleDelete(body: Record<string, unknown>): Promise<NextResponse
   if (!existsSync(path)) return NextResponse.json({ error: "Story not found" }, { status: 404 });
   unlinkSync(path);
   return NextResponse.json({ data: { deleted: true } });
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Character Sheets CRUD
+// ═══════════════════════════════════════════════════════════════
+
+interface CharacterSheet {
+  id: string;
+  name: string;
+  role: string;
+  description: string;
+  personality: string[];
+  backstory: string;
+  appearance: string;
+  speechPatterns: string;
+  relationships: string;
+  tags: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+function loadCharacters(): CharacterSheet[] {
+  ensureDir();
+  if (!existsSync(CHARACTERS_FILE)) return [];
+  try {
+    return JSON.parse(readFileSync(CHARACTERS_FILE, "utf-8"));
+  } catch { return []; }
+}
+
+function saveCharacters(chars: CharacterSheet[]): void {
+  ensureDir();
+  writeFileSync(CHARACTERS_FILE, JSON.stringify(chars, null, 2));
+}
+
+async function handleCharacters(body: Record<string, unknown>): Promise<NextResponse> {
+  const subAction = body.subAction as string;
+
+  switch (subAction) {
+    case "list": {
+      return NextResponse.json({ data: { characters: loadCharacters() } });
+    }
+    case "create": {
+      const chars = loadCharacters();
+      const now = new Date().toISOString();
+      const newChar: CharacterSheet = {
+        id: "char_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 6),
+        name: (body.name as string) || "Unnamed",
+        role: (body.role as string) || "supporting",
+        description: (body.description as string) || "",
+        personality: (body.personality as string[]) || [],
+        backstory: (body.backstory as string) || "",
+        appearance: (body.appearance as string) || "",
+        speechPatterns: (body.speechPatterns as string) || "",
+        relationships: (body.relationships as string) || "",
+        tags: (body.tags as string[]) || [],
+        createdAt: now,
+        updatedAt: now,
+      };
+      chars.push(newChar);
+      saveCharacters(chars);
+      return NextResponse.json({ data: newChar });
+    }
+    case "update": {
+      const charId = body.charId as string;
+      if (!charId) return NextResponse.json({ error: "Missing charId" }, { status: 400 });
+      const chars = loadCharacters();
+      const idx = chars.findIndex(c => c.id === charId);
+      if (idx === -1) return NextResponse.json({ error: "Character not found" }, { status: 404 });
+      const fields = ["name", "role", "description", "personality", "backstory", "appearance", "speechPatterns", "relationships", "tags"] as const;
+      for (const f of fields) {
+        if (body[f] !== undefined) (chars[idx] as unknown as Record<string, unknown>)[f] = body[f];
+      }
+      chars[idx].updatedAt = new Date().toISOString();
+      saveCharacters(chars);
+      return NextResponse.json({ data: chars[idx] });
+    }
+    case "delete": {
+      const charId = body.charId as string;
+      if (!charId) return NextResponse.json({ error: "Missing charId" }, { status: 400 });
+      const chars = loadCharacters();
+      const filtered = chars.filter(c => c.id !== charId);
+      if (filtered.length === chars.length) return NextResponse.json({ error: "Character not found" }, { status: 404 });
+      saveCharacters(filtered);
+      return NextResponse.json({ data: { deleted: true } });
+    }
+    default:
+      return NextResponse.json({ error: "Unknown subAction: " + subAction }, { status: 400 });
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Story Prompts CRUD
+// ═══════════════════════════════════════════════════════════════
+
+interface StoryTheme {
+  id: string;
+  name: string;
+  premise: string;
+  genre: string[];
+  era: string;
+  setting: string;
+  mood: string[];
+  notes: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+function loadThemes(): StoryTheme[] {
+  ensureDir();
+  if (!existsSync(THEMES_FILE)) return [];
+  try {
+    return JSON.parse(readFileSync(THEMES_FILE, "utf-8"));
+  } catch { return []; }
+}
+
+function saveThemes(prompts: StoryTheme[]): void {
+  ensureDir();
+  writeFileSync(THEMES_FILE, JSON.stringify(prompts, null, 2));
+}
+
+async function handleThemes(body: Record<string, unknown>): Promise<NextResponse> {
+  const subAction = body.subAction as string;
+
+  switch (subAction) {
+    case "list": {
+      return NextResponse.json({ data: { themes: loadThemes() } });
+    }
+    case "create": {
+      const prompts = loadThemes();
+      const now = new Date().toISOString();
+      const newPrompt: StoryTheme = {
+        id: "prompt_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 6),
+        name: (body.name as string) || "Unnamed Prompt",
+        premise: (body.premise as string) || "",
+        genre: (body.genre as string[]) || [],
+        era: (body.era as string) || "",
+        setting: (body.setting as string) || "",
+        mood: (body.mood as string[]) || [],
+        notes: (body.notes as string) || "",
+        createdAt: now,
+        updatedAt: now,
+      };
+      prompts.push(newPrompt);
+      saveThemes(prompts);
+      return NextResponse.json({ data: newPrompt });
+    }
+    case "update": {
+      const promptId = body.promptId as string;
+      if (!promptId) return NextResponse.json({ error: "Missing promptId" }, { status: 400 });
+      const prompts = loadThemes();
+      const idx = prompts.findIndex(p => p.id === promptId);
+      if (idx === -1) return NextResponse.json({ error: "Prompt not found" }, { status: 404 });
+      const fields = ["name", "premise", "genre", "era", "setting", "mood", "notes"] as const;
+      for (const f of fields) {
+        if (body[f] !== undefined) (prompts[idx] as unknown as Record<string, unknown>)[f] = body[f];
+      }
+      prompts[idx].updatedAt = new Date().toISOString();
+      saveThemes(prompts);
+      return NextResponse.json({ data: prompts[idx] });
+    }
+    case "delete": {
+      const promptId = body.promptId as string;
+      if (!promptId) return NextResponse.json({ error: "Missing promptId" }, { status: 400 });
+      const prompts = loadThemes();
+      const filtered = prompts.filter(p => p.id !== promptId);
+      if (filtered.length === prompts.length) return NextResponse.json({ error: "Prompt not found" }, { status: 404 });
+      saveThemes(filtered);
+      return NextResponse.json({ data: { deleted: true } });
+    }
+    default:
+      return NextResponse.json({ error: "Unknown subAction: " + subAction }, { status: 400 });
+  }
 }

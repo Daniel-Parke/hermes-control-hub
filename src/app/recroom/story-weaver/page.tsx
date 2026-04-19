@@ -2,7 +2,7 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { BookOpen, Plus, ChevronRight, Sparkles, Library, BookMarked } from "lucide-react";
+import { BookOpen, Plus, ChevronRight, Sparkles, Library, Users, FileText } from "lucide-react";
 import StoryCard from "@/components/story-weaver/StoryCard";
 
 interface StorySummary {
@@ -57,9 +57,11 @@ export default function StoryWeaverDashboard() {
 
       <div className="max-w-5xl mx-auto px-6 py-8 space-y-8">
         {/* Stats */}
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-3 md:grid-cols-5 gap-4">
           {[
             { label: "Stories", value: stories.length },
+            { label: "Complete", value: stories.filter(s => s.status === "complete").length },
+            { label: "In Progress", value: stories.filter(s => s.status === "active" || s.status === "generating").length },
             { label: "Chapters", value: totalChapters },
             { label: "Words Written", value: totalWords.toLocaleString() },
           ].map((stat) => (
@@ -71,18 +73,22 @@ export default function StoryWeaverDashboard() {
         </div>
 
         {/* Actions */}
-        <div className="flex gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
           <button onClick={() => router.push("/recroom/story-weaver/create")}
-            className="flex-1 flex items-center justify-center gap-2 px-6 py-4 rounded-xl border border-purple-500/30 bg-purple-500/10 text-base font-mono text-neon-purple hover:bg-purple-500/20 transition-all shadow-[0_0_20px_rgba(168,85,247,0.1)]">
-            <Plus className="w-5 h-5" /> Create New Story
-          </button>
-          <button onClick={() => router.push("/recroom/story-weaver/reading-desk")}
-            className="flex items-center gap-2 px-6 py-4 rounded-xl border border-white/10 text-base font-mono text-white/50 hover:text-white/70 hover:bg-white/5 transition-all">
-            <BookMarked className="w-5 h-5" /> Reading Desk
+            className="flex items-center justify-center gap-2 px-6 py-4 rounded-xl border border-purple-500/30 bg-purple-500/10 text-sm font-mono text-neon-purple hover:bg-purple-500/20 transition-all shadow-[0_0_20px_rgba(168,85,247,0.1)]">
+            <Plus className="w-4 h-4" /> Create
           </button>
           <button onClick={() => router.push("/recroom/story-weaver/library")}
-            className="flex items-center gap-2 px-6 py-4 rounded-xl border border-white/10 text-base font-mono text-white/50 hover:text-white/70 hover:bg-white/5 transition-all">
-            <Library className="w-5 h-5" /> Library
+            className="flex items-center justify-center gap-2 px-6 py-4 rounded-xl border border-white/10 text-sm font-mono text-white/50 hover:text-white/70 hover:bg-white/5 transition-all">
+            <Library className="w-4 h-4" /> Library
+          </button>
+          <button onClick={() => router.push("/recroom/story-weaver/characters")}
+            className="flex items-center justify-center gap-2 px-6 py-4 rounded-xl border border-white/10 text-sm font-mono text-white/50 hover:text-white/70 hover:bg-white/5 transition-all">
+            <Users className="w-4 h-4" /> Characters
+          </button>
+          <button onClick={() => router.push("/recroom/story-weaver/themes")}
+            className="flex items-center justify-center gap-2 px-6 py-4 rounded-xl border border-white/10 text-sm font-mono text-white/50 hover:text-white/70 hover:bg-white/5 transition-all">
+            <FileText className="w-4 h-4" /> Themes
           </button>
         </div>
 

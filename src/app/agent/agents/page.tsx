@@ -6,13 +6,14 @@
 
 import { useState, useEffect, useCallback } from "react";
 import {
-  Brain, FileText, Save, RotateCcw, Download, Eye, EyeOff,
-  ChevronDown, ChevronRight, Clock, HardDrive, User, Settings,
-  Check, AlertCircle,
+  Users, FileText, Save, RotateCcw, Download, Eye, EyeOff,
+  ChevronDown, ChevronRight, Clock, HardDrive, Settings,
+  Check, AlertCircle, Plus, Trash2,
 } from "lucide-react";
 import PageHeader from "@/components/layout/PageHeader";
 import Button from "@/components/ui/Button";
 import Badge from "@/components/ui/Badge";
+import Modal from "@/components/ui/Modal";
 import { LoadingSpinner, EmptyState } from "@/components/ui/LoadingSpinner";
 import { useToast } from "@/components/ui/Toast";
 import type { AgentProfile, ProfileFile } from "@/types/hermes";
@@ -47,6 +48,18 @@ export default function BehaviourPage() {
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [previewMode, setPreviewMode] = useState(false);
   const [savingPersonality, setSavingPersonality] = useState<string | null>(null);
+
+  // Create modal state
+  const [showCreate, setShowCreate] = useState(false);
+  const [createName, setCreateName] = useState("");
+  const [createDescription, setCreateDescription] = useState("");
+  const [createCloneFrom, setCreateCloneFrom] = useState("default");
+  const [creating, setCreating] = useState(false);
+
+  // Delete confirmation state
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
   const { showToast, toastElement } = useToast();
 
   const loadProfiles = useCallback(async () => {
@@ -63,6 +76,60 @@ export default function BehaviourPage() {
   }, [showToast]);
 
   useEffect(() => { loadProfiles(); }, [loadProfiles]);
+
+  const handleCreate = async () => {
+    if (creating || !createName.trim()) return;
+    setCreating(true);
+    try {
+      const res = await fetch("/api/agent/profiles", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: createName.trim(),
+          description: createDescription.trim(),
+          cloneFrom: createCloneFrom,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        showToast(data.error || "Failed to create profile", "error");
+        return;
+      }
+      showToast(`Profile "${createName.trim()}" created`, "success");
+      setShowCreate(false);
+      setCreateName("");
+      setCreateDescription("");
+      setCreateCloneFrom("default");
+      loadProfiles();
+    } catch {
+      showToast("Failed to create profile", "error");
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (deleting || !deleteTarget) return;
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/agent/profiles/${deleteTarget}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        showToast(data.error || "Failed to delete profile", "error");
+        return;
+      }
+      showToast("Profile deleted", "success");
+      setDeleteTarget(null);
+      setExpandedProfile(null);
+      loadProfiles();
+    } catch {
+      showToast("Failed to delete profile", "error");
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   const openFile = async (profileId: string, file: ProfileFile) => {
     if (!file.exists) {
@@ -143,7 +210,7 @@ export default function BehaviourPage() {
     return (
       <div className="min-h-screen bg-dark-950 grid-bg">
         {toastElement}
-        <PageHeader icon={Brain} title="Agent Behaviour" subtitle="Loading profiles..." color="purple" />
+        <PageHeader icon={Users} title="Agents" subtitle="Loading profiles..." color="purple" />
         <div className="px-6 py-12"><LoadingSpinner text="Loading profiles..." /></div>
       </div>
     );
@@ -153,10 +220,20 @@ export default function BehaviourPage() {
     <div className="min-h-screen bg-dark-950 grid-bg">
       {toastElement}
       <PageHeader
-        icon={Brain}
-        title="Agent Behaviour"
+        icon={Users}
+        title="Agents"
         subtitle={`${profiles.length} profiles configured`}
         color="purple"
+        actions={
+          <Button
+            variant="primary"
+            color="purple"
+            icon={Plus}
+            onClick={() => setShowCreate(true)}
+          >
+            New Agent
+          </Button>
+        }
       />
 
       <div className="px-6 py-6">
@@ -179,7 +256,7 @@ export default function BehaviourPage() {
                 <div className="p-4">
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex items-center gap-2">
-                      <User className={`w-5 h-5 text-${color}-400`} />
+                      <Users className={`w-5 h-5 text-${color}-400`} />
                       <span className="font-semibold text-white">{profile.name}</span>
                       {profile.isDefault && (
                         <Badge color="cyan" size="sm">Default</Badge>
@@ -272,7 +349,19 @@ export default function BehaviourPage() {
                     </div>
 
                     {/* Close button */}
-                    <div className="mt-4 pt-4 border-t border-white/10 flex justify-end">
+                    <div className="mt-4 pt-4 border-t border-white/10 flex justify-between">
+                      {!profile.isDefault && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          color="orange"
+                          icon={Trash2}
+                          onClick={() => setDeleteTarget(profile.id)}
+                        >
+                          Delete
+                        </Button>
+                      )}
+                      <div className="flex-1" />
                       <Button
                         variant="ghost"
                         size="sm"
@@ -373,6 +462,95 @@ export default function BehaviourPage() {
             </div>
           </div>
         )}
+        {/* Create Profile Modal */}
+        <Modal
+          open={showCreate}
+          onClose={() => { setShowCreate(false); setCreateName(""); setCreateDescription(""); setCreateCloneFrom("default"); }}
+          title="New Agent Profile"
+          icon={Plus}
+          iconColor="text-neon-purple"
+          size="md"
+          footer={
+            <>
+              <Button variant="ghost" size="sm" onClick={() => setShowCreate(false)}>Cancel</Button>
+              <Button
+                variant="primary"
+                color="purple"
+                size="sm"
+                icon={Plus}
+                onClick={handleCreate}
+                disabled={!createName.trim() || creating}
+              >
+                {creating ? "Creating..." : "Create"}
+              </Button>
+            </>
+          }
+        >
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm text-white/50 mb-1">Name</label>
+              <input
+                type="text"
+                value={createName}
+                onChange={(e) => setCreateName(e.target.value)}
+                placeholder="e.g. Research Assistant"
+                className="w-full bg-dark-800 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:border-purple-500/50 focus:outline-none"
+              />
+            </div>
+            <div>
+              <label className="block text-sm text-white/50 mb-1">Description</label>
+              <input
+                type="text"
+                value={createDescription}
+                onChange={(e) => setCreateDescription(e.target.value)}
+                placeholder="e.g. Academic research and analysis"
+                className="w-full bg-dark-800 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:border-purple-500/50 focus:outline-none"
+              />
+            </div>
+            <div>
+              <label className="block text-sm text-white/50 mb-1">Clone From</label>
+              <select
+                value={createCloneFrom}
+                onChange={(e) => setCreateCloneFrom(e.target.value)}
+                className="w-full bg-dark-800 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:border-purple-500/50 focus:outline-none"
+              >
+                <option value="default">Default (Bob)</option>
+                {profiles.filter(p => !p.isDefault).map((p) => (
+                  <option key={p.id} value={p.id}>{p.name}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </Modal>
+
+        {/* Delete Confirmation Modal */}
+        <Modal
+          open={deleteTarget !== null}
+          onClose={() => setDeleteTarget(null)}
+          title="Delete Profile"
+          icon={Trash2}
+          iconColor="text-red-400"
+          size="sm"
+          footer={
+            <>
+              <Button variant="ghost" size="sm" onClick={() => setDeleteTarget(null)}>Cancel</Button>
+              <Button
+                variant="primary"
+                color="orange"
+                size="sm"
+                icon={Trash2}
+                onClick={handleDelete}
+                disabled={deleting}
+              >
+                {deleting ? "Deleting..." : "Delete"}
+              </Button>
+            </>
+          }
+        >
+          <p className="text-sm text-white/70">
+            This will permanently delete the profile and all its files. This action cannot be undone.
+          </p>
+        </Modal>
       </div>
     </div>
   );
