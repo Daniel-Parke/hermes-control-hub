@@ -121,6 +121,7 @@ export const missionPostBodySchema = z.discriminatedUnion("action", [
     name: z.string().optional(),
     prompt: z.string().optional(),
     goals: z.array(z.string()).optional(),
+    skills: z.array(z.string()).optional(),
     profile: z.string().optional(),
     missionTimeMinutes: z.number().optional(),
     timeoutMinutes: z.number().optional(),
