@@ -92,7 +92,7 @@ function scanSkills(dir: string, category: string, disabled: Set<string>): Skill
               lastModified: stats.mtime.toISOString(),
             });
           } catch (error) {
-            console.error(`Failed to read skill ${skillPath}:`, error);
+            logApiError("GET /api/skills", `reading skill ${skillPath}`, error);
           }
         }
 
@@ -125,19 +125,19 @@ function scanSkills(dir: string, category: string, disabled: Set<string>): Skill
                   lastModified: stats.mtime.toISOString(),
                 });
               } catch (error) {
-                console.error(`Failed to read sub-skill ${subSkillPath}:`, error);
+                logApiError("GET /api/skills", `reading sub-skill ${subSkillPath}`, error);
               }
                 }
               }
             }
           } catch (error) {
-            console.error(`Failed to read sub-skills in ${fullPath}:`, error);
+            logApiError("GET /api/skills", `reading sub-skills in ${fullPath}`, error);
           }
         }
       }
     }
   } catch (error) {
-    console.error(`Failed to read skills directory ${dir}:`, error);
+    logApiError("GET /api/skills", `reading skills directory ${dir}`, error);
   }
   return skills;
 }

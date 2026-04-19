@@ -11,7 +11,7 @@
 #   bash install.sh
 #
 # Environment (non-interactive / CI / VPS):
-#   CH_INSTALL_NONINTERACTIVE=1  or  CH_INSTALL_NONINTERACTIVE=1  or  CI=1
+#   CH_INSTALL_NONINTERACTIVE=1  or  CI=1
 #     Requires either a working `hermes` on PATH, or:
 #     INSTALL_HERMES=yes   — run upstream Hermes install + `hermes setup`, then exit (re-run this script after)
 #     INSTALL_HERMES=no    — continue without Hermes CLI (limited profile/gateway steps)
@@ -49,7 +49,7 @@ hermes_cli_ok() {
 }
 
 noninteractive() {
-  [[ "${CI:-}" == "1" || "${CH_INSTALL_NONINTERACTIVE:-}" == "1" || "${CH_INSTALL_NONINTERACTIVE:-}" == "1" ]]
+  [[ "${CI:-}" == "1" || "${CH_INSTALL_NONINTERACTIVE:-}" == "1" ]]
 }
 
 HERMES_HOME="${HERMES_HOME:-$HOME/.hermes}"
@@ -214,13 +214,7 @@ if hermes_cli_ok && [ -f "$HERMES_HOME/config.yaml" ]; then
             ok "Profile '$profile' already exists"
         else
             info "Creating profile: $profile"
-            if hermes profile create "$profile" --clone --no-alias 2>/dev/null || true; then
-                :
-            else
-                mkdir -p "$PROFILE_DIR"/{memories,sessions,skills,skins,logs,plans,workspace,cron}
-                [ -f "$HERMES_HOME/config.yaml" ] && cp "$HERMES_HOME/config.yaml" "$PROFILE_DIR/config.yaml"
-                [ -f "$HERMES_HOME/.env" ] && cp "$HERMES_HOME/.env" "$PROFILE_DIR/.env"
-            fi
+            hermes profile create "$profile" --clone --no-alias 2>/dev/null || true
             if [ -f "$PROFILE_TEMPLATES/$profile/SOUL.md" ]; then
                 cp "$PROFILE_TEMPLATES/$profile/SOUL.md" "$PROFILE_DIR/SOUL.md"
             fi
@@ -307,13 +301,4 @@ echo "Start the server:"
 echo "  cd $INSTALL_DIR"
 echo "  npm run start:network"
 echo ""
-cd "$INSTALL_DIR"
-node node_modules/next/dist/bin/next start -p 3000 -H 0.0.0.0 \
-    > /dev/null 2>&1 &
-sleep 3
-if curl -s -o /dev/null -w '' http://localhost:3000 2>/dev/null; then
-    ok "Server running at http://localhost:3000"
-else
-    warn "Server may need a moment — try http://localhost:3000 in a few seconds"
-fi
-echo ""
+ok "Install complete. Start the server with: cd $INSTALL_DIR && npm run start:network"
