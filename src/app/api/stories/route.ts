@@ -243,9 +243,23 @@ async function handleCreate(body: Record<string, unknown>): Promise<NextResponse
       chapter1 = validateChapterOutput(raw);
     }
 
+    // Validate arc has enough chapter outlines, rebuild if not
+    const expectedChapters = getChapterCount(cfg.length as string);
+    if (storyArc && (!storyArc.chapterOutlines || storyArc.chapterOutlines.length < expectedChapters)) {
+      const existing = storyArc.chapterOutlines || [];
+      storyArc.chapterOutlines = Array.from({ length: expectedChapters }, (_, i) => {
+        if (existing[i]) return existing[i];
+        return {
+          number: i + 1, title: `Chapter ${i + 1}`,
+          purpose: i === 0 ? "Introduction" : i === expectedChapters - 1 ? "Resolution" : "Development",
+          keyBeats: [`Key event for chapter ${i + 1}`], emotionalTone: "Engaging",
+        };
+      });
+    }
+
     // Build fallback arc if parsing failed
     if (!storyArc) {
-      const chapterCount = getChapterCount(cfg.length as string);
+      const chapterCount = expectedChapters;
       storyArc = {
         storyArc: `A ${cfg.genre || "general"} story with beginning, middle, and end.`,
         fixedPlotPoints: Array.from({ length: chapterCount }, (_, i) => ({
@@ -719,7 +733,20 @@ The outlines must:
       } catch {}
     }
 
-    // Fallback if parsing fails
+    // Validate outline count, pad if LLM generated fewer
+    if (outlines.length < addCount) {
+      for (let i = outlines.length; i < addCount; i++) {
+        outlines.push({
+          number: startNum + i,
+          title: `Chapter ${startNum + i}`,
+          purpose: "Continue the story",
+          keyBeats: [`Continuation event for chapter ${startNum + i}`],
+          emotionalTone: "Engaging",
+        });
+      }
+    }
+
+    // Fallback if parsing fails completely
     if (!outlines.length) {
       outlines = Array.from({ length: addCount }, (_, i) => ({
         number: startNum + i,
