@@ -65,6 +65,14 @@ export async function PUT(request: NextRequest) {
       );
     }
 
+    // Validate that values is a plain object (not string, array, or null)
+    if (typeof values !== "object" || Array.isArray(values) || values === null) {
+      return NextResponse.json(
+        { error: "values must be an object" },
+        { status: 400 }
+      );
+    }
+
     // Security: only allow whitelisted sections (prevent modifying model/provider keys)
     if (!WRITABLE_SECTIONS.has(section)) {
       return NextResponse.json(

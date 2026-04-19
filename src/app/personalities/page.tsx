@@ -5,13 +5,11 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import Link from "next/link";
 import {
   Brain,
   Plus,
   Trash2,
   Edit3,
-  X,
   Check,
   Loader2,
   AlertCircle,

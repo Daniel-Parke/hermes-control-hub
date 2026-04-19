@@ -95,7 +95,7 @@ if [ "$RESTART_ONLY" = false ]; then
     log "Updating agent profiles..."
     HERMES_HOME="${HERMES_HOME:-$HOME/.hermes}"
     PROFILE_TEMPLATES="$APP_DIR/scripts/profiles"
-    PROFILES=("ch-qa-engineer" "ch-devops-engineer" "ch-swe-engineer" "ch-data-engineer" "ch-data-scientist" "ch-ops-director" "ch-creative-lead" "ch-support-agent")
+    PROFILES=("qa-engineer" "devops-engineer" "swe-engineer" "data-engineer" "data-scientist" "ops-director" "creative-lead" "support-agent")
 
     for profile in "${PROFILES[@]}"; do
         PROFILE_DIR="$HERMES_HOME/profiles/$profile"

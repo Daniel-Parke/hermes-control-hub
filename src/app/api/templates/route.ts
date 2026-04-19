@@ -6,9 +6,15 @@ import { NextRequest, NextResponse } from "next/server";
 import { existsSync, mkdirSync, readFileSync, writeFileSync, readdirSync, unlinkSync } from "fs";
 import { parseTemplatePackManifestV1 } from "@agent-control-hub/schema";
 import { zodErrorResponse } from "@/lib/api-schemas";
+import { logApiError } from "@/lib/api-logger";
 import { PATHS } from "@/lib/hermes";
+import { requireMcApiKey, requireNotReadOnly } from "@/lib/api-auth";
 
 const DATA_DIR = PATHS.templates;
+
+function sanitizeTemplateId(id: string): string {
+  return id.replace(/[^a-zA-Z0-9_-]/g, "");
+}
 
 function ensureDir() {
   if (!existsSync(DATA_DIR)) {
@@ -66,12 +72,18 @@ export async function GET() {
     templates.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
     return NextResponse.json({ data: { templates, total: templates.length } });
-  } catch {
+  } catch (err) {
+    logApiError("GET /api/templates", "listing templates", err);
     return NextResponse.json({ error: "Failed to list templates" }, { status: 500 });
   }
 }
 
 export async function POST(request: NextRequest) {
+  const ro = requireNotReadOnly();
+  if (ro) return ro;
+  const auth = requireMcApiKey(request);
+  if (auth) return auth;
+
   try {
     const body = await request.json();
     const { action } = body;
@@ -104,7 +116,8 @@ export async function POST(request: NextRequest) {
 
     if (action === "update") {
       const { templateId } = body;
-      const template = loadTemplate(templateId);
+      const sanitizedId = sanitizeTemplateId(templateId);
+      const template = loadTemplate(sanitizedId);
       if (!template) {
         return NextResponse.json({ error: "Template not found" }, { status: 404 });
       }
@@ -164,7 +177,11 @@ export async function POST(request: NextRequest) {
 
     if (action === "delete") {
       const { templateId } = body;
-      const path = DATA_DIR + "/" + templateId + ".json";
+      const sanitizedId = sanitizeTemplateId(templateId);
+      if (!sanitizedId) {
+        return NextResponse.json({ error: "Invalid template id" }, { status: 400 });
+      }
+      const path = DATA_DIR + "/" + sanitizedId + ".json";
       if (existsSync(path)) {
         unlinkSync(path);
         return NextResponse.json({ data: { deleted: true } });
@@ -173,7 +190,8 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({ error: "Unknown action" }, { status: 400 });
-  } catch {
+  } catch (err) {
+    logApiError("POST /api/templates", "processing request", err);
     return NextResponse.json({ error: "Failed to process request" }, { status: 500 });
   }
 }

@@ -89,6 +89,34 @@ describe("buildMissionPrompt", () => {
     });
     expect(result).not.toContain("1. [ ]");
   });
+
+  it("can round-trip: injected sections are strippable", () => {
+    // Simulate what handleEdit does: build a prompt, then strip injected sections
+    const originalInstruction = "Review the codebase and fix bugs";
+    const originalContext = "Focus on TypeScript strict mode issues";
+
+    const promptWithGoals = buildMissionPrompt({
+      prompt: originalInstruction + "\n\n---\n\n## Additional Context\n\n" + originalContext,
+      goals: ["Find bugs", "Fix bugs"],
+      missionTimeMinutes: 15,
+      timeoutMinutes: 10,
+    });
+
+    // Strip injected sections (replicates handleEdit logic)
+    let stripped = promptWithGoals;
+    stripped = stripped.replace(/^## Goals \(complete each in order\)\n[\s\S]*?Mark each goal as done.*\n\n---\n\n/m, "");
+    stripped = stripped.replace(/## MISSION SCOPE\n[\s\S]*?(?=\n## |\n\n---|\n\n[A-Z])/m, "\n");
+    stripped = stripped.replace(/## SAFETY LIMITS\n[\s\S]*?(?=\n## |\n\n---|\n\n[A-Z])/m, "\n");
+
+    // Verify injected sections are gone
+    expect(stripped).not.toContain("## Goals (complete each in order)");
+    expect(stripped).not.toContain("MISSION SCOPE");
+    expect(stripped).not.toContain("SAFETY LIMITS");
+
+    // Verify original content is preserved
+    expect(stripped).toContain(originalInstruction);
+    expect(stripped).toContain(originalContext);
+  });
 });
 
 describe("getMissionStatus", () => {

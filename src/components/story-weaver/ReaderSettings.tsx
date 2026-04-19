@@ -1,6 +1,6 @@
 // ReaderSettings — Kindle-style reading customisation panel
 "use client";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { Settings, X } from "lucide-react";
 
 export interface ReadingSettings {
@@ -60,7 +60,7 @@ export default function ReaderSettings({ settings, onChange }: {
     saveSettings(next);
   }, [settings, onChange]);
 
-  const theme = THEMES[settings.pageTheme] || THEMES.dark;
+  const _theme = THEMES[settings.pageTheme] || THEMES.dark;
 
   return (
     <>

@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
 import { existsSync, readFileSync } from "fs";
 
-import { HERMES_HOME, PATHS } from "@/lib/hermes";
-import { ApiResponse } from "@/types/hermes";
+import { PATHS } from "@/lib/hermes";
 import { logApiError } from "@/lib/api-logger";
 
 export async function GET() {

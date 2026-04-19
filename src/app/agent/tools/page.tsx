@@ -233,7 +233,6 @@ export default function ToolsPage() {
                     <div className="border-t border-white/5">
                       {tools.map(([name, info]) => {
                         const enabled = isToolEnabled(name);
-                        const isPending = name in (pendingChanges[selectedPlatform] ?? []);
 
                         return (
                           <div

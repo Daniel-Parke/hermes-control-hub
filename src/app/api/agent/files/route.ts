@@ -5,7 +5,6 @@
 import { NextResponse } from "next/server";
 import { readFileSync, existsSync, statSync } from "fs";
 
-import { HERMES_HOME } from "@/lib/hermes";
 import { logApiError } from "@/lib/api-logger";
 
 // Static behavior files — each defines a different aspect of agent personality

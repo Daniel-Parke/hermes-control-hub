@@ -13,7 +13,10 @@ export function titleCase(s: string): string {
  */
 export function timeAgo(iso: string | null): string {
   if (!iso) return "never";
-  const diff = Date.now() - new Date(iso).getTime();
+  const ts = new Date(iso).getTime();
+  if (isNaN(ts)) return "never";
+  const diff = Date.now() - ts;
+  if (isNaN(diff) || diff < 0) return "never";
   const mins = Math.floor(diff / 60000);
   if (mins < 1) return "just now";
   if (mins < 60) return `${mins}m ago`;
@@ -27,23 +30,29 @@ export function timeAgo(iso: string | null): string {
  */
 export function timeUntil(iso: string | null): string {
   if (!iso) return "—";
-  const diff = new Date(iso).getTime() - Date.now();
-  if (diff < 0) return "overdue";
-  const mins = Math.floor(diff / 60000);
+  const ts = new Date(iso).getTime();
+  if (isNaN(ts)) return "—";
+  const diff = ts - Date.now();
+  if (isNaN(diff) || diff < 0) return "overdue";
+  const mins = Math.round(diff / 60000);
   if (mins < 1) return "< 1m";
   if (mins < 60) return `${mins}m`;
   const hours = Math.floor(mins / 60);
-  return `${hours}h ${mins % 60}m`;
+  const remainderMins = mins % 60;
+  if (remainderMins === 0) return `${hours}h`;
+  return `${hours}h ${remainderMins}m`;
 }
 
 /**
  * Format bytes as human-readable size string
  */
 export function formatBytes(bytes: number): string {
+  if (!isFinite(bytes) || isNaN(bytes)) return String(bytes) + " B";
   if (bytes === 0) return "0 B";
+  if (bytes < 0) return String(bytes) + " B";
   const k = 1024;
   const sizes = ["B", "KB", "MB", "GB"];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  const i = Math.min(Math.floor(Math.log(bytes) / Math.log(k)), sizes.length - 1);
   return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
 }
 
@@ -51,6 +60,7 @@ export function formatBytes(bytes: number): string {
  * Truncate a string to a max length with ellipsis
  */
 export function truncate(str: string, maxLen: number): string {
+  if (maxLen <= 0) return "";
   if (str.length <= maxLen) return str;
   return str.slice(0, maxLen - 1) + "…";
 }

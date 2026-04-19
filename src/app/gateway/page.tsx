@@ -11,7 +11,6 @@ import {
   Hash,
   Phone,
   RefreshCw,
-  Terminal,
   FileText,
 } from "lucide-react";
 import PageHeader from "@/components/layout/PageHeader";

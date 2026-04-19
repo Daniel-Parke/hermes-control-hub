@@ -2,8 +2,7 @@ import { NextResponse } from "next/server";
 import { existsSync, readFileSync, readdirSync, statSync } from "fs";
 import { resolve } from "path";
 
-import { HERMES_HOME, PATHS } from "@/lib/hermes";
-import { ApiResponse } from "@/types/hermes";
+import { PATHS } from "@/lib/hermes";
 import { logApiError } from "@/lib/api-logger";
 
 export async function GET(request: Request) {

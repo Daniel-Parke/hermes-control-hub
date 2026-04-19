@@ -2,8 +2,7 @@ import { NextResponse } from "next/server";
 import { readFileSync, readdirSync, existsSync, statSync } from "fs";
 import { execSync } from "child_process";
 
-import { HERMES_HOME, PATHS } from "@/lib/hermes";
-import { ApiResponse } from "@/types/hermes";
+import { PATHS } from "@/lib/hermes";
 import { logApiError } from "@/lib/api-logger";
 
 interface AgentRun {
@@ -165,7 +164,7 @@ export async function GET() {
         for (const line of lines) {
           const parts = line.trim().split(/\s+/);
           const pid = parseInt(parts[1], 10);
-          const cmd = parts.slice(10).join(" ");
+          const _cmd = parts.slice(10).join(" ");
           agents.push({
             id: `subagent-${pid}`,
             type: "subagent",

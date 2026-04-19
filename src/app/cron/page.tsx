@@ -57,14 +57,24 @@ function formatSchedule(schedule: string): string {
   // Human-readable schedule display
   if (!schedule) return "No schedule";
   const parts = schedule.trim().split(/\s+/);
-  if (parts.length === 5) {
-    const [min, hour, dom, mon, dow] = parts;
+  // Handle both 5-part (min hour dom mon dow) and 6-part (sec min hour dom mon dow) cron
+  if (parts.length === 5 || parts.length === 6) {
+    const offset = parts.length - 5; // skip seconds field in 6-part
+    const [min, hour, dom, mon, dow] = parts.slice(offset);
     if (min === "*" && hour === "*" && dom === "*" && mon === "*" && dow === "*") return "Every minute";
     if (min !== "*" && hour !== "*" && dom === "*" && mon === "*" && dow === "*") return `Daily at ${hour}:${min.padStart(2, "0")}`;
     if (min !== "*" && hour !== "*" && dow !== "*" && dom === "*" && mon === "*") {
       const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
       const dayIndex = parseInt(dow);
-      return `Every ${days[dayIndex] || dow} at ${hour}:${min.padStart(2, "0")}`;
+      const dayLabel = Number.isFinite(dayIndex) && dayIndex >= 0 && dayIndex <= 6
+        ? days[dayIndex]
+        : dow;
+      return `Every ${dayLabel} at ${hour}:${min.padStart(2, "0")}`;
+    }
+    // Every N minutes pattern (e.g., */5 * * * *)
+    if (min.startsWith("*/") && hour === "*" && dom === "*" && mon === "*" && dow === "*") {
+      const n = min.slice(2);
+      return `Every ${n} minute${n === "1" ? "" : "s"}`;
     }
   }
   return schedule;
@@ -557,28 +567,43 @@ export default function CronPage() {
     const job = data?.jobs.find((j) => j.id === id);
     if (!job) return;
     const action = job.enabled ? "pause" : "resume";
-    await fetch("/api/cron", {
+    const res = await fetch("/api/cron", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id, action }),
     });
-        showToast(`Job ${action === "pause" ? "Paused" : "Resumed"}`);
+    if (res.ok) {
+      showToast(`Job ${action === "pause" ? "Paused" : "Resumed"}`);
+    } else {
+      const body = await res.json().catch(() => null);
+      showToast(body?.error || `Failed to ${action} job`, "error");
+    }
     loadJobs();
   };
 
   const handleDelete = async (id: string) => {
-    await fetch(`/api/cron?id=${id}`, { method: "DELETE" });
-    showToast("Job deleted");
+    const res = await fetch(`/api/cron?id=${id}`, { method: "DELETE" });
+    if (res.ok) {
+      showToast("Job deleted");
+    } else {
+      const body = await res.json().catch(() => null);
+      showToast(body?.error || "Failed to delete job", "error");
+    }
     loadJobs();
   };
 
   const handleRun = async (id: string) => {
-    await fetch("/api/cron", {
+    const res = await fetch("/api/cron", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id, action: "run" }),
     });
-    showToast("Run triggered");
+    if (res.ok) {
+      showToast("Run triggered");
+    } else {
+      const body = await res.json().catch(() => null);
+      showToast(body?.error || "Failed to trigger run", "error");
+    }
     loadJobs();
   };
 

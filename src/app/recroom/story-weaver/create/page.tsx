@@ -2,7 +2,7 @@
 "use client";
 import { useState, useCallback, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ChevronLeft, ChevronDown, ChevronUp, Sparkles, Plus, X, Save, FolderOpen, Users, Trash2 } from "lucide-react";
+import { ChevronLeft, Sparkles, Plus, X, Save, FolderOpen, Users, Trash2 } from "lucide-react";
 import { STORY_TEMPLATES } from "@/types/recroom";
 import type { StoryCharacter, CharacterSheet, StoryTheme } from "@/types/recroom";
 import GenerateOverlay from "@/components/story-weaver/GenerateOverlay";

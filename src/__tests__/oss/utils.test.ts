@@ -52,11 +52,21 @@ describe("timeAgo", () => {
   it("returns 'never' for null", () => {
     expect(timeAgo(null)).toBe("never");
   });
+
+  it("returns 'never' for invalid ISO string", () => {
+    expect(timeAgo("not-a-date")).toBe("never");
+    expect(timeAgo("")).toBe("never");
+  });
 });
 
 describe("timeUntil", () => {
   it("returns '—' for null", () => {
     expect(timeUntil(null)).toBe("—");
+  });
+
+  it("returns '—' for invalid ISO string", () => {
+    expect(timeUntil("not-a-date")).toBe("—");
+    expect(timeUntil("")).toBe("—");
   });
 
   it("returns 'overdue' for past timestamps", () => {
@@ -65,7 +75,7 @@ describe("timeUntil", () => {
   });
 
   it("returns '< 1m' for imminent timestamps", () => {
-    const soon = new Date(Date.now() + 30000).toISOString();
+    const soon = new Date(Date.now() + 20000).toISOString();
     expect(timeUntil(soon)).toBe("< 1m");
   });
 
@@ -77,6 +87,25 @@ describe("timeUntil", () => {
   it("returns hours and minutes for long durations", () => {
     const ninetyMin = new Date(Date.now() + 90 * 60000).toISOString();
     expect(timeUntil(ninetyMin)).toBe("1h 30m");
+  });
+
+  it("returns just hours without '0m' for exact hour durations", () => {
+    const oneHour = new Date(Date.now() + 60 * 60000).toISOString();
+    expect(timeUntil(oneHour)).toBe("1h");
+
+    const twoHours = new Date(Date.now() + 120 * 60000).toISOString();
+    expect(timeUntil(twoHours)).toBe("2h");
+
+    const threeHours = new Date(Date.now() + 180 * 60000).toISOString();
+    expect(timeUntil(threeHours)).toBe("3h");
+  });
+
+  it("includes minutes when non-zero for durations over 1 hour", () => {
+    const sixtyOneMin = new Date(Date.now() + 61 * 60000).toISOString();
+    expect(timeUntil(sixtyOneMin)).toBe("1h 1m");
+
+    const twoHoursFifteen = new Date(Date.now() + 135 * 60000).toISOString();
+    expect(timeUntil(twoHoursFifteen)).toBe("2h 15m");
   });
 });
 
@@ -101,6 +130,25 @@ describe("formatBytes", () => {
   it("formats gigabytes", () => {
     expect(formatBytes(1073741824)).toBe("1 GB");
   });
+
+  it("handles negative numbers without crashing", () => {
+    expect(formatBytes(-1)).toBe("-1 B");
+    expect(formatBytes(-500)).toBe("-500 B");
+  });
+
+  it("handles Infinity without crashing", () => {
+    expect(formatBytes(Infinity)).toBe("Infinity B");
+    expect(formatBytes(-Infinity)).toBe("-Infinity B");
+  });
+
+  it("handles NaN without crashing", () => {
+    expect(formatBytes(NaN)).toBe("NaN B");
+  });
+
+  it("caps at GB for very large values", () => {
+    const huge = 1073741824 * 1024; // 1 TB
+    expect(formatBytes(huge)).toMatch(/GB$/);
+  });
 });
 
 describe("truncate", () => {
@@ -114,6 +162,20 @@ describe("truncate", () => {
 
   it("handles exact length", () => {
     expect(truncate("hello", 5)).toBe("hello");
+  });
+
+  it("returns empty string for maxLen of 0", () => {
+    expect(truncate("hello", 0)).toBe("");
+  });
+
+  it("returns empty string for negative maxLen", () => {
+    expect(truncate("hello", -1)).toBe("");
+    expect(truncate("hello", -100)).toBe("");
+  });
+
+  it("handles empty string input", () => {
+    expect(truncate("", 5)).toBe("");
+    expect(truncate("", 0)).toBe("");
   });
 });
 

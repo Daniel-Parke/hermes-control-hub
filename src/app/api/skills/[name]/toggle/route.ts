@@ -3,21 +3,36 @@ import { readFileSync, existsSync } from "fs";
 
 import { HERMES_HOME } from "@/lib/hermes";
 import { logApiError } from "@/lib/api-logger";
+import { requireMcApiKey, requireNotReadOnly } from "@/lib/api-auth";
+import { resolveSafeProfileName } from "@/lib/path-security";
 
 // PUT — Toggle a skill on/off for a profile
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ name: string }> }
 ) {
+  // Authentication checks
+  const ro = requireNotReadOnly();
+  if (ro) return ro;
+  const auth = requireMcApiKey(request);
+  if (auth) return auth;
+
   const { name } = await params;
 
   try {
     const body = await request.json();
-    const { profile = "default", enabled } = body;
+    const { profile: profileParam, enabled } = body;
 
     if (typeof enabled !== "boolean") {
       return NextResponse.json({ error: "enabled (boolean) is required" }, { status: 400 });
     }
+
+    // Validate profile name
+    const profileResult = resolveSafeProfileName(profileParam);
+    if (!profileResult.ok) {
+      return NextResponse.json({ error: profileResult.error }, { status: 400 });
+    }
+    const profile = profileResult.profile;
 
     let configPath: string;
     if (profile === "default") {
@@ -100,7 +115,6 @@ export async function PUT(
       lines.splice(insertAt, 0, ...newDisabledYaml.trimEnd().split("\n"));
     }
 
-    readFileSync(configPath); // Ensure file exists
     const { writeFileSync } = await import("fs");
     writeFileSync(configPath, lines.join("\n"));
 

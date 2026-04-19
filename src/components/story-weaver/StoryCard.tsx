@@ -17,7 +17,7 @@ export default function StoryCard({ story, onRead, onDelete }: StoryCardProps) {
   const totalWords = (story.chapters || []).reduce((sum, c) => sum + (c.wordCount || 0), 0);
   const completeChapters = (story.chapters || []).filter(c => c.status === "complete").length;
   const totalChapters = (story.chapters || []).length;
-  const isComplete = story.status === "complete" || (totalChapters > 0 && completeChapters === totalChapters);
+  const _isComplete = story.status === "complete" || (totalChapters > 0 && completeChapters === totalChapters);
 
   return (
     <div

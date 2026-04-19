@@ -7,14 +7,13 @@
 import { useState, useEffect, useCallback } from "react";
 import {
   Users, FileText, Save, RotateCcw, Download, Eye, EyeOff,
-  ChevronDown, ChevronRight, Clock, HardDrive, Settings,
   Check, AlertCircle, Plus, Trash2,
 } from "lucide-react";
 import PageHeader from "@/components/layout/PageHeader";
 import Button from "@/components/ui/Button";
 import Badge from "@/components/ui/Badge";
 import Modal from "@/components/ui/Modal";
-import { LoadingSpinner, EmptyState } from "@/components/ui/LoadingSpinner";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { useToast } from "@/components/ui/Toast";
 import type { AgentProfile, ProfileFile } from "@/types/hermes";
 

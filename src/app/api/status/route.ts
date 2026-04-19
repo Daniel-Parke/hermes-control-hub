@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
-import { existsSync, statSync, readdirSync } from "fs";
+import { existsSync, statSync } from "fs";
+import { readdir } from "fs/promises";
 
-import { HERMES_HOME, PATHS } from "@/lib/hermes";
-import { ApiResponse } from "@/types/hermes";
+import { PATHS } from "@/lib/hermes";
 import { logApiError } from "@/lib/api-logger";
 
 export async function GET() {
@@ -19,13 +19,13 @@ export async function GET() {
     let skillsCount = 0;
     const skillsPath = PATHS.skills;
     if (existsSync(skillsPath)) {
-      const countSkills = (dir: string): number => {
+      const countSkills = async (dir: string): Promise<number> => {
         let count = 0;
         try {
-          const items = readdirSync(dir, { withFileTypes: true });
+          const items = await readdir(dir, { withFileTypes: true });
           for (const item of items) {
             if (item.isDirectory()) {
-              count += countSkills(dir + "/" + item.name);
+              count += await countSkills(dir + "/" + item.name);
             } else if (item.name === "SKILL.md") {
               count++;
             }
@@ -33,7 +33,7 @@ export async function GET() {
         } catch (err) { logApiError("GET /api/status", "counting skills in " + dir, err); }
         return count;
       };
-      skillsCount = countSkills(skillsPath);
+      skillsCount = await countSkills(skillsPath);
     }
 
     // Count sessions
@@ -41,7 +41,7 @@ export async function GET() {
     const sessionsPath = PATHS.sessions;
     if (existsSync(sessionsPath)) {
       try {
-        const files = readdirSync(sessionsPath);
+        const files = await readdir(sessionsPath);
         sessionsCount = files.filter((f) => f.endsWith(".json") || f.endsWith(".jsonl")).length;
       } catch (err) { logApiError("GET /api/status", "counting sessions", err); }
     }

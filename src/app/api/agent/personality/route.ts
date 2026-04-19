@@ -3,15 +3,31 @@ import { readFileSync, writeFileSync, existsSync } from "fs";
 
 import { HERMES_HOME } from "@/lib/hermes";
 import { logApiError } from "@/lib/api-logger";
+import { requireMcApiKey, requireNotReadOnly } from "@/lib/api-auth";
+import { resolveSafeProfileName } from "@/lib/path-security";
 
 // PUT — Update personality for a profile
 export async function PUT(request: NextRequest) {
+  const ro = requireNotReadOnly();
+  if (ro) return ro;
+
+  const auth = requireMcApiKey(request);
+  if (auth) return auth;
+
   try {
     const body = await request.json();
     const { profile, personality } = body;
 
     if (!personality || typeof personality !== "string") {
       return NextResponse.json({ error: "Personality is required" }, { status: 400 });
+    }
+
+    // Validate profile name (reject traversal, slashes, etc.)
+    if (profile) {
+      const safe = resolveSafeProfileName(profile);
+      if (!safe.ok) {
+        return NextResponse.json({ error: "Invalid profile name" }, { status: 400 });
+      }
     }
 
     let configPath: string;
@@ -45,7 +61,6 @@ export async function PUT(request: NextRequest) {
         inAgent = false;
       }
       if (inAgent && lines[i].includes("personality:")) {
-        const trimmed = lines[i].trimEnd();
         const indent = lines[i].length - lines[i].trimStart().length;
         lines[i] = " ".repeat(indent) + "personality: " + personality;
         foundPersonality = true;

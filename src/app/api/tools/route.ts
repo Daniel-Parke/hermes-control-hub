@@ -4,6 +4,7 @@ import { readFileSync, writeFileSync, existsSync } from "fs";
 
 import { HERMES_HOME, PATHS } from "@/lib/hermes";
 import { logApiError } from "@/lib/api-logger";
+import { requireMcApiKey, requireNotReadOnly } from "@/lib/api-auth";
 
 const AVAILABLE_TOOLSETS: Record<
   string,
@@ -82,6 +83,11 @@ export async function GET(request: NextRequest) {
 }
 
 export async function PUT(request: NextRequest) {
+  const ro = requireNotReadOnly();
+  if (ro) return ro;
+  const auth = requireMcApiKey(request);
+  if (auth) return auth;
+
   try {
     const body = await request.json();
     const { platform, toolsets, profile = "default" } = body;

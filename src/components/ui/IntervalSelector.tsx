@@ -26,8 +26,10 @@ const PRESETS = [
 ];
 
 function getIntervalLabel(value: string): string {
-  const preset = PRESETS.find((p) => p.value === value);
-  return preset ? preset.label : value;
+  // Strip "every " prefix — API returns schedule values like "every 5m"
+  const stripped = value.replace(/^every\s+/i, "");
+  const preset = PRESETS.find((p) => p.value === stripped);
+  return preset ? preset.label : stripped;
 }
 
 export default function IntervalSelector({ value, onChange, compact = false }: IntervalSelectorProps) {
@@ -56,8 +58,8 @@ export default function IntervalSelector({ value, onChange, compact = false }: I
             {PRESETS.map((p) => (
               <button
                 key={p.value}
-                onClick={(e) => { e.stopPropagation(); onChange(p.value); setOpen(false); }}
-                className={`w-full text-left px-3 py-2 text-xs hover:bg-white/5 ${value === p.value ? "text-neon-cyan" : "text-white/60"}`}
+                onClick={(e) => { e.stopPropagation(); onChange(`every ${p.value}`); setOpen(false); }}
+                className={`w-full text-left px-3 py-2 text-xs hover:bg-white/5 ${value === `every ${p.value}` || value === p.value ? "text-neon-cyan" : "text-white/60"}`}
               >
                 {p.label}
               </button>

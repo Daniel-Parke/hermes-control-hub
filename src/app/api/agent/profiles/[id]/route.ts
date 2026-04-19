@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { existsSync, statSync, rmSync } from "fs";
+import { existsSync, rmSync } from "fs";
 
 import { HERMES_HOME } from "@/lib/hermes";
 import { logApiError } from "@/lib/api-logger";
@@ -38,7 +38,7 @@ export async function PUT(
 
   try {
     const body = await request.json();
-    const { name, description } = body as {
+    const { name, description: _description } = body as {
       name?: string;
       description?: string;
     };

@@ -21,7 +21,7 @@ import { useSidebar } from "./SidebarContext";
 import {
   ChevronRight, ChevronLeft, ChevronDown,
   Terminal, Settings,
-  Activity, Code, RefreshCw, AlertTriangle, Check, Download,
+  RefreshCw, AlertTriangle, Check, Download,
 } from "lucide-react";
 
 import { iconColorMap } from "@/lib/theme";
@@ -30,7 +30,7 @@ import {
   isRestrictedNavHref, showRestrictedNav,
 } from "./sidebar-config";
 
-import type { SidebarLink, SidebarSection, ConfigGroup } from "./sidebar-config";
+import type { SidebarLink, ConfigGroup } from "./sidebar-config";
 
 
 
@@ -622,97 +622,53 @@ export default function Sidebar() {
 
   const { mobileOpen, setMobileOpen } = useSidebar();
 
-
-
-  const linkClass = (active: boolean) =>
-
-    `flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
-
-      active
-
-        ? "bg-white/10 text-white"
-
-        : "text-white/50 hover:bg-white/5 hover:text-white/80"
-
-    }`;
+  const closeMobile = useCallback(() => setMobileOpen(false), [setMobileOpen]);
 
 
 
-  const renderLink = (link: SidebarLink) => {
-
+  const renderLink = useCallback((link: SidebarLink) => {
     const active = isActive(pathname, link.href);
-
     const showSubs = active && link.subLinks && !collapsed;
 
     return (
-
       <div key={link.href}>
-
         <Link
-
           href={link.href}
-
-          className={linkClass(active)}
-
-          onClick={() => setMobileOpen(false)}
-
+          className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
+            active
+              ? "bg-white/10 text-white"
+              : "text-white/50 hover:bg-white/5 hover:text-white/80"
+          }`}
+          onClick={closeMobile}
         >
-
           <link.icon
-
             className={`w-4 h-4 flex-shrink-0 ${
-
               active ? iconColorMap[link.color] : ""
-
             }`}
-
           />
-
           {!collapsed && <span>{link.label}</span>}
-
         </Link>
-
         {showSubs && (
-
           <div className="ml-7 mt-1 space-y-0.5 border-l border-white/5 pl-3">
-
             {link.subLinks!.map((sub) => (
-
               <Link
-
                 key={sub.href}
-
                 href={sub.href}
-
                 className={`block py-1 text-xs transition-colors ${
-
                   pathname === sub.href
-
                     ? "text-white/80"
-
                     : "text-white/30 hover:text-white/60"
-
                 }`}
-
-                onClick={() => setMobileOpen(false)}
-
+                onClick={closeMobile}
               >
-
                 {sub.label}
-
               </Link>
-
             ))}
-
           </div>
-
         )}
-
       </div>
-
     );
-
-  };
+  }, [pathname, collapsed, closeMobile]);
 
 
 
