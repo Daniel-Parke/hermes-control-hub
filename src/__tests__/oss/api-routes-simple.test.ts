@@ -141,6 +141,7 @@ describe("GET /api/sessions", () => {
       size: 1024,
       mtime: new Date("2026-01-01"),
       mtimeMs: Date.now(),
+      birthtime: new Date("2026-01-01"),
     });
 
     const request = new NextRequest("http://localhost/api/sessions");
@@ -149,7 +150,8 @@ describe("GET /api/sessions", () => {
     const data = await res.json();
 
     expect(res.status).toBe(200);
-    expect(data.data.sessions.length).toBeGreaterThanOrEqual(0);
+    expect(data.data.sessions.length).toBe(1);
+    expect(data.data.total).toBe(1);
   });
 });
 
