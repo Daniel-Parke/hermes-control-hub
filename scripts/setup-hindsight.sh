@@ -58,9 +58,7 @@ if ! sudo -n true 2>/dev/null; then
     echo "You will be prompted for your password."
     echo ""
     if ! sudo true; then
-        fail "Cannot get sudo access. Install PostgreSQL manually:"
-        echo "  sudo apt-get install -y postgresql postgresql-client"
-        echo "  Then run this script again."
+        fail "Cannot get sudo access. Install PostgreSQL manually and re-run this script."
     fi
 fi
 ok "Sudo access confirmed"
@@ -111,8 +109,11 @@ fi
 step "Step 3: Database setup"
 info "Creating database and user..."
 sudo -u postgres psql -c "CREATE USER hindsight_user WITH PASSWORD 'hindsight_local';" 2>/dev/null || true
-sudo -u postgres psql -c "DROP DATABASE IF EXISTS hindsight_db;" 2>/dev/null || true
-sudo -u postgres psql -c "CREATE DATABASE hindsight_db OWNER hindsight_user;" 2>/dev/null || fail "Database creation failed"
+if sudo -u postgres psql -lqt 2>/dev/null | cut -d'|' -f1 | grep -qw hindsight_db; then
+    info "Database 'hindsight_db' already exists — skipping drop/recreate"
+else
+    sudo -u postgres psql -c "CREATE DATABASE hindsight_db OWNER hindsight_user;" 2>/dev/null || fail "Database creation failed"
+fi
 sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE hindsight_db TO hindsight_user;" 2>/dev/null
 sudo -u postgres psql -d hindsight_db -c "CREATE EXTENSION IF NOT EXISTS vector;" 2>/dev/null || warn "Could not create vector extension"
 
