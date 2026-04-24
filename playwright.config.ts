@@ -19,10 +19,13 @@ export default defineConfig({
     baseURL: "http://127.0.0.1:3000",
     trace: "on-first-retry",
   },
-  webServer: {
-    command: "cross-env CH_EDITION=oss NEXT_PUBLIC_CH_EDITION=oss npm run start",
-    url: "http://127.0.0.1:3000",
-    reuseExistingServer: !process.env.CI,
-    timeout: 120_000,
-  },
+  webServer: {
+    command:
+      process.env.CH_EDITION && process.env.NEXT_PUBLIC_CH_EDITION
+        ? `cross-env CH_EDITION=${process.env.CH_EDITION} NEXT_PUBLIC_CH_EDITION=${process.env.NEXT_PUBLIC_CH_EDITION} npm run start`
+        : "npm run start",
+    url: "http://127.0.0.1:3000",
+    reuseExistingServer: !process.env.CI,
+    timeout: 120_000,
+  },
 });
