@@ -128,3 +128,4 @@ The records under org/tasks/ are canonical.
 | T-0113 | standard | R2 | in_progress | unassigned |
 | T-0114 | standard | R1 | done | t0114-u0-baselines-2026-09-06 |
 | T-0115 | standard | R1 | done | t0115-u1-mock-factories-2026-09-07 |
+| T-0116 | standard | R1 | done | t0116-u2-token-layer-2026-09-07 |
