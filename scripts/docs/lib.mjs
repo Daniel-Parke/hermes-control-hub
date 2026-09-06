@@ -94,6 +94,24 @@ export const RETIRED_PATHS = [
 const RETIRED_RE =
   /(?<![\w/\-})])\/(?:orchestration|operations|laboratory|config|sessions|logs|memory|insights|benchmarks)(?![\w-])(?:\/[\w-]+)*/g;
 
+/**
+ * What B15's placeholder guides say about themselves.
+ *
+ * Matched as literal sentences rather than by word count: a short guide for a
+ * simple screen is a good guide, and "under 200 words" would refuse it while
+ * passing a 400-word placeholder that had grown a paragraph of apology.
+ */
+const STUB_MARKERS = ["This page is a stub", "Written in B18", "_Written in B18._"];
+
+/**
+ * The three headings every guide carries, in the reader's order: what is on
+ * the screen, what they would come here to do, and what is worth knowing once
+ * they have done it. Internals live under a disclosure inside Notes, so a
+ * reader who wants the schema can have it and a reader who does not never
+ * meets it.
+ */
+const GUIDE_SECTIONS = ["What you see", "Typical use", "Notes"];
+
 /** A hit that names a FILE rather than a page is not a retired URL. */
 function looksLikeAFile(hit) {
   return /\.[a-z]{2,4}$/i.test(hit) || hit.endsWith("/page");
@@ -685,6 +703,30 @@ export function checkDocs(input) {
         subject: shot,
         message: `docs:check: ${page.path} references ${shot}, which does not exist`,
       });
+    }
+
+    if (page.path.includes("docs/guides/")) {
+      // One refusal per page, not one per marker: a placeholder carries all
+      // three and three identical lines about one file is noise, not detail.
+      const marker = STUB_MARKERS.find((m) => page.body.includes(m));
+      if (marker) {
+        refusals.push({
+          code: "guide-is-a-stub",
+          path: page.path,
+          subject: marker,
+          message: `docs:check: ${page.path} is still a stub (it says "${marker}")`,
+        });
+      }
+
+      const missing = GUIDE_SECTIONS.filter((h) => !new RegExp(`^##\\s+${h}\\s*$`, "m").test(page.body));
+      if (missing.length > 0) {
+        refusals.push({
+          code: "guide-missing-sections",
+          path: page.path,
+          subject: missing.join(", "),
+          message: `docs:check: ${page.path} is missing the section(s) every guide carries: ${missing.map((h) => `## ${h}`).join(", ")}`,
+        });
+      }
     }
 
     for (const id of page.data.concepts ?? []) {
