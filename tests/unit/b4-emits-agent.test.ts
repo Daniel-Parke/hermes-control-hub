@@ -158,6 +158,8 @@ jest.mock("@/modules/hermes/lib/profile-drift", () => ({
 }));
 jest.mock("@/modules/hermes/lib/profile-counts", () => ({
   countProfileSkills: () => 0,
+  // The list route counts the whole population with one catalogue read.
+  createProfileSkillsCounter: () => () => 0,
   countProfileToolsets: () => 0,
 }));
 

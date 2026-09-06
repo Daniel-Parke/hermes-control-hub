@@ -20,40 +20,94 @@
 // ROTATE is the second door (T-0100, D14). Before it, replacing a key that had
 // leaked or expired meant deleting the credential and adding it again, which
 // unlinked every model pointing at it.
+//
+// ADD is the third, and the one a new install needs first. This panel used to
+// open `if (credentials.length === 0) return null`, so the one state where the
+// operator has nothing and needs the door most was the one state with no door
+// at all, and no add control existed at any count: a credential could only be
+// made inside the Add Model modal, on the way to saving a model. A newcomer
+// following the "Add a credential" quest, who had already added their model,
+// therefore had to invent a second one to hang a key on. The section is now on
+// the page whether or not there are rows, and it says what to do when there
+// are none.
 // ═══════════════════════════════════════════════════════════════
 
 import { useState } from "react";
 
-import { KeyRound, Trash2, Check } from "lucide-react";
+import { KeyRound, Plus, Trash2, Check } from "lucide-react";
 
-import { Input } from "@/components/ui/field";
+import { Input, Select } from "@/components/ui/field";
 import ConceptHint from "@/components/help/ConceptHint";
 import { useTwoStepConfirm } from "@/hooks/useTwoStepConfirm";
 import type { ApiCredential } from "./types";
+
+export interface NewCredential {
+  label: string;
+  provider: string;
+  apiKey: string;
+}
 
 export interface CredentialsPanelProps {
   credentials: ApiCredential[];
   onDelete: (credential: ApiCredential) => void;
   onRotate: (credential: ApiCredential, apiKey: string) => void | Promise<void>;
+  /** Create a credential on its own, with no model attached to it. */
+  onAdd: (credential: NewCredential) => void | Promise<void>;
+  /**
+   * Providers that can hold a key, injected by the page. A component may not
+   * consult a module (ADR-0005), and the list is a module's to know.
+   */
+  providers: readonly string[];
   busyId: string | null;
+  /** True while a create is in flight, so the form cannot be submitted twice. */
+  adding?: boolean;
 }
 
 export default function CredentialsPanel({
   credentials,
   onDelete,
   onRotate,
+  onAdd,
+  providers,
   busyId,
+  adding = false,
 }: CredentialsPanelProps) {
   const confirm = useTwoStepConfirm();
   const [rotatingId, setRotatingId] = useState<string | null>(null);
   const [newKey, setNewKey] = useState("");
+  const [addOpen, setAddOpen] = useState(false);
+  // The provider starts UNCHOSEN, and Save stays disabled until it is picked.
+  // A key is stored under a provider-specific variable, so defaulting to
+  // whichever provider happens to be first in the list would let an operator
+  // who never looked at the field file an Anthropic key as an OpenRouter one,
+  // and find out only when the agent failed to authenticate.
+  const [draft, setDraft] = useState<NewCredential>({ label: "", provider: "", apiKey: "" });
 
   const closeRotate = () => {
     setRotatingId(null);
     setNewKey("");
   };
 
-  if (credentials.length === 0) return null;
+  const closeAdd = () => {
+    setAddOpen(false);
+    // The key goes with the form. Nothing keeps a copy once the operator has
+    // walked away from it, the same rule the rotate input keeps.
+    setDraft({ label: "", provider: "", apiKey: "" });
+  };
+
+  const submitAdd = () => {
+    const apiKey = draft.apiKey.trim();
+    if (apiKey.length === 0 || draft.provider === "") return;
+    const credential = {
+      // A name is a convenience, not a requirement: an operator who names
+      // nothing gets the provider back rather than a blank row.
+      label: draft.label.trim() || `${draft.provider} key`,
+      provider: draft.provider,
+      apiKey,
+    };
+    closeAdd();
+    void onAdd(credential);
+  };
 
   return (
     <section className="mb-6 rounded-xl border border-white/10 bg-white/[0.02] p-4">
@@ -64,7 +118,73 @@ export default function CredentialsPanel({
         <h2 className="font-mono text-xs uppercase tracking-widest text-ps-text-muted">
           <ConceptHint id="api-key">Credentials</ConceptHint>
         </h2>
+        <button
+          type="button"
+          disabled={adding || addOpen}
+          onClick={() => setAddOpen(true)}
+          className="ml-auto flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 font-mono text-xs text-neon-cyan transition-colors hover:bg-neon-cyan/15 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          <Plus className="h-3.5 w-3.5" />
+          Add credential
+        </button>
       </div>
+
+      {credentials.length === 0 && !addOpen && (
+        <p className="px-1 text-sm text-ps-text-muted">
+          No credentials yet. Add one if your provider needs an API key. A provider you run
+          yourself, such as Ollama or LM Studio, does not need one.
+        </p>
+      )}
+
+      {addOpen && (
+        <div className="mb-3 space-y-2 rounded-lg border border-neon-cyan/20 bg-neon-cyan/[0.04] p-3">
+          <div className="grid gap-2 sm:grid-cols-2">
+            <Input
+              type="text"
+              aria-label="Credential name"
+              placeholder="For example: work key"
+              value={draft.label}
+              onChange={(e) => setDraft((d) => ({ ...d, label: e.target.value }))}
+            />
+            <Select
+              ariaLabel="Provider for the new credential"
+              placeholder="Choose a provider"
+              value={draft.provider}
+              onChange={(provider) => setDraft((d) => ({ ...d, provider }))}
+              options={providers.map((p) => ({ value: p, label: p }))}
+            />
+          </div>
+          <Input
+            type="password"
+            autoComplete="off"
+            aria-label="API key for the new credential"
+            placeholder="Paste the key your provider gave you"
+            value={draft.apiKey}
+            onChange={(e) => setDraft((d) => ({ ...d, apiKey: e.target.value }))}
+            className="font-mono"
+          />
+          {/* design-lint-disable-next-line hermes-outside-adapter -- the same disclosure the model editor makes before a key is pasted: it names the file the key ends up readable in, and hiding that would be the only thing worse than saying it here. */}
+          <p className="text-xs text-ps-text-muted">Stored in the registry and written to ~/.hermes/.env so the agent can read it.</p>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              disabled={adding || draft.apiKey.trim().length === 0 || draft.provider === ""}
+              onClick={submitAdd}
+              className="rounded-lg bg-neon-cyan/20 px-2.5 py-1.5 font-mono text-xs text-neon-cyan transition-colors hover:bg-neon-cyan/30 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              Save credential
+            </button>
+            <button
+              type="button"
+              aria-label="Cancel adding a credential"
+              onClick={closeAdd}
+              className="rounded-lg px-2.5 py-1.5 font-mono text-xs text-ps-text-muted transition-colors hover:bg-white/5 hover:text-white"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
 
       <ul className="space-y-1">
         {credentials.map((c) => {

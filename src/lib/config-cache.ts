@@ -91,13 +91,24 @@ function writeConfigCache(config: Record<string, unknown>): void {
  * parse — matching the pre-extraction behaviour.
  */
 /**
- * The config, AND whether the file on disk failed to parse.
+ * The config, AND whether the file on disk failed to be read or parsed.
  *
  * `readCachedConfig` below is this with the error thrown away, which is the
  * right contract for a render path and the wrong one for anything that must
  * decide whether to let the operator hit Save. Splitting them lets the GET keep
  * degrading while the page it feeds stops pretending an unparseable config is an
  * empty one (T-0064).
+ *
+ * THE READ IS INSIDE THE TRY, and that is the whole point of the try. It used
+ * to guard yaml.load alone, so a file that existed but could not be OPENED
+ * (EACCES after a chmod, EISDIR, EBUSY while another process holds it on
+ * Windows) threw straight through a function whose whole contract is to report
+ * trouble in `error`. Every caller inherited that: a permission problem on
+ * config.yaml 500ed GET /api/models/defaults and blanked the entire Models page
+ * -- table, credentials and all -- with "Failed to load registry", for data
+ * that lives in SQLite and never touches this file. A file we cannot read and a
+ * file we cannot parse are the same fact to every caller: we do not know what
+ * is in it.
  */
 export function readCachedConfigResult(): {
   config: Record<string, unknown>;
@@ -109,14 +120,15 @@ export function readCachedConfigResult(): {
   const configPath = getAgentWorkspace().config;
   if (!existsSync(configPath)) return { config: {}, error: null };
 
-  const content = readFileSync(configPath, "utf-8");
   let config: Record<string, unknown>;
   try {
+    const content = readFileSync(configPath, "utf-8");
     config = (yaml.load(content) as Record<string, unknown>) || {};
   } catch (err) {
     // First line only, for the same reason PUT /api/config carries only the
     // first line: the rest of a js-yaml message quotes the offending LINES of
-    // config.yaml, and this file holds api_key values.
+    // config.yaml, and this file holds api_key values. An fs errno message is
+    // one line already, and quotes the path rather than the contents.
     const message = err instanceof Error ? err.message : String(err);
     return { config: {}, error: message.split("\n")[0] };
   }
@@ -125,27 +137,17 @@ export function readCachedConfigResult(): {
   return { config, error: null };
 }
 
+/**
+ * The same read with the verdict dropped, for render paths that have nothing
+ * to do with it.
+ *
+ * Delegating rather than repeating the branches: the two copies were identical
+ * apart from the error return, and only one of them was fixed the last time
+ * this file's failure handling moved (T-0064). A caller that swallows the
+ * error should not also get a different set of failures swallowed.
+ */
 export function readCachedConfig(): Record<string, unknown> {
-  const cached = readConfigCache();
-  if (cached) return cached;
-
-  const configPath = getAgentWorkspace().config;
-
-  if (!existsSync(configPath)) {
-    return {};
-  }
-
-  const content = readFileSync(configPath, "utf-8");
-  let config: Record<string, unknown>;
-  try {
-    config = (yaml.load(content) as Record<string, unknown>) || {};
-  } catch {
-    // YAML parse error — return empty config rather than crashing
-    return {};
-  }
-
-  writeConfigCache(config);
-  return config;
+  return readCachedConfigResult().config;
 }
 
 /**

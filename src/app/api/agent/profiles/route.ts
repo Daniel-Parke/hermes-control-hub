@@ -18,7 +18,7 @@ import { getAgentRoot } from "@/lib/agent-root-repository";
 import { pushProfileToHermes } from "@/modules/hermes/lib/profile-push";
 import { recordEvent } from "@/lib/analytics/record-event";
 import { detectProfileDrift, detectRootDrift } from "@/modules/hermes/lib/profile-drift";
-import { countProfileSkills, countProfileToolsets } from "@/modules/hermes/lib/profile-counts";
+import { createProfileSkillsCounter, countProfileToolsets } from "@/modules/hermes/lib/profile-counts";
 import { slugifyDisplayName, validateProfileDisplayName, DEFAULT_PROFILE_SLUG } from "@/lib/profile-slug";
 import { buildProfileHermesPathBundle } from "@/modules/hermes/lib/profile-paths";
 import { isManagedKey, readManagedFileContent } from "@/modules/hermes/lib/agent-file-store";
@@ -70,7 +70,13 @@ function deriveSyncStatus(drift: { drifted: boolean }, syncError: string | null)
   return "synced";
 }
 
-function rowToApiProfile(slug: string): AgentProfile | null {
+/**
+ * `countSkillsFor` is passed in rather than called per profile: the skills
+ * catalogue it counts against is the same for every profile in the list, and
+ * reading it here walked the whole skills tree once per row (see
+ * createProfileSkillsCounter).
+ */
+function rowToApiProfile(slug: string, countSkillsFor: (slug: string) => number): AgentProfile | null {
   if (slug === "default") {
     const root = getAgentRoot();
     const drift = detectRootDrift();
@@ -84,7 +90,7 @@ function rowToApiProfile(slug: string): AgentProfile | null {
       personality: root.personality,
       isDefault: true,
       isBundled: false,
-      skillsCount: countProfileSkills("default"),
+      skillsCount: countSkillsFor("default"),
       toolsCount: countProfileToolsets("default"),
       files: getProfileFilesForSlug("default"),
       syncStatus: deriveSyncStatus(drift, root.syncError),
@@ -105,7 +111,7 @@ function rowToApiProfile(slug: string): AgentProfile | null {
     personality: row.personality,
     isDefault: false,
     isBundled: Boolean(row.seedKey),
-    skillsCount: countProfileSkills(slug),
+    skillsCount: countSkillsFor(slug),
     toolsCount: countProfileToolsets(slug),
     files: getProfileFilesForSlug(slug),
     syncStatus: deriveSyncStatus(drift, row.syncError),
@@ -118,11 +124,13 @@ export async function GET(_request: NextRequest) {
   try {
     ensureDb();
     const profiles: AgentProfile[] = [];
-    const defaultProfile = rowToApiProfile("default");
+    // One catalogue read for the whole list, not one per profile.
+    const countSkillsFor = createProfileSkillsCounter();
+    const defaultProfile = rowToApiProfile("default", countSkillsFor);
     if (defaultProfile) profiles.push(defaultProfile);
 
     for (const row of listProfiles()) {
-      const api = rowToApiProfile(row.slug);
+      const api = rowToApiProfile(row.slug, countSkillsFor);
       if (api) profiles.push(api);
     }
 

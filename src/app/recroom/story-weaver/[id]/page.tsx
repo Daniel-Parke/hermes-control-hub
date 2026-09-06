@@ -22,6 +22,7 @@ import { deriveReaderView } from "@/modules/rec-room/components/story-reader-vie
 import { ReaderLoading, ReaderNotFound } from "@/modules/rec-room/components/ReaderPlaceholders";
 import StoryReaderOverlays from "@/modules/rec-room/components/StoryReaderOverlays";
 import ReaderBody from "@/modules/rec-room/components/ReaderBody";
+import type { SpendWindowSource } from "@/lib/spend/spend-window";
 
 /** Stop auto-generating after this many consecutive failures. */
 const MAX_AUTO_FAILURES = 3;
@@ -34,13 +35,34 @@ export default function StoryReaderPage() {
   const [story, setStory] = useState<StoryState | null>(null);
   const [loading, setLoading] = useState(true);
   const [currentChapter, setCurrentChapter] = useState(1);
-  const [generating, setGenerating] = useState(false);
+  /**
+   * How many billed calls are on the wire.
+   *
+   * A COUNT, not a boolean. Retry renders beside Stop with nothing disabling
+   * it, so a generate and a retry run together perfectly legally, and one
+   * shared boolean meant the first to settle ran `false` and took Stop away
+   * from the other while it was still running and still billing.
+   */
+  const [inFlight, setInFlight] = useState(0);
+  const generating = inFlight > 0;
+  const callStarted = useCallback(() => setInFlight((n) => n + 1), []);
+  const callSettled = useCallback(() => setInFlight((n) => Math.max(0, n - 1)), []);
   /** The operator's standing intent to keep writing. NEVER true on mount. */
   const [writing, setWriting] = useState(false);
-  const abortRef = useRef<AbortController | null>(null);
+  /**
+   * Every generation currently on the wire, so Stop can pull all of them.
+   *
+   * This was a single slot, and a single slot is only correct while exactly one
+   * call can be in flight. Two can: the Retry control stays live while a chapter
+   * is generating, and the second call overwrote the slot, leaving the first one
+   * running and billing with nothing left holding its controller.
+   */
+  const inFlightRef = useRef<Set<AbortController>>(new Set());
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [bibleOpen, setBibleOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  /** What this story has cost so far. Null while unknown, never assumed zero. */
+  const [spend, setSpend] = useState<SpendWindowSource | null>(null);
 
   // Edit chapter state
   const [editModalOpen, setEditModalOpen] = useState(false);
@@ -106,11 +128,35 @@ export default function StoryReaderPage() {
 
   useEffect(() => { loadStory(); }, [loadStory]);
 
+  const loadSpend = useCallback(async () => {
+    try {
+      const res = await fetch("/api/stories", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "spend", storyId }),
+      });
+      const d = await res.json();
+      setSpend((d.data?.spend as SpendWindowSource | undefined) ?? null);
+    } catch {
+      // A figure that will not load must not take the story down with it. The
+      // note hides itself rather than drawing a zero nothing measured.
+      setSpend(null);
+    }
+  }, [storyId]);
+
+  // Re-read the figure whenever a paid operation settles, not just on mount.
+  // A cost read once is a cost that is always one chapter out of date, and out
+  // of date is the number the operator would act on.
+  useEffect(() => {
+    if (generating || editing || continuing) return;
+    void loadSpend();
+  }, [generating, editing, continuing, loadSpend]);
+
   const generateNext = useCallback(async () => {
     if (!story) return;
     const controller = new AbortController();
-    abortRef.current = controller;
-    setGenerating(true);
+    inFlightRef.current.add(controller);
+    callStarted();
     setError(null);
     try {
       const res = await fetch("/api/stories", {
@@ -130,24 +176,42 @@ export default function StoryReaderPage() {
       // A Stop is not a failure, and does not count toward the ceiling.
       if (e instanceof Error && e.name === "AbortError") {
         setWriting(false);
+        // Re-read, because a Stop leaves the SERVER holding the truth and this
+        // screen holding what it had before. An abort that lands after the
+        // provider answered still writes and bills the chapter (the title and
+        // summary calls are both caught server-side), and the write action
+        // names no chapter: it writes the first PENDING one. Offering "Write
+        // chapter 3" from a stale screen is therefore how the operator pays for
+        // chapter 4 (T-0113).
+        void loadStory();
         return;
       }
       autoFailuresRef.current += 1;
       setError(e instanceof Error ? e.message : "Generation failed");
     } finally {
-      abortRef.current = null;
-      setGenerating(false);
+      inFlightRef.current.delete(controller);
+      callSettled();
     }
-  }, [story, storyId]);
+  }, [story, storyId, loadStory, callStarted, callSettled]);
 
   /** Write exactly the next pending chapter, once. Does not arm the loop. */
   const writeNextChapter = useCallback(() => { void generateNext(); }, [generateNext]);
   /** Arm the loop: write chapters until none are pending or Stop is pressed. */
-  const keepWriting = useCallback(() => setWriting(true), []);
-  /** Stop before the next call, and abort the one in flight. */
+  const keepWriting = useCallback(() => {
+    // Arming the loop is a fresh decision, so the failure ceiling starts again
+    // from zero. Without this, arming it after a pause would be a dead control:
+    // the effect would decline to call and disarm itself, silently.
+    autoFailuresRef.current = 0;
+    setWriting(true);
+  }, []);
+  /** Stop before the next call, and abort every call already on the wire. */
   const stopWriting = useCallback(() => {
     setWriting(false);
-    abortRef.current?.abort();
+    // Each call removes its own controller when it settles, so this is only
+    // ever the set of generations still running. Aborting all of them is the
+    // point: Stop has to mean stopped on every path that bills, not just the
+    // most recent one.
+    inFlightRef.current.forEach((controller) => controller.abort());
   }, []);
 
   /**
@@ -167,13 +231,22 @@ export default function StoryReaderPage() {
     // fire on mount, so opening a half-finished story to re-read it billed a
     // chapter (T-0108, D88).
     if (!writing) return;
+    // A call is on the wire. The run is still live, so the intent stands.
     if (!story || generating) return;
-    if (autoFailuresRef.current >= MAX_AUTO_FAILURES) return;
     const firstPending = story.chapters?.find((c: Chapter) => c.status === "pending");
     const anyWriting = story.chapters?.some((c: Chapter) => c.status === "writing");
-    if (firstPending && !anyWriting) {
+    if (firstPending && !anyWriting && autoFailuresRef.current < MAX_AUTO_FAILURES) {
       generateNext();
+      return;
     }
+    // The run this intent authorised is over: everything is written, or the
+    // ceiling has paused it. Clear the intent HERE, because this effect is the
+    // only thing that carries the loop forward. Leaving it set was a money bug:
+    // the flag outlived its run, and the next thing to put a pending chapter
+    // back in front of the effect resumed billed writing nobody asked for. A
+    // Retry does exactly that, and the paused banner tells the operator to
+    // press it.
+    setWriting(false);
   }, [writing, story, story?.chapters, generating, generateNext]);
 
   const autoPaused = autoFailuresRef.current >= MAX_AUTO_FAILURES;
@@ -181,22 +254,42 @@ export default function StoryReaderPage() {
   // Retry a failed chapter
   const retryChapter = useCallback(async (chapterNumber: number) => {
     setError(null);
-    // A deliberate retry re-arms auto-generation: the operator has decided the
-    // cause is fixed, so the failure ceiling starts again from zero.
+    // A deliberate retry clears the failure ceiling: the operator has decided
+    // the cause is fixed. It writes ONE chapter and does not arm the loop.
     autoFailuresRef.current = 0;
-    setGenerating(true);
+    // A retry is billed generation like any other, so it goes on the wire with
+    // a signal Stop can pull. It had none, and the header shows Stop while a
+    // retry runs, so pressing it aborted nothing and the operator watched the
+    // call run to completion. The server already honours the signal: /api/stories
+    // hands request.signal to the provider call for retry-chapter.
+    const controller = new AbortController();
+    inFlightRef.current.add(controller);
+    callStarted();
     try {
       const res = await fetch("/api/stories", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "retry-chapter", storyId, chapterNumber }),
+        signal: controller.signal,
       });
       const d = await res.json();
       if (d.data?.story) setStory(d.data.story as StoryState);
       else if (d.error) setError(d.error);
     } catch (e) {
+      // A Stop is not a failure. It gives the controls back rather than raising
+      // an error the operator must read. What it must NOT do is assume the
+      // chapter is as this screen last saw it: the retry reset it to pending
+      // server-side before calling the provider, and only a re-read says which
+      // of the two the server settled on.
+      if (e instanceof Error && e.name === "AbortError") {
+        void loadStory();
+        return;
+      }
       setError(e instanceof Error ? e.message : "Retry failed");
-    } finally { setGenerating(false); }
-  }, [storyId]);
+    } finally {
+      inFlightRef.current.delete(controller);
+      callSettled();
+    }
+  }, [storyId, loadStory, callStarted, callSettled]);
 
   // Edit chapter with prompt
   const handleEditChapter = useCallback(async () => {
@@ -412,6 +505,7 @@ export default function StoryReaderPage() {
         onRetryChapter={retryChapter}
         onPrev={() => setCurrentChapter(Math.max(1, currentChapter - 1))}
         onNext={handleNextChapter}
+        spend={spend}
       />
     </AppPageShell>
   );

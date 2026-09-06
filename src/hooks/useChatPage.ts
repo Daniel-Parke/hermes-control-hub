@@ -48,7 +48,7 @@ export function useChatPage() {
     online: gatewayOnline,
     authConfigured: gatewayAuthConfigured,
     baseUrl: gatewayUrl,
-    agentDefaultModelSet,
+    modelReadiness,
     registryModelIds,
     modelLabels,
     modelsError,
@@ -148,18 +148,21 @@ export function useChatPage() {
     reloadActiveConversation: send.reloadActiveConversation,
     // gateway banners
     //
-    // The page renders `bannerStates`; the three raw fields stay exported
-    // because other consumers (the send guard, the model dropdown) read them
-    // directly. Which banners show is one rule in one place -- see
+    // The page renders `bannerStates`; the two raw gateway fields stay
+    // exported because other consumers (the send guard, the model dropdown)
+    // read them directly. Which banners show is one rule in one place -- see
     // gateway-banner-states.ts.
     gatewayOnline,
     gatewayAuthConfigured,
-    agentDefaultModelSet,
     gatewayUrl,
+    // The sentence the banner says about THIS install, straight from the one
+    // readiness answer. The page does not compose it and does not second-guess
+    // it.
+    modelDetail: modelReadiness?.detail ?? null,
     bannerStates: bannerStatesFor({
       gatewayOnline,
       gatewayAuthConfigured,
-      agentDefaultModelSet,
+      modelReady: modelReadiness ? modelReadiness.ready : null,
       hasActiveConversation: conversations.hasActiveConversation,
       messageCount: transcript.messages.length,
     }),

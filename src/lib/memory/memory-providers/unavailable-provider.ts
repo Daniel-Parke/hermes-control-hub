@@ -14,6 +14,7 @@
 // somebody else's backend.
 // ═══════════════════════════════════════════════════════════════
 
+import { memoryUnavailableMessage } from "../memory-error-copy";
 import type {
   MemoryHealth,
   MemoryProvider,
@@ -29,10 +30,17 @@ export class UnavailableMemoryProvider implements MemoryProvider {
     this.type = type;
   }
 
+  /**
+   * What happened, then what to do about it.
+   *
+   * The sentences live in @/lib/memory/memory-error-copy because three
+   * surfaces read them (the store toast, the health banner, the dashboard's
+   * Memory row) and because the banner has to recognise them: it renders
+   * INSIDE the memory provider card, and it used to reprint this as
+   * "Hindsight: <sentence>" over an install with no Hindsight in it.
+   */
   private reason(): string {
-    return this.type === "none"
-      ? "No memory provider is configured."
-      : `PatterStage has no client for the '${this.type}' memory provider.`;
+    return memoryUnavailableMessage(this.type);
   }
 
   bankBase(): string {
@@ -40,7 +48,9 @@ export class UnavailableMemoryProvider implements MemoryProvider {
   }
 
   async request<T = Record<string, unknown>>(): Promise<T> {
-    throw new Error(`${this.reason()} There is nothing to query.`);
+    // The message travels: the route puts it on the wire and the client toasts
+    // it, so this string is user-facing copy, not a developer note.
+    throw new Error(this.reason());
   }
 
   async health(): Promise<MemoryHealth> {

@@ -9,7 +9,7 @@ import { NextResponse } from "next/server";
 import { logApiError } from "@/lib/api-logger";
 import { getStoryPrompt } from "@/modules/rec-room/lib/prompts";
 import { callLLM } from "@/lib/llm";
-import { getStory, updateStory } from "@/modules/rec-room/lib/story-repository";
+import { getStory, updateStory, type StoryChapter } from "@/modules/rec-room/lib/story-repository";
 import { recordEvent } from "@/lib/analytics/record-event";
 import type { ChapterOutline } from "@/modules/rec-room/types";
 
@@ -21,9 +21,46 @@ import {
   validateChapterOutput,
 } from "./shared";
 
+/**
+ * What a stopped chapter answers with: the request was closed by the caller,
+ * not failed by this server, and 500 said the opposite. 499 is nginx's "Client
+ * Closed Request". Nobody is usually listening (the reader stopped this by
+ * aborting the request), so this is for the logs and for any caller that does
+ * wait (T-0113).
+ */
+export const CHAPTER_STOPPED_STATUS = 499;
+
+/**
+ * Was this a Stop, or a failure?
+ *
+ * The SIGNAL answers it, not the error's name. The gateway path's own
+ * five-minute timeout also surfaces as an AbortError, and reading a real
+ * timeout as a Stop would leave a chapter quietly pending with nothing on
+ * screen to say the write had failed.
+ */
+function wasStopped(signal: AbortSignal | undefined): boolean {
+  return signal?.aborted === true;
+}
+
+/**
+ * A row a CALLER changed before delegating, and wants back if this call is
+ * stopped.
+ *
+ * handleRetryChapter resets its chapter to pending before delegating, so "as
+ * it was" is a row this function can no longer read. Restoring it inside the
+ * stop's own write, rather than after the delegate returns, matters: the
+ * reader re-reads the story the moment it stops one, and every extra write in
+ * between is a window in which it can read the transient row instead.
+ */
+interface StoppedRestore {
+  index: number;
+  chapter: StoryChapter;
+}
+
 export async function handleGenerateChapter(
   body: Record<string, unknown>,
   opts: StoryCallOptions = {},
+  restoreOnStop?: StoppedRestore,
 ): Promise<NextResponse> {
   const { storyId } = body;
   if (!storyId) return NextResponse.json({ error: "Missing storyId" }, { status: 400 });
@@ -37,6 +74,11 @@ export async function handleGenerateChapter(
     const updated = getStory(storyId as string);
     return NextResponse.json({ data: { message: "All chapters complete", story: updated } });
   }
+
+  // The row as it stood before this call touched it. A Stop puts it back
+  // exactly as it was, so nothing about the chapter records an attempt that
+  // was cancelled rather than tried.
+  const beforeThisCall = story.chapters[nextIdx];
 
   // Optimistically set "writing" status so the UI shows a blue pulse immediately
   const optimisticChapters = [...story.chapters];
@@ -150,6 +192,27 @@ export async function handleGenerateChapter(
     return NextResponse.json({ data: { chapter: nextNum, content, story: updated } });
   } catch (err) {
     const updatedChapters = [...story.chapters];
+
+    // A Stop is not a failure, and this is where that had to become true of
+    // the SERVER and not just of the reader's comments. Marking a stopped
+    // chapter "failed" cost money twice over: the write action names no
+    // chapter, so the next press skipped this one and billed the chapter after
+    // it, leaving a hole that breaks continuity (buildChapterPrompt feeds
+    // chapters n-2/n-1); and the error it wrote was the provider's timeout
+    // advice, blaming a base URL that was never wrong (T-0113).
+    if (wasStopped(opts.signal)) {
+      updatedChapters[nextIdx] = beforeThisCall;
+      // The caller's row goes back last, because a caller that changed one has
+      // the older and truer version of it. Usually the same index; not always,
+      // since the chapter this call picked is the first PENDING one.
+      if (restoreOnStop) updatedChapters[restoreOnStop.index] = restoreOnStop.chapter;
+      updateStory(storyId as string, { chapters: updatedChapters as typeof story.chapters });
+      return NextResponse.json({
+        error: "The chapter was stopped before it was written.",
+        stopped: true,
+      }, { status: CHAPTER_STOPPED_STATUS });
+    }
+
     updatedChapters[nextIdx] = {
       ...updatedChapters[nextIdx],
       status: "failed",
@@ -184,12 +247,22 @@ export async function handleRetryChapter(
     return NextResponse.json({ error: "Chapter is not in failed state" }, { status: 400 });
   }
 
+  // What the operator was reading before pressing Retry. Resetting the row to
+  // pending is this handler's doing, so a Stop has to undo it: the error text
+  // is the only record of WHY the chapter failed, and a stopped retry used to
+  // overwrite it with the abort's message (T-0113).
+  const beforeTheRetry = story.chapters[chIdx];
+
   // Reset to pending and regenerate
   const updatedChapters = [...story.chapters];
   updatedChapters[chIdx] = { ...updatedChapters[chIdx], status: "pending", error: undefined };
   updateStory(storyId as string, { chapters: updatedChapters as typeof story.chapters });
 
-  return handleGenerateChapter({ storyId }, opts);
+  // Handed down, not applied afterwards, so it lands only on the stop path. An
+  // abort that arrives after the provider answered still completes and bills
+  // the chapter (the title and summary calls are both caught), and putting the
+  // old failure back over THAT would throw away writing already paid for.
+  return handleGenerateChapter({ storyId }, opts, { index: chIdx, chapter: beforeTheRetry });
 }
 
 export async function handleRewriteChapter(

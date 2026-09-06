@@ -24,11 +24,13 @@ import { CheckCircle2, Loader2, Plug, XCircle } from "lucide-react";
 import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import { Field, Input } from "@/components/ui/field";
+import { Select } from "@/components/ui/Input";
 import { safeApiCall } from "@/lib/api-fetch";
 import ConceptHint from "@/components/help/ConceptHint";
 
 import HealthBanner from "./hindsight/HealthBanner";
 import type { HealthState } from "./hindsight/types";
+import type { MemoryProviderType } from "@/lib/memory/memory-providers/types";
 
 interface Cfg {
   host: string;
@@ -58,6 +60,19 @@ interface MemoryProviderSettingsProps {
   onRetry?: () => void;
 }
 
+/**
+ * The backends an operator can pick between.
+ *
+ * Mirrors the `options` on memory.provider in config-schema.ts, which is the
+ * declaration the config page reads. If one is added there and not here, this
+ * screen quietly stops being the place the provider is set, which is the defect
+ * this control exists to end.
+ */
+const SELECTABLE_PROVIDERS: ReadonlyArray<{ type: MemoryProviderType; label: string }> = [
+  { type: "hindsight", label: "Hindsight" },
+  { type: "holographic", label: "Holographic" },
+];
+
 const FALLBACK_ROW: ActiveRow = {
   type: "hindsight",
   label: "Hindsight",
@@ -79,6 +94,10 @@ export default function MemoryProviderSettings({
   // how editing a port on a holographic install silently switched the whole
   // memory backend (T-0101, D65).
   const [row, setRow] = useState<ActiveRow | null>(null);
+  // The provider the operator has PICKED, which is not always the one that
+  // was loaded. Held separately so Save can send a change: it used to post
+  // `type: current.type` and a choice could never leave the screen.
+  const [chosenType, setChosenType] = useState<MemoryProviderType | null>(null);
   // Save is a decision about the row this card loaded. Acting before the read
   // lands means acting on a guess, which is the whole of D65 in a smaller
   // window, so the buttons wait.
@@ -141,13 +160,20 @@ export default function MemoryProviderSettings({
         {
           method: "PUT",
           body: {
-            type: current.type,
+            // The chosen provider, falling back to the loaded one when the
+            // operator has not touched the chooser.
+            type: chosenType ?? current.type,
             label: current.label,
             enabled: true,
             // Only when this row is not already the active one. makeActive
             // rewrites every other row's flag, which is not what "I edited the
-            // port" means.
-            ...(current.isActive ? {} : { makeActive: true }),
+            // port" means. Choosing a DIFFERENT provider is exactly that
+            // though, so a change of type always makes the new one active:
+            // otherwise the product would go on reading the old backend while
+            // the operator believed they had switched.
+            ...(current.isActive && (chosenType ?? current.type) === current.type
+              ? {}
+              : { makeActive: true }),
             config: cfg,
           },
         },
@@ -220,6 +246,25 @@ export default function MemoryProviderSettings({
           memories rather than yours. Check the values and press Save to confirm.
         </div>
       )}
+
+      {/* The provider itself. The config page renders memory.provider read-only
+          under "Set this on the Memory page", so this is the control that
+          sentence has always been pointing at, and until now it did not exist.
+          `none` is not offered: choosing it would mean "turn memory off", which
+          the enabled flag already says, and two controls for one decision is
+          how they come to disagree. */}
+      <div className="mb-3">
+        <Select
+          label="Provider"
+          value={chosenType ?? row?.type ?? FALLBACK_ROW.type}
+          onChange={(v) => setChosenType(v as MemoryProviderType)}
+          options={SELECTABLE_PROVIDERS.map((p) => p.type)}
+        />
+        <p className="mt-1 text-xs text-ps-text-faint">
+          Which memory backend the agent uses. Saving a different one switches
+          the agent over and writes it into its configuration.
+        </p>
+      </div>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_120px_1fr]">
         <Field label="Host" htmlFor="mp-host">

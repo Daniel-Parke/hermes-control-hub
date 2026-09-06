@@ -15,6 +15,7 @@ import { listSchedules, createSchedule } from "@/lib/schedules-repository";
 import { boundsFrom, SCHEDULE_LIST_BOUNDS } from "@/lib/list-bounds";
 import { parseSchedule } from "@/lib/schedule/parse-schedule";
 import { computeNextRun, scheduleCanEverFire } from "@/lib/schedule/next-run";
+import { scheduleIntervalProblem } from "@/lib/schedule/interval-bounds";
 import { recordEvent } from "@/lib/analytics/record-event";
 
 const scheduleCreateSchema = z
@@ -70,6 +71,12 @@ export async function POST(request: NextRequest) {
           `exist, or a field outside its range. Check the day-of-month against the month.`,
       );
     }
+    // And how OFTEN is a third question. `every 0m` names a moment that is
+    // always reachable: the one you are standing in. It stored happily, was due
+    // again on the tick that had just fired it, and every tick of that loop
+    // dispatched a real agent run at a paid provider.
+    const tooFrequent = scheduleIntervalProblem(parsed.schedule);
+    if (tooFrequent) return badRequest(tooFrequent);
     const next = computeNextRun(parsed.schedule, new Date());
     const schedule = createSchedule({
       kind,

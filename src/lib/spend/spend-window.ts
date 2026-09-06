@@ -12,11 +12,21 @@
 // columns, which means "we do not know what this cost", and it stays out of the
 // priced total while staying declared in the count. Folding it in at zero would
 // take a real, uncounted cost and paint it as free.
+//
+// A SECOND KIND OF NOT-KNOWING, which this file also has to carry. A run whose
+// tokens ARE recorded can still be priced at a rate nobody published: the table
+// in model-cost.ts knows fifteen model families, and an install running
+// anything else is priced entirely at its fallback. The arithmetic is fine and
+// deliberately unchanged. What was missing is that nothing said so, so the
+// console described a screen of guesses as published rates. The folds below
+// therefore keep a `SpendRateBasis` beside the money: what was priced from a
+// rate on file, what was not, and which models it could not price.
 
-import { estimateCost } from "@/lib/analytics/model-cost";
+import { estimateCostWithBasis } from "@/lib/analytics/model-cost";
 import { SPEND_SOURCES, type SpendSource } from "./spend-law";
 import {
   readResearchUsageSince,
+  readRunUsageForStory,
   readRunUsageSince,
   type ResearchUsageRow,
   type SpendUsageRow,
@@ -39,6 +49,20 @@ export interface SpendWindowSource {
   costUsd: number | null;
   /** False means "we do not know", never "it was free". */
   recorded: boolean;
+  /** How much of costUsd was priced at the fallback rather than a rate on file. */
+  estimatedUsd: number;
+}
+
+/** Where a window's money came from: a rate on file, or the fallback. */
+export interface SpendRateBasis {
+  /** USD priced from a rate the product actually has on file. */
+  knownUsd: number;
+  /** USD priced at the fallback rate, because no rate is on file. */
+  estimatedUsd: number;
+  /** Distinct model ids priced at the fallback, sorted, so copy can name them. */
+  unknownModels: string[];
+  /** Runs that recorded no model at all, so no rate could be looked up. */
+  runsWithoutModel: number;
 }
 
 export interface SpendWindow {
@@ -48,6 +72,7 @@ export interface SpendWindow {
   /** Always one row per source, in SPEND_SOURCES order. */
   sources: SpendWindowSource[];
   unrecordedResearchRuns: number;
+  basis: SpendRateBasis;
 }
 
 function emptySource(source: SpendSource, recorded: boolean): SpendWindowSource {
@@ -59,7 +84,12 @@ function emptySource(source: SpendSource, recorded: boolean): SpendWindowSource 
     outputTokens: 0,
     costUsd: recorded ? 0 : null,
     recorded,
+    estimatedUsd: 0,
   };
+}
+
+function emptyBasis(): SpendRateBasis {
+  return { knownUsd: 0, estimatedUsd: 0, unknownModels: [], runsWithoutModel: 0 };
 }
 
 /** An answer for a window nothing could be read from. */
@@ -69,11 +99,56 @@ export function emptyWindow(since: string): SpendWindow {
     totalUsd: 0,
     sources: SPEND_SOURCES.map((s) => emptySource(s, true)),
     unrecordedResearchRuns: 0,
+    basis: emptyBasis(),
   };
 }
 
+/**
+ * The running basis of one window, filled in row by row.
+ *
+ * One accumulator shared by every fold, so the money the console prints and the
+ * sentence it prints beside it come from ONE pass over the same rows. Two
+ * passes is how a figure and its own description come to disagree.
+ */
+class BasisAccumulator {
+  private knownUsd = 0;
+  private estimatedUsd = 0;
+  private readonly unknownModels = new Set<string>();
+  private runsWithoutModel = 0;
+
+  /** Record one priced run. Returns the part of its cost that was guessed. */
+  add(model: string | null, costUsd: number, fromKnownRate: boolean): number {
+    if (fromKnownRate) {
+      this.knownUsd += costUsd;
+      return 0;
+    }
+    this.estimatedUsd += costUsd;
+    // A model we hold no price for can be NAMED, which is the useful half of
+    // the admission. A run with no model at all cannot be, and printing "no
+    // price for null" would be worse than saying nothing.
+    if (model) this.unknownModels.add(model);
+    else this.runsWithoutModel += 1;
+    return costUsd;
+  }
+
+  result(): SpendRateBasis {
+    return {
+      knownUsd: this.knownUsd,
+      estimatedUsd: this.estimatedUsd,
+      unknownModels: [...this.unknownModels].sort(),
+      runsWithoutModel: this.runsWithoutModel,
+    };
+  }
+}
+
 /** Fold the priced-run rows into their source totals. */
-function foldUsage(rows: SpendUsageRow[]): Record<"agent" | "composer" | "story", SpendWindowSource> {
+function foldUsage(
+  rows: SpendUsageRow[],
+  // Each source row's own `estimatedUsd` is filled in either way. The shared
+  // accumulator is only wanted by a caller that reports a WINDOW's basis, so a
+  // fold of some narrower slice may let this default and throw it away.
+  basis: BasisAccumulator = new BasisAccumulator(),
+): Record<"agent" | "composer" | "story", SpendWindowSource> {
   const acc = {
     agent: emptySource("agent", true),
     composer: emptySource("composer", true),
@@ -104,8 +179,10 @@ function foldUsage(rows: SpendUsageRow[]): Record<"agent" | "composer" | "story"
     target.outputTokens += output;
     // A null model (every Composer stage, every story chapter) resolves to
     // model-cost's DEFAULT_RATE, which is deliberately non-zero. Unknown must
-    // never read as free.
-    target.costUsd = (target.costUsd ?? 0) + estimateCost(row.model, input, output);
+    // never read as free, and it must never read as priced either.
+    const priced = estimateCostWithBasis(row.model, input, output);
+    target.costUsd = (target.costUsd ?? 0) + priced.usd;
+    target.estimatedUsd += basis.add(row.model, priced.usd, priced.fromKnownRate);
   }
 
   return acc;
@@ -115,7 +192,10 @@ function foldUsage(rows: SpendUsageRow[]): Record<"agent" | "composer" | "story"
  * Deep Research, folded the same way, plus a count of the runs whose usage was
  * NEVER recorded. That second number is why this cannot just call foldUsage.
  */
-function foldResearch(rows: ResearchUsageRow[]): { row: SpendWindowSource; unrecorded: number } {
+function foldResearch(
+  rows: ResearchUsageRow[],
+  basis: BasisAccumulator = new BasisAccumulator(),
+): { row: SpendWindowSource; unrecorded: number } {
   const row = emptySource("research", true);
   let unrecorded = 0;
 
@@ -129,7 +209,9 @@ function foldResearch(rows: ResearchUsageRow[]): { row: SpendWindowSource; unrec
     const output = Number.isFinite(r.completionTokens) ? (r.completionTokens as number) : 0;
     row.inputTokens += input;
     row.outputTokens += output;
-    row.costUsd = (row.costUsd ?? 0) + estimateCost(r.model, input, output);
+    const priced = estimateCostWithBasis(r.model, input, output);
+    row.costUsd = (row.costUsd ?? 0) + priced.usd;
+    row.estimatedUsd += basis.add(r.model, priced.usd, priced.fromKnownRate);
   }
 
   return { row, unrecorded };
@@ -145,8 +227,9 @@ function foldResearch(rows: ResearchUsageRow[]): { row: SpendWindowSource; unrec
  * away from the one caller whose choice costs money.
  */
 export function recordedSpendSince(since: string): SpendWindow {
-  const folded = foldUsage(readRunUsageSince(since));
-  const research = foldResearch(readResearchUsageSince(since));
+  const basis = new BasisAccumulator();
+  const folded = foldUsage(readRunUsageSince(since), basis);
+  const research = foldResearch(readResearchUsageSince(since), basis);
 
   const byKey: Record<SpendSource, SpendWindowSource> = {
     agent: folded.agent,
@@ -160,5 +243,26 @@ export function recordedSpendSince(since: string): SpendWindow {
     totalUsd: SPEND_SOURCES.reduce((sum, s) => sum + (byKey[s].costUsd ?? 0), 0),
     sources: SPEND_SOURCES.map((s) => byKey[s]),
     unrecordedResearchRuns: research.unrecorded,
+    basis: basis.result(),
   };
+}
+
+/**
+ * What ONE story has cost, over its whole life, in the same row shape the
+ * console draws per source.
+ *
+ * The Rec Room asks for this so a person can see what a story cost without
+ * leaving the page that spent it: generation calls a paid model, and Story
+ * Weaver said nothing about it before, during or after.
+ *
+ * It goes through `foldUsage`, the same function the window read uses, on
+ * purpose. Totalling a story separately is exactly how the reader and the
+ * console would come to show two different numbers for the same money.
+ *
+ * THROWS, like `recordedSpendSince`, so the caller decides what an unreadable
+ * ledger means. The story handler answers a failure rather than an invented
+ * $0.00, because a confident zero is the one answer this must never give.
+ */
+export function recordedSpendForStory(storyId: string): SpendWindowSource {
+  return foldUsage(readRunUsageForStory(storyId)).story;
 }

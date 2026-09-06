@@ -35,6 +35,7 @@
 import { useQuery } from "@tanstack/react-query";
 
 import { safeApiCall, safeApiCallData } from "@/lib/api-fetch";
+import type { ModelReadiness } from "@/lib/models/model-readiness";
 import type { SubsystemSummary } from "@/lib/status/subsystems";
 import {
   loadInitialDashboardData,
@@ -94,7 +95,7 @@ interface DashboardStatic {
   config: Record<string, unknown> | null;
   templates: DashboardTemplate[];
   categories: MissionCategory[];
-  registryAgentModelLabel: string | null;
+  modelReadiness: ModelReadiness | null;
 }
 
 async function fetchSubsystems(): Promise<SubsystemSummary | null> {
@@ -108,9 +109,10 @@ async function fetchStatic(): Promise<DashboardStatic> {
     config: dashboardData.config,
     templates: dashboardData.templates,
     categories: dashboardData.categories,
-    // Prefer the RESOLVED model name; never fall back to the raw uuid in
-    // `defaults.agent` (that's what showed "af00a9df-…" in the subtitle).
-    registryAgentModelLabel: modelsDefaults?.agentModelLabel ?? null,
+    // The server's one verdict, taken whole. This used to be a resolved NAME
+    // and nothing else, so the page had to decide for itself what having a
+    // name meant, and chat and the Models page each decided differently.
+    modelReadiness: modelsDefaults?.modelReadiness ?? null,
   };
 }
 
@@ -124,7 +126,11 @@ export interface UseDashboardResult {
   config: Record<string, unknown> | null;
   templates: DashboardTemplate[];
   categories: MissionCategory[];
-  registryAgentModelLabel: string | null;
+  /**
+   * The product's one answer to "do I have a model?". `null` until the static
+   * bundle has answered.
+   */
+  modelReadiness: ModelReadiness | null;
   /** 14-day session-activity counts for the Sessions pill sparkline. */
   sessionTrend: number[];
   /** The subsystem health summary (T-0091), null until the first check answers. */
@@ -190,7 +196,7 @@ export function useDashboard(): UseDashboardResult {
     config: staticQuery.data?.config ?? null,
     templates: staticQuery.data?.templates ?? [],
     categories: staticQuery.data?.categories ?? [],
-    registryAgentModelLabel: staticQuery.data?.registryAgentModelLabel ?? null,
+    modelReadiness: staticQuery.data?.modelReadiness ?? null,
     sessionTrend: sessionTrendQuery.data ?? [],
     subsystems: subsystemsQuery.data ?? null,
     monitorError: monitorQuery.isError ? (monitorQuery.error as Error).message : null,

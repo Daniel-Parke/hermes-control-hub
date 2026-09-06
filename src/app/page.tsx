@@ -44,7 +44,6 @@ import { dispatchMissionAction } from "@/hooks/success-message-for-dispatch";
 import { isMissionActive } from "@/lib/missions/mission-board";
 import { dedupErrors } from "@/lib/dashboard/dashboard-error-dedup";
 import { describeSchedulerHealth } from "@/lib/dashboard/scheduler-pill";
-import { formatModelSubtitle } from "@/lib/dashboard/dashboard-model-subtitle";
 import { settleFirstRunFacts, type FirstRunFacts } from "@/lib/dashboard/first-run-steps";
 import { SUBSYSTEM_STATE_LABELS } from "@/lib/status-labels";
 import { formatUsd } from "@/lib/spend/spend-law";
@@ -95,10 +94,14 @@ export default function Dashboard() {
     monitor,
     processes,
     missions,
-    config,
+    // `config` is deliberately not destructured. The header used to read
+    // config.yaml's model fields here and decide for itself what they meant;
+    // that verdict is resolved once on the server now and arrives as
+    // `modelReadiness`. The batch still carries `config` for whatever reads it
+    // next; this screen no longer needs it.
     templates,
     categories,
-    registryAgentModelLabel,
+    modelReadiness,
     subsystems,
     ready,
     monitorError,
@@ -200,19 +203,12 @@ export default function Dashboard() {
     await refetchProcesses();
   }, [refetchProcesses]);
 
-  const modelConfig = config?.model as Record<string, unknown> | undefined;
-  const diskModel = (modelConfig?.default as string) || "";
-  const diskProvider = (modelConfig?.provider as string) || "";
-  // Header subtitle: prefer the model written to config.yaml; fall back to
-  // the registry's "default agent" (the user has set a default in the
-  // Models registry but hasn't yet pushed it to config.yaml); else "-".
-  // The 3-source priority ladder lives in `formatModelSubtitle`
-  // (src/lib/dashboard/dashboard-model-subtitle.ts) so the rule is
-  // unit-testable in isolation.
-  const modelSubtitle = useMemo(
-    () => formatModelSubtitle(diskModel, diskProvider, registryAgentModelLabel),
-    [diskModel, diskProvider, registryAgentModelLabel],
-  );
+  // Header subtitle: the label from the one readiness answer the server
+  // resolved. The ladder that used to live here (config file, then the models
+  // registry, then a dash) is that answer's own rule now, so the dashboard,
+  // chat and the Models page all say the same thing about the same install
+  // instead of each combining the same two facts differently.
+  const modelSubtitle = modelReadiness?.label ?? "-";
   // Is there actually an agent behind this control plane? `framework.available`
   // is the adapter's own answer (the DB-owned registry probes the install), and
   // `undefined` means the monitor could not tell — which is not the same as
@@ -236,11 +232,11 @@ export default function Dashboard() {
       frameworkAvailable: agentConfigured,
       gatewayReachable,
       gatewayUrl: gatewayRow?.url ?? null,
-      modelConfigured: Boolean(diskModel || registryAgentModelLabel),
+      modelConfigured: modelReadiness?.ready === true,
       sessionCount: monitor?.sessions.total ?? 0,
       missionCount: missions.length,
     }),
-    [agentName, agentConfigured, gatewayReachable, gatewayRow?.url, diskModel, registryAgentModelLabel, monitor?.sessions.total, missions.length],
+    [agentName, agentConfigured, gatewayReachable, gatewayRow?.url, modelReadiness, monitor?.sessions.total, missions.length],
   );
   // The previous reading is state, settled during render the way React
   // documents for "information from previous renders": one guarded setState,

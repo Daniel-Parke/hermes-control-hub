@@ -14,6 +14,7 @@ import type { SyncSource } from "@/lib/sync/types";
 import type { CronJobEntry } from "@/lib/sessions/session-title";
 
 import { listProfiles } from "./lib/profiles-repository";
+import { createProfileSkillsCounter } from "./lib/profile-counts";
 import { loadCronJobsMap } from "./lib/cron-jobs";
 import { ConfigSync } from "./sync/ConfigSync";
 import { seedAgentCatalog, publishSkill } from "./lib/seed-agent-catalog";
@@ -49,4 +50,11 @@ export const hermesServerModule: ServerModule = {
 
   /** Write a seeded core skill through to the Hermes global skills dir. */
   publishSkill,
+
+  /**
+   * The skills count for a batch of profiles, the SAME function the profile
+   * cards count with (GET /api/agent/profiles). Core asks for it here so the
+   * Agents-page performance strip cannot carry a second, different answer.
+   */
+  createAgentSkillsCounter: createProfileSkillsCounter,
 };

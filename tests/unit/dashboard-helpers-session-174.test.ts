@@ -1,6 +1,9 @@
 // Unit tests for the 4 dashboard helpers extracted in session 174:
 //   - dedupErrors (src/lib/dashboard/dashboard-error-dedup.ts)
-//   - formatModelSubtitle (src/lib/dashboard/dashboard-model-subtitle.ts)
+//   - resolveModelReadiness (src/lib/models/model-readiness.ts), which took
+//     over from formatModelSubtitle when the product's three answers to "do I
+//     have a model?" were collapsed into one. The subtitle is one of its three
+//     readers now, so the ladder it used to own is asserted there.
 //   - topNTemplates (src/lib/dashboard-top-templates.ts)
 //   - loadInitialDashboardData (src/lib/dashboard-initial-load.ts)
 //
@@ -14,7 +17,7 @@ import {
   dedupErrors,
   type DedupableError,
 } from "@/lib/dashboard/dashboard-error-dedup";
-import { formatModelSubtitle } from "@/lib/dashboard/dashboard-model-subtitle";
+import { resolveModelReadiness } from "@/lib/models/model-readiness";
 import { topNTemplates } from "@/lib/dashboard/dashboard-top-templates";
 // Note: `loadInitialDashboardData` is imported via the test name
 // only; the test bodies use `require()` inside `jest.isolateModules`
@@ -92,31 +95,47 @@ describe("dedupErrors", () => {
   });
 });
 
-// ── formatModelSubtitle ───────────────────────────────────────
+// ── the header subtitle, now one reader of the readiness answer ──
+//
+// These five cases are the ones formatModelSubtitle held. The ladder is
+// unchanged; the strings moved with it, and the middle case says "not sent to
+// the agent yet" instead of "registry default (not yet applied)" because the
+// dashboard is a novice screen and the reader does not have to know the
+// product has a registry to act on it.
 
-describe("formatModelSubtitle", () => {
-  it("returns the disk model with provider when both are set", () => {
-    expect(formatModelSubtitle("gpt-4o", "openai", null)).toBe("gpt-4o · openai");
+function subtitle(configModel: string, configProvider: string, registryLabel: string | null) {
+  return resolveModelReadiness({ configModel, configProvider, registryLabel }).label;
+}
+
+describe("the model named in the dashboard header", () => {
+  it("returns the config-file model with provider when both are set", () => {
+    expect(subtitle("gpt-4o", "openai", null)).toBe("gpt-4o · openai");
   });
 
-  it("returns just the disk model when provider is empty", () => {
-    expect(formatModelSubtitle("claude-3-5-sonnet", "", null)).toBe("claude-3-5-sonnet");
+  it("returns just the config-file model when provider is empty", () => {
+    expect(subtitle("claude-3-5-sonnet", "", null)).toBe("claude-3-5-sonnet");
   });
 
-  it("falls back to the registry label when disk is empty", () => {
-    expect(formatModelSubtitle("", "", "claude-3-5-sonnet")).toBe(
-      "claude-3-5-sonnet · registry default (not yet applied)",
+  it("falls back to the registry label when the config file is empty", () => {
+    expect(subtitle("", "", "claude-3-5-sonnet")).toBe(
+      "claude-3-5-sonnet · not sent to the agent yet",
     );
   });
 
-  it("ignores the registry label when the disk has a model (priority 1 wins)", () => {
-    expect(formatModelSubtitle("gpt-4o", "openai", "claude-3-5-sonnet")).toBe(
-      "gpt-4o · openai",
-    );
+  it("ignores the registry label when the config file has a model (priority 1 wins)", () => {
+    expect(subtitle("gpt-4o", "openai", "claude-3-5-sonnet")).toBe("gpt-4o · openai");
   });
 
-  it("returns '-' when both disk and registry are empty", () => {
-    expect(formatModelSubtitle("", "", null)).toBe("-");
+  it("returns '-' when both the config file and the registry are empty", () => {
+    expect(subtitle("", "", null)).toBe("-");
+  });
+
+  it("only the config-file case counts as a model the agent can use", () => {
+    // The half the subtitle could never say, and the half three screens each
+    // guessed at: a name on screen is not the same as a model the agent has.
+    expect(resolveModelReadiness({ configModel: "gpt-4o", configProvider: "openai", registryLabel: null }).ready).toBe(true);
+    expect(resolveModelReadiness({ configModel: "", configProvider: "", registryLabel: "gpt-4o" }).ready).toBe(false);
+    expect(resolveModelReadiness({ configModel: "", configProvider: "", registryLabel: null }).ready).toBe(false);
   });
 });
 

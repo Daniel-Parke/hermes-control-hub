@@ -49,6 +49,7 @@ export default function ChatPage() {
     conversationError,
     reloadActiveConversation,
     gatewayUrl,
+    modelDetail,
     bannerStates,
     messages,
     isStreaming,
@@ -198,7 +199,12 @@ export default function ChatPage() {
           <div className="flex-1 flex flex-col min-w-0 min-h-0">
             <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
               {bannerStates.map((state) => (
-                <GatewayBanner key={state} status={state} gatewayUrl={gatewayUrl} />
+                <GatewayBanner
+                  key={state}
+                  status={state}
+                  gatewayUrl={gatewayUrl}
+                  modelDetail={modelDetail}
+                />
               ))}
               {/* The read contract again, one level in: a transcript that would
                   not load is this, with a Retry, and never the "start a

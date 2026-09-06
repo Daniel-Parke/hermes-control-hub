@@ -83,6 +83,16 @@ export interface ServerModule {
    */
   publishSkill?: (skillKey: string) => void;
   /**
+   * A counter for "how many skills may this agent use", built once for a batch.
+   *
+   * Core owns the skills catalogue but not this number: the set an agent may
+   * use is the catalogue unioned with the skills in that agent's own tree,
+   * minus the denylist its config declares, and both of those are the module's
+   * file layout. Batch-shaped because the tree walk is the same for every
+   * agent while only the denylist differs. See src/lib/agents/agent-skills-count.ts.
+   */
+  createAgentSkillsCounter?: () => (slug: string) => number;
+  /**
    * Boot sweep for rows a previous process left mid-flight. Runs once at
    * scheduler boot beside core's reconcileRunsOnBoot, inside the same
    * best-effort try/catch. Stories are the first (T-0087): a row born

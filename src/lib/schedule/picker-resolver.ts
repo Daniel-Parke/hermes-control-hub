@@ -6,6 +6,7 @@
 // custom-builder preview, and the preset grouping are pure + unit-testable
 // (the component is just rendering + local state around these).
 
+import { scheduleIntervalProblem } from "./interval-bounds";
 import { scheduleCanEverFire } from "./next-run";
 import { parseSchedule } from "@/lib/schedule/parse-schedule";
 import {
@@ -125,5 +126,8 @@ export function advancedDraftProblem(raw: string): string | null {
   if (!scheduleCanEverFire(trimmed)) {
     return `"${trimmed}" can never fire: that date does not exist, or a field is out of range`;
   }
-  return null;
+  // And the opposite: `every 0m` fires constantly, and each firing is a paid
+  // agent run. Refused here as well as at the API so the operator is told
+  // before the request goes out, from the same definition the server uses.
+  return scheduleIntervalProblem(trimmed);
 }

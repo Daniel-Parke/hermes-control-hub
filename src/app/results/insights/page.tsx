@@ -65,9 +65,13 @@ function CardTitle({ icon: Icon, hint, children }: { icon: React.ComponentType<{
   );
 }
 
-function MetricTile({ label, value, color = "cyan" }: { label: string; value: string; color?: NeonColor }) {
+// `hint` is a title on the tile itself rather than an icon beside it: these
+// tiles are three words wide and a second glyph would crowd the number. It is
+// what lets a tile say which rows it counted, which is the whole reason the
+// token figures on this page could not be told apart.
+function MetricTile({ label, value, color = "cyan", hint }: { label: string; value: string; color?: NeonColor; hint?: string }) {
   return (
-    <div className="rounded-xl border border-white/10 bg-dark-900/40 p-3" style={{ boxShadow: `inset 0 0 18px ${neonAlpha(color, 5)}` }}>
+    <div className="rounded-xl border border-white/10 bg-dark-900/40 p-3" title={hint} style={{ boxShadow: `inset 0 0 18px ${neonAlpha(color, 5)}` }}>
       <div className="font-mono text-2xl font-bold text-white">{value}</div>
       <div className="mt-0.5 text-xs uppercase tracking-wider text-ps-text-muted">{label}</div>
     </div>
@@ -211,7 +215,20 @@ export default function InsightsPage() {
                   <MetricTile label="Interactions" value={totalEvents.toLocaleString()} color="cyan" />
                   {/* From the window's bundle, so the number follows the switch the label names (D96). */}
                   <MetricTile label={`Active days (${days}d)`} value={String(insights?.activeDays ?? 0)} color="green" />
-                  <MetricTile label="Tokens" value={compactNum(stats?.runs.totalTokens ?? 0)} color="yellow" />
+                  {/* THREE token totals used to sit on this page with nothing
+                      saying what any of them covered: this tile (91 days, every
+                      run), the model list (the range switch, mission runs only)
+                      and the per-mission figures (the range, completed runs).
+                      They cannot agree, and unlabelled they made each other
+                      look wrong. Each one now names its own scope. This one is
+                      91 days because that is the window the stats query reads;
+                      it deliberately does not follow the 7/30/90 switch. */}
+                  <MetricTile
+                    label="Tokens (91d)"
+                    value={compactNum(stats?.runs.totalTokens ?? 0)}
+                    color="yellow"
+                    hint="Tokens from every run recorded in the last 91 days, whatever started it: missions, Composer stages and Story Weaver. Not affected by the range switch above."
+                  />
                   <MetricTile label="Achievements" value={`${unlocked}/${achievements.length}`} color="orange" />
                 </div>
               </div>
@@ -304,7 +321,7 @@ export default function InsightsPage() {
               <StaggerItem>
                 <div className="grid gap-4 lg:grid-cols-3">
                   <Card>
-                    <CardTitle icon={Cpu} hint="Total tokens used per model over the range. Spend is in the provider spend panel above.">Tokens by model</CardTitle>
+                    <CardTitle icon={Cpu} hint="Tokens per model over the selected range, counting only runs that belong to a mission. Composer stages and Story Weaver chapters have no mission, so they are not in this list and it totals less than the tokens tile above. Spend is in the provider spend panel.">Tokens by model (last {days} days)</CardTitle>
                     <TopList
                       color="orange"
                       rows={(insights?.modelUsage ?? []).map((m) => ({
@@ -315,7 +332,7 @@ export default function InsightsPage() {
                     />
                   </Card>
                   <Card>
-                    <CardTitle icon={Rocket} hint="Your most-run missions over the range, by number of runs.">Top missions</CardTitle>
+                    <CardTitle icon={Rocket} hint="Your most-run missions over the selected range, by number of runs. The tokens beside each one are from that mission's completed runs in the same range.">Top missions</CardTitle>
                     <TopList
                       color="cyan"
                       rows={(insights?.topMissions ?? []).map((m) => ({

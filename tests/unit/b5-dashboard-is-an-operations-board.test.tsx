@@ -160,7 +160,18 @@ function dash(over: Partial<DashResult> = {}): DashResult {
     config: { model: { default: "gpt-4o", provider: "openai" } },
     templates: [],
     categories: [],
-    registryAgentModelLabel: null,
+    // Was `registryAgentModelLabel: null`, with the header deriving the
+    // subtitle from `config` beside it. The product resolves one readiness
+    // verdict now (real-agent round, "three answers to do I have a model?")
+    // and the header renders its label, so the install's model is stated here
+    // once instead of being re-derived on the screen.
+    modelReadiness: {
+      state: "ready" as const,
+      ready: true,
+      label: "gpt-4o · openai",
+      modelName: "gpt-4o",
+      detail: "",
+    },
     sessionTrend: [],
     subsystems: SUBSYSTEMS,
     ready: true,
@@ -243,15 +254,16 @@ const TOP_AGENT: AgentExperienceEntry = {
 
 const SPEND: SpendSummary = {
   periods: [
-    { period: "day", label: "Today", since: "2026-09-05 00:00:00", totalUsd: 0.1, sources: [], unrecordedResearchRuns: 0 },
-    { period: "week", label: "This week", since: "2026-08-31 00:00:00", totalUsd: 0.5, sources: [], unrecordedResearchRuns: 0 },
-    { period: "month", label: "This month", since: "2026-09-01 00:00:00", totalUsd: 1.25, sources: [], unrecordedResearchRuns: 0 },
+    { period: "day", label: "Today", since: "2026-09-05 00:00:00", totalUsd: 0.1, sources: [], unrecordedResearchRuns: 0, basis: { knownUsd: 0.1, estimatedUsd: 0, unknownModels: [], runsWithoutModel: 0 }, estimateNote: null },
+    { period: "week", label: "This week", since: "2026-08-31 00:00:00", totalUsd: 0.5, sources: [], unrecordedResearchRuns: 0, basis: { knownUsd: 0.5, estimatedUsd: 0, unknownModels: [], runsWithoutModel: 0 }, estimateNote: null },
+    { period: "month", label: "This month", since: "2026-09-01 00:00:00", totalUsd: 1.25, sources: [], unrecordedResearchRuns: 0, basis: { knownUsd: 1.25, estimatedUsd: 0, unknownModels: [], runsWithoutModel: 0 }, estimateNote: null },
   ],
   policy: UNSET_SPEND_POLICY,
   budgetPeriod: "month",
   budgetSpentUsd: 1.25,
   verdict: { state: "unset", fraction: null, breached: false, blocksUnattended: false, message: null },
   unmeasured: [],
+  estimateNote: null,
   generatedAt: NOW_ISO,
 };
 

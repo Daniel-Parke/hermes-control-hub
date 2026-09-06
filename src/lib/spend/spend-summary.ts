@@ -49,17 +49,26 @@
 // discovering it from a number that was quietly wrong.
 // ═══════════════════════════════════════════════════════════════
 
+import { DEFAULT_RATE } from "@/lib/analytics/model-cost";
+
 import {
   SPEND_PERIODS,
   evaluateSpend,
+  formatUsd,
   periodLabel,
+  periodPossessive,
   periodStart,
   type SpendPeriod,
   type SpendPolicy,
   type SpendVerdict,
 } from "./spend-law";
 import { readSpendPolicy } from "./spend-repository";
-import { emptyWindow, recordedSpendSince, type SpendWindowSource } from "./spend-window";
+import {
+  emptyWindow,
+  recordedSpendSince,
+  type SpendRateBasis,
+  type SpendWindowSource,
+} from "./spend-window";
 
 // Module-private on purpose. Reachable structurally through the exported
 // parent type, so a caller can still read the field; nothing imports the
@@ -86,6 +95,28 @@ interface SpendPeriodRow {
    * defect T-0037 and T-0042 spent their whole scope removing elsewhere.
    */
   unrecordedResearchRuns: number;
+  /**
+   * What this period's money was priced from: a rate on file, or the fallback.
+   *
+   * Per period, because each tile draws its own figure and a month can be a
+   * guess while a day is not.
+   */
+  basis: SpendRateBasis;
+  /**
+   * THIS period's admission that part of THIS period's figure is a guess, or
+   * null when none of it was.
+   *
+   * On the row rather than only on the summary, because the panel marks every
+   * period whose basis was estimated and used to point all three marks at one
+   * sentence built from the budget period alone. That went wrong twice. A
+   * non-budget period could be marked while the sentence did not exist at all
+   * (the ISO week opens on a Monday, so early in most months the week window
+   * reaches back past the month boundary and holds spend the month does not),
+   * and where the sentence did exist its dollar figure was the budget period's,
+   * not the marked tile's. A mark and its explanation are one thing now, and
+   * they are computed from one basis.
+   */
+  estimateNote: string | null;
 }
 
 export interface SpendSummary {
@@ -99,6 +130,20 @@ export interface SpendSummary {
   verdict: SpendVerdict;
   /** What the totals above exclude, in sentences. Empty when they exclude nothing. */
   unmeasured: string[];
+  /**
+   * How much of the budget period's figure is a guess, in one sentence, or null
+   * when every figure came from a rate the product has on file.
+   *
+   * A sibling of `unmeasured` and deliberately not folded into it: that list is
+   * about money left OUT of the total, this is about money that is IN it but
+   * priced at a fallback. Both are honesty; they are not the same admission.
+   *
+   * It is the budget period's own `estimateNote`, taken from the row rather
+   * than computed a second time, so the prose under the source rows and the
+   * mark on the tile above them cannot say different things about the same
+   * money. The sentence names its period, because three tiles share one screen.
+   */
+  estimateNote: string | null;
   generatedAt: string;
 }
 
@@ -124,7 +169,67 @@ function periodRow(period: SpendPeriod, nowIso: string): SpendPeriodRow {
     totalUsd: w.totalUsd,
     sources: w.sources,
     unrecordedResearchRuns: w.unrecordedResearchRuns,
+    basis: w.basis,
+    // Written here, beside the basis it describes, so the two are one read.
+    // The panel can then mark a tile and explain the mark from the same row.
+    estimateNote: estimateNoteFor(period, w.basis),
   };
+}
+
+/** "a", "a and b", "a, b and c", then "a, b, c and 2 more". */
+function nameList(items: string[], cap = 3): string {
+  const shown = items.slice(0, cap);
+  const rest = items.length - shown.length;
+  if (rest > 0) shown.push(`${rest} more`);
+  if (shown.length === 1) return shown[0];
+  return `${shown.slice(0, -1).join(", ")} and ${shown[shown.length - 1]}`;
+}
+
+/**
+ * The sentence that admits which part of a period's figure is a guess.
+ *
+ * The rate table is small and this install may not be in it, so the honest
+ * answer is not a better number: it is the same number, plus the reason it is
+ * an estimate and somewhere real to check. Naming the models matters, because
+ * "add a price for minimax-m2" is something the operator can act on, whereas
+ * "some rates are missing" is not.
+ *
+ * It takes the PERIOD as well as the basis, and every sentence it builds names
+ * that period. The first version said "this period's total" and was called once
+ * for the budget period while three tiles pointed at the result, so a $12.00
+ * month tile could sit above a note about $4.00 with nothing to tell the reader
+ * they were different windows.
+ */
+function estimateNoteFor(period: SpendPeriod, basis: SpendRateBasis): string | null {
+  if (basis.estimatedUsd <= 0) return null;
+
+  const reasons: string[] = [];
+  if (basis.unknownModels.length > 0) {
+    reasons.push(`there is no price on file for ${nameList(basis.unknownModels)}`);
+  }
+  if (basis.runsWithoutModel > 0) {
+    const n = basis.runsWithoutModel;
+    reasons.push(`${n} run${n === 1 ? "" : "s"} recorded no model to price against`);
+  }
+  // Belt and braces: money was estimated, so there is always a reason for it.
+  if (reasons.length === 0) reasons.push("no rate could be looked up");
+
+  const reason = reasons.join(", and ");
+  const whose = periodPossessive(period);
+  const share =
+    basis.knownUsd <= 0
+      ? `Every figure in ${whose} total is an estimate.`
+      : // Below a cent, the amount says nothing useful and reads as a bug.
+        basis.estimatedUsd < 0.005
+        ? `Part of ${whose} total is an estimate.`
+        : `${formatUsd(basis.estimatedUsd)} of ${whose} total is an estimate.`;
+
+  return (
+    `${share} ${reason[0].toUpperCase()}${reason.slice(1)}, so they are priced at a ` +
+    `fallback of ${formatUsd(DEFAULT_RATE.input)} per million input tokens and ` +
+    `${formatUsd(DEFAULT_RATE.output)} per million output tokens. Check your ` +
+    `provider's own billing page for what you were actually charged.`
+  );
 }
 
 /**
@@ -174,6 +279,9 @@ export function getSpendSummary(nowIso: string = new Date().toISOString()): Spen
     budgetSpentUsd: budget.totalUsd,
     verdict: evaluateSpend(policy, budget.totalUsd),
     unmeasured,
+    // Taken from the row, never recomputed. Two passes over the same basis is
+    // exactly how a figure and the sentence beside it came to disagree.
+    estimateNote: budget.estimateNote,
     generatedAt: nowIso,
   };
 }

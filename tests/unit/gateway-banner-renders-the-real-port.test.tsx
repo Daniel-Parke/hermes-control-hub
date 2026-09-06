@@ -13,6 +13,18 @@
 // So this renders the real component and reads what an operator would read.
 
 import { render, screen } from "@testing-library/react";
+import type { ReactNode } from "react";
+
+// The model banner carries the one action now, so the component renders a
+// Link.
+jest.mock("next/link", () => ({
+  __esModule: true,
+  default: ({ href, children, ...rest }: { href: string; children: ReactNode }) => (
+    <a href={href} {...rest}>
+      {children}
+    </a>
+  ),
+}));
 
 jest.mock("lucide-react", () => {
   const passthrough = (name: string) => () => `[${name}]`;
@@ -94,10 +106,15 @@ describe("the other three banners are unchanged", () => {
     expect(text).toMatch(/401/);
   });
 
-  it("model-missing still points at Config and the config file", () => {
+  // Amended in the real-agent round. The old assertion was `/Config/`, which
+  // this banner satisfied with "Config → Models" -- a route the rail does not
+  // have. Chat is a novice screen; the remedy is one button, so what is worth
+  // pinning is that the button is there and goes somewhere real.
+  it("model-missing carries the one action, and it goes to the Models screen", () => {
     render(<GatewayBanner status="model-missing" />);
 
-    expect(bannerText()).toMatch(/Config/);
+    const link = screen.getByRole("link", { name: /open models/i });
+    expect(link.getAttribute("href")).toBe("/agent/models");
   });
 
   it("checking renders the quiet spinner form, not a card", () => {

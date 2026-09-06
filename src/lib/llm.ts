@@ -135,11 +135,7 @@ export async function callLLM(
   // A caller who has already stopped gets no call at all. Relying on fetch to
   // notice the signal makes "stopped" depend on how far the request had got
   // (T-0108, D88).
-  if (signal?.aborted) {
-    const err = new Error("The call was stopped before it was made.");
-    err.name = "AbortError";
-    throw err;
-  }
+  if (signal?.aborted) throw stoppedError("The call was stopped before it was made.");
 
   let resolved: ModelWithKey | null = null;
   if (modelId) {
@@ -208,6 +204,21 @@ function recordSpend(opts: LLMOptions, response: LLMResponse): void {
   });
 }
 
+/**
+ * The one error that means "the caller stopped this", named so every layer
+ * above can tell it from a failure.
+ *
+ * It has to be built here because the caller's signal is LINKED into the same
+ * AbortController as each path's own timeout, so `fetch` reports a Stop and a
+ * dead endpoint with the identical AbortError. Only this file knows which of
+ * the two fired (T-0113).
+ */
+function stoppedError(message = "The call was stopped."): Error {
+  const err = new Error(message);
+  err.name = "AbortError";
+  return err;
+}
+
 /** Abort this path's controller when the caller's signal aborts, now or later. */
 function linkAbort(signal: AbortSignal | undefined, controller: AbortController): void {
   if (!signal) return;
@@ -268,6 +279,11 @@ async function callDirectProvider(input: CallDirectInput): Promise<LLMResponse> 
       });
     } catch (err) {
       if (err instanceof Error && err.name === "AbortError") {
+        // Whose abort was it? The operator's Stop and this path's timeout share
+        // one controller. Calling a Stop a timeout sent the operator off to
+        // check a base URL that was never wrong, and generate.ts wrote that
+        // sentence onto the chapter as its failure (T-0113).
+        if (input.signal?.aborted) throw stoppedError();
         throw new Error(
           `LLM provider timed out after ${Math.round(timeoutMs / 1000)}s — ` +
             `check the model's base URL / API style (endpoint / registry config).`
@@ -341,8 +357,6 @@ async function callGateway(input: CallGatewayInput): Promise<LLMResponse> {
         signal: controller.signal,
       });
 
-      clearTimeout(timeout);
-
       if (resp.status === 429) {
         if (attempt < maxRetries) {
           await new Promise((r) => setTimeout(r, 30_000 * attempt));
@@ -375,6 +389,10 @@ async function callGateway(input: CallGatewayInput): Promise<LLMResponse> {
       };
     } catch (err) {
       lastError = err instanceof Error ? err : new Error(String(err));
+      // A stopped call is not a slow call. This path's own 5-minute timeout is
+      // worth another attempt; the operator's Stop can only ever fail again,
+      // and retrying it made Stop take nine seconds to mean stopped (T-0113).
+      if (input.signal?.aborted) throw stoppedError();
       if (lastError.name === "AbortError") {
         // Retry on timeout — treat it like any other retryable error
         if (attempt < maxRetries) {
@@ -385,6 +403,10 @@ async function callGateway(input: CallGatewayInput): Promise<LLMResponse> {
       if (attempt < maxRetries) {
         await new Promise((r) => setTimeout(r, 3_000 * attempt));
       }
+    } finally {
+      // Every exit, not just the successful one. A throw used to leave a live
+      // 5-minute timer behind holding a controller nobody would read again.
+      clearTimeout(timeout);
     }
   }
 

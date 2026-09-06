@@ -52,6 +52,21 @@ export interface SpendUsageRow {
 }
 
 /**
+ * How a `runs` row is classified into a spend source.
+ *
+ * Written once and shared by both reads below. The per-story read exists so the
+ * Rec Room can show a story its own bill, and the one way that figure could
+ * come to disagree with the console's Story Weaver row is by classifying or
+ * pricing a row differently. It cannot, because it is this expression fed to
+ * the same fold.
+ */
+const SOURCE_CASE = `CASE
+    WHEN r.spend_source IS NOT NULL AND r.spend_source <> 'agent' THEN r.spend_source
+    WHEN r.composer_node_run_id IS NOT NULL THEN 'composer'
+    ELSE 'agent'
+  END`;
+
+/**
  * Every run in the window that recorded token usage, tagged by source.
  *
  * `sinceExpr` is a SQLite-format instant from `periodStart`. Runs of EVERY
@@ -68,11 +83,7 @@ export function readRunUsageSince(sinceExpr: string): SpendUsageRow[] {
   return getDb()
     .prepare(
       `SELECT
-         CASE
-    WHEN r.spend_source IS NOT NULL AND r.spend_source <> 'agent' THEN r.spend_source
-    WHEN r.composer_node_run_id IS NOT NULL THEN 'composer'
-    ELSE 'agent'
-  END AS source,
+         ${SOURCE_CASE} AS source,
          m.model_id AS model,
          r.usage_json AS usage
        FROM runs r
@@ -81,6 +92,34 @@ export function readRunUsageSince(sinceExpr: string): SpendUsageRow[] {
          AND datetime(r.submitted_at) >= ?`,
     )
     .all(sinceExpr) as SpendUsageRow[];
+}
+
+/**
+ * Every recorded run linked to ONE story, in the same shape as the window read.
+ *
+ * No date bound: a story is not a calendar period, and "what has this story
+ * cost" means since it was created.
+ *
+ * The model column is NULL here for the same reason it is null there. A story
+ * run has no mission to join, so the console prices it at model-cost's
+ * conservative default; resolving the story's configured model at this one site
+ * would give the reader a different number from the console for the same money,
+ * which is the drift T-0108 (D104) spent its scope removing.
+ *
+ * Throws on failure, like the read above, so the caller keeps its own fallback.
+ */
+export function readRunUsageForStory(storyId: string): SpendUsageRow[] {
+  return getDb()
+    .prepare(
+      `SELECT
+         ${SOURCE_CASE} AS source,
+         NULL AS model,
+         r.usage_json AS usage
+       FROM runs r
+       WHERE r.story_id = ?
+         AND r.usage_json IS NOT NULL`,
+    )
+    .all(storyId) as SpendUsageRow[];
 }
 
 /** One Deep Research run's recorded usage. NULL columns mean "never recorded". */

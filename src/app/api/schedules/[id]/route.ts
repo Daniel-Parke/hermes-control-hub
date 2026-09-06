@@ -11,6 +11,7 @@ import { parseAndValidateJsonBody } from "@/lib/parse-json-body";
 import { getSchedule, updateSchedule, deleteSchedule } from "@/lib/schedules-repository";
 import { parseSchedule } from "@/lib/schedule/parse-schedule";
 import { computeNextRun, scheduleCanEverFire } from "@/lib/schedule/next-run";
+import { scheduleIntervalProblem } from "@/lib/schedule/interval-bounds";
 
 interface Ctx {
   params: Promise<{ id: string }>;
@@ -62,6 +63,11 @@ export async function PATCH(request: NextRequest, ctx: Ctx) {
             `exist, or a field outside its range. Check the day-of-month against the month.`,
         );
       }
+      // How often, as well as whether. See the note in
+      // src/app/api/schedules/route.ts: `every 0m` is due again the instant it
+      // fires, so it dispatched a paid agent run on every tick.
+      const tooFrequent = scheduleIntervalProblem(parsed.schedule);
+      if (tooFrequent) return badRequest(tooFrequent);
       const next = computeNextRun(parsed.schedule, new Date());
       nextRunAt = next ? next.toISOString() : null;
     }

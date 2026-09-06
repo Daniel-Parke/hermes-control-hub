@@ -28,8 +28,14 @@ export interface BannerInputs {
   gatewayOnline: boolean | null;
   /** Gateway answered but accepted our bearer key. `null` when unreachable. */
   gatewayAuthConfigured: boolean | null;
-  /** Both the registry and the on-disk config name an agent default model. */
-  agentDefaultModelSet: boolean | null;
+  /**
+   * Whether the agent has a model it can call. Read from the one readiness
+   * answer the server resolves (src/lib/models/model-readiness.ts), never
+   * re-derived here. `null` while unknown, which draws no banner: this used to
+   * be an AND of the models registry and the config file, and it accused a
+   * working install of having no model.
+   */
+  modelReady: boolean | null;
   hasActiveConversation: boolean;
   messageCount: number;
 }
@@ -38,7 +44,7 @@ export function bannerStatesFor(input: BannerInputs): GatewayBannerState[] {
   const {
     gatewayOnline,
     gatewayAuthConfigured,
-    agentDefaultModelSet,
+    modelReady,
     hasActiveConversation,
     messageCount,
   } = input;
@@ -58,7 +64,7 @@ export function bannerStatesFor(input: BannerInputs): GatewayBannerState[] {
   const onEmptyChat = !hasActiveConversation && messageCount === 0;
   if (!onEmptyChat) return states;
 
-  if (gatewayOnline !== false && gatewayAuthConfigured !== false && agentDefaultModelSet === false) {
+  if (gatewayOnline !== false && gatewayAuthConfigured !== false && modelReady === false) {
     states.push("model-missing");
   }
   if (gatewayOnline === null) states.push("checking");

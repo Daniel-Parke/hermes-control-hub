@@ -34,6 +34,14 @@ jest.mock("next/server", () => ({
 }));
 
 jest.mock("@/lib/api-logger", () => ({ logApiError: jest.fn() }));
+// GET /api/models/defaults resolves the product's one "do I have a model?"
+// verdict, which needs the agent's config file. Mocked so the answer comes
+// from the test rather than from whatever config.yaml this machine happens to
+// have.
+const configOnDisk = { value: {} as Record<string, unknown> };
+jest.mock("@/lib/config-cache", () => ({
+  readCachedConfigResult: () => ({ config: configOnDisk.value, error: null }),
+}));
 jest.mock("@/lib/audit-log", () => ({ appendAuditLine: jest.fn() }));
 
 jest.mock("@/lib/api-auth", () => ({
@@ -297,14 +305,48 @@ describe("/api/models/defaults", () => {
     );
   }
 
-  it("GET returns the defaults object + a resolved agent model label", async () => {
+  // `agentModelLabel` used to be the second field here: a resolved name with
+  // no verdict attached, which left chat, the dashboard and the Models page to
+  // each invent their own verdict from it and the config file (and reach three
+  // different ones). It is now `modelReadiness`, resolved once, and the same
+  // resolved name is inside it.
+  it("GET returns the defaults object + the one readiness verdict", async () => {
+    configOnDisk.value = { model: { default: "MiniMax-M3", provider: "minimax" } };
     repo.__getModelDefaults.mockReturnValue({ agent: "m_1", hindsight: null });
     repo.__getDefaultModel.mockReturnValue({ id: "m_1", name: "MiniMax-M3", modelId: "MiniMax-M3" });
     const res = await getDefaults();
     expect(res.status).toBe(200);
-    const body = res.body.data as { defaults: Record<string, unknown>; agentModelLabel: string | null };
+    const body = res.body.data as {
+      defaults: Record<string, unknown>;
+      modelReadiness: { state: string; ready: boolean; modelName: string; label: string };
+    };
     expect(body.defaults.agent).toBe("m_1"); // raw uuid retained for the Models UI
-    expect(body.agentModelLabel).toBe("MiniMax-M3"); // friendly name for the dashboard subtitle
+    expect(body.modelReadiness.ready).toBe(true);
+    expect(body.modelReadiness.modelName).toBe("MiniMax-M3"); // friendly name, not a uuid
+    expect(body.modelReadiness.label).toBe("MiniMax-M3 · minimax");
+  });
+
+  it("GET says the agent has a model when only the config file names one", async () => {
+    // The live install this was found on. An empty registry slot is not an
+    // absent model: the gateway reads the config file, not the registry.
+    configOnDisk.value = { model: { default: "MiniMax-M3", provider: "minimax" } };
+    repo.__getModelDefaults.mockReturnValue({ agent: null });
+    repo.__getDefaultModel.mockReturnValue(null);
+    const body = (await getDefaults()).body.data as { modelReadiness: { ready: boolean; state: string } };
+    expect(body.modelReadiness.ready).toBe(true);
+    expect(body.modelReadiness.state).toBe("ready");
+  });
+
+  it("GET says a slot that never reached the config file is not ready", async () => {
+    configOnDisk.value = {};
+    repo.__getModelDefaults.mockReturnValue({ agent: "m_1" });
+    repo.__getDefaultModel.mockReturnValue({ id: "m_1", name: "MiniMax-M3", modelId: "MiniMax-M3" });
+    const body = (await getDefaults()).body.data as {
+      modelReadiness: { ready: boolean; state: string; detail: string };
+    };
+    expect(body.modelReadiness.ready).toBe(false);
+    expect(body.modelReadiness.state).toBe("not-sent");
+    expect(body.modelReadiness.detail).toMatch(/has not reached the agent yet/);
   });
 
   it("PUT sets a default and audits", async () => {

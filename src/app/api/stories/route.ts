@@ -25,6 +25,7 @@ import {
   handleDelete,
 } from "@/modules/rec-room/handlers/crud";
 import { handleCharacters, handleThemes } from "@/modules/rec-room/handlers/library";
+import { handleStorySpend } from "@/modules/rec-room/handlers/spend";
 
 export async function POST(request: NextRequest) {
   try {
@@ -54,6 +55,9 @@ export async function POST(request: NextRequest) {
       case "characters":        return await handleCharacters(body);
       case "themes":            return await handleThemes(body);
       case "sync-titles":       return await handleSyncTitles(body);
+      // What this story has cost so far, so the reader can say it without
+      // sending the operator to Insights to find out.
+      case "spend":             return await handleStorySpend(body);
       case "delete":            return await handleDelete(body);
       default:
         return NextResponse.json({ error: "Unknown action: " + action }, { status: 400 });

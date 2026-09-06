@@ -3,7 +3,7 @@
 // ═══════════════════════════════════════════════════════════════
 // Consolidates three separate useEffect patterns from the chat page:
 //   1. Gateway online check (polls every 30s)
-//   2. Agent default model set check
+//   2. Whether the agent has a model at all
 //   3. Registry + gateway model list
 // ═══════════════════════════════════════════════════════════════
 
@@ -12,13 +12,13 @@
 import { useState, useEffect, useCallback } from "react";
 import { safeApiCallData } from "@/lib/api-fetch";
 import { useInterval } from "@/hooks/useInterval";
+import type { ModelReadiness } from "@/lib/models/model-readiness";
 import { CHAT_DEFAULT_MODEL } from "@/types/chat";
 
 const GATEWAY_HEALTH_URL = "/api/gateway/health";
 const GATEWAY_MODELS_URL = "/api/gateway/models";
 const MODELS_REGISTRY_URL = "/api/models";
 const MODELS_DEFAULTS_URL = "/api/models/defaults";
-const CONFIG_URL = "/api/config";
 
 export interface GatewayHealth {
   /** Whether the Hermes Gateway is reachable */
@@ -35,8 +35,13 @@ export interface GatewayHealth {
    * port (T-0080).
    */
   baseUrl: string | null;
-  /** Whether both registry and disk have an agent default model set */
-  agentDefaultModelSet: boolean | null;
+  /**
+   * The product's one answer to "do I have a model?", as resolved by
+   * GET /api/models/defaults. `null` during initial load and when the read
+   * fails: not knowing is not the same as knowing there is none, and a banner
+   * raised on a failed read would accuse a working install.
+   */
+  modelReadiness: ModelReadiness | null;
   /** Model IDs from the registry catalog */
   registryModelIds: string[];
   /** Human-readable name map for registry models */
@@ -54,18 +59,13 @@ interface RegistryModelRecord {
   name: string;
 }
 
-interface ConfigModelField {
-  model?: { default?: string } | string;
-}
-
 /**
  * Fetch gateway health, model lists, and agent default status.
  *
  * Returns `online: null` during initial load, `false` if unreachable,
  * `true` if the gateway health endpoint responds 2xx.
  *
- * Returns `agentDefaultModelSet: null` during initial load, `false` if
- * either registry or disk config lacks an agent default, `true` if both are set.
+ * Returns `modelReadiness: null` until the models endpoint answers.
  */
 export function useGatewayHealth(): GatewayHealth & {
   refetchHealth: () => void;
@@ -74,7 +74,7 @@ export function useGatewayHealth(): GatewayHealth & {
   const [online, setOnline] = useState<boolean | null>(null);
   const [authConfigured, setAuthConfigured] = useState<boolean | null>(null);
   const [baseUrl, setBaseUrl] = useState<string | null>(null);
-  const [agentDefaultModelSet, setAgentDefaultModelSet] = useState<boolean | null>(null);
+  const [modelReadiness, setModelReadiness] = useState<ModelReadiness | null>(null);
   const [registryModelIds, setRegistryModelIds] = useState<string[]>([]);
   const [modelLabels, setModelLabels] = useState<Record<string, string>>({});
   const [gatewayModelIds, setGatewayModelIds] = useState<string[]>([CHAT_DEFAULT_MODEL]);
@@ -102,36 +102,23 @@ export function useGatewayHealth(): GatewayHealth & {
     if (typeof data?.baseUrl === "string" && data.baseUrl) setBaseUrl(data.baseUrl);
   }, []);
 
-  // ── Check agent default model setup ─────────────────────────
-  // Both endpoints return `{ data: <inner> }`. `safeApiCallData` unwraps
-  // the inner payload directly so the `defaults?.agent` and
-  // `config?.model` reads work the way the type suggests. The pre-
-  // refactor code read the envelope `result.data` and got `{ data: ... }`
-  // for both — `result.data.defaults` was `undefined` and the hook
-  // always reported `agentDefaultModelSet: false`. This is a "feature
-  // is not working" fix that the recurring mission explicitly permits
-  // — the migration to `safeApiCallData` makes the chat page correctly
-  // detect a configured agent default.
+  // ── Does the agent have a model? ────────────────────────────
+  //
+  // ONE read, and no arithmetic on the answer. This used to fetch the models
+  // registry AND the agent's config file and report `registryOk && diskOk`,
+  // and the registry half is irrelevant to chat: an agent turn sends no model
+  // (the gateway reads its own config file) and a fast turn sends the chat
+  // dropdown's id. An install whose config file named a model but whose
+  // registry slot was empty was therefore told, in orange, that it could not
+  // chat, on a chat that worked. The rule now lives in one place on the server
+  // (src/lib/models/model-readiness.ts, applied by GET /api/models/defaults)
+  // so this screen and the two others read the same answer.
   const checkAgentModel = useCallback(async () => {
-    const [defaults, config] = await Promise.all([
-      safeApiCallData<{ defaults?: { agent?: string } }>(MODELS_DEFAULTS_URL, {
-        signal: AbortSignal.timeout(5000),
-      }),
-      safeApiCallData<ConfigModelField>(CONFIG_URL, {
-        signal: AbortSignal.timeout(5000),
-      }),
-    ]);
-    const registryOk = Boolean(defaults?.defaults?.agent?.trim());
-    let diskOk = false;
-    if (config) {
-      const modelCfg = config.model;
-      if (typeof modelCfg === "string") {
-        diskOk = modelCfg.trim().length > 0;
-      } else if (modelCfg && typeof modelCfg === "object") {
-        diskOk = Boolean(String((modelCfg as Record<string, unknown>).default ?? "").trim());
-      }
-    }
-    setAgentDefaultModelSet(registryOk && diskOk);
+    const defaults = await safeApiCallData<{ modelReadiness?: ModelReadiness }>(
+      MODELS_DEFAULTS_URL,
+      { signal: AbortSignal.timeout(5000) },
+    );
+    setModelReadiness(defaults?.modelReadiness ?? null);
   }, []);
 
   // ── Fetch model lists ───────────────────────────────────────
@@ -198,7 +185,7 @@ export function useGatewayHealth(): GatewayHealth & {
     online,
     authConfigured,
     baseUrl,
-    agentDefaultModelSet,
+    modelReadiness,
     registryModelIds,
     modelLabels,
     gatewayModelIds,

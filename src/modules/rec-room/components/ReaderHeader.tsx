@@ -9,7 +9,9 @@
 import { BookMarked, BookOpen, ChevronLeft, PlayCircle, RefreshCw } from "lucide-react";
 import ReaderSettings, { type ReadingSettings } from "@/modules/rec-room/components/ReaderSettings";
 import { chapterDotColor } from "@/modules/rec-room/components/chapter-dot";
+import StorySpendNote from "@/modules/rec-room/components/StorySpendNote";
 import type { Chapter, ReaderTheme } from "@/modules/rec-room/components/story-reader-types";
+import type { SpendWindowSource } from "@/lib/spend/spend-window";
 
 export interface ReaderHeaderProps {
   title: string;
@@ -35,6 +37,8 @@ export interface ReaderHeaderProps {
   onOpenBible: () => void;
   onToggleSidebar: () => void;
   onSelectChapter: (num: number) => void;
+  /** What this story has cost so far, or null while it is unknown. */
+  spend: SpendWindowSource | null;
 }
 
 export default function ReaderHeader({
@@ -60,6 +64,7 @@ export default function ReaderHeader({
   onOpenBible,
   onToggleSidebar,
   onSelectChapter,
+  spend,
 }: ReaderHeaderProps) {
   return (
     <div className="sticky top-0 lg:top-0 z-30 border-b border-white/10 bg-dark-950/95 backdrop-blur-xl flex-shrink-0">
@@ -152,8 +157,12 @@ export default function ReaderHeader({
         </div>
       </div>
 
-      {/* Chapter indicator dots */}
-      <div className="flex items-center justify-center gap-1.5 pb-2 px-4">
+      {/* Chapter indicator dots, and what the story has cost so far.
+          The cost sits on this row rather than a row of its own so the sticky
+          header keeps its height, and beside the write buttons rather than in
+          Insights so it is where the money is being spent. */}
+      <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 pb-2 px-4">
+        <div className="flex items-center gap-1.5">
         {chapters.map((ch, i) => (
           <button key={i} onClick={() => ch.status === "complete" && onSelectChapter(i + 1)}
             className={`w-2 h-2 rounded-full transition-all ${
@@ -162,6 +171,8 @@ export default function ReaderHeader({
             style={{ background: chapterDotColor(ch.status, i + 1 === currentChapter, theme.accent) }}
             title={`Chapter ${i + 1}: ${ch.title} (${ch.status})`} />
         ))}
+        </div>
+        <StorySpendNote spend={spend} />
       </div>
     </div>
   );

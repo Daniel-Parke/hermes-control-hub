@@ -79,7 +79,7 @@ jest.mock("@/hooks/useGatewayHealth", () => ({
     // network call. That's the easiest toast path to trigger in a unit test.
     online: false,
     authConfigured: true,
-    agentDefaultModelSet: false,
+    modelReadiness: null,
     registryModelIds: [],
     modelLabels: {},
     gatewayModelIds: [],

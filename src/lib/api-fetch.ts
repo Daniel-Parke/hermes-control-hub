@@ -151,6 +151,36 @@ export interface ApiFetchOptions extends RequestInit {
   timeoutMs?: number;
 }
 
+/**
+ * The message a failing route deliberately published, or null when it published
+ * none.
+ *
+ * The top-level `error` field is the contract: every 4xx/5xx factory in
+ * `@/lib/api-response` sets it, and it is read first and wins.
+ *
+ * Some routes answer their catch branch in the SUCCESS envelope instead, so the
+ * sentence sits one level down at `data.error`. `/api/memory/hindsight` is the
+ * one that made this worth fixing: storing a memory with no provider configured
+ * returned a 500 that explained itself perfectly, and the operator got the
+ * string "HTTP 500" because nothing here looked at `data`. That is a class
+ * rather than a single toast, because this helper is the only fetch in the
+ * client, and every route with a nested envelope lost its message the same way.
+ *
+ * ONLY the `error` field is read, at either depth, and never the rest of the
+ * body. A failure body can also carry a stack, a filesystem path or a token,
+ * and none of that belongs in a toast. An empty-string `error` is returned as
+ * it stands so `messageFromError`'s `|| fallback` still applies downstream.
+ */
+function publishedErrorMessage(body: unknown): string | null {
+  if (!body || typeof body !== "object") return null;
+  const top = (body as { error?: unknown }).error;
+  if (typeof top === "string") return top;
+  const data = (body as { data?: unknown }).data;
+  if (!data || typeof data !== "object" || Array.isArray(data)) return null;
+  const nested = (data as { error?: unknown }).error;
+  return typeof nested === "string" ? nested : null;
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- generic JSON fetch returns arbitrary shapes
 export async function apiFetch<T = any>(
   path: string,
@@ -190,7 +220,7 @@ export async function apiFetch<T = any>(
   });
 
   if (!res.ok) {
-    const base = typeof json.error === "string" ? json.error : `HTTP ${res.status}`;
+    const base = publishedErrorMessage(json) ?? `HTTP ${res.status}`;
     const push =
       typeof json.cronPushError === "string" && json.cronPushError.trim()
         ? json.cronPushError

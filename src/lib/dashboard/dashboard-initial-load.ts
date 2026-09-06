@@ -13,7 +13,7 @@
 //   /api/monitor          → MonitorData | null (cache: no-store)
 //   /api/agents           → { processes: HermesProcess[] } | null
 //   /api/missions         → { missions: MissionBrief[] } | null
-//   /api/models/defaults  → { defaults: { agent?: string } | null } | null
+//   /api/models/defaults  → { defaults: … , modelReadiness } | null
 //
 // The original inline form was a 50-line `useEffect` + `Promise.all`
 // + `setData({...})` + `setRegistryAgentModelLabel` + `setReady(true)`
@@ -30,6 +30,7 @@
 // passes in).
 
 import { safeApiCallData } from "@/lib/api-fetch";
+import type { ModelReadiness } from "@/lib/models/model-readiness";
 
 import type { SystemStatus, MonitorData, HermesProcess, MissionBrief } from "@/types/console";
 import type { MissionCategory } from "@/lib/missions/mission-category-repository";
@@ -90,17 +91,18 @@ export interface ModelsDefaults {
  * (the `templates ?? []` defensive copy matches the pre-extraction
  * inline form byte-for-byte).
  *
- * The page's `setRegistryAgentModelLabel(defaults?.defaults?.agent ?? null)`
- * reads the `modelsDefaults` field, which is NOT merged into the
- * `setData` slice (it's stored in a separate `useState` for the
- * header subtitle).
+ * The `modelsDefaults` field is NOT merged into the `setData` slice; the
+ * dashboard reads it separately for the header subtitle.
  */
 export interface InitialLoadResult {
   /** The merged slice for `setData({...result.dashboardData})`. */
   dashboardData: InitialDashboardData;
-  /** The Models-registry defaults (read by the header subtitle). `agentModelLabel`
-   *  is the resolved agent-slot model NAME (not a uuid). */
-  modelsDefaults: { defaults: ModelsDefaults | null; agentModelLabel?: string | null } | null;
+  /**
+   * The Models endpoint's answer. `modelReadiness` is the product's ONE
+   * verdict on whether the agent has a model, resolved on the server so this
+   * page, chat and the Models page cannot each reach a different one.
+   */
+  modelsDefaults: { defaults: ModelsDefaults | null; modelReadiness?: ModelReadiness | null } | null;
 }
 
 /**
@@ -135,7 +137,7 @@ export async function loadInitialDashboardData(
     safeApiCallData<MonitorData>("/api/monitor", { cache: cache ?? "no-store", signal }),
     safeApiCallData<{ processes: HermesProcess[] }>("/api/agents", { signal }),
     safeApiCallData<{ missions: MissionBrief[] }>("/api/missions", { signal }),
-    safeApiCallData<{ defaults: ModelsDefaults | null; agentModelLabel?: string | null }>("/api/models/defaults", { signal }),
+    safeApiCallData<{ defaults: ModelsDefaults | null; modelReadiness?: ModelReadiness | null }>("/api/models/defaults", { signal }),
   ]);
 
   return {

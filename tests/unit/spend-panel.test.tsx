@@ -22,26 +22,34 @@ import SpendPanel from "@/components/spend/SpendPanel";
 import { UNSET_SPEND_POLICY, evaluateSpend, type SpendPolicy } from "@/lib/spend/spend-law";
 import type { SpendSummary } from "@/lib/spend/spend-summary";
 
+// `estimatedUsd` and `basis` arrived with the rate-honesty work: the panel now
+// marks the figures that were priced at a fallback rather than at a rate the
+// product holds. This fixture prices everything from a rate on file, so every
+// assertion below still describes a panel with nothing extra on it; the
+// estimated case has oracles of its own in
+// spend-panel-says-what-is-estimated.test.tsx.
 function summary(policy: SpendPolicy, spent: number, unmeasured: string[] = []): SpendSummary {
   const sources = (n: number) => [
-    { source: "agent" as const, label: "Agent runs", runs: 2, inputTokens: 10, outputTokens: 5, costUsd: n, recorded: true },
-    { source: "composer" as const, label: "Composer stages", runs: 1, inputTokens: 4, outputTokens: 2, costUsd: 0, recorded: true },
-    { source: "research" as const, label: "Deep Research", runs: 3, inputTokens: 0, outputTokens: 0, costUsd: null, recorded: false },
+    { source: "agent" as const, label: "Agent runs", runs: 2, inputTokens: 10, outputTokens: 5, costUsd: n, recorded: true, estimatedUsd: 0 },
+    { source: "composer" as const, label: "Composer stages", runs: 1, inputTokens: 4, outputTokens: 2, costUsd: 0, recorded: true, estimatedUsd: 0 },
+    { source: "research" as const, label: "Deep Research", runs: 3, inputTokens: 0, outputTokens: 0, costUsd: null, recorded: false, estimatedUsd: 0 },
   ];
+  const basis = { knownUsd: spent, estimatedUsd: 0, unknownModels: [], runsWithoutModel: 0 };
   return {
     periods: [
       // unrecordedResearchRuns: 3 to match the `research` source row above, whose
       // runs are unpriced in this fixture. The two must agree, because the panel
       // renders the count from one and the money from the other (T-0030).
-      { period: "day", label: "Today", since: "2026-08-23 00:00:00", totalUsd: 1, sources: sources(1), unrecordedResearchRuns: 3 },
-      { period: "week", label: "This week", since: "2026-08-17 00:00:00", totalUsd: 5, sources: sources(5), unrecordedResearchRuns: 3 },
-      { period: "month", label: "This month", since: "2026-08-01 00:00:00", totalUsd: spent, sources: sources(spent), unrecordedResearchRuns: 3 },
+      { period: "day", label: "Today", since: "2026-08-23 00:00:00", totalUsd: 1, sources: sources(1), unrecordedResearchRuns: 3, basis, estimateNote: null },
+      { period: "week", label: "This week", since: "2026-08-17 00:00:00", totalUsd: 5, sources: sources(5), unrecordedResearchRuns: 3, basis, estimateNote: null },
+      { period: "month", label: "This month", since: "2026-08-01 00:00:00", totalUsd: spent, sources: sources(spent), unrecordedResearchRuns: 3, basis, estimateNote: null },
     ],
     policy,
     budgetPeriod: policy.period,
     budgetSpentUsd: spent,
     verdict: evaluateSpend(policy, spent),
     unmeasured,
+    estimateNote: null,
     generatedAt: "2026-08-23T14:00:00.000Z",
   };
 }

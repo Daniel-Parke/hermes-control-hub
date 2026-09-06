@@ -3,10 +3,10 @@
 // ═══════════════════════════════════════════════════════════════
 //
 // Four states are surfaced as full-width banners: gateway offline
-// (red), gateway up but unauthenticated (orange), agent default model
-// missing (orange), and gateway check still in-flight (muted spinner).
+// (red), gateway up but unauthenticated (orange), no model ready
+// (orange), and gateway check still in-flight (muted spinner).
 // All share the same outer card layout and only differ in colour, icon,
-// title, and body content.
+// title, body content, and whether they carry an action.
 //
 // WHICH of them show WHERE is not decided here -- see
 // `gateway-banner-states.ts`, which the page reads. This file draws what
@@ -14,6 +14,7 @@
 
 "use client";
 
+import Link from "next/link";
 import { AlertTriangle, Loader2 } from "lucide-react";
 
 import type { GatewayBannerState } from "./gateway-banner-states";
@@ -31,7 +32,19 @@ interface GatewayBannerProps {
    * and the copy then omits the address rather than inventing one.
    */
   gatewayUrl?: string | null;
+  /**
+   * For `model-missing`: the sentence the server resolved about THIS install
+   * (src/lib/models/model-readiness.ts). A model chosen but not sent to the
+   * agent and no model at all are different problems, and the banner used to
+   * describe neither: it listed three ways to set a model, one of which named
+   * a section this product does not have. `null` falls back to the general
+   * sentence.
+   */
+  modelDetail?: string | null;
 }
+
+/** Where the one remedy goes. The Models screen in the rail, not a guess. */
+const MODELS_HREF = "/agent/models";
 
 /**
  * Inline emphasis tokens for body text. The body string is split on
@@ -55,7 +68,11 @@ function renderBody(body: string) {
 function copyFor(
   status: GatewayStatus,
   gatewayUrl: string | null,
+  modelDetail: string | null,
 ): { tone: "red" | "orange" | "muted"; title: string; body: string } {
+  if (status === "model-missing" && modelDetail) {
+    return { ...COPY["model-missing"], body: modelDetail };
+  }
   if (status !== "offline") return COPY[status];
   // Naming the address is the whole point, so it goes in as a {code} token
   // rather than prose -- an operator copying it into a curl or a browser bar
@@ -95,15 +112,12 @@ const COPY: Record<
       "Set {code}API_SERVER_KEY{/code} in {code}~/.hermes/.env{/code}, mirror it " +
       "into {code}~/patterstage/.env.local{/code}, and restart PatterStage.",
   },
+  // Novice register (chat is a novice screen): no file paths, no commands, no
+  // sections that have to be found. What happened, then one button.
   "model-missing": {
     tone: "orange",
-    title: "Model not ready for chat",
-    body:
-      "Set an agent default under Config → Models, push to Hermes (or " +
-      "Operations → Agents → Push Bob), or run {code}hermes model{/code}. " +
-      // design-lint-disable-next-line hermes-outside-adapter -- this sentence exists to correct a specific operator misconception: that the chat dropdown label selects the inference model. Saying which file actually decides is what corrects it.
-      "The gateway reads {code}~/.hermes/config.yaml{/code} model.default — " +
-      "the chat dropdown label alone does not change inference.",
+    title: "No model is ready yet",
+    body: "The agent has no model to answer with, so a message will not get a reply.",
   },
   checking: {
     tone: "muted",
@@ -112,8 +126,12 @@ const COPY: Record<
   },
 };
 
-export default function GatewayBanner({ status, gatewayUrl = null }: GatewayBannerProps) {
-  const copy = copyFor(status, gatewayUrl);
+export default function GatewayBanner({
+  status,
+  gatewayUrl = null,
+  modelDetail = null,
+}: GatewayBannerProps) {
+  const copy = copyFor(status, gatewayUrl, modelDetail);
 
   if (copy.tone === "muted") {
     return (
@@ -138,6 +156,17 @@ export default function GatewayBanner({ status, gatewayUrl = null }: GatewayBann
         <span className="text-sm font-semibold">{copy.title}</span>
       </div>
       <p className="text-xs text-ps-text-secondary">{renderBody(copy.body)}</p>
+      {/* One action, and one that exists. The remedy for every model state is
+          the same screen, so the banner takes the operator there rather than
+          describing three routes and leaving them to pick. */}
+      {status === "model-missing" && (
+        <Link
+          href={MODELS_HREF}
+          className="mt-3 inline-flex items-center rounded-md border border-neon-orange/40 px-3 py-1.5 text-xs font-medium text-neon-orange hover:bg-neon-orange/10"
+        >
+          Open models
+        </Link>
+      )}
     </div>
   );
 }

@@ -23,6 +23,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { safeApiCallData, apiFetch, setErrorFromCaught } from "@/lib/api-fetch";
 import type { DefaultsModelOption } from "@/components/models/DefaultsGrid";
 import { type TaskType } from "@/lib/models/task-types";
+import type { ModelReadiness } from "@/lib/models/model-readiness";
 import type { FallbackChainEntry, FallbackConfig } from "@/types/console";
 import { emptyModelDefaults } from "@/lib/utils";
 
@@ -34,6 +35,9 @@ export function useModelsRegistry() {
   const [defaults, setDefaults] = useState<Record<TaskType, string | null>>(
     emptyModelDefaults()
   );
+  // The product's one answer to "do I have a model?", read from the same
+  // response the slot uuids come in. Null until the first read lands.
+  const [modelReadiness, setModelReadiness] = useState<ModelReadiness | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [drift, setDrift] = useState<SyncDrift | null>(null);
@@ -72,6 +76,7 @@ export function useModelsRegistry() {
       // API returns a complete defaults object (all 12 slots populated or null).
       // Fall back to empty defaults if the response is missing.
       setDefaults(d.data?.defaults ?? emptyModelDefaults());
+      setModelReadiness(d.data?.modelReadiness ?? null);
 
       if (drift) {
         setDrift(drift);
@@ -124,6 +129,7 @@ export function useModelsRegistry() {
     credentialOptions,
     defaults,
     setDefaults,
+    modelReadiness,
     loading,
     error,
     drift,

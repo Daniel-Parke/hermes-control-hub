@@ -18,6 +18,7 @@ import {
 import { createRun } from "@/lib/runs-repository";
 import { hasDispatchedMission } from "@/lib/missions/mission-repository";
 import { computeNextRun } from "@/lib/schedule/next-run";
+import { scheduleIntervalStatus } from "@/lib/schedule/interval-bounds";
 import { dispatchMissionRun } from "@/lib/orchestration/dispatch";
 import { runScriptFile } from "@/lib/scripts-manager";
 import { logApiError } from "@/lib/api-logger";
@@ -106,6 +107,29 @@ async function fireScriptSchedule(sched: ScheduleRecord, nowDate: Date): Promise
 }
 
 async function fireSchedule(sched: ScheduleRecord, nowDate: Date): Promise<boolean> {
+  // BEFORE everything, including the kind branch, because this is the row that
+  // costs money on a loop. The write paths now refuse an interval outside the
+  // bounds, but rows written before they did, and rows written straight into
+  // the database, still land here. `every 0m` is due again the moment it fires,
+  // so it dispatched a paid agent run on every tick forever; an interval past
+  // the far end of the calendar dispatched first and then threw on the advance,
+  // which left next_run_at in the past and did the same thing.
+  //
+  // Disabled rather than skipped, and it says why: a row that is silently
+  // stepped over is the enabled-and-dead shape this scheduler has been bitten
+  // by before. The operator sees the reason on the schedule and can fix it.
+  const intervalStatus = scheduleIntervalStatus(sched.schedule);
+  if (intervalStatus) {
+    advanceSchedule(sched.id, {
+      nextRunAt: null,
+      lastRunAt: nowDate.toISOString(),
+      lastRunId: null,
+      lastStatus: intervalStatus,
+      enabled: false,
+    });
+    return false;
+  }
+
   // BEFORE the orphan check, and that order is the whole point. A script row
   // has no mission, so the branch below would disable every row migration 041
   // creates on the first tick that saw it, and the feature would be dead on

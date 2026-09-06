@@ -20,17 +20,19 @@
  * `src/app/api/memory/hindsight/route.ts`. Tests cover (1) the log
  * line is emitted with the canonical `[API <route>] Error
  * <context>: <message>` shape, (2) the returned NextResponse has
- * the 500 status + `{ data: { available: false, error: msg } }` body,
+ * the 500 status + a body carrying the message at BOTH the top level
+ * and inside the `data` envelope,
  * and (3) the inline-form 2-line block produces a byte-equivalent
  * log+response pair (via the byte-equivalence matrix).
  *
  * Sister test: `tests/unit/server-error-from-catch.test.ts` covers
  * the same shape for the `serverErrorFromCatch` shim. The
  * `hindsightErrorFromCatch` shim is the hindsight-specific sister —
- * it composes the same `logApiError` primitive but targets the
- * `{ data: { available: false, error: ... } }` envelope used by the
- * Hindsight client, not the plain `{ error: ... }` shape used by
- * `serverError`. Two helper families, one logApiError primitive.
+ * it composes the same `logApiError` primitive but ALSO carries the
+ * `{ data: { available: false, error: ... } }` envelope the Hindsight
+ * client reads on the 200 path, alongside the plain top-level
+ * `{ error: ... }` that `serverError` sets. Two helper families, one
+ * logApiError primitive.
  */
 
 import { logApiError } from "@/lib/api-logger";
@@ -58,9 +60,13 @@ describe("hindsightErrorFromCatch", () => {
     );
     expect(res.status).toBe(500);
     const body = await res.json();
-    // The Hindsight client expects `{ data: { available: false, error: msg } }`
-    // — NOT the plain `{ error: ... }` shape used by serverError.
+    // AMENDED. This used to assert the `data` envelope ALONE, which is the
+    // defect: apiFetch reads the top-level `error` on a non-2xx, so a body
+    // without one reached the operator as the bare string "HTTP 500" while the
+    // sentence sat unread in `data`. The envelope stays (the memory browser
+    // reads `data.error` on the 200 path); the top-level field is the addition.
     expect(body).toEqual({
+      error: "DB connection lost",
       data: { available: false, error: "DB connection lost" },
     });
   });
@@ -110,7 +116,11 @@ describe("hindsightErrorFromCatch", () => {
     // hindsightErrorResponse uses `messageFromError(error, "Unknown error")`
     // — so the empty-Error trap is handled by the response body, NOT
     // by logApiError (which keeps the empty-string form for log fidelity).
-    expect(body).toEqual({ data: { available: false, error: "Unknown error" } });
+    // AMENDED alongside the shape above: the fallback goes in both places.
+    expect(body).toEqual({
+      error: "Unknown error",
+      data: { available: false, error: "Unknown error" },
+    });
   });
 
   it("preserves the user-facing error message verbatim for non-Error throws", async () => {
@@ -120,7 +130,11 @@ describe("hindsightErrorFromCatch", () => {
       "raw string",
     );
     const body = await res.json();
-    expect(body).toEqual({ data: { available: false, error: "raw string" } });
+    // AMENDED alongside the shape above: the message goes in both places.
+    expect(body).toEqual({
+      error: "raw string",
+      data: { available: false, error: "raw string" },
+    });
   });
 });
 

@@ -7,8 +7,9 @@
 // Powers the AgentPerformanceStrip on the Agents page via /api/stats.
 // ═══════════════════════════════════════════════════════════════
 
+import { createAgentSkillsCounter } from "@/lib/agents/agent-skills-count";
+
 import {
-  countSkills,
   readAgentProfileStatsRows,
   readAgentRootStatsRow,
   readMissionStatusCountsByProfile,
@@ -36,7 +37,18 @@ export interface AgentPerformance {
   totalTokens: number;
   /** Mean wall-clock seconds for completed runs (0 if none). */
   avgDurationSec: number;
-  /** Active (not-disabled) skills available to the profile. */
+  /**
+   * Active (not-disabled) skills available to the profile: the SAME number the
+   * profile card renders, from the same function (T-0113).
+   *
+   * This used to be `COUNT(*) FROM skills` minus the length of the profile's
+   * denylist, computed here. countProfileSkills stopped doing that arithmetic
+   * because it counts the catalogue only, while the Skills page lists the
+   * catalogue union the agent's skills tree, and the denylist it subtracted is
+   * full of keys that base never held. The strip kept the old sum for twelve
+   * lines of the Agents page, so "4 skills" rendered above "78 skills" for one
+   * agent on one screen.
+   */
   skills: number;
   /** Platform toolsets configured for the profile. */
   toolsets: number;
@@ -45,14 +57,6 @@ export interface AgentPerformance {
 function num(v: unknown): number {
   const n = Number(v);
   return Number.isFinite(n) ? n : 0;
-}
-/** Run a repository count read, degrading to 0 exactly as the old inline `scalar` did. */
-function safeCount(read: () => number | undefined): number {
-  try {
-    return num(read());
-  } catch {
-    return 0;
-  }
 }
 function parseTotalTokens(raw: string | null): number {
   if (!raw) return 0;
@@ -136,10 +140,14 @@ function missionsByProfile(): Map<string, { completed: number; failed: number }>
 export function getAgentPerformance(): AgentPerformance[] {
   const runsAgg = runsByProfile();
   const missionsAgg = missionsByProfile();
-  const totalSkills = safeCount(countSkills);
+  // Built once for the whole population: the tree every profile counts against
+  // is the same, only the denylist differs. Asks the agent module through the
+  // composition root, which is where the profile cards' number comes from too,
+  // and degrades to zero the way every other read here does.
+  const skillsFor = createAgentSkillsCounter();
   const agents: AgentPerformance[] = [];
 
-  const push = (slug: string, name: string, personality: string | undefined, disabledSkills: string | null, toolsets: string | null) => {
+  const push = (slug: string, name: string, personality: string | undefined, toolsets: string | null) => {
     const r = runsAgg.get(slug) ?? { runs: 0, completed: 0, tokens: 0, durSum: 0, durCount: 0 };
     const m = missionsAgg.get(slug) ?? { completed: 0, failed: 0 };
     agents.push({
@@ -152,7 +160,7 @@ export function getAgentPerformance(): AgentPerformance[] {
       missionsFailed: m.failed,
       totalTokens: r.tokens,
       avgDurationSec: r.durCount > 0 ? Math.round(r.durSum / r.durCount) : 0,
-      skills: Math.max(0, totalSkills - jsonLen(disabledSkills)),
+      skills: skillsFor(slug),
       toolsets: jsonLen(toolsets),
     });
   };
@@ -160,11 +168,11 @@ export function getAgentPerformance(): AgentPerformance[] {
   try {
     const root = readAgentRootStatsRow();
     if (root) {
-      push("default", root.display_name || "Bob", root.personality, root.disabled_skills, root.platform_toolsets);
+      push("default", root.display_name || "Bob", root.personality, root.platform_toolsets);
     }
     const profiles = readAgentProfileStatsRows();
     for (const p of profiles) {
-      push(p.slug, p.display_name || p.slug, p.personality, p.disabled_skills, p.platform_toolsets);
+      push(p.slug, p.display_name || p.slug, p.personality, p.platform_toolsets);
     }
   } catch {
     /* profiles table missing — return whatever we have */

@@ -139,6 +139,19 @@ describe("ModelsPage UI improvements", () => {
               acc[t] = t === "agent" ? minimax.id : null;
               return acc;
             }, {}),
+            // Amended in the real-agent round. The slot alone used to draw
+            // Active, so a model chosen here and never sent to the agent was
+            // stamped Active on a machine the agent had never run it on. The
+            // endpoint answers the one readiness verdict now, and Active
+            // follows that. This fixture is the install where the model really
+            // did reach the agent, which is the case the test is about.
+            modelReadiness: {
+              state: "ready",
+              ready: true,
+              label: "MiniMax/MiniMax-M2.1 · minimax",
+              modelName: "MiniMax/MiniMax-M2.1",
+              detail: "",
+            },
           },
         },
       },

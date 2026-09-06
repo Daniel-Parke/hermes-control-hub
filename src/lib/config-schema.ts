@@ -112,7 +112,7 @@ export const CONFIG_SECTIONS: Record<string, SectionDef> = {
     color: "pink",
     fields: [
       { key: "memory_enabled", label: "Memory Enabled", type: "boolean", description: "Enable memory system" },
-      { key: "provider", label: "Provider", type: "select", options: ["holographic", "hindsight"], description: "Which memory backend the agent uses. PatterStage owns this: set it on the Memory page and this file is written to match.", managedBy: { label: "Memory", href: "/agent/memory" } },
+      { key: "provider", label: "Provider", type: "select", options: ["holographic", "hindsight"], description: "Which memory backend the agent uses. Choose it on the Memory page and this file is written to match.", managedBy: { label: "Memory", href: "/agent/memory" } },
       { key: "memory_char_limit", label: "Memory Char Limit", type: "number", min: 500, max: 10000, description: "Max characters per memory entry" },
       { key: "user_char_limit", label: "User Char Limit", type: "number", min: 500, max: 10000, description: "Max characters for user profile" },
       { key: "nudge_interval", label: "Nudge Interval", type: "number", min: 1, max: 100, description: "Turns between memory flush nudges" },

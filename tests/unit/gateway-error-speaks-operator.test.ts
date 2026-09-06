@@ -382,7 +382,11 @@ describe("the banner shows up where it is needed (P0-5)", () => {
   const live = {
     gatewayOnline: false as boolean | null,
     gatewayAuthConfigured: null as boolean | null,
-    agentDefaultModelSet: true as boolean | null,
+    // Renamed from `agentDefaultModelSet` (real-agent round, "three answers to
+    // do I have a model?"). That field was the AND of the models registry and
+    // the agent's config file and fired on working installs; the input is now
+    // the one readiness verdict the server resolves. Same assertions.
+    modelReady: true as boolean | null,
     hasActiveConversation: true,
     messageCount: 6,
   };
@@ -410,7 +414,7 @@ describe("the banner shows up where it is needed (P0-5)", () => {
       ...live,
       gatewayOnline: true,
       gatewayAuthConfigured: true,
-      agentDefaultModelSet: false,
+      modelReady: false,
     });
     expect(states).not.toContain("model-missing");
 
@@ -426,7 +430,7 @@ describe("the banner shows up where it is needed (P0-5)", () => {
         ...empty,
         gatewayOnline: true,
         gatewayAuthConfigured: true,
-        agentDefaultModelSet: false,
+        modelReady: false,
       }),
     ).toEqual(["model-missing"]);
   });
@@ -436,7 +440,7 @@ describe("the banner shows up where it is needed (P0-5)", () => {
       bannerStatesFor({
         gatewayOnline: true,
         gatewayAuthConfigured: true,
-        agentDefaultModelSet: true,
+        modelReady: true,
         hasActiveConversation: false,
         messageCount: 0,
       }),

@@ -47,6 +47,14 @@ type PanelProps = {
   onDelete: (credential: ApiCredential) => void;
   busyId: string | null;
   onRotate: (credential: ApiCredential, apiKey: string) => void | Promise<void>;
+  // AMENDED, not weakened (T-0113). The panel grew a third door, "Add
+  // credential", because it used to render nothing at all on an install with
+  // no credentials and the quest that sends a newcomer here had no control to
+  // point at. Both props are required of the panel, and the loose cast below
+  // is what let this harness omit them; every rotate assertion in this file is
+  // untouched.
+  onAdd: (credential: { label: string; provider: string; apiKey: string }) => void | Promise<void>;
+  providers: readonly string[];
 };
 const Panel = CredentialsPanel as unknown as ComponentType<PanelProps>;
 
@@ -72,10 +80,19 @@ const CANCEL = "Cancel rotating Anthropic Personal";
 function renderPanel(overrides: Partial<PanelProps> = {}) {
   const onRotate = jest.fn();
   const onDelete = jest.fn();
+  const onAdd = jest.fn();
   const utils = render(
-    <Panel credentials={[CRED]} onDelete={onDelete} busyId={null} onRotate={onRotate} {...overrides} />,
+    <Panel
+      credentials={[CRED]}
+      onDelete={onDelete}
+      busyId={null}
+      onRotate={onRotate}
+      onAdd={onAdd}
+      providers={["anthropic", "openai"]}
+      {...overrides}
+    />,
   );
-  return { ...utils, onRotate, onDelete };
+  return { ...utils, onRotate, onDelete, onAdd };
 }
 
 const inputsHolding = (value: string) =>

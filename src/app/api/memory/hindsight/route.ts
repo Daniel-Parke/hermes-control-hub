@@ -51,6 +51,7 @@ import {
   handleUpdateMentalModel,
 } from "@/lib/memory/hindsight-write-actions";
 import { hindsightErrorFromCatch } from "@/lib/memory/hindsight-route-helpers";
+import { memoryFailureMessage } from "@/lib/memory/memory-error-copy";
 
 // ── Routes ───────────────────────────────────────────────────
 
@@ -101,11 +102,19 @@ export async function GET(request: NextRequest) {
     return ok(result);
   } catch (error) {
     logApiError("GET /api/memory/hindsight", `action=${action}`, error);
+    // Same translation as the POST catch and the health banner: a provider that
+    // is simply not running says so in words, not in undici's.
+    const message = memoryFailureMessage(messageFromError(error, "Hindsight error"));
     return NextResponse.json(
       {
+        // Top-level `error` as well as the envelope one: a non-2xx reaches the
+        // client through apiFetch, which reads the top-level field. Without it
+        // a reader who has no memory provider configured was told "HTTP 503"
+        // and the sentence explaining that sat unread in `data`.
+        error: message,
         data: {
           available: false,
-          error: messageFromError(error, "Hindsight error"),
+          error: message,
           memories: [],
         },
       },

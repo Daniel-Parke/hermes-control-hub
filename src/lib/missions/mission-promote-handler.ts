@@ -12,6 +12,7 @@ import { runMissionQueueTick } from "@/lib/missions/mission-queue-tick";
 import { createSchedule } from "@/lib/schedules-repository";
 import { parseSchedule, scheduleDisplayFromParsed } from "@/lib/schedule/parse-schedule";
 import { computeNextRun, scheduleCanEverFire } from "@/lib/schedule/next-run";
+import { scheduleIntervalProblem } from "@/lib/schedule/interval-bounds";
 import { enrichedMission } from "@/lib/missions/mission-response";
 import { logApiError } from "@/lib/api-logger";
 import { isMissionDraft, isMissionQueuedForRun } from "@/lib/missions/mission-board";
@@ -169,6 +170,13 @@ export async function promoteMission(
           `Schedule "${input.schedule}" can never fire: it names a date that does not ` +
           `exist, or a field outside its range. Check the day-of-month against the month.`,
       };
+    }
+    // The opposite failure to the one above, and the expensive one: `every 0m`
+    // is due again the instant it fires, so it dispatches a paid agent run on
+    // every tick.
+    const tooFrequent = scheduleIntervalProblem(input.schedule!);
+    if (tooFrequent) {
+      return { ok: false, status: 400, error: tooFrequent };
     }
     try {
       const current = getMission(input.missionId)!;

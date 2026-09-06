@@ -18,6 +18,7 @@
 import { NextResponse } from "next/server";
 import { messageFromError } from "@/lib/api-fetch";
 import { logApiError } from "@/lib/api-logger";
+import { memoryFailureMessage } from "@/lib/memory/memory-error-copy";
 import type { ApiResponse } from "@/types/console";
 
 /**
@@ -144,9 +145,22 @@ export const MENTAL_MODEL_UPDATE_FIELDS = {
  * `serverErrorFromCatch` family).
  */
 export function hindsightErrorResponse(error: unknown): NextResponse {
-  const message = messageFromError(error, "Unknown error");
+  // Translated, not raw. The top-level `error` field is what the client toasts,
+  // and a stopped provider reaches here as "fetch failed: connect ECONNREFUSED
+  // 127.0.0.1:9177" -- Node's phrasing, which health-message.ts already refuses
+  // to show a person. `memoryFailureMessage` applies the SAME rule the banner
+  // uses, so one stopped provider reads the same in the toast and the banner.
+  // A provider that explained itself is still quoted verbatim.
+  const message = memoryFailureMessage(messageFromError(error, "Unknown error"));
   return NextResponse.json<ApiResponse<Record<string, unknown>>>(
-    { data: { available: false, error: message } },
+    // The message goes in BOTH places, deliberately. Top-level `error` is what
+    // a failing response means everywhere else in the app (every 4xx/5xx
+    // factory in @/lib/api-response sets it) and it is the only field the
+    // client reads on a non-2xx, so while it was missing every failure here
+    // reached the operator as the bare string "HTTP 500". The `data` envelope
+    // stays because the memory browser reads `data.error` on the 200 path and
+    // one shape for both paths is what makes that reader simple.
+    { error: message, data: { available: false, error: message } },
     { status: 500 },
   );
 }

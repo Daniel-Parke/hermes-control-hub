@@ -44,6 +44,7 @@ export function useModelActions({
   agentDefaultId = null,
 }: UseModelActionsArgs) {
   const [busyCredentialId, setBusyCredentialId] = useState<string | null>(null);
+  const [addingCredential, setAddingCredential] = useState(false);
   const [busyDriftLine, setBusyDriftLine] = useState<string | null>(null);
   const [editing, setEditing] = useState<ModelEditorRecord | null | undefined>(
     undefined
@@ -178,6 +179,37 @@ export function useModelActions({
         toastError(showToast, err, "Delete failed");
       } finally {
         setBusyCredentialId(null);
+      }
+    },
+    [loadAll, showToast],
+  );
+
+  /**
+   * Create a credential on its own, with no model attached to it.
+   *
+   * The only way to make one used to be the model editor's picker, so the
+   * Models page could show credentials, delete them and rotate them while the
+   * act of adding one lived inside saving a MODEL. An operator who already had
+   * their model, and only wanted to give it a key, had nowhere to go (T-0113).
+   * The route is the same one the editor posts to, so the analytics event, the
+   * env write and the rollback on a failed write are all unchanged.
+   */
+  const handleAddCredential = useCallback(
+    async ({ label, provider, apiKey }: { label: string; provider: string; apiKey: string }) => {
+      setAddingCredential(true);
+      try {
+        const res = await apiFetch<{ data?: { credential?: { label?: string; keyHint?: string } } }>(
+          "/api/credentials",
+          { method: "POST", body: JSON.stringify({ label, provider, apiKey }) },
+        );
+        const saved = res?.data?.credential;
+        const hint = saved?.keyHint ? `: ${saved.keyHint}` : "";
+        showToast(`Added ${saved?.label ?? label}${hint}`, "success");
+        await loadAll();
+      } catch (err) {
+        toastError(showToast, err, "Could not add the credential");
+      } finally {
+        setAddingCredential(false);
       }
     },
     [loadAll, showToast],
@@ -405,6 +437,8 @@ export function useModelActions({
     handlePull,
     handleSaved,
     handleDelete,
+    handleAddCredential,
+    addingCredential,
     handleDeleteCredential,
     handleRotateCredential,
     busyCredentialId,

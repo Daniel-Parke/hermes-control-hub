@@ -5,6 +5,23 @@
 // unit-testable. Prices are USD per 1M tokens, matched by a normalised
 // substring of the model id (provider-agnostic). Unknown models fall back
 // to a conservative default so spend is never silently zero.
+//
+// ── THE TABLE IS SMALL, AND THE PRODUCT HAS TO SAY SO ──────────
+//
+// This table knows fifteen model families. There are hundreds, and an install
+// running one of the others (MiniMax, for instance) gets DEFAULT_RATE for every
+// figure it sees. That is the right arithmetic: a made-up price would be worse
+// than a declared fallback, because it would be wrong AND believed.
+//
+// What was NOT right was the silence. Nothing downstream could tell a priced
+// figure from a guessed one, so the console told the operator its numbers came
+// from published rates when, on that install, not one of them did. So pricing
+// reports its BASIS as well as its number: `estimateCostWithBasis` says whether
+// the rate came off this table or off the fallback, and the spend window and
+// panel carry that answer all the way to the screen.
+//
+// Adding a rate here is welcome. Guessing one is not: leave a model out and its
+// cost is honestly an estimate, put a wrong number in and it is quietly a lie.
 // ═══════════════════════════════════════════════════════════════
 
 export interface ModelRate {
@@ -36,15 +53,57 @@ const RATES: Record<string, ModelRate> = {
 /** Conservative fallback when a model id matches no known rate. */
 export const DEFAULT_RATE: ModelRate = { input: 1, output: 3 };
 
-/** Resolve a model id (e.g. "anthropic/claude-sonnet-4") to a rate. */
-export function rateForModel(modelId: string | null | undefined): ModelRate {
-  if (!modelId) return DEFAULT_RATE;
+/** A rate, plus where it came from. */
+interface ResolvedRate extends ModelRate {
+  /** False means DEFAULT_RATE: the figure below it is a guess, not a price. */
+  known: boolean;
+}
+
+function resolveRate(modelId: string | null | undefined): ResolvedRate {
+  if (!modelId) return { ...DEFAULT_RATE, known: false };
   const id = modelId.toLowerCase();
   const keys = Object.keys(RATES).sort((a, b) => b.length - a.length);
   for (const k of keys) {
-    if (id.includes(k)) return RATES[k];
+    if (id.includes(k)) return { ...RATES[k], known: true };
   }
-  return DEFAULT_RATE;
+  return { ...DEFAULT_RATE, known: false };
+}
+
+/** Resolve a model id (e.g. "anthropic/claude-sonnet-4") to a rate. */
+export function rateForModel(modelId: string | null | undefined): ModelRate {
+  const { input, output } = resolveRate(modelId);
+  return { input, output };
+}
+
+/** An estimated cost that can say how much of a guess it is. */
+export interface CostEstimate {
+  usd: number;
+  /**
+   * True when the price came off the rate table. False when it came off
+   * DEFAULT_RATE, which covers every model this table has never heard of and
+   * every run that recorded no model at all.
+   */
+  fromKnownRate: boolean;
+}
+
+/**
+ * Estimated USD cost for a token split, WITH its basis.
+ *
+ * One call rather than a cost call plus a separate rate lookup, so the money
+ * and the claim made about the money cannot come from different rows.
+ */
+export function estimateCostWithBasis(
+  modelId: string | null | undefined,
+  inputTokens: number,
+  outputTokens: number,
+): CostEstimate {
+  const r = resolveRate(modelId);
+  return {
+    usd:
+      (Math.max(0, inputTokens) / 1_000_000) * r.input +
+      (Math.max(0, outputTokens) / 1_000_000) * r.output,
+    fromKnownRate: r.known,
+  };
 }
 
 /** Estimated USD cost for a token split on a given model. */
@@ -53,9 +112,5 @@ export function estimateCost(
   inputTokens: number,
   outputTokens: number,
 ): number {
-  const r = rateForModel(modelId);
-  return (
-    (Math.max(0, inputTokens) / 1_000_000) * r.input +
-    (Math.max(0, outputTokens) / 1_000_000) * r.output
-  );
+  return estimateCostWithBasis(modelId, inputTokens, outputTokens).usd;
 }

@@ -12,8 +12,15 @@ import { disabledSkillsFromJson } from "./profile-config-builder";
 import { getDisabledSkills } from "./profiles-repository";
 import { listSkillKeys } from "@/lib/skills-repository";
 
-/** Union of SQLite catalog keys and on-disk skill directory paths. */
-function listCatalogSkillKeys(): string[] {
+/**
+ * Union of SQLite catalog keys and on-disk skill directory paths.
+ *
+ * @public Exported because it is the DENOMINATOR the Skills page counts
+ * against, and the profile cards have to count against the same one. While it
+ * was private, profile-counts.ts reached for `countSkills()` instead and a
+ * card said "4 skills" over a page listing 78.
+ */
+export function listCatalogSkillKeys(): string[] {
   // Keys only. This used to call `listSkills()`, which drags every SKILL.md
   // body out of SQLite so that the loop below can throw all of them away.
   const keys = new Set<string>();
@@ -32,9 +39,12 @@ function listCatalogSkillKeys(): string[] {
  */
 export function resolveEffectiveDisabledSkills(
   profile: string,
-  options?: { refreshFromDisk?: boolean },
+  options?: { refreshFromDisk?: boolean; catalogKeys?: readonly string[] },
 ): Set<string> {
-  const catalogKeys = listCatalogSkillKeys();
+  // A caller that already holds the catalogue passes it in rather than paying
+  // for a second walk of the skills tree. GET /api/agent/profiles counts every
+  // profile in one request, so this is once per profile instead of twice.
+  const catalogKeys = options?.catalogKeys ?? listCatalogSkillKeys();
 
   const fromDb: string[] =
     profile === "default"

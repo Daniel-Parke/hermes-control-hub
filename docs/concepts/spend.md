@@ -11,8 +11,8 @@ audience: operator
 ## What it is
 
 What your work has cost at the model [provider](provider.md). Token counts are
-recorded against each [run](run.md) as it finishes, priced against a published
-rate table, and totalled for today, this week and this month, split by the kinds
+recorded against each [run](run.md) as it finishes, priced against a small rate
+table, and totalled for today, this week and this month, split by the kinds
 of work that spend: agent runs, workflow stages, research and story writing.
 
 It is the only thing in PatterStage that costs money. Everything else runs on
@@ -21,8 +21,11 @@ bill.
 
 ## What it is not
 
-Not an invoice. The rate table is static and rates change, so treat the figure
-as the right order of magnitude and your provider's own dashboard as the truth.
+Not an invoice. The rate table is static, it holds only the model families
+PatterStage knows, and rates change anyway. Anything it does not recognise is
+priced at a declared fallback, and the panel marks those figures as estimated
+rather than passing a guess off as a price. Treat the number as the right order
+of magnitude and your provider's own dashboard as the truth.
 Not a limit either: a budget is optional, and on its own it only warns. The
 switch that actually pauses work is separate, ships turned off, and pauses only
 unattended dispatch. Anything a person clicks still runs, on the grounds that

@@ -124,7 +124,7 @@ function dash(gateway: "ok" | "down"): UseDashboardResult {
     config: null,
     templates: [],
     categories: [],
-    registryAgentModelLabel: null,
+    modelReadiness: null,
     sessionTrend: [],
     subsystems: subsystems(gateway),
     ready: true,

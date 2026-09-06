@@ -22,6 +22,7 @@ import { resolveAgentSlug } from "@/lib/agents/roster";
 import { createSchedule } from "@/lib/schedules-repository";
 import { parseSchedule, scheduleDisplayFromParsed } from "@/lib/schedule/parse-schedule";
 import { computeNextRun, scheduleCanEverFire } from "@/lib/schedule/next-run";
+import { scheduleIntervalProblem } from "@/lib/schedule/interval-bounds";
 import { dispatchMissionNow } from "@/lib/missions/mission-dispatch";
 import { parseMissionBodyFields } from "@/lib/missions/mission-body";
 import { missionTimeoutError } from "@/lib/missions/mission-timeout";
@@ -127,6 +128,10 @@ export async function handleDispatchMission(
           `exist, or a field outside its range. Check the day-of-month against the month.`,
       );
     }
+    // The opposite failure, and the expensive one: `every 0m` fires constantly,
+    // and each firing here is a paid agent run.
+    const tooFrequent = scheduleIntervalProblem(scheduleVal!);
+    if (tooFrequent) return badRequest(tooFrequent);
   }
   const mission = createMission({
     // Derived from the instruction when no name was given, so the board does

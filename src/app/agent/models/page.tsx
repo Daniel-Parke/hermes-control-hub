@@ -32,7 +32,13 @@ import { pluralise } from "@/lib/utils";
 import { useModelsPage } from "@/hooks/useModelsPage";
 // app/ may consult a module; the editor component may not, so the provider list
 // is injected from here (ADR-0005).
-import { HERMES_PROVIDERS, KEYLESS_PROVIDERS } from "@/modules/hermes/lib/providers";
+import { HERMES_PROVIDERS, KEYLESS_PROVIDERS, envVarForProvider } from "@/modules/hermes/lib/providers";
+
+// Providers a key can actually be stored for. POST /api/credentials refuses a
+// provider with nowhere to put one (nous signs in through the agent's CLI
+// instead), so offering it in the picker would only earn a 400 the operator
+// could do nothing about.
+const KEY_PROVIDERS = HERMES_PROVIDERS.filter((p) => Boolean(envVarForProvider(p)));
 
 export default function ModelsPage() {
   const {
@@ -41,6 +47,7 @@ export default function ModelsPage() {
     modelOptions,
     credentialOptions,
     defaults,
+    modelReadiness,
     loading,
     error,
     drift,
@@ -70,6 +77,8 @@ export default function ModelsPage() {
     handlePull,
     handleSaved,
     handleDelete,
+    handleAddCredential,
+    addingCredential,
     handleDeleteCredential,
     handleRotateCredential,
     busyCredentialId,
@@ -185,6 +194,9 @@ export default function ModelsPage() {
               credentials={credentials}
               onDelete={handleDeleteCredential}
               onRotate={handleRotateCredential}
+              onAdd={handleAddCredential}
+              providers={KEY_PROVIDERS}
+              adding={addingCredential}
               busyId={busyCredentialId}
             />
             <ModelsTableSection
@@ -204,6 +216,7 @@ export default function ModelsPage() {
               models={models}
               modelOptions={modelOptions}
               defaults={defaults}
+              readiness={modelReadiness}
               busyTaskType={busyTaskType}
               onBulkAuxiliaryChange={handleBulkAuxiliaryChange}
               onSetDefault={handleSetDefault}

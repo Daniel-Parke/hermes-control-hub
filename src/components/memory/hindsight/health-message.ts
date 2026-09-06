@@ -19,6 +19,11 @@
 //      (e.g. a Hindsight settings page) needs the same banner, the
 //      helper is the single source of truth.
 
+import {
+  MEMORY_NOT_ANSWERING,
+  isMemoryTransportFailure,
+  isMemoryUnavailableMessage,
+} from "@/lib/memory/memory-error-copy";
 import type { HealthState } from "@/components/memory/hindsight/types";
 
 /** Substring token that triggers the "Redis is not running" branch. */
@@ -28,13 +33,11 @@ const REDIS_TOKEN = "Redis";
 const NOT_RESPONDING = "not responding";
 
 /**
- * What a transport failure looks like on the wire. The health route answers 200
- * with `{ available: false, error: "fetch failed" }` when nothing is listening,
- * and "fetch failed" is Node's phrasing, not an instruction to anybody. Someone
- * who has installed PatterStage but not a memory provider needs to be told that
- * is what happened.
+ * The transport-failure list and its plain-English replacement moved to
+ * @/lib/memory/memory-error-copy. The store route publishes the same sentence
+ * for the same outage, and a second copy of the rule would have let the banner
+ * and the toast describe one stopped provider in two different ways.
  */
-const TRANSPORT_ERRORS = ["fetch failed", "ECONNREFUSED", "Connection refused", "ETIMEDOUT"];
 
 /**
  * "Hindsight <mode>", or plain "Hindsight" when the payload carried no mode.
@@ -48,6 +51,7 @@ function label(mode: string | undefined): string {
 /**
  * Resolve the banner message for a `health: HealthState` payload.
  *
+ *   0. the error is PatterStage's own no-provider notice → verbatim
  *   1. `health.error?.includes("Redis")` → "Redis is not running.
  *      Start Redis to enable memory features: redis-server"
  *   2. `health.message` is set → "Hindsight <mode>: <message>"
@@ -60,16 +64,25 @@ function label(mode: string | undefined): string {
  * want the actionable Redis hint to surface. Case 3 sits below the
  * message branch so a provider that explains itself is always quoted
  * verbatim, and only Node's own "fetch failed" gets translated.
+ *
+ * Case 0 sits above all of them because the label is a lie for it. Those
+ * notices are PatterStage saying there is no provider, or no client for the
+ * one selected; stamping "Hindsight:" on the front of a sentence about there
+ * being no Hindsight is the contradiction this branch exists to stop, and the
+ * notice is already a complete instruction that needs no prefix.
  */
 export function healthBannerMessage(health: HealthState): string {
+  if (health.error && isMemoryUnavailableMessage(health.error)) {
+    return health.error;
+  }
   if (health.error?.includes(REDIS_TOKEN)) {
     return "Redis is not running. Start Redis to enable memory features: redis-server";
   }
   if (health.message) {
     return `${label(health.mode)}: ${health.message}`;
   }
-  if (health.error && TRANSPORT_ERRORS.some((token) => health.error?.includes(token))) {
-    return "No memory provider is answering at the host and port configured above. PatterStage works without one; memory stays empty until a provider is running.";
+  if (health.error && isMemoryTransportFailure(health.error)) {
+    return MEMORY_NOT_ANSWERING;
   }
   return `${label(health.mode)}: ${health.error || NOT_RESPONDING}`;
 }

@@ -135,6 +135,26 @@ export function periodLabel(period: SpendPeriod): string {
   }
 }
 
+/**
+ * The same period as a possessive, so a figure can name the window it covers.
+ *
+ * It exists because a sentence saying "this period's total" is unattributable
+ * the moment more than one period is on screen: the console draws three tiles
+ * and printed ONE such sentence beneath them, so a $12.00 month tile could sit
+ * directly above a note about $4.00 and nothing said which was which. Every
+ * money sentence names its own window now.
+ */
+export function periodPossessive(period: SpendPeriod): string {
+  switch (period) {
+    case "day":
+      return "today's";
+    case "week":
+      return "this week's";
+    default:
+      return "this month's";
+  }
+}
+
 /** The same period as a noun that reads inside a sentence. */
 export function periodNoun(period: SpendPeriod): string {
   switch (period) {

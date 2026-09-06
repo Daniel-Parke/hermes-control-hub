@@ -54,11 +54,17 @@ record of them exists.
 
 ### It is an estimate, not an invoice
 
-The figures come from token counts already recorded against each run, priced against a published per-model rate table (`src/lib/analytics/model-cost.ts`). Two consequences worth knowing:
+The figures come from token counts already recorded against each run, priced against a small static rate table (`src/lib/analytics/model-cost.ts`). That table holds fifteen model families. There are hundreds, and anything it does not recognise is priced at a fallback of $1.00 per million input tokens and $3.00 per million output tokens.
 
-- A run with **no model recorded** (every Composer stage, which has no mission to carry the model) is priced at a conservative default rather than at zero. Unknown must never read as free.
+**The panel says which figures are which.** A period whose money was priced at the fallback is marked "estimated", or "part estimated" where only some of it was. Hovering that mark gives *that* period's own explanation: how much of its own total was a guess, the models it has no price for, and your provider's billing page to check the figure against. The same sentence is printed in full under the source list for the period your budget covers, and it names that period. Three tiles share one screen, the week can hold spend the month does not (an ISO week opens on a Monday, so early in most months it reaches back past the month boundary), and a dollar figure that does not say which window it covers is not an answer. On an install running a model the table does not know, that sentence covers the whole figure, which is the honest reading of it.
+
+Guessing a price for an unrecognised model would be worse than the fallback: it would be wrong and believed. If you want a real number for your own model, add its rate to that table.
+
+Two more consequences worth knowing:
+
+- A run with **no model recorded** (every Composer stage, which has no mission to carry the model) is priced at that same fallback rather than at zero. Unknown must never read as free. Those rows are marked estimated too, and the sentence counts them rather than naming a model they never had.
 - **True only since T-0058 (2026-08-30).** Before it, this sentence described an intention rather than the product. Composer stages recorded no usage at all: the reconciler dropped the gateway's token counts on the way to the database, and the spend read requires `usage_json IS NOT NULL`, so the whole source was EXCLUDED and the Composer row showed `$0.00`. Not a conservative estimate; nothing. Composer runs that finished before that fix stay absent rather than being reported as unmeasured, which is a known gap and narrower than the research one described above.
-- Rates change and the table is static. Treat the number as the right order of magnitude, and your provider's dashboard as the truth.
+- Rates change and the table is static, so even a recognised model is an estimate. Treat the number as the right order of magnitude, and your provider's dashboard as the truth.
 
 Runs of every status are counted, not just successful ones. A run that failed after burning tokens still cost you money.
 

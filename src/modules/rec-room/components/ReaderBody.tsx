@@ -18,6 +18,7 @@ import MobileChapterDrawer from "@/modules/rec-room/components/MobileChapterDraw
 import type { ReadingSettings } from "@/modules/rec-room/components/ReaderSettings";
 import type { ReaderTheme } from "@/modules/rec-room/components/story-reader-types";
 import type { ReaderView } from "@/modules/rec-room/components/story-reader-view";
+import type { SpendWindowSource } from "@/lib/spend/spend-window";
 
 export interface ReaderBodyProps {
   title: string;
@@ -47,6 +48,8 @@ export interface ReaderBodyProps {
   onRetryChapter: (chapterNumber: number) => void;
   onPrev: () => void;
   onNext: () => void;
+  /** What this story has cost so far, drawn in the header. */
+  spend: SpendWindowSource | null;
 }
 
 export default function ReaderBody({
@@ -75,6 +78,7 @@ export default function ReaderBody({
   onRetryChapter,
   onPrev,
   onNext,
+  spend,
 }: ReaderBodyProps) {
   const { chapters, chapterContent, currentMeta, nextComplete, prevChapter, nextChapter, anyFailed, allComplete } = view;
 
@@ -104,6 +108,7 @@ export default function ReaderBody({
         onOpenBible={onOpenBible}
         onToggleSidebar={onToggleSidebar}
         onSelectChapter={onSelectChapter}
+        spend={spend}
       />
 
       {/* Body */}

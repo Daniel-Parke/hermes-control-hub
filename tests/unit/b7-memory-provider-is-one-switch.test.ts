@@ -134,6 +134,27 @@ describe("getMemoryProviderType answers from the database, not the file", () => 
     expect(getMemoryProviderType()).toBe("none");
   });
 
+  /**
+   * The copy in @/lib/memory/memory-error-copy tells a reader with no provider
+   * to "Set Host and Port on the Memory page and press Save to switch one on".
+   * That sentence is only allowed to ship if pressing Save really does it, so
+   * this pins the mechanism it depends on: the card's Save posts
+   * `{ type: <the row it loaded>, enabled: true, config }`, and `enabled: true`
+   * on the active row is what lifts it back out of `none`.
+   */
+  it("the PUT the Memory page's Save sends lifts a switched-off row back out of none", () => {
+    updateMemoryProvider("hindsight", { makeActive: true });
+    updateMemoryProvider("hindsight", { enabled: false });
+    expect(getMemoryProviderType()).toBe("none");
+
+    updateMemoryProvider("hindsight", {
+      enabled: true,
+      config: { host: "127.0.0.1", port: 9177, bank: "hermes" },
+    });
+
+    expect(getMemoryProviderType()).toBe("hindsight");
+  });
+
   it("no config.yaml at all is not 'none': the seeded default still answers", () => {
     // The zero-config connect the operator ruled stays (T-0077). The old file
     // scan answered 'none' here, which is how a live Hindsight came to be

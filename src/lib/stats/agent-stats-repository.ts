@@ -44,30 +44,35 @@ export function readMissionStatusCountsByProfile(): Array<{ p: string; status: s
     .all() as Array<{ p: string; status: string; c: number }>;
 }
 
-/** Total number of catalogued skills (the ceiling a profile's disabled list subtracts from). */
-export function countSkills(): number | undefined {
-  return (getDb().prepare("SELECT COUNT(*) AS v FROM skills").get() as { v: number } | undefined)?.v;
-}
+// `countSkills()` was here, a `SELECT COUNT(*) FROM skills` described as "the
+// ceiling a profile's disabled list subtracts from". That subtraction is gone
+// (see AgentPerformance.skills): the catalogue table is not the set a profile
+// may use, so nothing reads this ceiling any more.
 
-/** The profile-shaped columns of a row in agent_root or agent_profiles. */
+/**
+ * The profile-shaped columns of a row in agent_root or agent_profiles.
+ *
+ * `disabled_skills` is deliberately absent. The strip no longer derives its
+ * skills count from that column, and selecting a denylist nothing subtracts
+ * would invite the arithmetic back.
+ */
 export interface AgentProfileStatsRow {
   display_name: string;
   personality: string;
-  disabled_skills: string;
   platform_toolsets: string;
 }
 
 /** The single default-agent row (id = 1), or undefined when the table is empty. */
 export function readAgentRootStatsRow(): AgentProfileStatsRow | undefined {
   return getDb()
-    .prepare("SELECT display_name, personality, disabled_skills, platform_toolsets FROM agent_root WHERE id = 1")
+    .prepare("SELECT display_name, personality, platform_toolsets FROM agent_root WHERE id = 1")
     .get() as AgentProfileStatsRow | undefined;
 }
 
 /** Every named profile, with the columns the performance strip needs. */
 export function readAgentProfileStatsRows(): Array<AgentProfileStatsRow & { slug: string }> {
   return getDb()
-    .prepare("SELECT slug, display_name, personality, disabled_skills, platform_toolsets FROM agent_profiles")
+    .prepare("SELECT slug, display_name, personality, platform_toolsets FROM agent_profiles")
     .all() as Array<AgentProfileStatsRow & { slug: string }>;
 }
 

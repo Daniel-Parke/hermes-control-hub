@@ -8,6 +8,7 @@
 // Times are evaluated in the server's local timezone (cron convention).
 // ═══════════════════════════════════════════════════════════════
 
+import { intervalMinutesAllowed, MAX_SCHEDULE_INTERVAL_MINUTES } from "./interval-bounds";
 import { parseSchedule } from "./parse-schedule";
 
 // Expand one cron field to a value set. Supports "*", step ("star-slash-5"),
@@ -56,7 +57,10 @@ function expandDow(field: string): Set<number> {
   return set;
 }
 
-const CAP_MINUTES = 366 * 24 * 60; // give up after a year of minute-stepping
+// The SAME horizon the interval bounds refuse past, imported rather than
+// retyped: the bounds doc claims the two agree, and two copies of a number
+// in two files is how they stop agreeing.
+const CAP_MINUTES = MAX_SCHEDULE_INTERVAL_MINUTES;
 
 /** Longest each month can ever be, February counted as a leap year. */
 const MAX_DAYS_IN_MONTH = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
@@ -154,8 +158,17 @@ export function nextCronAfter(expr: string, from: Date): Date | null {
 export function computeNextRun(schedule: string, from: Date): Date | null {
   const parsed = parseSchedule(schedule);
   switch (parsed.kind) {
-    case "interval":
+    case "interval": {
+      // The bounds are checked HERE and not only at the write paths, because
+      // this is where an out-of-bounds interval turns into damage: zero minutes
+      // answers "the instant you asked", so the row is due again on the tick
+      // that just fired it, and an absurd interval leaves the Date range, so
+      // the caller's `.toISOString()` throws. Neither can now leave this
+      // function. Refusing an already-stored bad row is the scheduler tick's
+      // job, which disables it and says why.
+      if (!intervalMinutesAllowed(parsed.minutes)) return null;
       return new Date(from.getTime() + parsed.minutes * 60_000);
+    }
     case "once": {
       const at = new Date(parsed.run_at);
       return Number.isFinite(at.getTime()) && at.getTime() > from.getTime() ? at : null;

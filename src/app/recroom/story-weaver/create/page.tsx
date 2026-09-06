@@ -614,6 +614,15 @@ function CreateStoryPage() {
           </div>
         </div>
 
+        {/* What this button spends, said before it is pressed.
+            Story Weaver used to disclose nothing at all, so the first a person
+            heard of the cost was their provider bill. One quiet line, no modal
+            and nothing to dismiss: the point is not to frighten anyone off, it
+            is that the bill is not a surprise. */}
+        <p data-testid="story-spend-before" className="text-xs leading-relaxed text-ps-text-faint">
+          Writing a story calls a paid model, so it costs money. What it has spent so far is shown while you read it, and in Insights alongside everything else.
+        </p>
+
         {/* Create Button */}
         <button onClick={handleCreate} disabled={!premise.trim() || generating}
           className="w-full flex items-center justify-center gap-2 px-6 py-4 rounded-xl border border-neon-purple/30 bg-neon-purple/10 text-base font-mono text-neon-purple hover:bg-neon-purple/20 transition-all disabled:opacity-30 shadow-[0_0_20px_rgb(var(--ps-rgb-neon-purple)_/_0.1)]">

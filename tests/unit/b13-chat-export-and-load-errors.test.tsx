@@ -43,7 +43,10 @@ jest.mock("@/hooks/useGatewayHealth", () => ({
     online: true,
     authConfigured: true,
     baseUrl: "http://127.0.0.1:8642",
-    agentDefaultModelSet: true,
+    // The one readiness verdict, replacing `agentDefaultModelSet` (real-agent
+    // round). Nothing in this suite reads it; it is kept accurate so the mock
+    // keeps describing the real hook.
+    modelReadiness: { state: "ready", ready: true, label: "m", modelName: "m", detail: "" },
     registryModelIds: [],
     modelLabels: {},
     modelsError: null,

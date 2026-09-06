@@ -97,8 +97,14 @@ export default function SpendPanel({ summary, onSave, saving = false }: SpendPan
         <h2 className="text-xs font-mono uppercase tracking-widest text-ps-text-muted">
           Provider spend
         </h2>
+        {/* The old wording here said "prices are the published per-model rates".
+            On an install running a model the rate table has never heard of, not
+            one figure on this panel came from a published rate: they all came
+            from the fallback. Do not put that sentence back. The rates are a
+            short static list, and the copy has to hold for the installs that
+            are not on it. */}
         <span
-          title="Estimated from the token usage already recorded against each run. Prices are the published per-model rates, so treat this as an estimate, not an invoice."
+          title="Estimated from the token usage already recorded against each run. Where there is a price on file for the model it is used; where there is not, the run is priced at a fallback rate and the panel says so below. Either way this is an estimate, not an invoice."
           aria-label="How this is estimated"
           className="ml-0.5 cursor-help text-ps-text-faint transition-colors hover:text-ps-text-secondary"
         >
@@ -119,12 +125,40 @@ export default function SpendPanel({ summary, onSave, saving = false }: SpendPan
               {formatUsd(p.totalUsd)}
             </div>
             <div className="mt-0.5 text-xs uppercase tracking-wider text-ps-text-muted">{p.label}</div>
+            {/* Driven by the row's OWN note, not by its basis.
+                The mark used to key off `basis.estimatedUsd > 0` and point at a
+                sentence built from the budget period alone, which broke twice:
+                a week can be estimated while the month it hangs under is not
+                (the ISO week opens on a Monday, so early in most months the
+                week window reaches back past the month boundary), and the note
+                that did render carried the budget period's dollars, not this
+                tile's. The note is per period now, and the mark and its
+                explanation come from the same field so neither can outlive the
+                other. */}
+            {p.estimateNote && (
+              <div
+                data-testid={`spend-estimated-${p.period}`}
+                title={p.estimateNote}
+                className="mt-1 text-xs text-ps-text-faint"
+              >
+                {p.basis.knownUsd > 0 ? "Part estimated" : "Estimated"}
+              </div>
+            )}
           </div>
         ))}
       </div>
 
-      {/* ── Per source, for the period the budget covers. ── */}
-      <ul className="mt-3 space-y-1.5">
+      {/* ── Per source, for the period the budget covers. ──
+          The heading is not decoration. Three period tiles sit directly above
+          this list and it counts only one of them, so without the label its
+          figures read as belonging to whichever tile the eye landed on last. */}
+      <div
+        data-testid="spend-sources-period"
+        className="mt-3 text-xs uppercase tracking-wider text-ps-text-faint"
+      >
+        {periodLabel(summary.budgetPeriod)}, by source
+      </div>
+      <ul className="mt-1.5 space-y-1.5">
         {budget.sources.map((s) => (
           <li
             key={s.source}
@@ -138,10 +172,25 @@ export default function SpendPanel({ summary, onSave, saving = false }: SpendPan
               {/* Never "$0.00" for a source this database did not record. A
                   confident zero is a worse answer than an honest blank. */}
               {s.recorded ? formatUsd(s.costUsd ?? 0) : "cost not recorded"}
+              {/* Composer stages and Story Weaver chapters carry no model, so
+                  they are ALWAYS priced at the fallback. Saying so on the row
+                  is the difference between a figure and a figure you can
+                  judge. */}
+              {s.estimatedUsd > 0 && (
+                <span className="ml-1.5 text-ps-text-faint">
+                  {s.costUsd !== null && s.estimatedUsd < s.costUsd ? "part estimated" : "estimated"}
+                </span>
+              )}
             </span>
           </li>
         ))}
       </ul>
+
+      {summary.estimateNote && (
+        <p data-testid="spend-rate-basis" className="mt-2 text-xs leading-relaxed text-ps-text-faint">
+          {summary.estimateNote}
+        </p>
+      )}
 
       {summary.unmeasured.length > 0 && (
         <p data-testid="spend-unmeasured" className="mt-2 text-xs leading-relaxed text-ps-text-faint">
