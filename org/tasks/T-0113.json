@@ -2,19 +2,54 @@
   "id": "T-0113",
   "intent": "B19 of the final-release programme: the release. Full gate, Playwright, mutation survivors reconciled, a browser walk of every screen at 1280x720 and 390x844 on the isolated instance, docs built; package.json to 1.0.0-rc.1 and the tag v1.0.0-rc.1 on dev. The real-Hermes round natively on this machine (decisions 10 and 18): the operator configures the API-key provider in Hermes and on the Models page, hermes gateway run, HERMES_GATEWAY_URL pointed at it, the quest ledger chapters 1 to 7 driven end to end, then the round-6 confirm list, then the Docker profiles. Every finding a defect with the same verify-then-fix loop; rc.2 if any blocker. Then v1.0.0, dev merged to main by the operator's gated release PR (ADR-0006), docs-pages.yml publishing, the operator enabling Pages, README hero and docs/images recaptured.",
   "declared": {
-    "capabilities": ["edit-code", "edit-docs", "network"],
-    "side_effects": ["sends-external", "publishes"]
+    "capabilities": [
+      "edit-code",
+      "edit-docs",
+      "network"
+    ],
+    "side_effects": [
+      "sends-external",
+      "publishes"
+    ]
   },
   "mode": "standard",
   "tier_proposed": "R2",
   "tier_ruled": "R2",
   "reasons": [
-    {"factor": "boundary-contact", "tier_floor": "R1", "source": "declared", "evidence": "the real-Hermes round calls a paid provider through the operator's own key; tags and the release PR are pushed"},
-    {"factor": "ci-stateful-infra", "tier_floor": "R2", "source": "derived:infra-state", "evidence": "the Pages deployment is state outside the repository"}
+    {
+      "factor": "boundary-contact",
+      "tier_floor": "R1",
+      "source": "declared",
+      "evidence": "the real-Hermes round calls a paid provider through the operator's own key; tags and the release PR are pushed"
+    },
+    {
+      "factor": "ci-stateful-infra",
+      "tier_floor": "R2",
+      "source": "derived:infra-state",
+      "evidence": "the Pages deployment is state outside the repository"
+    }
   ],
-  "status": "proposed",
+  "status": "in_progress",
   "owner_session": "unassigned",
-  "claims": ["package.json", "CHANGELOG.md", "docs/images/", "README.md", "org/reviews/", "org/tasks/"],
+  "claims": [
+    "package.json",
+    "CHANGELOG.md",
+    "docs/images/",
+    "README.md",
+    "org/reviews/",
+    "org/tasks/"
+  ],
   "programme": "B19, depends on B18 (T-0112). Publishing to a new external destination (Pages) and the merge to main are the operator's, per the constitution's approver rule; the session prepares and the operator clicks.",
-  "timestamps": {"opened": "2026-09-05T10:30:00Z", "updated": "2026-09-05T10:30:00Z"}
+  "timestamps": {
+    "opened": "2026-09-05T10:30:00Z",
+    "updated": "2026-09-06T03:30:00Z"
+  },
+  "verification_so_far": "The pre-tag verification the plan asks for is complete and green on dev at 119cce29. Gate by exit code: lint 0, tsc 0, jest 0 (5772 tests, 575 suites), knip 0, canary 0, build 0, Playwright 140 passed and 25 skipped. Docs built: 77 pages, and the site opens from file:// with its rail, its prose and its images. The release walk covered every one of the 25 rail screens at BOTH 1280x720 and 390x844 -- 50 screen-loads -- asking of each whether it renders its own heading, says anything at all, carries a title and a working ?, scrolls sideways, or logs a console error, plus whether the rail fits at 720 tall. It now reports no findings.",
+  "found_by_the_walk": "One defect, fixed in this batch, and it was invisible to everything else. At 390x844 the h1 on five screens had a bounding box of 0 x 28: in the DOM, display flex, visibility visible, and nought pixels wide, so a reader on a phone could not tell which page they were on. A jsdom render has no layout, so all 5772 unit tests passed over it, and the 1280-wide walk saw nothing. The cause was three shrink-0 siblings competing with a title group that was allowed to collapse: the actions on Logs measure 388px inside a 390px bar, and on the Rec Room pages the back label took the row one level further in. Fixed by wrapping the bar, letting the title group grow rather than merely shrink, and standing the back label down below sm while it keeps its arrow and gains an unconditional accessible name. tests/e2e/b19-a-title-survives-a-phone.spec.ts pins it at 390 wide, measured red at 5 failed / 2 passed before the fix, and asserts the RENDERED BOX rather than the element existing, because 'the heading is in the document' was true throughout.",
+  "remaining": [
+    "The version bump and the tag v1.0.0-rc.1. Not done: a tag is not a thing to place on the operator's behalf.",
+    "The real-Hermes round natively on this machine. Blocked on the operator: Hermes reports no model, no provider and no API key, and the reviewer never enters credentials. Once a provider is configured in Hermes and on the Models page, `hermes gateway run` plus HERMES_GATEWAY_URL is all this needs.",
+    "The Docker install and deploy profiles (test:full-install, test:full-install-release, test:full-install-hermes, test:docker-deploy-smoke).",
+    "v1.0.0, the merge of dev into main, and the Pages deployment. The operator's, per this record's own tier and the approver rule."
+  ]
 }
