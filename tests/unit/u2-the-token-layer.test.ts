@@ -23,6 +23,8 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
+import { RULES, violationsIn } from "../../scripts/tooling/design-lint.mjs";
+
 import {
   GROUND,
   LADDER,
@@ -221,6 +223,20 @@ describe("the scales that did not exist at all", () => {
     expect(token(name)).toBe(value);
   });
 
+  /**
+   * Declared is not the same as usable. z-index is not one of Tailwind v4's
+   * theme namespaces, so these rungs produce no utility on their own and were
+   * dropped from the built stylesheet entirely: measured against a real build,
+   * not assumed. They live in :root now with an @utility each, which was also
+   * measured, and this is what stops the pair drifting apart.
+   */
+  it.each(["base", "sticky", "dropdown", "overlay", "modal", "toast", "tooltip"])(
+    "z-%s is a class as well as a variable",
+    (rung) => {
+      expect(css()).toContain(`@utility z-${rung} { z-index: var(--z-${rung}); }`);
+    },
+  );
+
   it("puts the ladder in the order things actually stack", () => {
     const order = ["base", "sticky", "dropdown", "overlay", "modal", "toast", "tooltip"];
     const values = order.map((n) => Number(token(`z-${n}`)));
@@ -280,5 +296,157 @@ describe("two measures are declared, and the old three are still standing", () =
     expect(token("container-ps-reading")).toBe("48rem");
     expect(token("container-ps-wide")).toBe("56rem");
     expect(token("container-ps-full")).toBe("80rem");
+  });
+});
+
+// ── the rules that hold it ──────────────────────────────────────────────────
+
+/** The rule ids one line trips, at a given path. */
+const trips = (path: string, line: string): string[] =>
+  [...violationsIn(path, [line]).keys()].map((k) => k.split("::")[0]);
+
+/**
+ * Every new rule, with the form it must refuse and the form it must leave
+ * alone. The second half is the half that matters: a rule which fires on the
+ * replacement as well as the original is a rule nobody can satisfy, and the
+ * codemod that tries would drive its count UP.
+ */
+const NEW_RULES: ReadonlyArray<{
+  id: string;
+  path: string;
+  refuses: string;
+  allows: string;
+}> = [
+  {
+    id: "no-raw-border-alpha",
+    path: "src/components/x.tsx",
+    refuses: 'className="border border-white/10 bg-white/5"',
+    allows: 'className="border border-ps-edge bg-ps-surface-panel"',
+  },
+  {
+    id: "no-raw-text-alpha",
+    path: "src/components/x.tsx",
+    refuses: 'className="text-white/55 placeholder-white/20"',
+    allows: 'className="text-ps-text-muted placeholder-ps-text-faint"',
+  },
+  {
+    id: "palette-must-be-house",
+    path: "src/components/x.tsx",
+    refuses: 'className="text-red-400 bg-green-500/10"',
+    allows: 'className="text-status-fail bg-status-ok/10"',
+  },
+  {
+    id: "type-scale-only",
+    path: "src/components/x.tsx",
+    refuses: 'className="text-xs font-mono"',
+    allows: 'className="text-micro font-mono"',
+  },
+  {
+    id: "radius-scale-only",
+    path: "src/components/x.tsx",
+    refuses: 'className="rounded-xl"',
+    allows: 'className="rounded-ps-lg"',
+  },
+  {
+    id: "z-scale-only",
+    path: "src/components/x.tsx",
+    refuses: 'className="fixed z-[60]"',
+    allows: 'className="fixed z-modal"',
+  },
+  {
+    id: "no-inline-card-chrome",
+    path: "src/components/x.tsx",
+    refuses: 'className="rounded-xl border border-white/10 bg-dark-900/50 p-4"',
+    allows: '<Surface variant="panel" padding="md">',
+  },
+  {
+    id: "no-raw-control-outside-ui",
+    path: "src/components/x.tsx",
+    refuses: "  <button onClick={go}>Run</button>",
+    allows: "  <Button onClick={go}>Run</Button>",
+  },
+  {
+    id: "one-container-per-page",
+    path: "src/app/work/missions/page.tsx",
+    refuses: 'className="max-w-6xl mx-auto px-6"',
+    allows: 'className="space-y-6"',
+  },
+  {
+    id: "no-raw-colour-in-css",
+    path: "src/app/globals.css",
+    refuses: "  box-shadow: 0 0 5px rgb(34 211 238 / 0.6);",
+    allows: "  --color-ps-edge: #6c7887;",
+  },
+];
+
+describe("each new rule refuses one form and allows the other", () => {
+  it("registers all eleven", () => {
+    const ids = RULES.map((r: { id: string }) => r.id);
+    for (const rule of NEW_RULES) expect(ids).toContain(rule.id);
+    expect(ids).toContain("no-raw-fetch-in-component");
+  });
+
+  it.each(NEW_RULES.map((r) => [r.id, r.path, r.refuses]))(
+    "%s fires on the form it refuses",
+    (id, path, line) => {
+      expect(trips(path as string, line as string)).toContain(id);
+    },
+  );
+
+  it.each(NEW_RULES.map((r) => [r.id, r.path, r.allows]))(
+    "%s stays quiet on the form it wants",
+    (id, path, line) => {
+      expect(trips(path as string, line as string)).not.toContain(id);
+    },
+  );
+
+  /**
+   * `one-container-per-page` is scoped to pages on purpose: a component that
+   * caps a paragraph's measure is doing the right thing, and a rule that could
+   * not tell the difference would push that width somewhere worse.
+   */
+  it("only asks a PAGE to stop owning the measure", () => {
+    const line = 'className="max-w-4xl"';
+    expect(trips("src/app/quests/page.tsx", line)).toContain("one-container-per-page");
+    expect(trips("src/components/help/Prose.tsx", line)).not.toContain("one-container-per-page");
+  });
+
+  /** And the prose column IS the shell's, so the shell may still name it. */
+  it("allows the one measure the shell owns", () => {
+    expect(trips("src/app/help/page.tsx", 'className="max-w-ps-prose"')).not.toContain(
+      "one-container-per-page",
+    );
+  });
+
+  /**
+   * The primitives are where a raw control is supposed to live. A rule that
+   * flagged src/components/ui would make the shared Button impossible to write.
+   */
+  it("lets the primitives be built out of raw controls", () => {
+    const line = "  <button type=\"button\" className={cls}>";
+    expect(trips("src/components/x.tsx", line)).toContain("no-raw-control-outside-ui");
+    expect(trips("src/components/ui/Button.tsx", line)).not.toContain("no-raw-control-outside-ui");
+  });
+
+  /**
+   * The file-level rule, which a line test cannot express: reading the API
+   * straight out of a component is only wrong when it is a component doing it,
+   * so the shape is "this file has a useEffect AND a safeApiCall".
+   */
+  it("flags a raw fetch in a component, and not the hook it belongs in", () => {
+    const component = [
+      "useEffect(() => {",
+      "  void safeApiCall<Thing>(\"/api/things\");",
+      "}, []);",
+    ];
+    expect([...violationsIn("src/components/x.tsx", component).keys()]).toContain(
+      "no-raw-fetch-in-component::src/components/x.tsx",
+    );
+    expect([...violationsIn("src/hooks/useThings.ts", component).keys()]).toEqual([]);
+  });
+
+  it("and not a component that merely has an effect", () => {
+    const clean = ["useEffect(() => {", "  setReady(true);", "}, []);"];
+    expect([...violationsIn("src/components/x.tsx", clean).keys()]).toEqual([]);
   });
 });

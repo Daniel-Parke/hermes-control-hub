@@ -298,6 +298,106 @@ export const RULES = [
     pattern: /—/,
     codeOnly: false,
   },
+  // ══════════════════════════════════════════════════════════════════════════
+  // The token layer's rules (U2, T-0116).
+  //
+  // Each of these lands at TODAY'S count, not at zero. That is what the ratchet
+  // is for: the number may fall and never rise, so the codemod batches can take
+  // them down while the gate refuses anything new on the way. A rule at zero
+  // that nobody can satisfy for six batches gets disabled; a rule at its real
+  // count is a debt with a direction.
+  // ══════════════════════════════════════════════════════════════════════════
+  {
+    id: "no-raw-border-alpha",
+    law: "A rule is a token: --color-ps-edge for a control boundary or a shell seam, --color-ps-edge-hairline for a card outline or a rule inside a surface, --color-ps-edge-emphasis for selected or armed. The tree draws 435 rules across eight undeclared white alphas, none of which reaches 1.8:1 and all of which are below the 3:1 WCAG 1.4.11 asks of a component boundary.",
+    files: (f) => f.startsWith("src/") && f.endsWith(".tsx"),
+    pattern: /(?:^|[^\w-])(?:border(?:-[trblxyse])?|divide|ring|outline|bg)-white\/\d{1,3}(?![\w-])/,
+  },
+  {
+    id: "no-raw-text-alpha",
+    law: "Text hierarchy is the four --color-ps-text-* tiers, which are derived from the painted ground and gated by contrast-check. Spelling it as a raw white opacity is how 2,377 elements once failed AA; 157 sites still do it, and 23 of them are below the 50% floor the file says has no tier beneath it.",
+    files: (f) => f.startsWith("src/") && f.endsWith(".tsx"),
+    pattern: /(?:^|[^\w-])(?:text|placeholder|caret|decoration)-white(?:\/\d{1,3})?(?![\w-])/,
+  },
+  {
+    id: "palette-must-be-house",
+    law: "Tailwind's own palette is not this product's palette. 353 sites in 56 files paint red-400, green-500 and 23 other ramp colours directly, and the collisions are exact: text-red-400 IS --color-semantic-danger, spelled two ways. Use a house token or the status ladder.",
+    files: (f) => f.startsWith("src/") && f.endsWith(".tsx"),
+    pattern:
+      /(?:^|[^\w-])(?:text|bg|border(?:-[trblxyse])?|ring(?:-offset)?|shadow|from|via|to|fill|stroke|outline|decoration|accent|divide|placeholder|caret)-(?:slate|gray|grey|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose)-\d{2,3}(?:\/\d{1,3})?(?![\w-])/,
+  },
+  {
+    id: "type-scale-only",
+    law: "Five steps: text-micro 12/16, text-body 14/21, text-lead 16/24, text-title 20/28, text-display 28/34. Tailwind's default scale was used as if it had two, with text-xs 919 times and text-sm 241 against 36 uses of everything larger, and 70% of every character rendered is 12px.",
+    files: (f) => f.startsWith("src/") && f.endsWith(".tsx"),
+    pattern:
+      /(?:^|[^\w-])text-(?:xs|sm|base|lg|xl|2xl|3xl|4xl|5xl|6xl|7xl|8xl|9xl)(?![\w-])/,
+  },
+  {
+    id: "radius-scale-only",
+    law: "Three radii: rounded-ps-sm 4 for a chip, rounded-ps-md 8 for a control, rounded-ps-lg 12 for a surface, plus rounded-full. Seven render today from eleven spellings, and adjacent cards on the same screen have 8px and 12px corners.",
+    files: (f) => f.startsWith("src/") && f.endsWith(".tsx"),
+    pattern:
+      /(?:^|[^\w-])rounded(?:-[trblse]{1,2})?-(?:none|sm|md|lg|xl|2xl|3xl|\[[^\]]+\])(?![\w-])/,
+  },
+  {
+    id: "z-scale-only",
+    law: "Seven named layers: base, sticky, dropdown, overlay, modal, toast, tooltip. Thirteen z values are in use and seven are arbitrary; z-[61] exists because someone needed to sit on z-[60], which is how a modal ends up under a toast.",
+    files: (f) => f.startsWith("src/") && f.endsWith(".tsx"),
+    pattern: /(?:^|[^\w-])z-(?:\[[^\]]+\]|\d+)(?![\w-])/,
+  },
+  {
+    id: "no-inline-card-chrome",
+    law: "A card is <Surface>. 113 files spell its chrome inline instead, and the measured result is 108 distinct card chromes across 23 screens: the same intent at dark-900/40 and dark-900/50 accounts for 102 surfaces where nobody made a choice.",
+    files: (f) =>
+      f.startsWith("src/") && f.endsWith(".tsx") && !f.startsWith("src/components/ui/"),
+    // All three on one line: a corner, an edge and a fill is a card, wherever
+    // the author put the words.
+    test: (line) =>
+      /(?:^|[^\w-])rounded(?:-|\b)/.test(line) &&
+      /(?:^|[^\w-])border(?:-|\s|")/.test(line) &&
+      /(?:^|[^\w-])bg-/.test(line),
+  },
+  {
+    id: "no-raw-control-outside-ui",
+    law: "A control is a primitive. 321 raw <button> elements live in 113 files against 104 uses of the shared Button, which is why 20 distinct button heights render; 110 of them carry no type= and default to submit inside a form.",
+    files: (f) =>
+      f.startsWith("src/") &&
+      f.endsWith(".tsx") &&
+      !f.startsWith("src/components/ui/") &&
+      !f.startsWith("src/kit/"),
+    pattern: /<(?:button|input|select|textarea)(?=[\s/>])/,
+  },
+  {
+    id: "one-container-per-page",
+    law: "The shell owns the measure. A page that centres its own column is how 21 of 23 screens end up with their h1 on a different left edge from their content, by as much as 289px, across eight content widths.",
+    files: (f) => f.startsWith("src/app/") && f.endsWith("page.tsx"),
+    pattern: /(?:^|[^\w-])max-w-(?!ps-prose)[\w[\]./-]+/,
+  },
+  {
+    id: "no-raw-colour-in-css",
+    law: "globals.css paints three colours no token declares, including a second cyan (#22d3ee) for the product's own live-pathway signature, next to elements painted in the brand cyan. Declare it or use the one that exists.",
+    files: (f) => f === "src/app/globals.css",
+    // Inside the declaration blocks a literal IS the token; everywhere else it
+    // is a colour nobody can retheme. The line test is the cheap approximation:
+    // a raw colour on a line that is not a custom-property declaration.
+    test: (line) =>
+      !/^\s*--[a-z-]+:/.test(line) &&
+      /#[0-9a-fA-F]{3,8}\b|(?<![A-Za-z0-9.$])rgba?\(\s*\d/.test(line),
+  },
+  {
+    id: "no-raw-fetch-in-component",
+    law: "A component reads the API through useApiResource, which is cached and deduped. Sixteen files call safeApiCall inside a useEffect instead, and the dashboard therefore issues 23 requests on load with six endpoints fetched twice.",
+    files: (f) =>
+      (f.startsWith("src/components/") || f.startsWith("src/app/") || f.startsWith("src/modules/")) &&
+      f.endsWith(".tsx"),
+    fileTest: (lines) => {
+      const usesEffect = lines.some((l) => /\buseEffect\s*\(/.test(l));
+      if (!usesEffect) return null;
+      const at = lines.findIndex((l) => /\bsafeApiCall\s*[(<]/.test(l));
+      return at >= 0 ? at : null;
+    },
+  },
 ];
 
 // ── Scan ────────────────────────────────────────────────────────────────────

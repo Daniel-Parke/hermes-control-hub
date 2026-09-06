@@ -82,16 +82,35 @@ describe("the surface ladder", () => {
     }
   });
 
-  it("aliases the primitives the tree already paints, minting no new colour", () => {
-    // Three of the four roles are an alias, not a value: changing --color-dark-900
-    // must move the panel with it, or the semantic layer is a second source of
-    // truth rather than a name for the first.
-    expect(tokens.get("--color-ps-surface-ground")).toBe("var(--color-dark-950)");
-    expect(tokens.get("--color-ps-surface-panel")).toBe("var(--color-dark-900)");
+  /**
+   * Amended 2026-09-07 (T-0116), and the reason belongs here rather than in a
+   * commit message.
+   *
+   * This used to assert that all four roles alias a `--color-dark-*` primitive:
+   * that the semantic layer is a NAME for the appearance layer and not a second
+   * source of truth. That is a good rule and it is why the test was written. It
+   * is also the rule that kept the ladder flat, because the primitives it named
+   * span 1.19:1 against the ground, and a semantic layer that can only rename
+   * what is already there cannot fix a surface nobody can see.
+   *
+   * So the rule now applies to the roles that are still names, and the roles
+   * that became values are asserted AS values, by measurement, in
+   * u2-the-token-layer.test.ts. Nothing here is loosened: there are more
+   * assertions than before, not fewer.
+   */
+  it("still aliases the primitives for the roles that are names", () => {
     expect(tokens.get("--color-ps-surface-well")).toBe("var(--color-dark-800)");
     // The hairline is the exception, and it is recorded rather than invented:
     // the tree draws its rules as border-white/10, which matches no dark-* rung.
     expect(tokens.get("--color-ps-surface-hairline")).toBe("rgb(255 255 255 / 0.10)");
+  });
+
+  it("and the roles that became values are hexes, not aliases of a flat ladder", () => {
+    // A `var()` here would mean the ladder is back to renaming dark-900, which
+    // is the state the walk measured at 1.06:1 against the page.
+    expect(tokens.get("--color-ps-surface-ground")).toMatch(/^#[0-9a-f]{6}$/i);
+    expect(tokens.get("--color-ps-surface-panel")).toMatch(/^#[0-9a-f]{6}$/i);
+    expect(tokens.get("--color-ps-surface-panel")).not.toBe(tokens.get("--color-dark-900"));
   });
 });
 

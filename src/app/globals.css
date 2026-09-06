@@ -78,28 +78,156 @@
      the only layer, because "dark-900" says nothing about whether a surface is
      a panel or a well and so nothing stops the two diverging.
 
-     No colour is minted here. Each role is an alias for the primitive the tree
-     already paints in that role, counted across the tsx tree on 2026-08-24:
+     Until 2026-09-07 no colour was minted here: each role aliased the primitive
+     the tree already painted in that role, counted across the tsx tree on
+     2026-08-24 (ground dark-950 x50, panel dark-900 x160, well dark-800 x68,
+     hairline white/10 x280). That was honest recording and it is precisely why
+     the ladder is flat, because what the tree already painted was three
+     surfaces inside 1.19:1 of one another.
 
-       role      alias         uses   what it is
-       ground    dark-950       50    the page itself (src/app/layout.tsx body)
-       panel     dark-900      160    a raised card, panel or bar
-       well      dark-800       68    a sunken field, code block or table row
-       hairline  white / 10%   280    the rule between two surfaces
+     `panel` is now a value in its own right, solved for 1.45:1 against the
+     ground by scripts/tooling/derive-surface-ladder.mjs, and it is no longer
+     dark-900. Re-valuing it repaints nothing: `bg-ps-surface-panel` had zero
+     call sites outside src/lib/theme.ts. `well` and `hairline` keep the values
+     their three and 280 call sites paint today and are retired by U4's codemod,
+     which replaces the call sites rather than the values under them.
 
-     `hairline` is the one role with no `--color-dark-*` behind it, and naming
-     one would be inventing rather than recording: the tree draws its rules as
-     `border-white/10`, which over the ground resolves to #1e232a and matches no
-     rung. dark-700 (#1c2d40) and dark-600 (#263d54) stay un-roled on purpose:
-     four backgrounds and the scrollbar thumb between them is not a role.
-
-     These name what exists; they do not repaint anything. Migrating the 278
-     appearance-named usages onto them is separate work, and until it happens
-     both spellings are live and mean the same pixels. */
-  --color-ps-surface-ground: var(--color-dark-950);
-  --color-ps-surface-panel: var(--color-dark-900);
+     dark-700 (#1c2d40) and dark-600 (#263d54) stay un-roled on purpose: four
+     backgrounds and the scrollbar thumb between them is not a role. */
+  --color-ps-surface-ground: #040b12;
+  --color-ps-surface-panel: #1e3042;
   --color-ps-surface-well: var(--color-dark-800);
   --color-ps-surface-hairline: rgb(255 255 255 / 0.10);
+
+  /* ── The derived ladder ────────────────────────────────────────────────────
+     The four text tiers above are derived rather than chosen: white at 92, 70,
+     55 and 50 percent, because those are the alphas that clear AA against the
+     ground the product actually paints. The SURFACES were never given the same
+     treatment. They are named for how they look, and measured across the
+     running product the whole ladder spans 1.00 to 1.19:1 against the page: the
+     rail is 1.06:1 against the column beside it, the commonest card fill is
+     1.03:1, and every rule in the tree is a 1px white/10 hairline at 1.25:1,
+     against the 3:1 WCAG 1.4.11 asks of a boundary that identifies a component.
+     That is the whole of "the sidebar is quite hard to see", and it is a
+     surface problem: the rail's own labels already measure 6.18:1.
+
+     These five are the output of scripts/tooling/derive-surface-ladder.mjs,
+     which solves for the DIMMEST colour on a hue ray that reaches a target
+     ratio. Do not hand-edit them. Change the requirement in that file and re-run
+     it; tests/unit/u2-the-token-layer.test.ts recomputes every ratio from the
+     hexes written here, so an edit that looks nicer and measures worse fails.
+
+       rung       hex       against  target  measured   vs ground
+       panel      #1e3042   ground   1.45    1.466      1.466
+       raised     #2e4a66   panel    1.45    1.470      2.154
+       edge       #6c7887   panel    3.00    3.003      4.402
+       hairline   #474f59   panel    1.60    1.626      2.383
+       emphasis   #8797aa   panel    4.50    4.521      6.628
+
+     Two rays, because a surface and a rule are not the same object. Surfaces
+     travel the palette's own line (#263d54 is 38:61:84, its brightest existing
+     rung), so the identity does not move. Rules travel a cooler, far less
+     saturated one: on the surface ray a 3:1 stroke comes out a mid blue that
+     reads as a coloured line rather than as an edge.
+
+     WHICH RULE WHERE, decided by looking at both in a browser before writing
+     it down. `edge` is for the boundary of a CONTROL and for the shell's own
+     seams, which is what 1.4.11 is about. `hairline` is for a card outline and
+     for a subdivision inside one surface: a card whose fill already sits
+     1.47:1 off the page does not also need a 3:1 stroke to be found, and
+     drawing one round every tile reads as wireframe. `emphasis` is selected,
+     armed or focused, a boundary that has to win against a boundary.
+
+     `inset` is the ground. A well is normally a step DOWN, and a page this
+     close to black has nowhere to go: an input inside a panel reads as sunken
+     by being its parent's lower rung, which costs no new colour at all.
+
+     Nothing here repaints anything. `--color-ps-surface-panel` had zero
+     consumers in .tsx, `well` and `hairline` keep the values their three and
+     280 call sites already paint, and the codemod that moves those is U4. */
+  --color-ps-surface-raised: #2e4a66;
+  --color-ps-surface-inset: var(--color-ps-surface-ground);
+  --color-ps-edge: #6c7887;
+  --color-ps-edge-hairline: #474f59;
+  --color-ps-edge-emphasis: #8797aa;
+
+  /* ── Type ──────────────────────────────────────────────────────────────────
+     There was no type scale. `@theme` declared no --text-*, no --leading-* and
+     no --tracking-*, so the scale was Tailwind's default, untouched, and it was
+     used as if it had two steps: text-xs 919 times and text-sm 241 against 36
+     uses of everything larger combined. Rendered across 23 routes, 70% of every
+     character in the product is 12px and 63% is JetBrains Mono, so the eye has
+     nothing to land on and every screen reads as one undifferentiated block.
+
+       micro    12/16   mono micro-caps, IDs, paths, timestamps, table cells
+       body     14/21   the default: body copy, list rows, form values, buttons
+       lead     16/24   prose: Help, descriptions, empty states, the reader
+       title    20/28   h1, panel titles
+       display  28/34   the one number a screen exists to show
+
+     Five steps, and the floor is the 12px this project already declares
+     readable. `body` and `lead` carry a 1.5 line height because WCAG 1.4.12
+     asks it of prose and seventeen blocks in this product run at 1.33. `micro`
+     is a one-line mono label, which is not prose.
+
+     The register, ruled by the operator: mono keeps the machine words (values,
+     IDs, paths, timestamps, status words, counts, commands and therefore button
+     labels, and the uppercase micro-caps section labels). Inter takes the human
+     sentences and the headings. */
+  --text-micro: 0.75rem;
+  --text-micro--line-height: 1rem;
+  --text-body: 0.875rem;
+  --text-body--line-height: 1.3125rem;
+  --text-lead: 1rem;
+  --text-lead--line-height: 1.5rem;
+  --text-title: 1.25rem;
+  --text-title--line-height: 1.75rem;
+  --text-display: 1.75rem;
+  --text-display--line-height: 2.125rem;
+
+  /* ── Radius ────────────────────────────────────────────────────────────────
+     Seven radii render across the product and eleven spellings produce them.
+     Three: 4 for a chip or a dot, 8 for a control, 12 for a surface.
+
+     House-prefixed, and that is not decoration. Tailwind already ships
+     --radius-sm/md/lg, and `rounded-lg` appears 324 times in this tree, so
+     redefining the built-in names would repaint every one of them in a batch
+     whose whole contract is that nothing repaints. U6's codemod moves the call
+     sites onto these; the built-in names are not touched. */
+  --radius-ps-sm: 4px;
+  --radius-ps-md: 8px;
+  --radius-ps-lg: 12px;
+
+  /* ── Elevation ─────────────────────────────────────────────────────────────
+     Twenty-six distinct box-shadows render, including near-duplicate inner
+     glows at 16px and 18px on five different accents. Two survive: this one,
+     which is a dialog or a popover being above the page, and `glow-surface`,
+     which is the product's live signal and is not elevation at all. */
+  --shadow-ps-raised: 0 8px 24px -4px rgb(0 0 0 / 0.55), 0 2px 6px -2px rgb(0 0 0 / 0.4);
+
+  /* ── Layers ────────────────────────────────────────────────────────────────
+     Thirteen z values are in use and seven of them are arbitrary. `z-[61]`
+     exists because somebody needed to sit on top of `z-[60]`, which is how a
+     modal ends up under a toast. Named, ordered, and gapped by ten so there is
+     room to insert without inventing a decimal. */
+  /* ── Status ────────────────────────────────────────────────────────────────
+     Twenty-two files each invented their own state-to-colour map, so `failed`
+     renders as neon-pink in the composer, neon-pink again for a down
+     subsystem, and red-400 in two other places, none of them the danger token
+     the design system declares. One ladder, aliasing colours that already
+     exist, so nothing new is minted and nothing can drift.
+
+     This is state. It is NOT the categorical scale a chart legend needs, which
+     lives in src/components/viz/colors.ts and is deliberately separate: on
+     Insights the same six accents currently serve as both, so green means
+     "healthy" and "Sessions" at once and orange means seven different things. */
+  --color-status-idle: var(--color-ps-text-muted);
+  --color-status-queued: var(--color-semantic-warning);
+  --color-status-running: var(--color-neon-cyan);
+  --color-status-ok: var(--color-semantic-success);
+  --color-status-warn: var(--color-semantic-warning);
+  --color-status-fail: var(--color-semantic-danger);
+  --color-status-blocked: var(--color-neon-orange);
 
   /* ── Viz chrome ────────────────────────────────────────────────────────────
      The furniture a chart is drawn ON, as opposed to the data drawn IN it.
@@ -168,6 +296,13 @@
 
      Tailwind reads `--container-*` for max-w-* and `--spacing-*` for gap,
      padding and space-y, so these are utilities the moment they are declared. */
+  /* Two measures replace the three above, in U3. `page` is every screen's
+     container and owns the left edge the h1 and the content both sit on; the
+     h1 misses that edge on 21 of 23 routes today, by up to 289px. `prose` is a
+     column INSIDE it, left-aligned rather than centred, because a second
+     centred container is what puts a screen 400px away from its neighbour. */
+  --container-ps-page: 82rem;
+  --container-ps-prose: 46rem;
   --container-ps-reading: 48rem;
   --container-ps-wide: 56rem;
   --container-ps-full: 80rem;
@@ -176,8 +311,31 @@
 
 /* Shell + RGB mirrors for effects (keep aligned with @theme / docs/contributing/design-tokens.md) */
 :root {
+  /* The layer ladder. In :root rather than @theme because z-index is not one of
+     Tailwind's theme namespaces: declared there it produces no utility and is
+     dropped from the stylesheet entirely, which was measured rather than
+     assumed. The @utility rules below turn each rung into a real class, so a
+     call site writes `z-modal` and not `z-[var(--z-modal)]` -- which the
+     z-scale-only rule flags as an arbitrary value, correctly.
+
+     Gapped by ten so a new layer can be inserted without inventing a decimal.
+     Thirteen z values are in use today and seven of them are arbitrary; z-[61]
+     exists because somebody needed to sit on top of z-[60]. */
+  --z-base: 0;
+  --z-sticky: 10;
+  --z-dropdown: 30;
+  --z-overlay: 50;
+  --z-modal: 60;
+  --z-toast: 70;
+  --z-tooltip: 80;
   --ps-shell-header-min-height: 5rem;
   --ps-mobile-header-min-height: 3rem;
+  /* One pair, so a transition is either the one you notice or the one you do
+     not. The house transition also excludes outline-color, in U14: Tailwind's
+     `transition-colors` includes it, so the focus ring currently fades in from
+     grey over 150ms and a fast tabber never sees it cyan. */
+  --ps-duration-fast: 120ms;
+  --ps-duration: 200ms;
   --ps-rgb-neon-cyan: 0 191 255;
   --ps-rgb-neon-purple: 164 128 255;
   --ps-rgb-neon-green: 163 255 18;
@@ -225,6 +383,15 @@
   --ps-reader-chapter-failed: #7f1d1d;
   --ps-reader-chapter-idle: var(--ps-reader-rule);
 }
+
+/* One class per rung of the layer ladder (see :root above). */
+@utility z-base { z-index: var(--z-base); }
+@utility z-sticky { z-index: var(--z-sticky); }
+@utility z-dropdown { z-index: var(--z-dropdown); }
+@utility z-overlay { z-index: var(--z-overlay); }
+@utility z-modal { z-index: var(--z-modal); }
+@utility z-toast { z-index: var(--z-toast); }
+@utility z-tooltip { z-index: var(--z-tooltip); }
 
 /* Scrollbar styling */
 ::-webkit-scrollbar {
