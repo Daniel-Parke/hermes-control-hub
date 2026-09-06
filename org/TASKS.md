@@ -126,3 +126,4 @@ The records under org/tasks/ are canonical.
 | T-0111 | standard | R1 | done | unassigned |
 | T-0112 | standard | R1 | done | unassigned |
 | T-0113 | standard | R2 | in_progress | unassigned |
+| T-0114 | standard | R1 | done | t0114-u0-baselines-2026-09-06 |
