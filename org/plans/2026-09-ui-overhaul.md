@@ -1,5 +1,5 @@
 ---
-summary: The approved UI overhaul programme, batches U0 to U17, four foundational systems, the signed-off deletions, the per-screen density decisions, eleven new gates and the measurements that prove it
+summary: The approved UI overhaul programme, batches U0 to U16, four foundational systems, the signed-off deletions, the per-screen density decisions, eleven new gates and the measurements that prove it
 type: venture
 tags: [plan, design]
 status: approved
@@ -16,7 +16,7 @@ compiled_from: preserved
 > the governance corpus, and four operator decisions taken at approval.
 > **Approved by the operator 2026-09-06.** Sessions read this file from disk; it
 > outranks any memory of the conversation that produced it. Task records T-0114
-> to T-0131 are the batches. Format follows `org/plans/2026-09-final-release.md`.
+> to T-0130 are the batches. Format follows `org/plans/2026-09-final-release.md`.
 > Precedence: `org/CONSTITUTION.md` > repo governing files > this plan.
 
 ## Context
@@ -106,11 +106,21 @@ unreachable. The line-count problem is duplication, not vestige.
     timestamps, status words, counts, commands (and therefore button labels)
     and uppercase micro-caps section labels. Inter takes prose, descriptions,
     empty states and headings. ~62% mono to ~45%.
-11. **The test corpus is in scope, in full.** Mock hoisting AND re-organisation
-    by subject rather than by batch: 39,499 lines of preamble across 615 files,
-    144 batch-named files (37,744 lines, 553 duplicated 15-line windows).
-    20,000 to 28,000 lines, split across two batches at opposite ends of the
-    programme.
+11. **The test corpus: shared mock factories only**, re-scoped on measurement
+    (2026-09-06, after U0). The reconnaissance reported 39,499 of 107,013 lines
+    sitting before the first `describe`, and inferred copy-pasted preamble. The
+    37% is real; the inference is not. Measured, that preamble is jest.mock
+    7,402 + imports 1,905 + **comments 14,873** + per-file fixtures 15,255, and
+    the comment culture is on the keep list. The mocks are not identical either:
+    `@/lib/db` has 42 distinct shapes across 99 calls, `api-fetch` 31 across 48,
+    `api-logger` 28 across 109. Counting genuine duplication directly, repeated
+    code blocks across three or more files, the ceiling on the WHOLE corpus is
+    4,284 lines (6-line windows) or 6,957 at the most generous setting, and the
+    generous figure counts `afterEach(() => {` in 56 files, which is not
+    removable at all. So: one batch of shared factories, about 1,750 lines. The
+    merge-by-subject batch is **dropped** - merging files moves lines rather
+    than deleting them, and it would have rewritten 37,744 lines of assertions
+    while the screens they test were being rebuilt underneath.
 
 ## What must survive (the contract)
 
@@ -357,7 +367,7 @@ last programme, lands with gate 9.
 
 ## Programme, batches
 
-Eighteen batches in order. Each is one task record, one oracle-first commit
+Seventeen batches in order. Each is one task record, one oracle-first commit
 measured red, one implementation commit, one mutation sweep against the
 committed tree, one push. Effort S/M/L/XL. The discipline block from
 `org/plans/2026-09-final-release.md` applies unchanged: gate **by exit code**
@@ -398,18 +408,24 @@ by gates, never by comments.
   design-lint rules measured red against planted fixtures AND against the real
   sites, so a rule that fires for the wrong reason is caught.
 
-### U1 — Test corpus A: the mock preamble [L] · depends U0 · T-0115
-Landed first because it is purely mechanical and every later batch edits tests.
-- The always-identical mocks (`@/lib/api-logger` x109, `@/lib/db` x99,
-  `lucide-react` x55, `@/lib/api-auth` x53, `@/lib/audit-log` x52,
-  `@/lib/api-fetch` x48, `next/navigation` x36, `next/server` x33) hoisted into
-  `tests/jest.setup.ts` or `moduleNameMapper`.
-- One `tests/helpers/with-test-db.ts` factory for the ~50 pasted db-mock
-  stanzas, called in one line through `jest.mock`'s hoisting-safe form.
+### U1 — Shared mock factories [M] · depends U0 · T-0115
+Landed early because it is mechanical and every later batch edits tests.
+- `tests/helpers/mocks.ts`: one exported factory per repeated mock shape, called
+  from each site through `jest.mock`'s hoisting-safe `require` form, so the mock
+  stays OPT-IN per file. Nothing moves into `jest.setup.ts` or
+  `moduleNameMapper`: a mock declared there applies to all 614 files including
+  the ones that deliberately use the real module, which is a behaviour change
+  wearing a refactor's clothes.
+- The stanza that actually pays: `@/lib/db`'s crypto-and-transaction block, 10
+  lines pasted identically into 37 files. Then the dominant shapes of
+  `lucide-react` (26 of 54), `@/components/layout/AppPageShell` (13 of 16),
+  `next/link` (10 of 18), `@/lib/api-auth` (16 of 52), `@/lib/runtime` (8 of 17)
+  and the rest. Every non-dominant shape keeps its own factory, because it is
+  testing something different.
 - `tests/helpers/render-with-query.tsx` (22 lines, zero users) deleted.
 - Verify: **the oracle is identity.** `it()` count, suite count, pass count and
-  every coverage percentage are byte-identical before and after; any movement
-  is a defect, not a saving. Coverage floors unchanged. 12,000 to 18,000 lines.
+  every coverage percentage are unchanged; any movement is a defect, not a
+  saving. About 1,750 lines.
 
 ### U2 — The token layer [L] · depends U1 · T-0116
 - S1, S3, S5 and S6 declared in `@theme`: the surface and edge ladder, the five
@@ -629,20 +645,7 @@ Dashboard, Quests, Help.
   which currently hides test-only modules; canary blessed in the same commit
   for the route deletions; a request-count assertion on the dashboard.
 
-### U16 — Test corpus B: by subject, not by batch [XL] · depends U15 · T-0130
-Landed last of the code batches, because only now are the subjects final.
-- The 144 `b1-` to `b19-` files (37,744 lines) merged and renamed by subject:
-  one composer-engine suite, one models-repository suite, one sessions-filters
-  suite, and so on. 553 duplicated 15-line windows across 25 file-groups
-  collapse; the 7-copy composer migration setup and the 7-copy `NextResponse`
-  stub become one helper each.
-- Verify: **the oracle is identity again.** Total `it()` count and every
-  coverage percentage unchanged; a mapping table on the record from every old
-  file to its new home, so nothing is quietly dropped; the mutation sweep re-run
-  against the reorganised tree to prove the oracles still kill what they killed.
-  8,000 to 12,000 lines.
-
-### U17 — Documentation, records, release readiness [L] · depends U16 · T-0131
+### U16 — Documentation, records, release readiness [L] · depends U15 · T-0130
 - `docs/contributing/design-tokens.md` rewritten to describe the system that
   now exists: the ladder and its derivation, the type scale and register rule,
   radius/z/shadow/motion, the status ladder, the primitive set, and the rule
@@ -651,7 +654,7 @@ Landed last of the code batches, because only now are the subjects final.
 - Every touched guide finished against the final state; `npm run screenshots`
   regenerates every PNG; `docs:check` and `check-doc-links` green with the
   retired guides gone.
-- The eighteen task records written and `org/TASKS.md` re-rendered; CHANGELOG
+- The seventeen task records written and `org/TASKS.md` re-rendered; CHANGELOG
   entries in user language. (The plan itself was filed in U0, so that every
   session after the first reads it from disk rather than from a conversation.)
 - The after-census published beside the before-census in the final record.
@@ -691,10 +694,10 @@ Landed last of the code batches, because only now are the subjects final.
 | 3 orphan API routes | zero callers; two of their doc rows are wrong | 94 |
 | 18 unused `IconName` variants + imports | registry uses 19 of 37 | ~18 |
 | `dashboard-initial-load.ts` | duplicates six `useQuery` calls | ~155 |
-| **Test corpus (decision 11)** | 39,499 lines of preamble; 144 batch-named files; 553 duplicated windows | **20,000-28,000** |
+| **Shared mock factories (decision 11)** | the `@/lib/db` stanza pasted identically into 37 files, plus each target's dominant shape | **~1,750** |
 
 **Total: 6,000 to 8,500 lines from `src/` with no feature removed, plus
-~1,100 from the signed-off merges, plus 20,000 to 28,000 from `tests/`.**
+~1,100 from the signed-off merges, plus ~1,750 from `tests/`.**
 
 ### Explicitly NOT proposed for deletion
 
@@ -706,7 +709,7 @@ bloom field; any viz component.
 ## What I will measure
 
 Captured by the census script in U0 against the committed tree, re-captured in
-U17. "It looks better" is not a result.
+U16. "It looks better" is not a result.
 
 The "before" column below is the reconnaissance's. U0 built the census and took
 its own reading, and where the two disagree it is because the predicates differ,
@@ -741,7 +744,7 @@ surface at least 24x24 that is not a control (108, against the walk's narrower
 | Animations under reduced-motion | 28 | **<= 3** |
 | Worst CLS across all routes | 0.116 | **<= 0.02** |
 | `src/` lines | 105,965 | **-6,000 to -9,600** |
-| `tests/` lines | 111,664 | **-20,000 to -28,000** |
+| `tests/` lines | 111,664 | **~-1,750** |
 | Test count and coverage percentages | 6,090 tests | **unchanged, exactly** |
 
 ## What I decided NOT to do, and why
@@ -786,10 +789,10 @@ surface at least 24x24 that is not a control (108, against the walk's narrower
   one; the canary's `moduleGraph` is path-insensitive so pure moves are
   neutral; screenshots recaptured and walked per batch; a sceptic agent reads
   `git diff` for deleted assertions after every fix agent.
-- **The test batches could quietly lose coverage.** Both carry an identity
-  oracle: the `it()` count and every coverage percentage must be unchanged, and
-  U16 additionally carries an old-file-to-new-home mapping table on its record
-  and re-runs the mutation sweep against the reorganised tree.
+- **The mock-factory batch could quietly lose coverage.** It carries an
+  identity oracle: the `it()` count and every coverage percentage must be
+  unchanged. Nothing moves into `jest.setup.ts`, so no file gains a mock it did
+  not ask for.
 - **`contrast-check.mjs`'s regexes are form-sensitive.** `--color-dark-950`
   must stay a 6-digit hex and the four tiers must stay spelled
   `rgb(255 255 255 / 0.NN)`, or tiers silently drop out of measurement. Held as
