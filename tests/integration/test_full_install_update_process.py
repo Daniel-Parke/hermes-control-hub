@@ -121,6 +121,47 @@ def _interactive_scenarios_tail() -> list[str]:
     ]
 
 
+def _describe_manifest_change(before: str, after: str) -> str:
+    """Say which files went, arrived or changed, rather than only that one did.
+
+    Each manifest line is `<sha256>  <path>` from sha256sum, so the path is the
+    identity and the hash is the content. Splitting on that makes the three
+    interesting cases separable, and they are not equally alarming: a file that
+    VANISHED is possible data loss, while one that merely changed may be a file
+    the update is supposed to rewrite and nobody remembered to exclude.
+    """
+
+    def index(manifest: str) -> dict[str, str]:
+        out: dict[str, str] = {}
+        for line in manifest.splitlines():
+            line = line.strip()
+            if not line:
+                continue
+            parts = line.split(None, 1)
+            if len(parts) == 2:
+                out[parts[1].strip()] = parts[0].strip()
+        return out
+
+    a, b = index(before), index(after)
+    gone = sorted(set(a) - set(b))
+    new = sorted(set(b) - set(a))
+    changed = sorted(k for k in set(a) & set(b) if a[k] != b[k])
+
+    lines = []
+    if gone:
+        lines.append("  REMOVED (this is the data-loss case):")
+        lines.extend(f"    - {p}" for p in gone)
+    if new:
+        lines.append("  ADDED:")
+        lines.extend(f"    + {p}" for p in new)
+    if changed:
+        lines.append("  CONTENTS CHANGED:")
+        lines.extend(f"    ~ {p}" for p in changed)
+    if not lines:
+        lines.append("  (the listings differ only in whitespace or ordering)")
+    return "\n".join(lines)
+
+
 class Harness:
     def __init__(
         self,
@@ -455,6 +496,12 @@ class Harness:
 
         ``control-hub.db`` and ``seed-state.json`` are updated by ``seed-catalog --merge`` on update;
         user-owned JSON/markers are asserted separately via ``assert_sentinel_ch_files``.
+
+        ``auth-token`` is minted by the app on first boot since authentication began
+        failing closed, so under ``--skip-http`` it first appears during the update
+        rather than during setup. It is excluded here and asserted properly by
+        ``assert_auth_token_intact``: what matters about that file is that it exists
+        and is not rotated, neither of which a byte-equal listing was checking.
         """
         r = root.replace("'", "'\"'\"'")
         return self.docker_exec_capture(
@@ -467,9 +514,37 @@ class Harness:
             f"! -path './patterstage.db-wal' ! -path './patterstage.db-shm' "
             f"! -path './control-hub.db-wal' ! -path './control-hub.db-shm' "
             f"! -name '*.pre-migrate-*' ! -name '*.pre-baseline-*' "
+            f"! -path './auth-token' "
             f"! -path './seed-state.json' | LC_ALL=C sort | xargs -r sha256sum\n",
             workdir="/",
         )
+
+    def assert_auth_token_intact(self, container: str, root: str, before: str | None) -> None:
+        """The token must exist after an update, and must not have been rotated.
+
+        Both halves are the operator's problem rather than a tidiness question.
+        A missing token locks them out of their own install; a rotated one
+        silently breaks the ``?ps_token`` link the installer printed at them and
+        that they have very likely bookmarked.
+
+        ``before`` is the token's contents prior to the update, or None when the
+        install had not minted one yet -- which is the ordinary case under
+        ``--skip-http``, where no server ran during setup.
+        """
+        r = root.replace("'", "'\"'\"'")
+        after = self.docker_exec_capture(
+            container,
+            f"test -s '{r}/auth-token' && cat '{r}/auth-token'\n",
+            workdir="/",
+        ).strip()
+        if not after:
+            raise AssertionError(
+                "auth-token is missing or empty after the update; the operator is locked out",
+            )
+        if before and before != after:
+            raise AssertionError(
+                "auth-token was rotated by the update; every bookmarked ?ps_token link is now dead",
+            )
 
     def sha256_file(self, container: str, path: str) -> str:
         p = path.replace("'", "'\"'\"'")
@@ -1060,6 +1135,13 @@ echo "[harness] {action} lifecycle OK (pid $SPID on port $PORT)"
 
             manifest_before = self.manifest_data_dir(c, data_root)
             schema_before = self.sqlite_schema_version(c, f"{data_root}/control-hub.db")
+            # Read rather than hashed, so the assertion after the update can say
+            # whether it was ROTATED and not merely whether it differs.
+            token_before = self.docker_exec_capture(
+                c,
+                f"cat '{data_root}/auth-token' 2>/dev/null || true\n",
+                workdir="/",
+            ).strip()
 
             self.configure_file_origin_and_push_dev(c)
             self.bump_upstream_dev(c)
@@ -1074,10 +1156,12 @@ echo "[harness] {action} lifecycle OK (pid $SPID on port $PORT)"
 
             if manifest_before != manifest_after:
                 raise AssertionError(
-                    "data dir manifest changed after update; possible data loss",
+                    "data dir manifest changed after update; possible data loss\n"
+                    + _describe_manifest_change(manifest_before, manifest_after),
                 )
             if schema_after < schema_before:
                 raise AssertionError("schema_version regressed")
+            self.assert_auth_token_intact(c, data_root, token_before or None)
             self.assert_hermes_qa_marker(c)
             self.assert_custom_profile_unchanged(c)
             self.assert_sentinel_ch_files(c, data_root)
