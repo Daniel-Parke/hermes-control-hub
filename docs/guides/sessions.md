@@ -8,6 +8,7 @@ screen: /results/sessions
 concepts: [session, transcript, run]
 type: guide
 tags: [sessions, transcripts, history]
+shots: [docs/images/sessions.png]
 ---
 
 # Sessions
@@ -16,6 +17,8 @@ Every conversation the agent has had on this machine, whatever started it,
 newest first and readable in full.
 
 ## What you see
+
+![Sessions screen](../images/sessions.png)
 
 At the top, the page name and a count of the sessions the current filter
 matches. If no agent is installed yet, an orange notice sits under the heading

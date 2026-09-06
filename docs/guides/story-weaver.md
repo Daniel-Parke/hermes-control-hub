@@ -8,6 +8,7 @@ screen: /recroom/story-weaver
 concepts: [spend]
 type: guide
 tags: [product, rec-room]
+shots: [docs/images/story-weaver.png]
 ---
 
 # Story Weaver
@@ -16,6 +17,8 @@ The front door to the Rec Room's long-form writer: how much you have written, th
 stories you touched most recently, and the way in to the rest of it.
 
 ## What you see
+
+![Story Weaver screen](../images/story-weaver.png)
 
 The header reads **Story Weaver** with **Collaborative interactive fiction**
 beneath it, and a back link reading HOME on the left that returns you to the

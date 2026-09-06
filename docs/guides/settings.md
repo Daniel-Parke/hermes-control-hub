@@ -7,6 +7,7 @@ audience: operator
 screen: /agent/settings
 type: guide
 tags: [product, config]
+shots: [docs/images/settings.png]
 ---
 
 # Settings
@@ -15,6 +16,8 @@ Settings is where you change how the agent behaves, and where you look when you
 need to know how this install is put together.
 
 ## What you see
+
+![Settings screen](../images/settings.png)
 
 The header names the page and counts what is under it: 27 sections, plus
 Models, Restore and System. The `?` at the right of the header opens this

@@ -8,6 +8,7 @@ screen: /agent/tools
 concepts: [tool, toolset]
 type: guide
 tags: [product, agent]
+shots: [docs/images/tools.png]
 ---
 
 # Tools
@@ -15,6 +16,8 @@ tags: [product, agent]
 What your agent is allowed to do, chosen one profile at a time and written straight into the agent's own configuration.
 
 ## What you see
+
+![Tools screen](../images/tools.png)
 
 The page opens at **Agent → Tools** in the left rail. The title bar carries a
 wrench, the word **Tools**, and under it a line counting how many toolsets are

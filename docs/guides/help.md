@@ -7,13 +7,18 @@ audience: operator
 screen: /help
 type: guide
 tags: [product, docs]
+shots: [docs/images/help.png]
 ---
 
 # Help
 
-This documentation, rendered inside the app, with a link on every screen.
+You do not have to leave the product to read its manual. Help is the same
+documentation you are reading now, served by your own install, and every
+screen can hand you the page written about it.
 
 ## What you see
+
+![Help screen](../images/help.png)
 
 **The header.** A life ring, the title of the page you are reading, and that
 page's one-line summary beneath it. Arriving from the rail you land on
@@ -76,8 +81,8 @@ they are underlined with a dotted cyan line: agent and prompt on Chat; mission,
 run and schedule on Missions; profile and personality on Agents; skill on
 Skills; tool and toolset on Tools; memory on Memory; model, provider and API key
 on Models; workflow and gate on Composer; artifact on Research. Press one and a
-small panel opens beside it with the word, a one-sentence definition, and a
-**Read more about** link into its Concepts page. It covers nothing, traps
+small panel opens just beneath it with the word, a one-sentence definition, and
+a **Read more about** link into its Concepts page. It covers nothing, traps
 nothing and stops no scrolling. Escape, or a press anywhere else, puts the
 screen back as it was.
 

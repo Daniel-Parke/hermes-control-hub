@@ -9,6 +9,7 @@ concepts: [agent, prompt, model]
 type: guide
 tags: [product, chat]
 compiled_from: authored
+shots: [docs/images/chat.png]
 ---
 # Chat
 
@@ -16,6 +17,8 @@ Chat is where you talk to your [agent](../concepts/agent.md) a message at a
 time, and watch it work while it answers.
 
 ## What you see
+
+![Chat screen](../images/chat.png)
 
 The header carries the page title, and on its right the three controls that
 decide how your next message is answered: the **Agent** and **Fast** toggle, a

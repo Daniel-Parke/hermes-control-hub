@@ -8,6 +8,7 @@ screen: /agent/models
 concepts: [model, provider, api-key]
 type: guide
 tags: [models, providers, credentials]
+shots: [docs/images/models.png]
 ---
 
 # Models
@@ -17,6 +18,8 @@ pays for each one, which model does which job, and what happens when the model
 you chose will not answer.
 
 ## What you see
+
+![Models screen](../images/models.png)
 
 **The header.** The page title, and under it a count of what the registry holds:
 "3 models in registry · 2 credentials". On the left, a back arrow labelled

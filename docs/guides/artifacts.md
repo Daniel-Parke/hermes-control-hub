@@ -8,6 +8,7 @@ screen: /results/artifacts
 concepts: [artifact]
 type: guide
 tags: [product, results]
+shots: [docs/images/artifacts.png]
 ---
 
 # Artifacts
@@ -15,6 +16,8 @@ tags: [product, results]
 Everything your agents actually produced, kept in one list you can read, download and clear out.
 
 ## What you see
+
+![Artifacts screen](../images/artifacts.png)
 
 The page opens at **Results → Artifacts** in the left rail. Under the title is a
 thin bar with two things on it: a count of how many artifacts the list is

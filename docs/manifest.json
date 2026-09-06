@@ -39,6 +39,12 @@
           ]
         },
         {
+          "slug": "start-here/tour",
+          "title": "The tour",
+          "summary": "Every screen in the product, in the order the sidebar lists them, with a picture of each",
+          "nav": 35
+        },
+        {
           "slug": "start-here/quests",
           "title": "Quests",
           "summary": "A guided path through the product, ticked off by what you actually did rather than by what you read",
@@ -198,6 +204,9 @@
             "agent",
             "mission",
             "run"
+          ],
+          "shots": [
+            "docs/images/dashboard.png"
           ]
         },
         {
@@ -210,6 +219,9 @@
             "agent",
             "prompt",
             "model"
+          ],
+          "shots": [
+            "docs/images/chat.png"
           ]
         },
         {
@@ -222,6 +234,9 @@
             "mission",
             "run",
             "schedule"
+          ],
+          "shots": [
+            "docs/images/missions.png"
           ]
         },
         {
@@ -234,6 +249,9 @@
             "workflow",
             "gate",
             "run"
+          ],
+          "shots": [
+            "docs/images/composer.png"
           ]
         },
         {
@@ -246,6 +264,9 @@
             "artifact",
             "model",
             "spend"
+          ],
+          "shots": [
+            "docs/images/research.png"
           ]
         },
         {
@@ -256,6 +277,9 @@
           "screen": "/work/scripts",
           "concepts": [
             "schedule"
+          ],
+          "shots": [
+            "docs/images/scripts.png"
           ]
         },
         {
@@ -268,6 +292,9 @@
             "session",
             "transcript",
             "run"
+          ],
+          "shots": [
+            "docs/images/sessions.png"
           ]
         },
         {
@@ -278,6 +305,9 @@
           "screen": "/results/artifacts",
           "concepts": [
             "artifact"
+          ],
+          "shots": [
+            "docs/images/artifacts.png"
           ]
         },
         {
@@ -289,6 +319,9 @@
           "concepts": [
             "spend",
             "run"
+          ],
+          "shots": [
+            "docs/images/insights.png"
           ]
         },
         {
@@ -296,7 +329,10 @@
           "title": "Logs",
           "summary": "The log files PatterStage and its scripts write, and how to read them",
           "nav": 100,
-          "screen": "/results/logs"
+          "screen": "/results/logs",
+          "shots": [
+            "docs/images/logs.png"
+          ]
         },
         {
           "slug": "guides/agents",
@@ -308,6 +344,9 @@
             "agent",
             "profile",
             "personality"
+          ],
+          "shots": [
+            "docs/images/agents.png"
           ]
         },
         {
@@ -319,6 +358,9 @@
           "concepts": [
             "skill",
             "toolset"
+          ],
+          "shots": [
+            "docs/images/skills.png"
           ]
         },
         {
@@ -330,6 +372,9 @@
           "concepts": [
             "tool",
             "toolset"
+          ],
+          "shots": [
+            "docs/images/tools.png"
           ]
         },
         {
@@ -340,6 +385,9 @@
           "screen": "/agent/memory",
           "concepts": [
             "memory"
+          ],
+          "shots": [
+            "docs/images/memory.png"
           ]
         },
         {
@@ -352,6 +400,9 @@
             "model",
             "provider",
             "api-key"
+          ],
+          "shots": [
+            "docs/images/models.png"
           ]
         },
         {
@@ -359,7 +410,10 @@
           "title": "Settings",
           "summary": "Every configuration section the agent reads, plus this install's own facts",
           "nav": 160,
-          "screen": "/agent/settings"
+          "screen": "/agent/settings",
+          "shots": [
+            "docs/images/settings.png"
+          ]
         },
         {
           "slug": "guides/story-weaver",
@@ -369,6 +423,9 @@
           "screen": "/recroom/story-weaver",
           "concepts": [
             "spend"
+          ],
+          "shots": [
+            "docs/images/story-weaver.png"
           ]
         },
         {
@@ -379,6 +436,9 @@
           "screen": "/recroom/story-weaver/create",
           "concepts": [
             "model"
+          ],
+          "shots": [
+            "docs/images/story-create.png"
           ]
         },
         {
@@ -386,35 +446,50 @@
           "title": "Story library",
           "summary": "Every story you have started, with its status and its progress",
           "nav": 190,
-          "screen": "/recroom/story-weaver/library"
+          "screen": "/recroom/story-weaver/library",
+          "shots": [
+            "docs/images/story-library.png"
+          ]
         },
         {
           "slug": "guides/story-characters",
           "title": "Characters",
           "summary": "Reusable characters, saved once and dropped into any story",
           "nav": 200,
-          "screen": "/recroom/story-weaver/characters"
+          "screen": "/recroom/story-weaver/characters",
+          "shots": [
+            "docs/images/story-characters.png"
+          ]
         },
         {
           "slug": "guides/story-themes",
           "title": "Themes",
           "summary": "Reusable premises and tags, saved as a theme you can load later",
           "nav": 210,
-          "screen": "/recroom/story-weaver/themes"
+          "screen": "/recroom/story-weaver/themes",
+          "shots": [
+            "docs/images/story-themes.png"
+          ]
         },
         {
           "slug": "guides/quests",
           "title": "Quests",
           "summary": "A guided path from a first mission to a backup, proved by what you actually did",
           "nav": 220,
-          "screen": "/quests"
+          "screen": "/quests",
+          "shots": [
+            "docs/images/quests.png"
+          ]
         },
         {
           "slug": "guides/help",
           "title": "Help",
           "summary": "This documentation, rendered inside the app, with a link on every screen",
           "nav": 230,
-          "screen": "/help"
+          "screen": "/help",
+          "shots": [
+            "docs/images/help.png"
+          ]
         }
       ]
     },
@@ -661,6 +736,7 @@
     "start-here/index",
     "start-here/install",
     "start-here/first-hour",
+    "start-here/tour",
     "start-here/quests",
     "start-here/getting-help",
     "support",

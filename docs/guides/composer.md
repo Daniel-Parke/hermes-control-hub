@@ -9,6 +9,7 @@ concepts: [workflow, gate, run]
 type: guide
 tags: [product, orchestration]
 compiled_from: normalised
+shots: [docs/images/composer.png]
 ---
 # Composer
 
@@ -17,6 +18,8 @@ time, each stage decides where the work goes next, and the stages you mark stop
 and wait for your decision.
 
 ## What you see
+
+![Composer screen](../images/composer.png)
 
 Two tabs sit under the page title. **Run** is where you launch a
 [workflow](../concepts/workflow.md) and watch it. **Build** is where you draw

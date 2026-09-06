@@ -8,6 +8,7 @@ screen: /agent/profiles
 concepts: [agent, profile, personality]
 type: guide
 tags: [product, agents]
+shots: [docs/images/agents.png]
 ---
 
 # Agents
@@ -15,6 +16,8 @@ tags: [product, agents]
 Every agent you can run lives on this screen: what it sounds like, the files it reads before each run, and whether the copy PatterStage holds still matches the copy on disk.
 
 ## What you see
+
+![Agents screen](../images/agents.png)
 
 The header reads **Agent Profiles**, with the number of profiles configured under it and a **New Profile** button on the right.
 

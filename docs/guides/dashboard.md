@@ -8,13 +8,18 @@ screen: /
 concepts: [agent, mission, run]
 type: guide
 tags: [product, dashboard]
+shots: [docs/images/dashboard.png]
 ---
 
 # Dashboard
 
-The operations board: what is healthy, what is running, and what to do first.
+This is the screen PatterStage opens on, and it is built to be read in a
+glance rather than studied: whether the parts are up, what is happening now,
+and one suggestion for what to do next.
 
 ## What you see
+
+![Dashboard screen](../images/dashboard.png)
 
 The board reads the machine while it is open and re-reads it every few seconds,
 so what you are looking at is current rather than a snapshot from when you

@@ -8,6 +8,7 @@ screen: /agent/memory
 concepts: [memory]
 type: guide
 tags: [product, memory]
+shots: [docs/images/memory.png]
 ---
 
 # Memory
@@ -16,6 +17,8 @@ This screen browses what your agent has learned between conversations, and it
 carries the one connection to the service that stores it.
 
 ## What you see
+
+![Memory screen](../images/memory.png)
 
 The header reads **Memory**, with "Knowledge graph memory with semantic search"
 underneath it.

@@ -12,10 +12,10 @@ The work leading to the 1.0.0 release.
 
 **Three things to do after upgrading.**
 
-1. Open the Agents page and use **Pull from Hermes** once, on all profiles. An
-   older version of the config reader could drop sections of `config.yaml` and
-   force every profile's personality to "technical". One pull repairs the stored
-   copy. Expect a drift warning or two on the way through; the pull clears them.
+1. Open the Agents page and use **Pull all** once. An older version of the
+   config reader could drop sections of `config.yaml` and force every profile's
+   personality to "technical". One pull repairs the stored copy. Expect a drift
+   warning or two on the way through; the pull clears them.
 2. Update any bookmarks. Nearly every page has a new address (see below). The old
    ones redirect for this release only.
 3. Let the app finish its first boot before using it. Four database changes are
@@ -25,12 +25,14 @@ The work leading to the 1.0.0 release.
 
 - **Quests.** A guided route through the product: 32 quests across seven
   chapters, from getting an agent answering to taking your first backup. Progress
-  is worked out from what you have actually done, so anything you did before this
-  release already counts. Nothing to tick off by hand, and a completed quest stays
-  completed even after old activity is trimmed. Find them at **Quests** in the
-  sidebar, with a badge on the rail and the next step on the dashboard. Quests you
-  are not interested in can be skipped, and the dashboard card can be hidden
-  (there is no control to bring the card back yet).
+  is worked out from the record of what you have done, so work already in that
+  record counts. Most of the steps are proved by events this release starts
+  recording, so some things you did earlier will need doing once more before they
+  tick. Nothing to tick off by hand, and a completed quest stays completed even
+  after old activity is trimmed. Find them at **Quests** in the sidebar, with a
+  badge on the rail and the next step on the dashboard. Quests you are not
+  interested in can be skipped, and the dashboard card can be hidden (there is no
+  control to bring the card back yet).
 - **Help inside the app, and a documentation site.** Every page header now carries
   a **?** that opens the guide for that exact screen, and pressing `?` anywhere
   does the same. The full set is browsable at **Help**, with search, and unfamiliar
@@ -124,9 +126,9 @@ The work leading to the 1.0.0 release.
   has read never reports "Healthy".
 - **One vocabulary for states.** Draft, Queued, Running, Waiting for you,
   Completed, Failed, Cancelled; Healthy, Degraded, Not running, Not installed; In
-  sync, Out of sync. Nothing says "Successful", "Finished", "In Progress" or
-  "Complete" any more, and one screen no longer says "ok" and "Healthy" about the
-  same thing.
+  sync, Out of sync. Every status badge takes its word from one place, so the same
+  mission no longer reads "Successful" on one screen and "Finished" on another,
+  and one screen no longer says "ok" and "Healthy" about the same thing.
 - **Destructive actions are two clicks in place**, on the button itself, instead of
   a browser confirmation box. Deleting a script, a scheduled mission, a story theme,
   an artifact, a memory or a workflow all work this way, and the armed button stays
@@ -161,9 +163,9 @@ The work leading to the 1.0.0 release.
   rather than a relevance percentage it never was.
 - **Chat, Composer and Research errors surface where they happen** instead of a
   spinner that never stops or a refetch over the top of the failure.
-- **Sync controls read "Pull from Hermes" and "Push to Hermes"** everywhere, and a
-  sync answer now says what actually happened per target rather than a bare
-  success.
+- **Sync controls on Tools and Models read "Pull from Hermes" and "Push to
+  Hermes"**, and a sync answer now says what actually happened per target rather
+  than a bare success.
 - **Keyboard and screen-reader use across the app.** A skip link before the
   sidebar, one visible focus ring, dialogs that trap focus, close on Escape and
   return focus to what opened them, a mobile drawer that is inert while closed, and
@@ -175,7 +177,7 @@ The work leading to the 1.0.0 release.
 - **Installing over an existing install** now backs the database up and asks you to
   type a confirmation before it moves your data aside, and says where it put it.
 
-### Fixed
+### Security
 
 - **Script execution and updates now require authentication.** With
   authentication turned off, `POST /api/scripts/run`, saving a script, writing a
@@ -185,6 +187,9 @@ The work leading to the 1.0.0 release.
   writes are unaffected.
 - **API keys are no longer sent to the browser in plaintext.** `GET /api/config`
   masks every `api_key` at any depth, including inside fallback provider lists.
+
+### Fixed
+
 - **The agent's `config.yaml` no longer corrupts itself.** A rebuild could emit the
   same top-level key twice, misread the toolsets list, and never read the
   personality at all, and the damaged text was then copied back into the database,
@@ -192,7 +197,7 @@ The work leading to the 1.0.0 release.
   plugins) disappeared over following cycles. Config is now rebuilt as a whole
   object, nothing is written without parsing first, a file that will not parse is
   refused rather than laundered, and every refusal names the most recent backup
-  that still parses. This is what the "Pull from Hermes" step above repairs.
+  that still parses. This is what the "Pull all" step above repairs.
 - **Read-only mode no longer writes.** Three pages performed a write while merely
   being read.
 - **Creating a story no longer fails with an empty error.** A one-word mood, an
@@ -222,14 +227,15 @@ The work leading to the 1.0.0 release.
   goes ahead only when you confirm.
 - **A Composer workflow's description survives a save.** It could be lost on the
   next write.
-- **Every kind of script is listed, run and scheduled the same way.** Five
-  different ideas of what counts as a script were in the code, and they disagreed:
-  the backup script the installer sets up (`ps-db-backup.mjs`) really was in the
-  crontab and reported "not scheduled" forever; `.ps1`, `.bat` and `.cmd` had a
-  Schedule button that refused every time; and unscheduling anything that was not
-  a `.sh` file failed with a not-found. All seven kinds (`.sh`, `.mjs`, `.cjs`,
-  `.js`, `.ps1`, `.bat`, `.cmd`) now work end to end, and saving from the editor
-  no longer adds a second extension to the file name.
+- **Every kind of script is listed, run and scheduled the same way.** The rule for
+  what counts as a script was written out five times, and three of those copies
+  disagreed with the other two: the backup script the installer sets up
+  (`ps-db-backup.mjs`) really was in the crontab and reported "not scheduled"
+  forever; `.ps1`, `.bat` and `.cmd` had a Schedule button that refused every
+  time; and unscheduling anything that was not a `.sh` file failed with a
+  not-found. All seven kinds (`.sh`, `.mjs`, `.cjs`, `.js`, `.ps1`, `.bat`,
+  `.cmd`) now work end to end, and saving from the editor no longer adds a second
+  extension to the file name.
 - **The skill viewer no longer crashes on top-level skills.** Two routes were
   sending two different shapes; there is one now, and the thinnest payload renders
   as a page.

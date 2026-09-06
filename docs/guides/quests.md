@@ -7,13 +7,18 @@ audience: operator
 screen: /quests
 type: guide
 tags: [product, quests]
+shots: [docs/images/quests.png]
 ---
 
 # Quests
 
-A guided path from a first mission to a backup, proved by what you actually did.
+Quests are the product's answer to "what should I do next?". There is nothing
+to tick off by hand: each one watches for something you were going to do
+anyway, and marks itself when the product records you doing it.
 
 ## What you see
+
+![Quests screen](../images/quests.png)
 
 **The header.** A trophy, the word Quests, and a line reading "Real actions,
 tracked, from your first message to your first backup". On the right, a **?**

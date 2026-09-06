@@ -7,6 +7,7 @@ audience: operator
 screen: /recroom/story-weaver/characters
 type: guide
 tags: [product, rec-room]
+shots: [docs/images/story-characters.png]
 ---
 
 # Characters
@@ -15,6 +16,8 @@ A shelf of character sheets you write once and drop into any story you start
 afterwards.
 
 ## What you see
+
+![Characters screen](../images/story-characters.png)
 
 The header reads **Characters**, with a count of the characters you have saved
 beneath it, a back link reading STORY WEAVER on the left, and a **New character**

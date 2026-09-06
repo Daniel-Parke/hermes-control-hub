@@ -38,9 +38,9 @@ account system, and adding one is not a setting.
   live in one table keyed by preference name, with no owner column
   (`operator_prefs`). Open the console in a second browser and you are looking
   at the same state, not your own copy.
-- **Achievements and progression are recorded per agent profile**, not per
-  person. They measure what an agent has done, so they do not divide between
-  two people driving the same agent.
+- **Progression is recorded per agent profile, and achievements once for the
+  whole install.** Neither is per person, so neither divides between two people
+  driving the same agent.
 
 The consequence worth planning around: do not put PatterStage on a shared
 machine and hand the URL round a team. Run one install per person, or reach a
@@ -98,9 +98,9 @@ PatterStage drives an agent. It does not contain one.
 - **A model provider is a separate requirement.** Work either goes through the
   Hermes gateway or directly to a provider using a model row and its stored
   credential. With neither, the features that call a model on their own behalf
-  cannot run at all: Story Weaver, deep research, the model comparison work and
-  anything else driving a model directly. Adding a model means adding a
-  credential, which means a provider account and its costs.
+  cannot run at all: Story Weaver, deep research and anything else driving a
+  model directly. Adding a model means adding a credential, which means a
+  provider account and its costs.
 - **Long-term memory is one implementation.** The provider layer is pluggable
   and Hindsight is the only client that ships. Selecting a type with no client
   gives you a provider that refuses honestly and names the type it cannot
@@ -146,9 +146,9 @@ know about is a smaller problem than one you discover.
 - **Story Weaver has no export and does not remember your reading position.**
 - **Spend has no page of its own.** The figures appear beside the work that
   produced them.
-- **There is no public help.** Every route except the health endpoint requires
-  the token, the help section included, so you cannot send someone a link to a
-  help page without also giving them your install.
+- **The in-app help is not public.** Every route except the health endpoint
+  requires the token, the help section included. The same pages are published as
+  a static site from `docs/`, so link that rather than your install.
 - **There is no OpenAPI description of the HTTP API.** The
   [API reference](../reference/api.md) is written, not generated from a schema.
 - **PatterStage writes its own deploy logs into the agent's home directory**

@@ -7,6 +7,7 @@ audience: operator
 screen: /recroom/story-weaver/library
 type: guide
 tags: [product, rec-room, stories]
+shots: [docs/images/story-library.png]
 ---
 
 # Story library
@@ -14,6 +15,8 @@ tags: [product, rec-room, stories]
 Your bookshelf: every story you have started, what state each one is in, and the way back into reading one.
 
 ## What you see
+
+![Story library screen](../images/story-library.png)
 
 The header names the screen Library, with "Your personal bookshelf" under it, a back link marked STORY WEAVER, and the **?** that opens this guide.
 

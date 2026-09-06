@@ -21,9 +21,12 @@ Three things read it, and nothing else does.
 
 - **[Insights](../guides/insights.md)** charts it: the interactions tile, the
   activity by category, the hour of day clock, the mission success trend and the
-  active day streak are all counts over this table.
+  active days tile are all counts over this table. The daily streak reads it
+  too, but it is the one that also counts a day on which a run finished, so it
+  would survive a prune of this table in part.
 - **[Achievements](achievements.md)** are derived from it on every read. Nothing
-  is stored, so a badge cannot drift out of step with what you did.
+  about a badge is stored for the sake of showing it, so what you see cannot
+  drift out of step with what you did.
 - **[Quests](quests.md)** are ticked by it. A quest completes because the ledger
   holds the event, not because you said so.
 
@@ -51,8 +54,9 @@ mission has been moved to dispatched, never before the backend accepted it. A
 research run is recorded finished after the terminal row is written, so a write
 that throws leaves no event claiming an outcome the table does not hold. A
 schedule records a firing only when the dispatch came back ok. A backup is
-recorded after the file exists. A script run carries the exit code it actually
-returned.
+recorded after the file exists. A script you run yourself carries the exit code
+it actually returned; a script the scheduler fired is recorded only when it
+succeeded, and carries the source rather than the code.
 
 Recording is best effort and never interferes with the action it describes.
 Nothing is written while the console is in read-only mode, and a failed insert
@@ -100,8 +104,9 @@ is known to exist.
 
 No content is copied into a row. Not a prompt, not a reply, not a chapter, not a
 report, not a log line and not a key. The payload is flags and identifiers, and
-the identifier is the id of a row in your own database, or, for a log, the
-file's own name.
+the identifier is the id of a row in your own database, or the name of a file or
+a section on your own machine: a script, a backup, a log, a configuration
+section, a guide.
 
 ## Every event type
 
@@ -114,26 +119,26 @@ Forty-two types, listed in the order the Insights chart stacks their categories.
 | `mission.failed` | A dispatched run was found finished, unsuccessfully | Missions |
 | `mission.cancelled` | You cancelled a mission, and the local record was finalised | Missions |
 | `template.saved` | A mission template was created or updated | Missions |
-| `composer.run_started` | A workflow run was created and the first stage was kicked | Workflows |
+| `composer.run_started` | A workflow run row was written | Workflows |
 | `composer.run_completed` | A workflow run reached the end of its graph | Workflows |
 | `composer.run_failed` | A workflow run ended badly, or a gate was rejected (the payload says which) | Workflows |
 | `composer.gate_approved` | You approved a gate and the run moved on | Workflows |
 | `composer.workflow_saved` | A workflow was created or replaced | Workflows |
-| `artifact.saved` | An artifact was written to the registry | Workflows |
+| `artifact.saved` | You saved a workflow stage's output to the registry by hand. The ones the product captures for you, mission output and research reports, are not recorded here | Workflows |
 | `artifact.opened` | An artifact was read back, with its content | Workflows |
 | `story.created` | A story was started in the Rec Room | Stories |
 | `story.chapter_generated` | A chapter was written and saved onto the story | Stories |
 | `story.completed` | A saved chapter left none outstanding, so the story is finished | Stories |
 | `research.started` | A research run was created | Research |
 | `research.completed` | A research run finished and its report was written | Research |
-| `research.failed` | A research run ended without one | Research |
+| `research.failed` | A research run ended badly. Either it threw and wrote no report, or every search failed and the report it did write is flagged as ungrounded (the payload says which) | Research |
 | `research.cancelled` | You stopped a research run that was still in flight | Research |
 | `session.started` | A session was opened for a dispatched mission | Sessions |
 | `session.closed` | That session was closed when its run reached a terminal state | Sessions |
 | `schedule.created` | A schedule was saved | Automation |
 | `schedule.fired` | A schedule came due and its dispatch succeeded | Automation |
 | `script.saved` | A host script file was created or replaced | Automation |
-| `script.run` | A host script ran, by your hand or by the scheduler, and the exit code came back | Automation |
+| `script.run` | A host script ran. By your hand, with the exit code it returned; by the scheduler, only when it succeeded, and with the source instead of the code | Automation |
 | `script.scheduled` | A script was given a system cron entry | Automation |
 | `logs.opened` | A log file's lines were handed back to the Logs page | Automation |
 | `skill.toggled` | A skill was enabled or disabled for a profile | Config |
@@ -235,14 +240,18 @@ not one of the types this achievement asks for.
 | `profile` | An agent profile, by slug, or `all` when the action covered every one |
 | `toolset` | The profile whose toolsets were saved |
 | `config` | The configuration section that was written |
-| `memory` | The memory bank |
+| `memory` | The memory bank a fact was written into, or the memory provider that was configured |
 | `template` | A mission template |
 | `script` | A host script, by file name |
 | `artifact` | An artifact in the registry |
-| `log` | A log file, by its own name. The only entity here that is not a row in a table |
+| `log` | A log file, by its own name |
 | `backup` | A backup file, by name |
 | `credential` | A stored credential |
 | `help` | The guide that was rendered, by slug |
+
+Most of these name a row in a table. Five do not: `log`, `script` and `backup`
+name a file on your own machine, `config` names a section of the agent's
+configuration, and `help` names a page of these docs.
 
 ## How long a row is kept
 
@@ -261,8 +270,10 @@ npm run db:retention -- --apply                      # the only form that delete
 ```
 
 The first form prints the policy, how many rows there are, and exactly what a
-real run would remove. It changes nothing, and it is the form to reach for
-first.
+real run would remove, and it is the form to reach for first. It deletes
+nothing. It does write one thing before it measures anything: a progression row
+per agent profile, on purpose, so that the preview reports the same refusal or
+the same go-ahead that `--apply` would.
 
 Four things about the window are worth knowing before you touch it.
 

@@ -9,6 +9,7 @@ concepts: [spend, run]
 type: guide
 tags: [product, analytics]
 compiled_from: authored
+shots: [docs/images/insights.png]
 ---
 
 # Insights
@@ -16,6 +17,8 @@ compiled_from: authored
 The history page: what you have done with PatterStage, what it cost, and what you have earned for it.
 
 ## What you see
+
+![Insights screen](../images/insights.png)
 
 The header carries the page title and, on the right, a range switch reading **7d**, **30d** and **90d**. It opens on 30d. That switch drives most of the charts below it, and the cards say so in their own titles.
 

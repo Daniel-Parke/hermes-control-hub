@@ -9,12 +9,15 @@ concepts: [mission, run, schedule]
 type: guide
 tags: [product, missions, schedules]
 compiled_from: authored
+shots: [docs/images/missions.png]
 ---
 # Missions
 
 Missions is where you write a job for the agent, decide when it should run, and read what came back.
 
 ## What you see
+
+![Missions screen](../images/missions.png)
 
 **The header.** The page title, a refresh icon that reloads the board by hand,
 and **New Mission**, which opens the composer. If no agent is installed on this

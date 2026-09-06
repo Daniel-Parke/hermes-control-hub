@@ -8,6 +8,7 @@ screen: /recroom/story-weaver/create
 concepts: [model]
 type: guide
 tags: [product, rec-room]
+shots: [docs/images/story-create.png]
 ---
 
 # Create a story
@@ -16,6 +17,8 @@ The setup form for a new story: what it is about, who is in it, how long it
 runs, and which model does the writing.
 
 ## What you see
+
+![Create a story screen](../images/story-create.png)
 
 The page sits under **Rec Room → Story Weaver → Create** in the sidebar, and the
 **Create** button on the Story Weaver hub comes here. The header reads

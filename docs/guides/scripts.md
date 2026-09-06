@@ -8,6 +8,7 @@ screen: /work/scripts
 concepts: [schedule]
 type: guide
 tags: [product, ops]
+shots: [docs/images/scripts.png]
 ---
 
 # Scripts
@@ -16,6 +17,8 @@ Scripts lists the small programs that live on this machine, so you can write
 one, run it by hand, read what it printed, and put it on a timer.
 
 ## What you see
+
+![Scripts screen](../images/scripts.png)
 
 The header names the page and counts what was found, for example "4 host
 scripts", with two buttons beside it. **New script** opens an empty editor.

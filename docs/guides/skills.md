@@ -8,6 +8,7 @@ screen: /agent/skills
 concepts: [skill, toolset]
 type: guide
 tags: [skills, profiles, catalogue]
+shots: [docs/images/skills.png]
 ---
 
 # Skills
@@ -16,6 +17,8 @@ Every skill installed on this machine, in one list, with a switch on each one
 saying whether the profile you have selected is allowed to use it.
 
 ## What you see
+
+![Skills screen](../images/skills.png)
 
 At the very top, a small line recording the last thing that happened on this
 page, such as "Saved at 14:03: apple-notes enabled". It is not there until you

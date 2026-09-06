@@ -7,6 +7,7 @@ audience: operator
 screen: /recroom/story-weaver/themes
 type: guide
 tags: [product, rec-room]
+shots: [docs/images/story-themes.png]
 ---
 
 # Themes
@@ -16,6 +17,8 @@ and mood that go with it, kept so you can start another story from it without
 typing it all again.
 
 ## What you see
+
+![Themes screen](../images/story-themes.png)
 
 While the list loads, the page is a spinner on an empty screen. Then the header
 appears, reading **Themes**, with a back link reading STORY WEAVER on the left

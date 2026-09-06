@@ -9,6 +9,7 @@ concepts: [artifact, model, spend]
 type: guide
 tags: [product, laboratory]
 compiled_from: normalised
+shots: [docs/images/research.png]
 ---
 
 # Deep Research
@@ -18,6 +19,8 @@ think for you, then writes back a report with every claim linked to the page it
 came from.
 
 ## What you see
+
+![Deep Research screen](../images/research.png)
 
 The page sits at **Work → Research** in the left rail. Everything at the top of
 it is the form that starts a run.

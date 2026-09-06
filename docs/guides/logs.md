@@ -7,6 +7,7 @@ audience: operator
 screen: /results/logs
 type: guide
 tags: [product, logs, troubleshooting]
+shots: [docs/images/logs.png]
 ---
 
 # Logs
@@ -15,6 +16,8 @@ This screen reads the log files your agent writes on this machine, one file at
 a time, newest line at the top.
 
 ## What you see
+
+![Logs screen](../images/logs.png)
 
 The header names the file you are reading. Under the title sits a line of
 facts about it: the file name, how many lines it holds, its size on disk, and
