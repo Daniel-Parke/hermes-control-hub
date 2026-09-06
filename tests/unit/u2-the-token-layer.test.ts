@@ -429,6 +429,36 @@ describe("each new rule refuses one form and allows the other", () => {
   });
 
   /**
+   * One thing per line, which the sweep had to teach me.
+   *
+   * The `refuses` fixture above carries `border border-white/10 bg-white/5`,
+   * so dropping `bg` from the rule's alternation changed nothing: the border
+   * half still matched and the case still passed. Each of the three below
+   * isolates exactly one spelling, so a rule that stops seeing it has nowhere
+   * to hide.
+   */
+  it.each([
+    ["a background alpha on its own", 'className="bg-white/5"'],
+    ["a divider alpha on its own", 'className="divide-white/10"'],
+    ["a ring alpha on its own", 'className="ring-white/20"'],
+  ])("no-raw-border-alpha sees %s", (_name, line) => {
+    expect(trips("src/components/x.tsx", line)).toContain("no-raw-border-alpha");
+  });
+
+  /**
+   * A rounded corner is not a card. An avatar, a chip and a progress track are
+   * all rounded and none of them is a surface, so a rule that fired on the
+   * corner alone would send someone to wrap a 24px circle in <Surface>.
+   */
+  it.each([
+    ["a corner alone", 'className="rounded-ps-md w-6 h-6"'],
+    ["a corner and a fill, with no edge", 'className="rounded-ps-md bg-ps-surface-panel"'],
+    ["a corner and an edge, with no fill", 'className="rounded-ps-md border border-ps-edge"'],
+  ])("no-inline-card-chrome leaves %s alone", (_name, line) => {
+    expect(trips("src/components/x.tsx", line)).not.toContain("no-inline-card-chrome");
+  });
+
+  /**
    * The file-level rule, which a line test cannot express: reading the API
    * straight out of a component is only wrong when it is a component doing it,
    * so the shape is "this file has a useEffect AND a safeApiCall".
@@ -448,5 +478,20 @@ describe("each new rule refuses one form and allows the other", () => {
   it("and not a component that merely has an effect", () => {
     const clean = ["useEffect(() => {", "  setReady(true);", "}, []);"];
     expect([...violationsIn("src/components/x.tsx", clean).keys()]).toEqual([]);
+  });
+
+  /**
+   * The other half, which the sweep found unasserted: a component that calls
+   * the API from an event handler is not reading on mount, and that is the
+   * thing this rule is about. Flagging it would push a perfectly ordinary
+   * button-click mutation into a hook for no reason.
+   */
+  it("and not a component that calls the API from a handler", () => {
+    const handler = [
+      "async function onSave() {",
+      '  await safeApiCall("/api/things", { method: "POST" });',
+      "}",
+    ];
+    expect([...violationsIn("src/components/x.tsx", handler).keys()]).toEqual([]);
   });
 });
