@@ -378,7 +378,9 @@ export function insertWorkflowEdge(edge: {
   fromNodeId: string;
   toNodeId: string;
   condition: string;
-  label: string;
+  /** Nullable, as the column is: an unlabelled edge is the ordinary case, and
+   *  createWorkflowFromDef has always written null here. */
+  label: string | null;
   createdAt: string;
 }): void {
   getDb()
@@ -389,6 +391,60 @@ export function insertWorkflowEdge(edge: {
 }
 
 /** Replace one node's serialised config. */
+/**
+ * Clear the End flag on one node, leaving everything else about it alone.
+ *
+ * Exists for the seed repair: a stage marked End runs no agent, so a stage that
+ * was meant to produce something and got marked End produces nothing and the run
+ * still reports success. Narrow rather than a general node update, because that
+ * is the only field the repair is entitled to touch.
+ */
+export function clearWorkflowNodeTerminal(nodeId: string): void {
+  getDb().prepare("UPDATE composer_nodes SET is_terminal = 0 WHERE id = ?").run(nodeId);
+}
+
+/**
+ * Add one node to a workflow that already exists.
+ *
+ * `createWorkflowFromDef` builds a whole workflow from a definition and is
+ * idempotent by key, so it cannot add a missing end marker to an install that
+ * already has the workflow. This can, and returns the row so the caller can
+ * wire an edge to it.
+ */
+export function insertWorkflowNode(node: {
+  id: string;
+  workflowId: string;
+  key: string;
+  label: string;
+  kind: string;
+  gate: string;
+  isStart: boolean;
+  isTerminal: boolean;
+  configJson: string | null;
+  pos: number;
+  createdAt: string;
+}): ComposerNode {
+  getDb()
+    .prepare(
+      `INSERT INTO composer_nodes (id, workflow_id, key, label, kind, gate, is_start, is_terminal, config_json, pos, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    )
+    .run(
+      node.id,
+      node.workflowId,
+      node.key,
+      node.label,
+      node.kind,
+      node.gate,
+      node.isStart ? 1 : 0,
+      node.isTerminal ? 1 : 0,
+      node.configJson,
+      node.pos,
+      node.createdAt,
+    );
+  return getNode(node.id)!;
+}
+
 export function updateWorkflowNodeConfig(nodeId: string, configJson: string): void {
   getDb()
     .prepare("UPDATE composer_nodes SET config_json = ? WHERE id = ?")

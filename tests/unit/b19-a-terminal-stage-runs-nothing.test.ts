@@ -52,7 +52,7 @@ describe("a terminal stage runs no agent, so it must not be a stage that does wo
     // Mapped to strings rather than asserted in a loop, so a failure PRINTS the
     // offending stage and its kind instead of just "expected true to be false".
     const doingWork = terminals
-      .filter((t) => WORKING_KINDS.includes(t.kind))
+      .filter((t) => WORKING_KINDS.includes(t.kind ?? ""))
       .map((t) => `${t.label} (kind: ${t.kind}) is terminal, so it never runs`);
     expect(doingWork).toEqual([]);
   });
@@ -62,7 +62,7 @@ describe("a terminal stage runs no agent, so it must not be a stage that does wo
     // run forever rather than finish early.
     const byKey = new Map(wf.nodes.map((n) => [n.key, n]));
     const out = new Map<string, string[]>();
-    for (const e of wf.edges) out.set(e.from, [...(out.get(e.from) ?? []), e.to]);
+    for (const e of wf.edges ?? []) out.set(e.from, [...(out.get(e.from) ?? []), e.to]);
 
     const start = wf.nodes[0].key;
     const seen = new Set<string>();
@@ -85,7 +85,7 @@ describe("a terminal stage runs no agent, so it must not be a stage that does wo
     const write = wf.nodes.find((n) => n.key === "write");
     expect(write).toBeDefined();
     expect(write!.isTerminal).toBeFalsy();
-    expect(wf.edges.some((e) => e.from === "write")).toBe(true);
+    expect((wf.edges ?? []).some((e) => e.from === "write")).toBe(true);
   });
 });
 

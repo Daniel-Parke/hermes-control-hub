@@ -10,6 +10,8 @@ import {
   createWorkflowFromDef,
   getWorkflowByKey,
   insertWorkflowEdge,
+  insertWorkflowNode,
+  clearWorkflowNodeTerminal,
   listWorkflowEdges,
   listWorkflowNodes,
   updateWorkflowNodeConfig,
@@ -37,6 +39,81 @@ const RECOVERY_EDGES: { from: string; to: string; condition: string; label: stri
 ];
 
 /** Idempotently add the recovery edges to the existing seeded workflow. */
+/**
+ * Stage kinds that exist to produce something.
+ *
+ * Mirrors WORKING_STAGE_KINDS in canvas-graph.ts, which refuses to SAVE this
+ * shape; this one repairs installs that were given it before that rule existed.
+ */
+const WORKING_STAGE_KINDS = ["documentation", "review", "research", "implementation", "planning", "testing"];
+
+/**
+ * Move the End marker off a stage that was supposed to do work.
+ *
+ * "Research then summarise" shipped with its `write` stage marked terminal, and
+ * a terminal stage is where the run STOPS: `applyNext` completes the run on
+ * reaching one without ever dispatching it. So an approved gate ended the run
+ * with no summary written, and the run said `completed`. The seed definition is
+ * fixed, but a keyed seed writes nothing on an install that already has the
+ * workflow, so without this the defect is permanent for every existing user.
+ *
+ * Narrow on purpose. It repairs only a terminal stage whose kind means it was
+ * meant to produce output, because that shape cannot be a deliberate choice --
+ * the engine cannot honour it and the Build tab now refuses to save it. An
+ * operator's own edits to a seeded workflow are left alone.
+ *
+ * Run history is untouched: nothing is recreated, the marker is moved.
+ */
+function ensureNoWorkingTerminal(): void {
+  for (const key of [
+    SOFTWARE_DELIVERY_WORKFLOW_KEY,
+    RESEARCH_SUMMARISE_WORKFLOW_KEY,
+    DRAFT_REVIEW_WORKFLOW_KEY,
+  ]) {
+    const wf = getWorkflowByKey(key);
+    if (!wf) continue;
+
+    const nodes = listWorkflowNodes(wf.id);
+    const broken = nodes.filter((n) => n.isTerminal && WORKING_STAGE_KINDS.includes(n.kind));
+    if (broken.length === 0) continue;
+
+    // Somewhere for the run to stop. Reuse an inert marker if the workflow
+    // already has one, so a partially-repaired install does not grow a second.
+    let marker = nodes.find((n) => n.isTerminal && !WORKING_STAGE_KINDS.includes(n.kind));
+    if (!marker) {
+      marker = insertWorkflowNode({
+        id: uuid(),
+        workflowId: wf.id,
+        key: "done",
+        label: "Done",
+        kind: "custom",
+        gate: "auto",
+        isStart: false,
+        isTerminal: true,
+        configJson: JSON.stringify({ _ui: { x: 0, y: (nodes.length + 1) * 120 } }),
+        pos: nodes.length,
+        createdAt: now(),
+      });
+    }
+
+    const edges = listWorkflowEdges(wf.id);
+    for (const node of broken) {
+      clearWorkflowNodeTerminal(node.id);
+      const linked = edges.some((e) => e.fromNodeId === node.id && e.toNodeId === marker!.id);
+      if (linked) continue;
+      insertWorkflowEdge({
+        id: uuid(),
+        workflowId: wf.id,
+        fromNodeId: node.id,
+        toNodeId: marker.id,
+        condition: "always",
+        label: null,
+        createdAt: now(),
+      });
+    }
+  }
+}
+
 function ensureRecoveryEdges(): void {
   const wf = getWorkflowByKey(SOFTWARE_DELIVERY_WORKFLOW_KEY);
   if (!wf) return;
@@ -99,4 +176,5 @@ export function ensureDefaultComposerWorkflows(): void {
   }
   ensureRecoveryEdges();
   ensureSoftwareDeliveryStartConfig();
+  ensureNoWorkingTerminal();
 }

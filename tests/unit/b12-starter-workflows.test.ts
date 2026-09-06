@@ -99,16 +99,25 @@ describe("a fresh install ships two starter workflows beside Software Delivery",
     expect((getWorkflowByKey(DRAFT_KEY)?.description ?? "").trim().length).toBeGreaterThan(0);
   });
 
-  it('"Research then summarise" is research -> gate -> write, and the gate is a human one', () => {
+  it('"Research then summarise" is research -> gate -> write -> done, and the gate is a human one', () => {
     ensureDefaultComposerWorkflows();
     const graph = graphFor(RESEARCH_KEY);
 
     const byKey = new Map(graph.nodes.map((n) => [n.key, n]));
-    expect([...byKey.keys()].sort()).toEqual(["gate", "research", "write"]);
+    expect([...byKey.keys()].sort()).toEqual(["done", "gate", "research", "write"]);
     expect(byKey.get("research")!.kind).toBe("research");
     expect(byKey.get("research")!.isStart).toBe(true);
     expect(byKey.get("gate")!.gate).toBe("hil");
-    expect(byKey.get("write")!.isTerminal).toBe(true);
+    // `write` is NOT terminal, and this line used to assert that it was.
+    //
+    // That is why the workflow shipped unable to do the one thing it is named
+    // for: a terminal node completes the run without being dispatched, so an
+    // approved gate ended the run with no summary written. The case one test
+    // below had the rule right all along -- "a terminal reviewer short-circuits
+    // resolveNext" -- and nobody applied the same sentence to this stage.
+    // The run now stops on an inert `done` marker, like the other two seeds.
+    expect(byKey.get("write")!.isTerminal).toBe(false);
+    expect(byKey.get("done")!.isTerminal).toBe(true);
   });
 
   it('"Research then summarise" sends a rejected gate back to the research, not off a cliff', () => {
@@ -118,6 +127,8 @@ describe("a fresh install ships two starter workflows beside Software Delivery",
       "gate -> research (on_reject)",
       "gate -> write (on_approve)",
       "research -> gate (always)",
+      // The edge that makes the summary reachable rather than the end of the road.
+      "write -> done (always)",
     ]);
   });
 

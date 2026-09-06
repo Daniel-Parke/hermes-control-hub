@@ -371,12 +371,19 @@ export const DEFAULT_RESEARCH_SUMMARISE_WORKFLOW: WorkflowDef = {
       },
     },
     { key: "gate", label: "Check the findings", kind: "review", gate: "hil" },
-    { key: "write", label: "Write the summary", kind: "documentation", gate: "auto", isTerminal: true },
+    // NOT the terminal node, for the reason Draft-and-review states below:
+    // resolveNext answers "complete" for a terminal node before it dispatches
+    // it, so a terminal stage runs no agent. This one writes the summary, which
+    // is the whole point of the workflow, so the run has to pass THROUGH it and
+    // stop on the inert marker after it.
+    { key: "write", label: "Write the summary", kind: "documentation", gate: "auto" },
+    { key: "done", label: "Done", kind: "custom", gate: "auto", isTerminal: true },
   ],
   edges: [
     { from: "research", to: "gate" },
     { from: "gate", to: "write", condition: "on_approve" },
     { from: "gate", to: "research", condition: "on_reject", label: "research again" },
+    { from: "write", to: "done" },
   ],
 };
 

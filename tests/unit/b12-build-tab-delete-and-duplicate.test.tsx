@@ -109,13 +109,31 @@ const GRAPH: ComposerWorkflowGraph = {
       kind: "documentation",
       gate: "auto",
       isStart: false,
-      isTerminal: true,
+      // Not End. This fixture was copied from the shipped seed back when the
+      // seed marked its deliverable End, so it built the canvas the Build tab
+      // now refuses -- a stage the engine completes without ever running. These
+      // cases are about duplicating a workflow, so the canvas is simply made
+      // valid and they go back to testing what they are named for.
+      isTerminal: false,
       config: { _ui: { x: 0, y: 120 } },
       pos: 1,
+    },
+    {
+      id: "n-done",
+      workflowId: "wf-1",
+      key: "done",
+      label: "Done",
+      kind: "custom",
+      gate: "auto",
+      isStart: false,
+      isTerminal: true,
+      config: { _ui: { x: 0, y: 240 } },
+      pos: 2,
     },
   ],
   edges: [
     { id: "e-1", workflowId: "wf-1", fromNodeId: "n-research", toNodeId: "n-write", condition: "always", label: null },
+    { id: "e-2", workflowId: "wf-1", fromNodeId: "n-write", toNodeId: "n-done", condition: "always", label: null },
   ],
 };
 
@@ -332,8 +350,14 @@ describe("a saved workflow can be duplicated", () => {
     await click("Duplicate");
 
     const body = requests().at(-1)!.body as { nodes: { key: string }[]; edges: { from: string; to: string }[] };
-    expect(body.nodes.map((n) => n.key).sort()).toEqual(["research", "write"]);
-    expect(body.edges).toEqual([expect.objectContaining({ from: "research", to: "write" })]);
+    // The fixture gained a `done` end marker when the Build tab started
+    // refusing an End stage that was given work to do; the duplicate must carry
+    // the whole board, marker and all.
+    expect(body.nodes.map((n) => n.key).sort()).toEqual(["done", "research", "write"]);
+    expect(body.edges).toEqual([
+      expect.objectContaining({ from: "research", to: "write" }),
+      expect.objectContaining({ from: "write", to: "done" }),
+    ]);
   });
 
   it("it never sends the original's key, which would overwrite the original", async () => {
