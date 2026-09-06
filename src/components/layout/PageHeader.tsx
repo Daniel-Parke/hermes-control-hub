@@ -45,10 +45,19 @@ export default function PageHeader({
   const resolved = useRegistryTitle(title);
   return (
     <header
-      className={`${shellHeaderBarClasses} sticky top-0 z-30 justify-between gap-4 w-full`}
+      // flex-wrap, because on a phone the actions alone can be wider than the
+      // bar: Logs measures 388px of pickers and buttons inside 390px. With
+      // nothing to share, the title group was rendering 0px wide. Wrapping puts
+      // the actions on a second row instead of erasing the page's own name.
+      className={`${shellHeaderBarClasses} sticky top-0 z-30 flex-wrap justify-between gap-4 py-3 w-full`}
     >
       <PageTitle title={resolved} />
-      <div className="flex items-center gap-4 min-w-0">
+      {/* flex-1, not just min-w-0: min-w-0 lets this group shrink past its
+          content, and with the actions marked shrink-0 there was nothing to
+          stop it reaching zero. On a phone the busiest headers rendered
+          their h1 0px wide. Growing claims the leftover space instead, and
+          the truncate on the h1 handles what is left. */}
+      <div className="flex flex-1 items-center gap-4 min-w-0">
         {backHref && (
           <>
             <Link
@@ -56,17 +65,27 @@ export default function PageHeader({
               className={`flex items-center text-ps-text-muted hover:text-white transition-colors shrink-0 ${
                 backIconOnly ? "" : "gap-2"
               }`}
-              aria-label={backIconOnly ? backLabel : undefined}
+              // Always named, because the label is now hidden below sm and a
+              // link whose text disappears at a breakpoint would otherwise be
+              // an unnamed arrow on a phone.
+              aria-label={backLabel}
             >
-              <ArrowLeft className="w-4 h-4" />
+              <ArrowLeft className="w-4 h-4 shrink-0" />
+              {/* Hidden below sm, not removed: on a 390px screen the page's own
+                  name is worth more than the word for where you came from, and
+                  the arrow still says it. The aria-label below keeps the link
+                  named for anyone not reading pixels. */}
               {!backIconOnly && (
-                <span className="text-sm font-mono">{backLabel}</span>
+                <span className="hidden sm:inline text-sm font-mono">{backLabel}</span>
               )}
             </Link>
-            {!backIconOnly && <div className="w-px h-6 bg-white/20 shrink-0" />}
+            {!backIconOnly && <div className="hidden sm:block w-px h-6 bg-white/20 shrink-0" />}
           </>
         )}
-        <div className="flex items-center gap-3 min-w-0">
+        {/* Grows for the same reason its parent does: the back link and the
+            divider beside it are shrink-0, so without this the title is
+            handed whatever is left, which on a phone was nothing. */}
+        <div className="flex flex-1 items-center gap-3 min-w-0">
           <Icon className={`w-5 h-5 shrink-0 ${iconColorMap[color]}`} />
           <div className="min-w-0">
             <h1 className="text-xl font-bold text-white tracking-tight flex items-center gap-2 truncate">
