@@ -474,6 +474,12 @@
           "nav": 80
         },
         {
+          "slug": "running/limitations",
+          "title": "Limitations",
+          "summary": "What PatterStage does not do, stated up front: one operator, one platform tier, one agent framework, the caps on the lists, and the features held back",
+          "nav": 85
+        },
+        {
           "slug": "security",
           "title": "Security",
           "summary": "How to report a vulnerability in PatterStage privately, and what to include",
@@ -504,6 +510,12 @@
           "nav": 25
         },
         {
+          "slug": "reference/achievements",
+          "title": "Achievements",
+          "summary": "Every achievement PatterStage can award, what earns it, its target, and why a Rec Room badge never reaches an agent's record",
+          "nav": 27
+        },
+        {
           "slug": "reference/spend",
           "title": "Spend",
           "summary": "Provider spend in PatterStage, how it is estimated, the optional budget, and the hard stop that is off until you turn it on",
@@ -512,6 +524,12 @@
             "spend",
             "model"
           ]
+        },
+        {
+          "slug": "reference/analytics-events",
+          "title": "Analytics events",
+          "summary": "The local ledger PatterStage keeps of what you have done with it, the rule every event follows, every event type it can hold, and how long a row is kept",
+          "nav": 35
         },
         {
           "slug": "reference/catalog-and-profiles",
@@ -697,11 +715,14 @@
     "running/host-scheduling",
     "running/cross-platform",
     "running/troubleshooting",
+    "running/limitations",
     "security",
     "reference/api",
     "reference/schema",
     "reference/quests",
+    "reference/achievements",
     "reference/spend",
+    "reference/analytics-events",
     "reference/catalog-and-profiles",
     "reference/runtime-architecture",
     "contributing",

@@ -10,74 +10,208 @@ type: guide
 tags: [product, laboratory]
 compiled_from: normalised
 ---
+
 # Deep Research
 
-Native, provider-flexible research under the [Laboratory](research.md): submit a question and the engine runs an iterative loop, **plan → (search → visit sources → reason)×rounds → synthesize**, producing a cited report. It depends on no external service (no Odysseus): inference reuses PatterStage's own `callLLM`, and web search is a shared, free/local-first module.
+Ask a question in plain language and the agent goes off to search, read and
+think for you, then writes back a report with every claim linked to the page it
+came from.
 
-Nav: **Work → Research** (`/work/research`).
+## What you see
 
-## Inference (local or cloud, default Hermes)
+The page sits at **Work → Research** in the left rail. Everything at the top of
+it is the form that starts a run.
 
-The engine ([`engine.ts`](../../src/lib/laboratory/deep-research/engine.ts)) calls inference through an injectable `LlmFn` whose default is `callLLM` ([`src/lib/llm.ts`](../../src/lib/llm.ts)). `callLLM` already resolves **direct-provider** (a model-registry row with a `baseUrl` + key → a local OpenAI-compatible endpoint like LM Studio/Ollama/vLLM, *or* a cloud provider) vs. the **Hermes gateway** default. So a research run can use:
+**Research question** is a three-line box with an example question showing in it
+as a placeholder. Under the box is a row of four settings:
 
-- the **Hermes agent's default model** (no `config.modelId`), or
-- any **registry model** (`config.modelId`), pointing at a **local endpoint** or a **cloud** provider.
+- **Model** chooses what does the thinking. The first entry, **Agent default
+  model**, uses whatever your agent already runs on. Below it is every model you
+  have registered, each listed as its name and its provider.
+- **Search** chooses where the evidence comes from. **DuckDuckGo (free)** needs
+  no setting up at all. **SearXNG (local)** uses a search instance you run
+  yourself. **No web (model only)** turns searching off, and the report is
+  written from the model's own knowledge.
+- **Depth**, hinted **rounds**, takes a number from 1 to 8 and starts at 3. It
+  is how many times the run searches, reads and thinks again before writing.
+- **Breadth**, hinted **results/query**, takes a number from 1 to 12 and starts
+  at 6. It is how many results each search asks for.
 
-## Search (shared, free/local-first)
+Under those sits **Presets**, a **Load preset…** picker of configurations you
+have saved, next to a **Save current as…** name box and a **Save** button. On
+the right of the same row is **Start research**. Until the question is at least
+three characters long that button stays disabled and a line under it reads
+"Enter a research question (≥ 3 characters) to start."
 
-Search lives in the reusable [`src/lib/search/`](../../src/lib/search) module (also used by Composer's Research stage). Providers implement `SearchProvider`; `resolveSearchProvider()` picks one:
+The rest of the page is two panes side by side.
 
-- **DuckDuckGo:** free, zero-config **default** (no key).
-- **SearXNG:** fully local/private when you point `PS_SEARXNG_URL` at your own instance.
-- **None:** "No web (model only)" on the page, `searchProvider: "none"` over the API. A null provider that returns no results, so the run answers from model knowledge alone and says so.
-- Cloud adapters (serper/tavily/brave) slot in later, keyed off the credentials registry.
+**Runs** on the left lists your research runs, newest first, up to fifty. Each
+row shows the first line of the question and, under it, the run's state in
+capitals: pending, running, completed, failed or cancelled. Before you have run
+anything it reads "No research runs yet."
 
-Configure via `PS_SEARCH_PROVIDER` / `PS_SEARXNG_URL` (see [ENV_REFERENCE.md](../running/env-reference.md)). A per-run choice in the config panel overrides the environment; with no choice and `PS_SEARXNG_URL` set, SearXNG is preferred automatically. Choosing SearXNG **without** that URL is not an error, it silently resolves to DuckDuckGo, so set the URL before assuming a run stayed local. `visit()` fetches a page and extracts readable text (dependency-free HTML→text, size-capped). The engine tolerates zero search results (it falls back to LLM-only and says so).
+The pane on the right is whichever run you selected. Until you pick one it reads
+"Select a run to read its report, sources, and timeline." Once a run is selected
+it shows, from the top:
 
-## The loop
+- the full question, the state, and, while the run is still pending or running,
+  a **Stop run** button;
+- a line of facts about the run: Model, Search, Depth, Breadth, Duration and
+  Tokens. Duration reads "running" until the run ends, and Tokens reads "not
+  recorded" when no model reported any;
+- the run's error, when it has one;
+- **Copy**, **View report** and **Download**, once there is a finished report;
+- **In brief**, a highlighted band of three to five bullets carrying the whole
+  answer;
+- **On this page**, a row of links to the report's own headings;
+- the report itself, with every **[n]** citation clickable;
+- **Sources (n)**, numbered to match those citations, each showing the site it
+  came from and the full address underneath;
+- **Research timeline**, a stepper of everything the run actually did, labelled
+  Plan, Search, Read, Reason and Synthesize. Each entry expands to show what it
+  produced. While the run is live the newest one is already open and a
+  "working…" line pulses under the list.
 
-1. **Plan:** the model proposes sub-questions + an initial `QUERY:`.
-2. **Rounds** (budgeted, default 3): **search** the current query → **visit** the top sources → **reason** over the evidence + prior notes; the model emits `NEXT QUERY:` to continue or `DONE` to stop.
-3. **Synthesize:** a cited Markdown report from the plan, notes, and deduped sources.
+A read or a write that fails puts a banner across the top of the page saying
+what went wrong.
 
-## Configuring a run, and saving that configuration
+## Typical use
 
-Under the question box are four fields: **Model**, **Search** provider, **Depth** (`rounds`, 1 to 8, default 3) and **Breadth** (`resultsPerQuery`, 1 to 12, default 6). A fifth option, `visitsPerRound` (pages actually read per round, default 2), is accepted by the API and carried in a saved preset but has no field on the page.
+**Ask a question and read the answer.**
 
-Any configuration can be saved under a name and reloaded from the **Presets** picker. Presets live in `research_presets`, added together with `research_runs.config_json` by migration `023`, so the options a run used are recorded on the run itself.
+1. Type the question into **Research question**. A question with a shape to it
+   works better than a bare topic, because the plan step turns it into
+   sub-questions to chase.
+2. Leave **Model** on **Agent default model** and **Search** on **DuckDuckGo
+   (free)** for a first run.
+3. Click **Start research**. The run appears at the top of **Runs** and selects
+   itself, and the timeline fills in step by step as it goes. You can leave the
+   page or close the tab; the run carries on without you.
+4. When the state reads completed, read **In brief** first, then use **On this
+   page** to jump to the section you want. To check a claim, click its **[n]**
+   and you land on that source.
 
-## Persistence and recovery
+**Save a configuration you want again.**
 
-Every step (plan/search/visit/reason/synthesize) is persisted to `research_steps` (schema v19) so the page can replay/stream it. The run is fire-and-forget ([`run-job.ts`](../../src/lib/laboratory/deep-research/run-job.ts)); the page streams via SSE (`GET /api/laboratory/research/[id]/events`) with `useApiResource` polling as the fallback. Because the job is fire-and-forget, a crashed/restarted process would leave a run stuck `running`. Boot recovery (`failStuckResearchRuns`, wired in [`instrumentation.ts`](../../src/instrumentation.ts)) fails standalone runs left running past a deadline so the page doesn't spin forever.
+1. Set **Model**, **Search**, **Depth** and **Breadth** to what you want. Depth
+   5 or 6 with breadth 8 is a slower, wider run; depth 1 is close to a single
+   search and a summary.
+2. Type a name into **Save current as…** and click **Save**.
+3. Next time, pick it from **Load preset…** and the fields fill themselves in.
+   Loading a preset changes the form and starts nothing.
 
-## API
+**Stop a run you no longer want.**
 
-| Method + path | Purpose |
+1. Select the run while it is still pending or running.
+2. Click **Stop run**. The button changes to **Confirm stop?**.
+3. Click it again within a few seconds. The run reads cancelled, keeps the steps
+   it had already reached, and records no report. If you leave it, the button
+   goes back to **Stop run** on its own.
+
+## Notes
+
+Depth is what a run costs. Each round is one search and one round of thinking,
+on top of one call to plan at the start and one to write the report at the end,
+so a run at depth 8 makes about twice the model calls of one at depth 3.
+Breadth widens each search rather than adding calls. Depth is a ceiling, not a
+quota: after each round the model either asks for another search or declares
+itself done, so a run set to 8 can finish in three rounds and often will. The
+token total for a finished run is on
+the run's own line of facts, and Deep Research is one of the sources broken out
+in the spend panel on [Insights](./insights.md). See
+[Spend](../concepts/spend.md) for how that total is arrived at, and
+[Model](../concepts/model.md) for what your choice in the Model dropdown
+actually changes.
+
+Every round opens the top two results and reads the pages behind them, and that
+number is fixed for runs started from this page. Breadth still matters: every
+result a search returns is carried into the final write-up as a numbered source,
+which is why the **Sources** list is longer than the pages the timeline shows
+being read. When no page in a round could be opened, that round reasons over the
+search snippets instead.
+
+A finished report is kept as an artifact, named after the question, so it
+outlives the run and turns up on [Artifacts](./artifacts.md) alongside
+everything else your agents produced. A cancelled run keeps nothing: half a
+report is not a deliverable. **Copy** puts the report on your clipboard as
+Markdown; **View report** opens a self-contained page with the report, the
+sources and the timeline on it; **Download** saves that same page as a file you
+can send to someone who does not have PatterStage.
+
+If some of the evidence could not be gathered, the report opens with a note
+saying so, counting the searches that failed and the pages that could not be
+read, and telling you to treat its coverage as partial. A clean run gets no such
+note, which is what makes it worth reading when it appears.
+
+If every single search fails, the run is marked failed rather than completed,
+and its error says the report was written with no external sources and its
+claims are ungrounded. A search that legitimately finds nothing is a different
+thing: that run completes, and the report says it answered from the model's own
+knowledge.
+
+Choosing **SearXNG (local)** without an instance to point at falls back to
+DuckDuckGo silently, so a run you meant to keep on your own machine can leave
+it. Set the address first, and confirm afterwards by reading the Search fact on
+the finished run, which records the provider that was actually used.
+
+Pages that will not open are skipped rather than fatal. A fetch gives up after
+twelve seconds, reads roughly the first six thousand characters, and refuses
+addresses on your own machine or network. A page that is paywalled, blocked or
+slow is counted towards the incomplete-evidence note, and the round carries on
+with what the search results said.
+
+A run interrupted by a restart is not left spinning. Anything still marked
+running more than thirty minutes after it started is failed the next time
+PatterStage boots, with an error saying it was interrupted.
+
+Presets can be saved and loaded here but not deleted here.
+
+Research is also a stage you can put inside a workflow. A **research** node in
+[Composer](./composer.md) runs the same engine as part of a longer process, so
+if research is the first step of something bigger, build it there rather than
+starting from a report.
+
+<details>
+<summary>Under the hood</summary>
+
+The screen is `src/app/work/research/page.tsx`. The loop lives in
+`src/lib/laboratory/deep-research/engine.ts`, which calls inference through
+`callLLM`, so a run can use the Hermes gateway default or any registered model
+pointing at a local endpoint or a cloud provider. Search is the shared
+`src/lib/search/` module, which Composer's research stage uses too.
+
+| Route | What it does |
 |---|---|
-| `GET /api/laboratory/research` | List runs |
-| `POST /api/laboratory/research` | Start `{ query, config? }`. Every option lives inside `config`: `modelId`, `searchProvider`, `rounds`, `resultsPerQuery`, `visitsPerRound`. Both schemas are `.strict()`, so a stray or top-level key (a bare `modelId`, for instance) is a 400 rather than a silently ignored field. |
-| `GET /api/laboratory/research/[id]` | Run + steps |
-| `GET /api/laboratory/research/[id]/events` | Live SSE (`{ run, steps }`) |
-| `GET /api/laboratory/research/[id]/export` | Standalone interactive HTML report (`Content-Disposition: inline`, so it opens in the browser; the UI also offers Download) |
-| `GET /api/laboratory/research/presets` | List saved run configurations |
-| `POST /api/laboratory/research/presets` | Save one: `{ name, config }` |
-| `DELETE /api/laboratory/research/presets?id=` | Delete one (`id` is required, else 400) |
+| `GET /api/laboratory/research` | Lists runs. Limit defaults to 50 and is capped at 500. |
+| `POST /api/laboratory/research` | Starts a run from `{ query, config? }`. Every option lives inside `config`, and both schemas are strict, so a stray or top-level key is a 400 rather than a field that is quietly ignored. |
+| `GET /api/laboratory/research/[id]` | Returns one run with its steps. |
+| `GET /api/laboratory/research/[id]/events` | Live updates over SSE. The page falls back to polling every three seconds, and shows a "Live updates" banner if the stream itself fails. |
+| `POST /api/laboratory/research/[id]/cancel` | Stops a run. 404 for an unknown id, 409 for one that has already finished. |
+| `GET /api/laboratory/research/[id]/export` | The standalone HTML report, sent inline so it opens in the browser. |
+| `GET`, `POST`, `DELETE /api/laboratory/research/presets` | Lists, saves and deletes saved configurations. Delete needs an `id`. |
 
-Research is also a **Composer node kind** (`research`). Orchestrate it as one stage of a workflow rather than launching a workflow from a report. See [COMPOSER.md](COMPOSER.md).
+`config` carries one option the page has no field for: `visitsPerRound`, the
+pages opened per round, which the API accepts between 0 and 6. The page always
+sends 2, though a preset created through the API can carry another value and
+will be applied when you load it.
 
-## Verification
+Set `PS_SEARCH_PROVIDER` to `duckduckgo`, `searxng` or `none` to choose a
+default provider, and `PS_SEARXNG_URL` to the base URL of your own SearXNG
+instance. With the URL set and no provider named, SearXNG is preferred
+automatically; a per-run choice on the page overrides both. See
+[Environment variables](../running/env-reference.md).
 
-`npm test` covers the IterResearch loop (rounds, budget, LLM-only, failure) and the search module (SearXNG parse, visit extraction, resolver) with injected deps. End-to-end: run a query against (a) the Hermes default and (b) a local-endpoint registry model; confirm a cited report + streamed steps.
+Runs, steps and presets live in `research_runs`, `research_steps` and
+`research_presets`. Migration `019_deep_research.sql` created the first two,
+`023_research_options.sql` added the saved configurations and recorded each
+run's own options on it, `034_research_usage.sql` added the token totals, and
+`036_research_gather_health.sql` added the four counters behind the
+incomplete-evidence note. A null token total is stored as null rather than zero,
+because a run whose cost was never reported is not a free one.
 
-## Stopping a run
+The job is fire and forget, so nothing in the process resumes it after a crash.
+`failStuckResearchRuns()` runs from `src/instrumentation.ts` at boot and fails
+standalone runs left running past the deadline. Research nodes driven by
+Composer are bounded separately by that engine.
 
-A run you no longer want can be stopped from the detail pane: **Stop run**, then
-a second click to confirm. It is offered only while the run is pending or
-running, so a finished report can never be relabelled.
-
-The row is written by `POST /api/laboratory/research/[id]/cancel` and the job
-notices at its next step and bails out, rather than finishing and overwriting
-your decision with `completed`. A cancelled run keeps whatever steps it had
-reached, records no report, and captures no artifact: half a report is not a
-deliverable. Its tokens up to that point are already recorded against it, so
-stopping a run does not make what it already spent disappear.
+</details>

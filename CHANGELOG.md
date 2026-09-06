@@ -1,0 +1,287 @@
+# Changelog
+
+All notable changes to PatterStage are recorded here, in the words of the person
+using it rather than the person building it.
+
+The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
+the project uses [semantic versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased]
+
+The work leading to the 1.0.0 release.
+
+**Three things to do after upgrading.**
+
+1. Open the Agents page and use **Pull from Hermes** once, on all profiles. An
+   older version of the config reader could drop sections of `config.yaml` and
+   force every profile's personality to "technical". One pull repairs the stored
+   copy. Expect a drift warning or two on the way through; the pull clears them.
+2. Update any bookmarks. Nearly every page has a new address (see below). The old
+   ones redirect for this release only.
+3. Let the app finish its first boot before using it. Four database changes are
+   applied automatically, taking the schema to version 41. Nothing is deleted.
+
+### Added
+
+- **Quests.** A guided route through the product: 32 quests across seven
+  chapters, from getting an agent answering to taking your first backup. Progress
+  is worked out from what you have actually done, so anything you did before this
+  release already counts. Nothing to tick off by hand, and a completed quest stays
+  completed even after old activity is trimmed. Find them at **Quests** in the
+  sidebar, with a badge on the rail and the next step on the dashboard. Quests you
+  are not interested in can be skipped, and the dashboard card can be hidden
+  (there is no control to bring the card back yet).
+- **Help inside the app, and a documentation site.** Every page header now carries
+  a **?** that opens the guide for that exact screen, and pressing `?` anywhere
+  does the same. The full set is browsable at **Help**, with search, and unfamiliar
+  terms carry a hint you can click. The same pages are published as a static site
+  you can open from disk or read online.
+- **Backups you can take yourself.** Settings › System has a Backups card that
+  snapshots the database on demand. Anything that overwrites or deletes your data,
+  such as restoring the seed pack, now takes a snapshot first, and refuses to run
+  if it cannot.
+- **Settings › System.** One page for how this install is put together: data
+  directory, schema version, ports, authentication mode, read-only state and
+  version, copyable as a single block for a bug report. Update, rebuild and
+  restart live here now.
+- **A subsystems panel on the dashboard.** Five rows, always: gateway, memory,
+  sync, the agent's config file, and gateway load. Each says what state it is in
+  and why, in a sentence you can act on, so a broken config file no longer means
+  reading a log to find out.
+- **Search across settings.** The Settings index lists every section with the
+  fields it holds, and searching narrows it to the sections that actually contain
+  the word.
+- **Scheduling without a crontab.** PatterStage can now run scheduled scripts on
+  its own timer where the host has no crontab (Windows, most containers). Rows
+  scheduled this way say "Runs while PatterStage is running" so the trade is
+  visible, and the Scripts page says whether a schedule belongs to the host or to
+  PatterStage.
+- **Cancel controls where runs used to be unstoppable.** Deep research runs can be
+  stopped mid-flight, and story generation has a Stop that aborts the request and
+  ends the loop rather than letting one more chapter through.
+- **A writing-model picker in Story Weaver**, defaulting to the agent's model, plus
+  per-story spend now recorded against the same ceiling everything else is held to.
+- **Two starter workflows in Composer**, "Research then summarise" and "Draft and
+  review", both showing an approval gate doing real work. Workflows can be
+  duplicated, and the note you leave when approving or rejecting a stage is shown
+  on that stage and passed to the stage that runs again.
+- **Session history you can navigate.** A Failed badge with the exit code, a Failed
+  filter, search and filters kept in the URL so a view can be shared or reloaded,
+  first and last page controls, a page size, plus search inside a transcript,
+  expand all, role filters and copy.
+- **A schedule card on missions** showing cadence, next run, last run and last
+  result, and a plain sentence when a schedule will not fire and why. A mission
+  that has run links straight to its sessions.
+- **Rotating an API key** without losing the models that point at it, and
+  providers that need no key are no longer asked for one.
+- **Per-file copy and download in Logs**, and a Latest lines control when you have
+  scrolled away from the tail.
+- **Editing a profile's name and description**, and a display name for the
+  built-in agent.
+
+### Changed
+
+- **Almost every page has moved.** The sidebar is now five groups, named after
+  what you are doing rather than after the subsystem behind it:
+
+  | Group | Pages |
+  | --- | --- |
+  | Home | Dashboard, Quests, Help |
+  | Work | Chat, Missions, Composer, Research, Scripts |
+  | Results | Sessions, Artifacts, Insights, Logs |
+  | Agent | Agents, Skills, Tools, Memory, Models, Settings |
+  | Rec Room | Story Weaver |
+
+  The full map of old address to new: `/orchestration/chat` to `/work/chat`,
+  `/orchestration/missions` to `/work/missions`, `/orchestration/composer` to
+  `/work/composer`, `/orchestration/scripts` to `/work/scripts`,
+  `/laboratory/research` to `/work/research`, `/sessions` to `/results/sessions`,
+  `/laboratory/artifacts` to `/results/artifacts`, `/laboratory/insights` and
+  `/insights` to `/results/insights`, `/logs` to `/results/logs`,
+  `/operations/agents` to `/agent/profiles`, `/operations/skills` to
+  `/agent/skills`, `/operations/tools` to `/agent/tools`, `/memory` to
+  `/agent/memory`, `/config/models` to `/agent/models`, `/config/seed` to
+  `/agent/settings/restore`, and `/config` and its sections to `/agent/settings`.
+  Every old address answers a temporary redirect, query string intact, **for this
+  release only**. Page titles, browser tab titles and the sidebar now all take
+  their wording from one place, so they can no longer disagree.
+- **Personalities is now the Identity tab on the Agents page.** A personality
+  belongs to a profile, so it is edited on that profile's own card rather than on a
+  separate page. Both old addresses land on the tab.
+- **Update, rebuild and restart moved out of the sidebar** into Settings › System.
+  The sidebar keeps a version line and shows a badge when an update is available.
+  Those controls now tell the truth before you click: if the deploy route is
+  switched off they say so and stay disabled, a version check that failed reads as
+  a warning rather than "up to date", and a deploy that never finishes releases
+  the buttons instead of spinning forever.
+- **The dashboard is now an operations board.** Six status pills (gateway, memory,
+  scheduler, spend, processes, errors), each a link to the page that answers in
+  full, the live panels, and one progress line. The charts, the mission mix and the
+  trophy case moved to **Insights**, which is the history page. The clock, the Rec
+  Room card and the Command Center block are gone.
+- **Nothing on the dashboard reads green until it has been read.** A check that has
+  not answered says "Checking", one that failed says "Unknown", and a panel nobody
+  has read never reports "Healthy".
+- **One vocabulary for states.** Draft, Queued, Running, Waiting for you,
+  Completed, Failed, Cancelled; Healthy, Degraded, Not running, Not installed; In
+  sync, Out of sync. Nothing says "Successful", "Finished", "In Progress" or
+  "Complete" any more, and one screen no longer says "ok" and "Healthy" about the
+  same thing.
+- **Destructive actions are two clicks in place**, on the button itself, instead of
+  a browser confirmation box. Deleting a script, a scheduled mission, a story theme,
+  an artifact, a memory or a workflow all work this way, and the armed button stays
+  clickable.
+- **A list that failed to load now says so, with a Retry.** Nine pages used to show
+  their "nothing here yet" state when the read had in fact failed, which read as
+  data loss. The empty state now appears only after a read that succeeded.
+- **A saturated gateway is refused rather than left hanging.** Requests to the
+  agent gateway are admitted a few at a time per endpoint; beyond that they queue
+  briefly and are then refused with a message naming the endpoint and the counts.
+  One slow endpoint can no longer starve the rest, and recovery is immediate when
+  the gateway catches up.
+- **Every list is bounded and newest first.** Missions, artifacts, models,
+  schedules, chats, runs and research all honour a limit, and a nonsense limit is
+  clamped rather than returning everything or erroring.
+- **The Tools grid understands bundles.** A toolset already provided by an enabled
+  bundle shows as on and says which bundle provides it, instead of offering a
+  switch that does nothing. Hand-edited advanced JSON is now kept as the payload
+  until you save or discard it, and the page says the grid is out of play while it
+  stands.
+- **Models are never imported behind your back.** Opening the Models page reads;
+  it no longer writes. Re-importing from config is an explicit button, and an
+  import keeps any name or address you edited yourself and says which fields it
+  kept.
+- **The Seed page is now Restore**, and it counts what the shipped pack actually
+  contains rather than describing it, then shows what each restore did.
+- **Memory has one provider switch.** The Memory page owns it; the matching field
+  in Settings is read-only and points there. Saving also updates the agent's own
+  config file to agree. The two stacked first-visit warnings became one "Set up
+  memory" card carrying the address that fixes it, an empty result now says which
+  kind of empty it is, and the number beside a fact is labelled as its proof count
+  rather than a relevance percentage it never was.
+- **Chat, Composer and Research errors surface where they happen** instead of a
+  spinner that never stops or a refetch over the top of the failure.
+- **Sync controls read "Pull from Hermes" and "Push to Hermes"** everywhere, and a
+  sync answer now says what actually happened per target rather than a bare
+  success.
+- **Keyboard and screen-reader use across the app.** A skip link before the
+  sidebar, one visible focus ring, dialogs that trap focus, close on Escape and
+  return focus to what opened them, a mobile drawer that is inert while closed, and
+  51 controls that had a placeholder where their name should be now carry a real
+  name.
+- **Notifications stack.** Up to three at a time, and a success can no longer evict
+  an error you have not read.
+- **The sidebar remembers whether you collapsed it.**
+- **Installing over an existing install** now backs the database up and asks you to
+  type a confirmation before it moves your data aside, and says where it put it.
+
+### Fixed
+
+- **Script execution and updates now require authentication.** With
+  authentication turned off, `POST /api/scripts/run`, saving a script, writing a
+  crontab line and `POST /api/update` were reachable by anything that could reach
+  the port. They are refused twice now, at the proxy and at the route. Turning
+  authentication off is not the same as opening the host, and ordinary reads and
+  writes are unaffected.
+- **API keys are no longer sent to the browser in plaintext.** `GET /api/config`
+  masks every `api_key` at any depth, including inside fallback provider lists.
+- **The agent's `config.yaml` no longer corrupts itself.** A rebuild could emit the
+  same top-level key twice, misread the toolsets list, and never read the
+  personality at all, and the damaged text was then copied back into the database,
+  so one bad write became permanent and whole sections (model, auxiliary, memory,
+  plugins) disappeared over following cycles. Config is now rebuilt as a whole
+  object, nothing is written without parsing first, a file that will not parse is
+  refused rather than laundered, and every refusal names the most recent backup
+  that still parses. This is what the "Pull from Hermes" step above repairs.
+- **Read-only mode no longer writes.** Three pages performed a write while merely
+  being read.
+- **Creating a story no longer fails with an empty error.** A one-word mood, an
+  odd title or an unexpected field now gives a clear message instead of a blank
+  500, and every request that fails now returns a reason.
+- **A story interrupted by a restart is marked failed with the reason**, rather
+  than sitting on "generating" forever. The same is true of a chapter that was
+  being written.
+- **Opening a half-finished story no longer starts writing on its own.** Chapters
+  are written when you ask, one at a time or continuously, and a stop is not
+  counted as a failure.
+- **"Clone from: Default" now clones.** New profiles were being created from
+  boilerplate rather than from the profile named.
+- **A very large mission timeout no longer wedges the queue.** A timeout of a
+  billion minutes did not exceed the safety cap, it replaced it, so a mission whose
+  backend had vanished never timed out and held the one-at-a-time gate forever.
+  Timeouts are now whole minutes from 1 to 4320.
+- **A mission schedule that can never fire is refused before the mission is
+  created**, rather than after, so a rejected schedule no longer leaves a stranded
+  draft behind.
+- **Cancelling a finished mission is a success**, not an error in the log.
+- **A chat no longer loses its session** when its title collides with an existing
+  one. The name is retried with a suffix, and if it still cannot be created the
+  log says so instead of silently continuing without one.
+- **Deleting a Composer workflow no longer takes its run history silently.** The
+  delete is refused, naming the workflow and how many runs would go with it, and
+  goes ahead only when you confirm.
+- **A Composer workflow's description survives a save.** It could be lost on the
+  next write.
+- **Every kind of script is listed, run and scheduled the same way.** Five
+  different ideas of what counts as a script were in the code, and they disagreed:
+  the backup script the installer sets up (`ps-db-backup.mjs`) really was in the
+  crontab and reported "not scheduled" forever; `.ps1`, `.bat` and `.cmd` had a
+  Schedule button that refused every time; and unscheduling anything that was not
+  a `.sh` file failed with a not-found. All seven kinds (`.sh`, `.mjs`, `.cjs`,
+  `.js`, `.ps1`, `.bat`, `.cmd`) now work end to end, and saving from the editor
+  no longer adds a second extension to the file name.
+- **The skill viewer no longer crashes on top-level skills.** Two routes were
+  sending two different shapes; there is one now, and the thinnest payload renders
+  as a page.
+- **Memory "Test connection" believes a healthy store.** It was reading only one
+  level of the response and reporting a working store as a failure. Saving now
+  keeps the provider you loaded rather than falling back.
+- **Downloading a chat exports the conversation whose button you pressed**, not the
+  one that happened to be open, and a read that was refused is reported as a
+  failure rather than as an empty transcript.
+- **Saving settings survives a push.** A save followed by "Push to Hermes" could
+  revert the save. Clearing a default now clears it and stays cleared, "not set" is
+  a state with its own Clear control, and minimum and maximum values are enforced
+  on the server as well as in the browser.
+- **The Settings index says when `config.yaml` cannot be read**, instead of showing
+  an empty tree that looks like a fresh install.
+- **The log pane scrolls, at every width.** Auto-scroll and the "latest lines"
+  control could not work because the page was scrolling instead of the pane.
+- **Deleting a story theme works**, and rows are removed from the screen only once
+  the delete succeeded. "Save to library" reports the real answer, and a chapter
+  heading no longer prints its number twice.
+- **The chapter length and "chapters to regenerate" controls are read.** They had
+  no effect.
+- **Fresh installs no longer show a red alert on Logs** for the normal state of
+  having written no logs yet.
+- **The "no local install" banner no longer appears beside a working gateway.**
+  With no local install and a reachable gateway, the dashboard says the agent runs
+  through the gateway, at its address.
+- **The data-directory warning at boot stays quiet** when you have actually set the
+  data directory.
+- **Mission statistics no longer overlap at 1280 pixels wide**, and the New Mission
+  form no longer states a requirement before you have typed anything, contradicts
+  its own hint, or hides the dispatch mode below the fold.
+- **Session rows are valid to click and to tab through.** Links were nested inside
+  links, and a transcript that failed to load said "Session not found" whatever the
+  real reason was. A session with no transcript now says how it ended instead of
+  claiming it does not exist.
+- **"Hide API noise" describes one set.** It now filters on how long a session ran
+  rather than a rule the rows, the count and the tiles each read differently.
+- **A rejected request that names a method now says which methods are allowed**,
+  and approving a Composer gate takes "accept" or "reject" with the others rejected
+  by name instead of quietly routing to the wrong decision.
+- **Failures during category rename, scheduled-mission delete, pause and run-now
+  are shown** instead of the page reloading over them.
+
+### Removed
+
+- **The Personalities page**, its sidebar entry and its API. Editing a
+  personality happens on the Agents page's Identity tab.
+- **The "activate personality" control**, which changed nothing when clicked, and
+  the "not implemented" sentence on the agent level card.
+- **The Command Center block, the live clock and the Rec Room card** from the
+  dashboard, along with the charts and trophy case, which moved to Insights.
+- **Browser confirmation dialogs.** Every destructive action confirms in place.
+- **The duplicate mission-cancel implementation**, which was a second answer to a
+  settled question.

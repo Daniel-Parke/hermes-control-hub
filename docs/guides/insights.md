@@ -6,199 +6,84 @@ nav: 90
 audience: operator
 screen: /results/insights
 concepts: [spend, run]
-type: reference
+type: guide
 tags: [product, analytics]
-compiled_from: normalised
+compiled_from: authored
 ---
-# PatterStage: Analytics & Achievements
 
-How PatterStage logs meaningful interactions, turns them into achievements, and
-surfaces them on the **Insights** page (`/results/insights`). The older addresses survive only
-as redirects for existing bookmarks
-(`next.config.ts`); there is no page at that path. Added in Phase Q3.
+# Insights
 
-## 1. The event log (`analytics_events`)
+The history page: what you have done with PatterStage, what it cost, and what you have earned for it.
 
-An append-only table written by the server whenever something noteworthy happens.
+## What you see
 
-| column | notes |
-|--------|-------|
-| `id` | uuid |
-| `event_type` | one of the taxonomy below (validated in TypeScript, **no SQL CHECK**) |
-| `entity_type` | `mission` / `run` / `story` / `session` / `skill` / `personality` / `schedule` / `chat` / `model` (nullable) |
-| `entity_id` | the related row id (nullable) |
-| `profile` | agent profile, for per-profile breakdowns (nullable) |
-| `metadata_json` | small JSON payload, e.g. `{ "enabled": true }` (nullable) |
-| `created_at` | ISO, defaults to `datetime('now')` |
+The header carries the page title and, on the right, a range switch reading **7d**, **30d** and **90d**. It opens on 30d. That switch drives most of the charts below it, and the cards say so in their own titles.
 
-Indexes: `event_type`, `created_at`, and the composite `(event_type, created_at)`
-for the windowed counts. Migration **v12** (`012_analytics_events.sql` +
-`apply-analytics-events-migration.ts`, wired last in `runMigrations()`). There is
-deliberately **no `CHECK` on `event_type`**: new types ship as code, so a CHECK
-would force a migration per type and reject forward-compatible writes from newer
-code against an older DB. The taxonomy is enforced at the TypeScript boundary
-(`recordEvent` only accepts an `AnalyticsEventType`).
+If nothing has been recorded yet, a single panel sits at the top: **No activity yet**, with a **Go to Missions** button. Everything else fills in as you use the product.
 
-**Retention (v32, [ADR-0009](../../org/decisions/ADR-0009-retention-for-the-readings-tables.md)).**
-This table has a declared window of **400 days**, with a schema-enforced floor of
-365 because that is the longest read any consumer on this page performs. The
-prune ships **disabled** on every install and is a command an operator runs by
-hand (`npm run db:retention`); nothing on this page or anywhere else deletes an
-event on its own. The lifetime aggregates below (`countByType`,
-`distinctActiveDays`, the breadth counts) are the reason the prune first captures
-an `agent_progression_snapshots` row and refuses to run if it cannot: no finite
-window can satisfy a lifetime count, so the answer is recorded instead of the
-inputs being kept.
+Below that, top to bottom:
 
-### Taxonomy (`src/lib/analytics/event-types.ts`)
+- **A streak flame and four tiles.** The flame shows your current run of active days and your best ever. The tiles are **Interactions** (every recorded event, all time), **Active days** for the selected range, **Tokens**, and **Achievements** as unlocked out of total.
+- **Provider spend.** Three totals, **Today**, **This week** and **This month**, then a line for each thing that spends money: Agent runs, Composer stages, Deep Research and Story Weaver, each with its run count and estimated cost. Underneath, a quiet link reading **Set a budget (optional)**, or your figure if you have set one. This is the only money on the page.
+- **Activity by category** over the selected range, a stacked area chart with a colour legend, beside **By category (all-time)**, a ring with the running total in the middle and every category listed with its count.
+- **When you work (hour of day)**, a 24 hour clock where a longer spoke means more activity in that hour; **Run duration**, a histogram bucketed from under five seconds to over five minutes; and **Mission success trend**, completed against failed per day.
+- **Tokens by model**, **Top missions** by number of runs, and **Mission mix (all-time)**, a ring splitting every mission you have ever written into Successful, Failed, Dispatched, Queued and Draft.
+- **Run activity**, a heatmap of the last 91 days with a count of active days and total runs beside the title.
+- **Achievements**, a compact trophy case at the foot of the page. It shows your points, a tally per rarity, your rarest earned badges and the ones you are closest to unlocking. **Show all** expands it into the full grid, with **All**, **Unlocked** and **Locked** filters.
 
-Forty types in nine categories (`src/lib/analytics/categories.ts`). The
-taxonomy was extended once for the release (T-0098) so Insights can see
-Research and the Composer and so the quests have a ledger to read.
+Most card titles carry a small information icon. Hovering it explains what that chart counts.
 
-| Category | Types |
+Nothing on this page can be edited except the budget. Everything else is a reading.
+
+## Typical use
+
+**See what the last week actually looked like**
+
+1. Click **7d** in the header.
+2. The stacked area, the hour clock, the duration histogram, the success trend, tokens by model and top missions all redraw against those seven days, along with the **Active days** tile.
+3. Read the success trend first. Green is completed missions, pink is failed. A pink week is the signal to open the run in [Missions](./missions.md) and look at what came back.
+
+**Find out what you are spending**
+
+1. Read the three figures at the top of the provider spend panel. They are calendar periods: today, the current week, the current month.
+2. Read the lines below them to see which part of the product spent it. A run whose token usage was never recorded is counted in the run count and reported in a sentence under the list rather than being priced at zero.
+3. To put a ceiling on it, click **Set a budget (optional)**, choose day, week or month, type a figure in US dollars and click **Save budget**. A meter appears, showing what you have spent as a percentage of that figure. Pass the figure and a message says so, and says plainly that nothing has been stopped.
+4. If you want the figure to do more than warn, tick **Hard stop**. Scheduled runs, the queue and Composer then pause once the figure is passed. Dispatching a mission by hand always works.
+
+**Check your progress**
+
+1. Scroll to the achievements panel and read the rarest badges you have earned and the ones closest to unlocking.
+2. Click **Show all** for the whole catalogue, then **Locked** to see only what is left.
+3. Hovering a badge names it, describes what unlocks it, and shows how far along you are.
+
+## Notes
+
+- **The range switch does not drive everything, on purpose.** The two rings and the **Interactions** tile are all time, because a share of your whole history is a different question from a share of last week. The heatmap is always the last 91 days. The **Tokens** tile counts tokens recorded against runs in the last 91 days. Provider spend keeps its own calendar periods, because a budget is a month, not a rolling window.
+- **Spend is an estimate, not an invoice.** It is worked out from the token counts already recorded against each run, priced at the published per model rates. Check your provider's own billing for the real figure. See [spend](../concepts/spend.md) for what is counted and what is not.
+- **Tokens by model and Top missions read the model from the mission**, so a Composer stage run, which has no mission of its own, does not appear in either. The spend panel does count those runs, which is why they are listed there as Composer stages.
+- **A day counts as active** if a run completed on it or anything at all was recorded on it, so a day of chat or a Story Weaver chapter keeps a streak alive. The current streak stays alive as long as your most recent active day was today or yesterday, so checking first thing in the morning does not read as a broken streak.
+- **Achievements are worked out fresh every time the page loads.** Nothing is stored, so they cannot drift out of step with what you did. The toast that congratulates you on an unlock belongs to the app shell and can appear on any screen; this page never fires one.
+- **The same record of what you have done drives [Quests](./quests.md)**, which turn it into a guided path rather than a chart.
+- **Your agents' levels are not here.** A level belongs to an agent rather than to you, so it is shown per agent on [Agents](./agents.md).
+- **When a read fails**, a red banner appears at the top naming what failed, with a reminder that analytics start empty and fill in as you use PatterStage. Its **Retry** button refetches every query on the page at once, so a single broken chart does not stay broken while the others recover. The figures otherwise refresh themselves every 30 seconds.
+- **This is all local.** The history lives in the same database as everything else on your machine, and nothing here is sent anywhere. It is included in a [backup](../running/backup.md).
+
+<details>
+<summary>Under the hood</summary>
+
+Every recorded interaction is one row in the `analytics_events` table, appended by the server after the action it describes has succeeded. There is no way for a browser to write one, so achievement progress cannot be forged.
+
+The page reads four endpoints, all of them GET only:
+
+| Endpoint | What it returns |
 |---|---|
-| Missions | `mission.dispatched` · `mission.completed` · `mission.failed` · `mission.cancelled` · `template.saved` |
-| Workflows | `composer.run_started` · `composer.run_completed` · `composer.run_failed` · `composer.gate_approved` · `composer.workflow_saved` · `artifact.saved` |
-| Stories | `story.created` · `story.chapter_generated` · `story.completed` |
-| Research | `research.started` · `research.completed` · `research.failed` · `research.cancelled` |
-| Sessions | `session.started` · `session.closed` |
-| Automation | `schedule.created` · `schedule.fired` · `script.saved` · `script.run` · `script.scheduled` |
-| Config | `skill.toggled` · `personality.changed` · `model.configured` · `model.added` · `credential.added` · `profile.created` · `profile.pushed` · `profile.pulled` · `toolset.saved` · `config.saved` · `memory.configured` · `memory.retained` · `backup.taken` |
-| Chat | `chat.message_sent` |
-| Help | `help.opened` |
+| `/api/analytics` | Per type counts, all time and last 30 days, plus distinct active days |
+| `/api/analytics/timeseries?type=&days=` | Gap filled daily counts, `days` clamped to 1 to 365 |
+| `/api/analytics/insights?days=N` | The composed bundle behind most cards: hour of day, category series, duration buckets, model usage, top missions, success trend |
+| `/api/stats` | Streaks, mission mix, run activity and the achievement catalogue |
 
-One type has no emitter yet and arrives with its feature:
-`research.cancelled` (the Research cancel, B14). `backup.taken` left that list
-in B6, when `POST /api/backup` began writing one, and `help.opened` in B16,
-when the Help page began recording the guide it rendered. The
-**Completionist** achievement is measured against
-`COMPLETIONIST_EVENT_TYPES`, the curated list of every type an operator can
-trigger by doing something: the one remaining is not on it until it can be, and
-the three failure types never are.
+The budget is the one write: `PUT /api/spend`. Clearing the figure disarms the hard stop with it, a rule the database enforces as well as the form.
 
-## 2. Emitting events
+Event rows are kept for 400 days. Nothing deletes them on its own: the prune ships disabled and is a command you run by hand, `npm run db:retention`. It records a progress snapshot before it removes anything, because the lifetime totals on this page cannot be recomputed from a window.
 
-One helper: **`recordEvent(type, { entityType, entityId, profile, metadata })`**
-(`src/lib/analytics/record-event.ts`). It is best-effort and side-effect-only:
-
-- **never throws** into the caller's hot path (the whole body is wrapped, including
-  `JSON.stringify` on a bad `metadata`),
-- **no-ops in read-only mode** (`isReadOnly()`, from `src/lib/read-only.ts`),
-- logs failures via `logApiError` rather than surfacing them.
-
-Emit **after** the action succeeds, and only from a write path: an event is a
-claim that the table holds the outcome, so a write that throws leaves no event.
-Mission terminal events are emitted from `run-reconcile.ts`'s live terminal
-transition (`finalizeAndRecord`), **not** the idempotent `finalizeMissionForRun`
-(which also runs on boot recovery). Otherwise a restart would double-count.
-Call sites, as of T-0098: `src/lib/orchestration/dispatch.ts`,
-`run-reconcile.ts`, `chat-dispatch.ts`, `scheduler/tick.ts`,
-`src/lib/composer/engine.ts` (every terminal status of a Composer run),
-`src/lib/laboratory/deep-research/run-job.ts` (a research run's outcome),
-`src/lib/missions/mission-handlers/cancel.ts` (both cancel doors),
-`src/lib/templates-handlers/{create,update}.ts`,
-`src/lib/hardware-cron-handlers/create.ts`; the `schedules`,
-`skills/[name]/toggle`, `agent/personality`, `agent/files/[key]` (SOUL.md),
-`agent/profiles` (create), `agent/profiles/sync/{push,pull}`,
-`agent/profiles/[id]/toolsets`, `config`, `memory/config`, `memory/hindsight`
-(retain), `orchestration/chat`, `models`, `models/defaults`, `credentials`,
-`artifacts`, `scripts/[name]`, `scripts/run`, `laboratory/research`,
-`composer/runs`, `composer/runs/[id]/nodes/[nodeId]/approve` and
-`composer/workflows` routes; and, for the `story.*` types,
-`src/modules/rec-room/handlers/create.ts` and `generate.ts`, which the `stories`
-route delegates to rather than emitting itself. `tests/unit/b4-emits-*.test.ts`
-hold every one of the T-0098 sites to "after the write, never before it".
-
-## 3. The API (`/api/analytics`)
-
-Read-only: events are server-emitted, so there is **no POST** (a client must not
-be able to forge achievement progress).
-
-- `GET /api/analytics` → `{ analytics: { totals, last30, activeDays, generatedAt } }`
-  (per-type counts all-time + last 30 days + distinct active days).
-- `GET /api/analytics/timeseries?type=&days=&bucket=day` → gap-filled daily
-  counts. `days` is clamped **1-365** (`analyticsTimeseriesQuerySchema`), bounding
-  the only request value that reaches a SQL interval. `type` is the event-type enum.
-- `GET /api/analytics/insights?days=N` → `{ insights: { days, hourOfDay,
-  categorySeries, categoryDaily, durationBuckets, modelUsage, topMissions,
-  successTrend, generatedAt } }`, the composed bundle that feeds most of the page's cards
-  (`src/lib/analytics/insights-bundle.ts`). Note that `days` here is coerced
-  (`Number(...)`, default 30 on a non-finite value) rather than Zod-clamped like
-  `timeseries`.
-
-The aggregations live in `src/lib/analytics/analytics-repository.ts` (all reads
-defensive → zeros on an empty/pre-v12 DB).
-
-## 3a. The events that prove a quest
-
-The same ledger drives Quests. Every quest is completed by one event type
-reaching a count, or by one row-count in the store, and which event proves which
-quest is listed in full in [the quest ledger](../reference/quests.md). Nothing
-about a quest is stored except the moment it was first seen complete.
-
-Two of the types exist only for that: `artifact.opened` and `logs.opened` are
-the only READ events here. Everything else records a write.
-
-## 4. Achievements
-
-Still **derived live** (no persistence) in `src/lib/stats/derive.ts`:
-`ACHIEVEMENT_DEFS` (≈36 across missions / stories / sessions / automation /
-skills+config / chat / tokens / streaks / time-of-day / breadth, with tiered
-ladders) → `evaluateAchievements(RawMetrics)`. `getDashboardStats()`
-(`stats-repository.ts`) builds `RawMetrics` from the existing tables **plus** the
-event aggregations (`countByType` + the specialised queries), and folds event
-active-days into the streak so chat/story-only days keep a streak alive.
-
-Adding an achievement: append a def (`{ id, name, description, icon, color,
-target, measure }`), add any new `RawMetrics` field it needs (+ populate it in
-`getDashboardStats`), and register the lucide `icon` in
-`AchievementBadge.ICONS`. The catalogue-integrity test asserts every icon is
-registered (no silent `Medal` fallback) and colours are valid neon accents.
-
-**Unlock UX:** `useAchievementUnlocks` diffs the unlocked set across `useStats`
-polls (first poll seeds silently, per-id dedup) and fires a toast. `CommandCenter`
-is the sole owner of that toast; the Insights grid is read-only.
-
-## 5. Insights page (`/results/insights`)
-
-`src/app/laboratory/insights/page.tsx` composes five hooks: `useStats`,
-`useAnalytics`, `useAnalyticsTimeseries`, `useInsights` (the
-`/api/analytics/insights` bundle) and `useSpend`. A 7/30/90-day range switch in
-the page header drives the first four; spend does not follow it, because a budget
-is a calendar month rather than a rolling window.
-
-Top to bottom:
-
-- a **streak flame** and four headline tiles (Interactions, Active days, Tokens,
-  Achievements). There is no level here: [ADR-0004](../../org/decisions/ADR-0004-brain-and-body.md)
-  moved the level onto the agent profile, so `AgentLevelBadge` renders on
-  `/agent/profiles` and per-agent on `CommandCenter`, and the global operator
-  `LevelBadge` that once stood here no longer exists,
-- the **provider spend panel** (`SpendPanel`, see [SPEND.md](../reference/spend.md)), the only
-  money on the page and the only place it is reported,
-- a **stacked activity-by-category area** over the selected range, falling back to
-  a plain area chart when the bundle is empty, beside the all-time **category
-  breakdown ring** (the 40 event types folded into 9 categories),
-- an **hour-of-day radial clock**, a **run-duration histogram** and a **mission
-  success trend** (completed vs failed per day),
-- **tokens by model** (tokens only; the spend panel is the one money number on
-  the page), **top missions**, and the all-time **mission mix** donut that
-  moved here from the dashboard (T-0099). The first two aggregate
-  `runs` INNER JOINed to `missions`, because the model dimension lives on the
-  mission, so a run without one (a Composer stage run, which carries a
-  `composer_node_run_id` and no `mission_id`) is absent from them. That is a
-  known chart hole, not a money hole: `src/lib/spend/spend-repository.ts` LEFT
-  JOINs on purpose so the spend panel counts those runs,
-- the **91-day run-activity heatmap**, from `stats.runActivity` rather than the
-  range switch,
-- the **achievement showcase**: a compact trophy case that expands to the full
-  grid.
-
-Built entirely on the existing `src/components/viz/` primitives.
-
-An "Est. spend" tile used to sit in the headline strip. It was removed with the
-spend panel's arrival (T-0021): it summed `insights.modelUsage`, so it inherited
-the missing-Composer hole above, and it was drawn over the 7/30/90 switch, which
-is not a period anyone budgets in. Two spend numbers on one page, one of them
-quietly incomplete, is worse than one.
+</details>

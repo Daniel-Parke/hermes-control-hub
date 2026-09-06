@@ -12,104 +12,231 @@ compiled_from: normalised
 ---
 # Composer
 
-Composer is PatterStage's **graph orchestrator**: it runs a methodical, multi-stage workflow where each stage is an agent run, stages are connected by **conditional + looping edges**, and selected stages pause at **human-in-the-loop (HIL) gates**. It is separate from [Missions](MISSIONS.md): Missions stay simple (single/recurring "cron for AI agents"); Composer is for orchestrated processes like "feature request → … → PR".
+Composer is for work that takes more than one go: the agent does one stage at a
+time, each stage decides where the work goes next, and the stages you mark stop
+and wait for your decision.
 
-It is **on by default**; set `PS_COMPOSER=0` (see [ENV_REFERENCE.md](../running/env-reference.md)) and restart to disable it (the sidebar link hides and the page 404s). Nav: **Orchestration → Composer**.
+## What you see
 
-## Why a custom engine (not LangGraph/Temporal)
+Two tabs sit under the page title. **Run** is where you launch a
+[workflow](../concepts/workflow.md) and watch it. **Build** is where you draw
+one. Both keep what you were doing when you switch between them, so looking in
+on a running job does not throw away an unsaved board.
 
-PatterStage already owns a hardened, restart-safe, single-flight, idempotent execution substrate (the `BackgroundScheduler` + the `runs` table + `reconcile` + the ownership lease), which already dispatches minutes-long external Hermes runs and self-heals. A Composer stage **is** exactly that. Adopting LangGraph would bolt a *second* durable state model (its checkpointer) onto the one we already hardened, plus a LangChain dependency, on a self-hostable SQLite app. So Composer adds only the **graph control-flow layer** we lacked, on the substrate we own: one durable model, no heavy dependency, maintainable for the long term.
+### The Run tab
 
-## Model
+At the top is the launch card. A panel names the workflow you have selected, its
+one-line description, and its stages in order as a row of chips, with the stages
+that stop for you picked out in yellow.
 
-A **workflow** is a reusable graph definition; a **run** is one execution; a **node-run** is one stage execution (= one agent run). Tables (schema v21, [`021_composer.sql`](../../src/lib/db/migrations/021_composer.sql)):
+Under that is the box you type your objective into. Its label and its greyed-out
+example belong to the workflow rather than to the page: **Research question** for
+one of the workflows that ships with the product, **What to draft** for another,
+**Feature request / bug report** for the third. A workflow that carries example
+objectives shows them as a row of buttons under the box, and clicking one fills
+the box in.
 
-- `composer_workflows`, the definition (name, key, version).
-- `composer_nodes`, the stages: `kind` (review/validate/`research`/`group`/plan/implement/test/…), `gate` (`hil` | `auto`), `is_start`, `is_terminal`, `config_json` (per-kind config + the canvas position under `_ui:{x,y}`).
-- `composer_edges`, the transitions: `condition` (`always` | `on_pass` | `on_fail` | `on_approve` | `on_reject` | a custom **`on_<outcome>`** branch label). A **loop** is simply an edge back to an earlier node (e.g. `on_fail`).
-- `composer_runs`, the execution state: `status`, `current_node_id`, `context_json`, and `parent_node_run_id` (set when a `group` node spawned this run as a nested sub-workflow, schema v26).
-- `composer_node_runs`, one per stage execution: `attempt` (increments on loop re-entry), `run_id` (→ `runs`), `output`, `verdict_json`.
-- `composer_approvals`, the HIL decisions (accept/reject/review/add_feature).
+Then two pickers, **Workflow** and **Agent profile**, and a **Review…** button.
+Until the objective is at least three characters long the button stays disabled
+and a line under it says so. The [profile](../concepts/profile.md) decides which
+agent identity every stage runs under; leave it on **Default profile** if you
+have not set any up.
 
-`runs.composer_node_run_id` links an agent run back to its stage so [reconcile](../reference/runtime-architecture.md) can branch. Two stage kinds run something other than an agent: a **`research`** node drives a [Deep Research](research.md) run (linked via `research_runs.composer_node_run_id`, schema v25), and a **`group`** node runs a referenced sub-workflow as a nested `composer_run` (linked via `composer_runs.parent_node_run_id`, schema v26). Both are settled by the engine when their linked run terminates.
+**Review…** opens **Review before launch**, which lists the workflow, your
+objective exactly as typed, and every stage it will run. Stages that can write to
+your repository, meaning the ones that implement code, build tests or open a pull
+request, are outlined in orange with a warning naming them, and the confirm
+button says so as well. Nothing runs until you press it.
 
-**Conditional branching:** a stage can emit `OUTCOME: <label>` in its output; the engine then follows an `on_<label>` edge if one exists (else falls back to `on_pass`/`on_fail`). This lets a node fan out to >2 paths (e.g. a triage stage → `on_implement_fix` / `on_further_research` / `on_write_report`).
+Below the launch card the page is two columns.
 
-**Interactive clarification:** instead of dead-ending on a too-vague objective, an assessing stage can emit `OUTCOME: needs_clarification` + a `QUESTION:` line. The engine pauses the run (reusing the `awaiting_approval` state + a `__clarify` context marker, with no extra status/migration) and the Run UI asks the question; the answer (`POST …/clarify`) enriches the objective and re-runs the asking stage. This is Anthropic's "interactive discussion to clarify the task". Note the bound: the clarify route calls `dispatchComposerNode` directly, and the per-node attempt cap is enforced only in the engine's `applyNext`, which this path does not go through. Repeated clarification rounds on one stage are held by the per-run total-step backstop, not by the per-node cap.
+On the left, **Runs**: every run of every workflow, newest first, with a status
+filter above the list. Each row carries the first line of the objective, the name
+of the workflow it was a run of, its status, and how long ago it started. A run
+that is waiting says which kind of waiting it is doing: at a gate, or with a
+question for you to answer.
 
-The default **"Software Delivery"** workflow is seeded on boot ([`schema.ts`](../../src/lib/composer/schema.ts)): review → validate → research → hypothesise → plan **(HIL)** → build-tests → implement → test → documentation → PR **(HIL)** → unit/integration/acceptance → final-assessment → update-PR **(HIL)** → done, with `on_fail` loop-backs (test→implement, final-assessment→implement, plan→review-on-reject) and `on_fail` **forward-recovery** on the best-effort enrichment stages (research→hypothesise, hypothesise→plan) so a transient search/LLM blip doesn't dead-end the run. The forward-recovery edges are back-filled idempotently into older seeded workflows ([`seed.ts`](../../src/lib/composer/seed.ts)).
+On the right is the board. Before you pick a run it says "Select a run to watch
+it live". Once a run is selected, a header line carries the objective, the status,
+how long it has been going, and a **Cancel run** button that asks a second time
+before it acts. If the run ended badly, the reason sits under the objective. When
+a run is selected the launch card collapses to a **New run** bar, which reopens
+it.
 
-## Engine
+Under that header is the graph. Each stage is a box with a coloured dot for its
+state, the kind of stage it is, an **HIL** badge if it stops for a human in the
+loop, and a multiplier badge if it has had to run more than once. The stage in
+flight glows and the routes leading out of it are animated. Clicking a stage that
+has already run opens a panel from the right with its state, which attempt this
+was, its verdict of pass or fail with the reasons and any suggestions it gave, the
+gate decisions taken at it, any error, and its raw output with a **Save as
+artifact** button.
 
-The engine ([`engine.ts`](../../src/lib/composer/engine.ts)) advances a run one step at a time, driven by the `ComposerTick` (a `SyncSource` on the BackgroundScheduler) and by reconcile (after each stage's agent run goes terminal):
+While the run is waiting, a small panel appears in the top right corner of the
+board. If a [gate](../concepts/gate.md) is open it names the stage and offers a
+note box with **Accept** and **Reject**. If a stage stopped to ask you something
+instead, the panel shows the question, an answer box and **Submit answer**.
 
-1. **Start** the current node → `dispatchComposerNode` builds a stage prompt ([`stage-prompt.ts`](../../src/lib/composer/stage-prompt.ts), kind-specific + accumulated context + any loop-back failure reasons) and submits an agent run.
-2. **Reconcile** finalizes the stage-run, parses a **verdict** (`VERDICT: PASS|FAIL` + reasons/suggestions, [`verdict.ts`](../../src/lib/composer/verdict.ts)) for assessing stages, and merges output into the run's context.
-3. **Route**: auto gate → follow `on_pass`/`on_fail`; HIL gate → set `awaiting_approval` and wait. A `fail`/`reject` with no recovery edge fails the run with a **readable error** (the stage label + its verdict reasons, e.g. `"Review failed: the goal is too vague"`) rather than an opaque code; reaching a terminal node completes it. **Loop-backs** dispatch the target node with a fresh `attempt` and the prior failure injected into the prompt.
+### The Build tab
 
-Single-flight (one stage in flight per run), idempotent run ids (`cn_<nodeRunId>`), and the scheduler ownership lease make it restart-safe and exactly-once. **Loop guardrails** bound cycles (best practice: "maximum iteration limits by default"): a per-node attempt cap (default 5, overridable per node via `config.maxAttempts`) and a per-run total-step backstop stop a runaway loop gracefully with a readable error instead of running forever.
+A toolbar runs across the top: **Edit workflow**, which chooses what you are
+editing or starts a new one, then **Name**, **Description**, **Auto-layout**,
+**Create** or **Save**, **Duplicate** and **Delete**. The result of a save appears
+beside those buttons, green when it worked and pink when it did not.
 
-`research`/`group` stages create no agent `runs` row; the engine settles them in-process (`settleResearchNode` / `settleGroupNode`) from their linked run, with the `ComposerTick` as the cross-restart backstop. `group` nesting is guarded against recursion (a workflow referencing an ancestor in its run chain) and a depth cap.
+Under the toolbar is the board. Top left is a **Drag to add** palette holding
+Task, Research, Validate, Test and Group. Drag one onto the board to add a stage,
+then drag from the dot at the bottom of one stage to the dot at the top of another
+to connect them. Zoom controls and a small map of the whole board sit in the lower
+corners.
 
-## Building workflows (the node canvas)
+Clicking a stage opens the **Stage** inspector on the right: its **Label**, its
+**Kind**, and an optional **Instruction** that replaces the default wording for
+that kind of stage. A Research stage also gets a query, and a Group stage gets a
+picker for the workflow it runs inside itself. Three toggles set whether the stage
+is a **HIL gate**, the **Start**, and the **End**. The start stage carries one
+more group, **Workflow input (Run form)**, which is where the objective label, the
+hint and the click-to-fill examples on the Run tab come from.
 
-The **Build** tab on the Composer page is a drag-and-drop node editor ([`WorkflowCanvas.tsx`](../../src/components/composer/WorkflowCanvas.tsx), [react-flow](https://reactflow.dev)): drag stage kinds from the palette onto the board, drag handle → handle to connect them, and click a node/edge to edit just its details in the inspector (kind, HIL gate, start/terminal, a `research` query or a `group`'s sub-workflow). The whole graph is saved atomically; node positions persist in `config._ui`, and [dagre](https://github.com/dagrejs/dagre) auto-lays-out workflows that have none. Pure converters in [`canvas-graph.ts`](../../src/lib/composer/canvas-graph.ts) map the DB graph ↔ the canvas. The **Run** tab renders the same board in read-only "live" mode ([`WorkflowRunCanvas.tsx`](../../src/components/composer/WorkflowRunCanvas.tsx)). Nodes light up by status, the active pathway electrifies, and HIL gates prompt in-canvas. **Click any stage** for a side-panel ([`ComposerNodeRunDetail.tsx`](../../src/components/composer/ComposerNodeRunDetail.tsx)) with its verdict (pass + reasons + suggestions), error, and raw output.
+Clicking a connector opens the **Route** inspector instead: its **Condition**, and
+an optional label that is drawn on the line. The conditions are listed under the
+field: `always`, `on_pass`, `on_fail`, `on_approve`, `on_reject`, or `on_`
+followed by an outcome word of your own.
 
-Each workflow declares its own **input contract** on the start node's `config.inputSpec` (`{ objectiveLabel, objectiveHint, examples[] }`, authored in the start-node inspector), so the Run form is self-describing (its own objective label + hint + click-to-fill examples + a description/stage preview) instead of a hardcoded "Feature request" box. `getInputSpec(graph)` ([`schema.ts`](../../src/lib/composer/schema.ts)) reads it with a generic fallback; the seeded contract is back-filled into older installs by [`seed.ts`](../../src/lib/composer/seed.ts).
+## Typical use
 
-> react-flow needs a measured viewport; both canvases are loaded client-only via `next/dynamic({ ssr: false })`.
+### Run one of the workflows that came with the product
 
-## API
+1. On the **Run** tab, choose **Research then summarise** in **Workflow**. The
+   panel above shows its three stages.
+2. Type your question into the box, or click one of the examples.
+3. Press **Review…**, check what it lists, and press the confirm button.
+4. The run appears at the top of **Runs** and is selected for you. The first stage
+   lights up on the board, and the rest wait their turn.
+5. Click any stage that has finished to read what it produced. **Save as artifact**
+   keeps that output on the [Artifacts](artifacts.md) page.
 
-Gated by `PS_COMPOSER` (on by default; `PS_COMPOSER=0` makes every one of them return `503`, the SSE stream included).
+### Answer a gate
 
-| Method + path | Purpose |
-|---|---|
-| `GET /api/composer/workflows` · `POST` | List / create a workflow (whole-graph def) |
-| `GET/PUT/DELETE /api/composer/workflows/[id]` | Read graph / replace whole graph / delete (blocked while a run is active) |
-| `GET /api/composer/runs` | List runs |
-| `POST /api/composer/runs` | Start a run `{ workflowId \| workflowKey, input }` |
-| `GET /api/composer/runs/[id]` | Run + node-runs + workflow graph |
-| `GET /api/composer/runs/[id]/events` | Live SSE (`{ run, nodeRuns }`), see [RUNTIME_ARCHITECTURE.md](../reference/runtime-architecture.md). No `PS_COMPOSER` check |
-| `POST /api/composer/runs/[id]/nodes/[nodeId]/approve` | Resolve a HIL gate `{ action: accept\|reject\|review\|add_feature, note? }` |
-| `POST /api/composer/runs/[id]/clarify` | Answer a stage's clarification question `{ answer }` |
+1. When the run reaches **Check the findings** it stops. Its row in **Runs** says
+   it is waiting at a gate, and the stage on the board carries the **HIL** badge.
+2. A panel appears in the corner of the board. Type a note saying what you want
+   changed, or why you are happy.
+3. **Accept** sends the work on to the next stage. **Reject** sends it back along
+   the route marked for a rejection, which in this workflow is back to Research,
+   and your note travels with it into the stage being redone.
 
-Deep Research is **also** a Composer node kind (`research`), so research can run as one stage of a workflow instead of only from its own page. The standalone launcher remains: **Work → Research** at `/work/research`, backed by `POST /api/laboratory/research`, which starts a research run with no Composer involvement and is behind no feature flag. See [DEEP_RESEARCH.md](research.md).
+### Build your own workflow
 
-## Verification
+1. On the **Build** tab, open **Edit workflow** and choose **+ New workflow**.
+   Give it a **Name** and a **Description**.
+2. Drag stages from the palette onto the board and connect them up.
+3. Click each stage to name it and choose its kind. Turn on **HIL gate** for any
+   stage that should wait for you. Exactly one stage must be the **Start**, and a
+   run finishes when it reaches a stage marked **End**, so mark one of those too.
+4. Click the start stage and fill in **Workflow input (Run form)** so that your
+   workflow asks for the right thing when someone launches it.
+5. Press **Create**. If something is missing, such as no start stage, a stage with
+   no name, or a stage still called "New stage", the toolbar says which and
+   nothing is saved.
 
-`npx tsc --noEmit && npm run lint && npm test && npm run build`. Engine/graph tests: [`composer-engine.test.ts`](../../tests/unit/composer-engine.test.ts) (PASS path, HIL accept, FAIL loop-back), [`composer-builder.test.ts`](../../tests/unit/composer-builder.test.ts) (whole-graph save + `OUTCOME` branch routing), [`composer-research-node.test.ts`](../../tests/unit/composer-research-node.test.ts) and [`composer-group-node.test.ts`](../../tests/unit/composer-group-node.test.ts) (research/group settle + recursion guard), and [`composer-canvas-graph.test.ts`](../../tests/unit/composer-canvas-graph.test.ts) (canvas ↔ def converters). With a live Hermes + `PS_COMPOSER=1`, build a workflow on the canvas, launch it, watch the live board, approve/reject a gate, and force a FAIL to see the loop-back.
+## Notes
 
+**Composer can be switched off.** It is on when the product is installed. If the
+Composer link is missing from the sidebar under Work and the address answers "not
+found", this install has it turned off, and turning it back on takes an edit to
+the environment and a restart. See the
+[environment reference](../running/env-reference.md).
 
-## The starter workflows
+**Every stage is a full agent run.** A stage costs tokens and takes as long as
+the agent takes, so a sixteen-stage workflow is sixteen of those, one after the
+other. The cost lands in your [spend](../concepts/spend.md) figures attributed to
+Composer. This is the reason to start with a three-stage workflow rather than the
+long one.
 
-Three workflows are seeded, by key, so a second boot writes nothing:
+**Three workflows are there on the first start.** *Research then summarise*
+researches a question, stops at a gate so you can check the findings, then writes
+the summary. *Draft and review* drafts the piece and then reviews it against the
+brief, looping back to the draft until the review passes. *Software Delivery* is
+sixteen stages of engineering pipeline, which is a fine third workflow and an
+intimidating first one.
 
-- **Research then summarise.** Research a question, check the findings at a
-  human gate, then write the summary. Rejecting the gate sends the work back to
-  the research stage with your note.
-- **Draft and review.** Draft the piece, then review it against the brief. A
-  FAIL routes back to the draft; a PASS finishes. The reviewer is deliberately
-  not the terminal stage, because a terminal node completes the run before any
-  edge is read, so a terminal reviewer could never loop.
-- **Software Delivery.** Sixteen stages, the full engineering pipeline. A fine
-  third workflow and an intimidating first one.
+**Loops are bounded.** A workflow can send failed work backwards, so a run could
+in principle circle for ever. It cannot: one stage re-runs at most five times, and
+a run stops after a hundred stage executions in total. Either way it ends with a
+readable reason rather than by grinding on.
 
-## Deleting a workflow
+**Saving a workflow that has runs deletes those runs.** The runs are the history:
+the stage outputs, the verdicts and the gate decisions all hang off them. Any save
+to an existing workflow rebuilds it, so the page asks first, names the number of
+runs, and offers to keep the history instead. Deleting a workflow asks the same
+question. Neither is possible at all while one of its runs is still going: let it
+finish or cancel it first.
 
-A workflow's runs are its history: the stage outputs, the verdicts and the gate
-decisions all hang off them. `DELETE /api/composer/workflows/[id]` therefore
-answers **409** when the workflow has runs, naming the workflow and the count,
-and deletes nothing. Repeat with `?discardRunHistory=1` to go ahead. The Build
-tab asks the same question inline, under the toolbar, and the two-click confirm
-on the button is unchanged: the first click asks whether you meant to click,
-the second question asks whether you meant to destroy the history.
+**Unsaved edits are not thrown away silently.** Switching to another workflow with
+an unsaved board asks whether to discard the changes or keep editing.
 
-## Gate notes
+**Cancelling.** **Cancel run** takes two clicks. The run is marked cancelled
+straight away and the agent is asked to stop the stage that was in flight. A run
+that has already finished, failed or been rejected refuses the cancellation and
+says why rather than pretending.
 
-A note typed into a gate decision is recorded against the run and shown on the
-stage it was taken at, under **Gate decisions**. It also travels with the
-resume: the next stage the engine dispatches, which for a rejection is the one
-being sent back, reads it under "Note from the operator's gate decision". A
-decision taken with no note clears any previous one, so a stale note never
-follows a run around.
+**If the live connection drops.** A banner appears at the top saying live updates
+failed. The board keeps working from ordinary polling, so it stays correct, it
+just updates less promptly.
+
+**The address bar remembers.** The workflow you are editing and the run you are
+watching are both written into the page address, so a reload or a shared link
+comes back to the same view.
+
+**How this relates to its neighbours.** A [mission](missions.md) is one job,
+optionally on a timer, with no branching and no stages. Composer is for the case
+where the work has to be done in steps and checked along the way.
+[Deep Research](research.md) runs the same research engine on its own page, with
+no workflow around it, and it is not affected by the switch that turns Composer
+off. Anything a stage produces can be kept as an
+[artifact](../concepts/artifact.md).
+
+<details>
+<summary>Under the hood</summary>
+
+Composer is gated by the `PS_COMPOSER` environment variable, documented in the
+[environment reference](../running/env-reference.md). It defaults to on. Setting
+it to `0` (or `false`, `no`, `off`) and restarting hides the sidebar link, makes
+the page return 404, and makes every Composer API route answer 503, the live
+event stream included.
+
+Six tables hold the feature: `composer_workflows` (the definition),
+`composer_nodes` (the stages, with each stage's canvas position kept in its
+config under `_ui`), `composer_edges` (the routes and their conditions),
+`composer_runs` (one execution), `composer_node_runs` (one stage execution, with
+its attempt number), and `composer_approvals` (the gate decisions and their
+notes). A stage's agent run is an ordinary row in `runs` carrying a
+`composer_node_run_id`, which is how the reconciler knows to advance a graph
+rather than finish a mission, and how spend is attributed to Composer.
+
+The engine reads two markers out of a stage's output. `VERDICT: PASS` or
+`VERDICT: FAIL`, with reason and suggestion lines, is what the stage detail panel
+shows as a verdict and what `on_pass` and `on_fail` routes are decided by. A
+stage can also print `OUTCOME: <label>`, and the engine will follow an
+`on_<label>` route if one exists, which is how a stage fans out to more than two
+destinations. `OUTCOME: needs_clarification` together with a `QUESTION:` line is
+what makes the board stop and ask you something; your answer is added to the
+objective and the asking stage runs again.
+
+The loop guardrails are a per-stage attempt cap of 5, overridable per stage by
+setting `maxAttempts` in its config, and a per-run backstop of 100 stage
+executions.
+
+The routes are `GET`/`POST /api/composer/workflows`,
+`GET`/`PUT`/`DELETE /api/composer/workflows/[id]`, `GET`/`POST
+/api/composer/runs`, `GET /api/composer/runs/[id]`,
+`GET /api/composer/runs/[id]/events` for the live stream, and, on one run,
+`POST /api/composer/runs/[id]/nodes/[nodeId]/approve`,
+`POST /api/composer/runs/[id]/clarify` and
+`POST /api/composer/runs/[id]/cancel`. A save or delete that would destroy run
+history answers 409 with the count; repeating the request with
+`?discardRunHistory=1` is the confirmation, and it is what the inline question on
+the Build tab sends.
+
+</details>

@@ -8,113 +8,190 @@ screen: /work/chat
 concepts: [agent, prompt, model]
 type: guide
 tags: [product, chat]
-compiled_from: normalised
+compiled_from: authored
 ---
-# PatterStage: Agent Chat
+# Chat
 
-The Chat page (`/work/chat`) is a real conversation with your Hermes
-agent: it runs over the same agent runtime as Missions, so the assistant can use
-tools, remembers the conversation (via a Hermes session), and streams its work
-live. This replaces the older localStorage-only chat that proxied raw model
-completions.
+Chat is where you talk to your [agent](../concepts/agent.md) a message at a
+time, and watch it work while it answers.
 
-## Two modes
+## What you see
 
-- **Agent** (default): each turn is a real agent **run** submitted through the
-  runtime (`runtime.submitRun`). The agent has tools and memory; reasoning, tool
-  calls, and the reply stream live into the bubble; tool gates can pause for your
-  approval.
-- **Fast:** a raw model completion straight from the gateway
-  (`/api/orchestration/chat`). No tools, no run, just a quick answer. The turn
-  is still persisted to the conversation so history stays unified.
+The header carries the page title, and on its right the three controls that
+decide how your next message is answered: the **Agent** and **Fast** toggle, a
+model dropdown that appears only when Fast is selected, and **New Chat**. The
+toggle is greyed out while a reply is arriving, so a conversation cannot change
+mode halfway through a turn.
 
-Toggle modes in the chat header. The model selector is shown in Fast mode (Agent
-mode uses the active profile's model).
+Down the left is **Conversations**, with the number held in brackets, most
+recently active first. Arriving at the page opens the top one. Each row shows the
+conversation's title and how long ago it last changed. Move the pointer over a
+row, or tab into it, and two more
+controls appear at its right edge: a download button, and a delete button. The
+download button saves the conversation as JSON; hovering it, or tabbing to it,
+reveals a second option, **as CSV**, underneath. The delete button asks twice.
+The first click turns it into a tick and the tooltip changes to say so, and a
+second click within about three seconds removes the conversation. If you wait,
+it disarms itself.
 
-## Persistence (schema v13)
+The middle column is the conversation. When something is wrong between
+PatterStage and the agent's gateway, a banner sits above it. Two of those
+banners appear wherever you are, because they mean your next message cannot go
+anywhere: the gateway is not responding, or the gateway answered but rejected
+PatterStage's key. Each one names what to do about it. Two more are advisory and
+only show on an empty conversation: one while the first connection check is
+still running, and one saying no model is ready for chat.
 
-Conversations are server-side, not localStorage:
+Before the first message there is an empty state: the conversation's title, a
+line describing the mode you are in, and a line telling you that your message is
+the [prompt](../concepts/prompt.md). The word **prompt** there carries a hint you
+can open, and in Agent mode so does the word **agent**.
 
-- **`chat_conversations`**: one row per thread, mapped to a Hermes **session**
-  (`session_id`) for memory continuity; stores `profile_name`, `model`, and
-  `previous_response_id` (multi-turn).
-- **`chat_messages`**: user/assistant turns. An assistant turn is linked to the
-  PatterStage **run** that produced it (`run_id`) and carries `reasoning`,
-  `tool_calls_json`, and a `status` (`pending → streaming → complete | failed |
-  cancelled`).
+Once there are messages, your turns sit on the right and the agent's on the left
+behind a small avatar, each stamped with the time it was sent. An agent reply can
+carry two things above its text. A **Reasoning** panel, collapsed, holding the
+thinking the model streamed before it answered. And one card for each
+[tool](../concepts/tool.md) the turn used, showing the tool's name and where it
+got to: running, done, failed, or awaiting approval. Code blocks inside a reply
+show a **Copy** button when you hover them. While a reply is on its way but has
+produced nothing yet, three bouncing dots stand in for it.
 
-Migration: `013_chat.sql` + `apply-chat-migration.ts`, wired into
-`runMigrations()` (see [MIGRATION.md](../running/migration.md)). Repository:
-`src/lib/chat-repository.ts`.
+At the bottom is the message box, which grows as you type. Enter sends, Shift
+and Enter together start a new line, and the placeholder says so. To its right
+is a send button that turns into a red stop button while a reply is streaming.
+If the agent asks to run a tool that needs your permission, a yellow strip
+appears above the box naming the tool, with **Deny** and **Approve**.
 
-**Retention (v32, [ADR-0009](../../org/decisions/ADR-0009-retention-for-the-readings-tables.md)).**
-Conversations have a declared window of **365 days of inactivity**, and the unit
-is the whole conversation, never the individual turn: a transcript that starts in
-the middle is worse than either keeping it or dropping it, so one recent turn
-keeps every older turn with it. The prune ships **disabled** on every install and
-is a command an operator runs by hand (`npm run db:retention`). Nothing in the
-Chat surface deletes a message on a timer.
+## Typical use
 
-## Request flow (Agent mode)
+### Ask the agent to do something
 
-1. `POST /api/chat` → create a conversation + a Hermes session
-   (`runtime.createSession`).
-2. `POST /api/chat/[id]/messages` → persist the user message, then
-   `dispatchChatTurn` mirrors `dispatchMissionRun`: `createRun` →
-   `runtime.submitRun({ input, sessionId, previousResponseId, profileName })` →
-   `attachBackendRun`. Returns the **PatterStage run id**.
-3. The client opens **`GET /api/runs/[runId]/events`** (the shared SSE proxy) and
-   renders events: `message.delta` → reply, `reasoning.*` → a collapsible
-   "Reasoning" panel, `tool.*` → tool-call cards, `tool.approval_required` → an
-   approve/deny gate, `run.completed` → finalize.
-4. On completion the client persists the final turn via
-   `PATCH /api/chat/[id]/messages/[messageId]`.
+1. Leave the toggle on **Agent**, which is where it starts.
+2. Type what you want and press Enter. Your message appears on the right and a
+   placeholder appears on the left.
+3. Watch the reply build: reasoning first if the model produced any, then a card
+   for each tool as it is called, then the text streaming in.
+4. If the approval strip appears, read the tool name and choose **Approve** or
+   **Deny**. The turn carries on either way.
+5. Ask a follow up. The agent still has the earlier turns, because the whole
+   conversation is one [session](../concepts/session.md).
 
-`POST /api/chat/[id]/stop` cancels the active run; `POST /api/chat/[id]/approval`
-forwards a tool-approval decision (`runtime.resolveApproval`).
+Each message you send in this mode is a real [run](../concepts/run.md), the same
+kind of run a mission produces on [Missions](./missions.md).
 
-## Robustness
+### Get a quick answer with no tools
 
-- **The empty bubble is driven by `status`, not by "content is empty".** A
-  completed-but-empty, failed, or cancelled turn renders an explicit terminal
-  state rather than a placeholder. An assistant row still `pending`/`streaming`
-  with no content renders the literal "Thinking…", so the guarantee that it is
-  never permanent rests entirely on something moving that row to a terminal
-  status. In **Agent** mode two mechanisms do; in **Fast** mode only the third
-  does, and only after 30 minutes.
-- **Self-healing (Agent mode).** `GET /api/chat/[id]` reconciles any assistant
-  turn still `pending`/`streaming` whose underlying run has reached a terminal
-  state (e.g. the client disconnected mid-stream): it copies the run's output
-  onto the message (`reconcilePendingChatMessages`). The background RunSync
-  writes the run row; the load path folds it onto the message. This can only
-  heal a turn that **has** a run: the loop skips every message with a null
-  `run_id`.
-- **The Fast-mode gap.** `appendFastTurn` inserts the assistant row as
-  `streaming` with no `run_id`, and only the client's finalize `PATCH` moves it
-  off. Close the tab mid-stream and the row stays `streaming`. Pressing Stop
-  does not rescue it either, because `POST /api/chat/[id]/stop` only considers
-  assistant turns that carry a `runId` and otherwise answers
-  `{ stopped: false, reason: "no active run" }`. There is nothing for it to
-  cancel.
-- **Boot sweep (T-0052).** On startup, `failStuckChatMessages()` fails any
-  assistant turn still `pending`/`streaming` after 30 minutes **whose run is
-  NULL or has been pruned**, with a reason the bubble can show. That covers both
-  wedges: the Fast-mode turn that never had a run, and the agent turn whose run
-  was pruned out from under the reconciler. A row whose run still exists is
-  deliberately left alone at any age, because sweeping it would race a live
-  agent turn that is simply taking its time. That one belongs to the reconciler.
+1. Click **Fast**. A model dropdown appears next to the toggle.
+2. Leave it on **Agent Default**, or pick one of the models from your registry
+   on [Models](./models.md).
+3. Type and press Enter. The reply streams straight back from the model.
 
-## Analytics
+Fast mode still sends the earlier turns on screen along with your message, so it
+follows the thread. What it does not do is use tools, or open a run. It is for
+the question you want answered rather than acted on.
 
-Each turn records a `chat.message_sent` event (category `chat`), so chat shows up
-in Insights alongside missions, schedules, and stories.
+### Keep a copy of a conversation
 
-## Verification
+1. Move the pointer over the conversation's row in the left column.
+2. Click the download button. The transcript is saved as a JSON file named after
+   the conversation.
+3. For a spreadsheet instead, keep the pointer on the download button and click
+   **as CSV**. That file has one row per turn: role, content, status and
+   timestamp.
 
-The agent-chat flow is covered end-to-end by the real-Hermes gate
-(`npm run test:e2e-hermes`, section 9 of the full-stack smoke): create
-conversation → send an agent turn → reconcile the run → assert the assistant turn
-finalizes from the run output, plus `chat.message_sent` analytics and cascade
-delete. Unit tests cover the dispatch (`chat-dispatch.test.ts`), the repository
-(`chat-repository.test.ts`), the v13 migration (`chat-migration.test.ts`), and
-the run-event parsing helpers (`chat-run-events.test.ts`).
+Both formats export the row you clicked, not whichever conversation happens to
+be open.
+
+## Notes
+
+**The two modes differ in more than speed.** Agent mode submits a real run, so
+the agent has its tools, its instructions and the conversation's session. Fast
+mode asks the model one question and prints the answer. The model dropdown only
+exists in Fast mode, because in Agent mode the model is the one the agent is
+already configured with, and picking a different label in Chat would not change
+it. If the "Model not ready for chat" banner appears, set an agent default on
+[Models](./models.md) and push it to the agent.
+
+**Naming.** Typing into a Chat with no conversations creates one named after the
+first fifty characters of your message. Clicking **New Chat** creates one called
+New Chat, and it keeps that name. Clicking **New Chat** again while an unused
+one is still there reuses it rather than making a second.
+
+**Stop does different things in each mode.** In Agent mode it cancels the run,
+and the turn keeps whatever text had arrived; a turn cancelled before any text
+reads "Stopped". In Fast mode it halts the text on your screen, but there is no
+run to cancel, so the stored turn is left unfinished and tidied up later.
+
+**An interrupted reply resolves itself, eventually.** Close the tab during an
+agent turn and the reply keeps going on the server; reopening the conversation
+folds the finished result onto the message. A Fast turn has nothing to fold, so
+it is marked as interrupted by a sweep that runs when PatterStage next starts,
+and only for turns older than thirty minutes.
+
+**Deleting is local and permanent.** Removing a conversation removes its turns
+with it, and there is no undo beyond the second click you have to make. The
+agent's own session is not deleted.
+
+**Nothing here deletes a message on a timer.** Conversations have a declared
+window of 365 days of inactivity, the window applies to the whole conversation
+rather than to single turns, and the prune ships switched off. Turning it on is
+a command an operator runs by hand. Your ordinary safety net is a backup, which
+is covered in [Backups](../running/backup.md).
+
+**What a turn costs.** An agent turn spends whatever your provider charges for
+the work the agent does, tool calls included, and because it is a run it counts
+towards your [spend](../concepts/spend.md) figures. A fast turn is a single
+completion and opens no run, so your provider still bills it but PatterStage
+does not count it.
+
+**The left column holds the hundred most recent conversations.** Older ones stay
+in the database and stay exportable, but they stop appearing in the list.
+
+**A failed read says so.** If the conversation list cannot be fetched you get
+the reason and a **Retry** where the list would be, not an empty sidebar reading
+"No conversations yet". A transcript that will not load behaves the same way in
+the middle column, and the turns of the conversation you were reading before are
+cleared rather than left sitting under the new title.
+
+<details>
+<summary>Under the hood</summary>
+
+Conversations are server side, not browser storage. Migration `013_chat.sql`
+adds two tables. `chat_conversations` holds one row per thread with the Hermes
+`session_id` that gives it memory continuity, plus `profile_name`, `model` and
+`previous_response_id`. `chat_messages` holds the turns; an assistant turn
+carries `reasoning`, `tool_calls_json`, an optional `run_id`, and a `status`
+that moves `pending` to `streaming` to one of `complete`, `failed` or
+`cancelled`. Deleting a conversation cascades to its messages. The repository is
+`src/lib/chat-repository.ts` and the dispatch is
+`src/lib/orchestration/chat-dispatch.ts`.
+
+| Route | What it does |
+|---|---|
+| `GET /api/chat` | Lists conversations, newest first. Limit defaults to 100 and is capped at 500. |
+| `POST /api/chat` | Creates a conversation and registers a Hermes session for it. A title collision retries once with a time suffix before giving up on the session. |
+| `GET /api/chat/[id]` | Returns the conversation and its turns, reconciling any assistant turn whose run has already finished. |
+| `DELETE /api/chat/[id]` | Removes the conversation and its turns. |
+| `POST /api/chat/[id]/messages` | Sends one turn. In agent mode it submits a run and returns the run id; in fast mode it persists the turn and lets the browser stream the reply. |
+| `PATCH /api/chat/[id]/messages/[messageId]` | Writes the final content, reasoning, tool calls, status and error onto an assistant turn. |
+| `POST /api/chat/[id]/stop` | Cancels the conversation's active run. With no run it answers `{ stopped: false }`. |
+| `POST /api/chat/[id]/approval` | Forwards an approve or deny decision for a tool. |
+
+An agent reply is read from `GET /api/runs/[runId]/events`, the same run event
+stream the rest of the console uses. Content deltas, reasoning, tool events and
+approval requests are folded into one assistant message, and the first terminal
+event wins. If the socket drops without one, the client waits and rereads the
+conversation rather than guessing that the run failed. A fast reply is proxied
+to the gateway's chat completions endpoint with `max_tokens` set to 4096.
+
+Gateway health is checked on load and then every thirty seconds, and the poll
+suspends while the browser tab is hidden. The offline banner names the gateway
+address that was actually probed rather than a hardcoded port.
+
+Every send records a `chat.message_sent` analytics event, which is what proves
+the "Send a first message" quest and what puts Chat alongside missions on
+Insights. Retention policy for `chat_messages` lives in the `retention_policy`
+table, seeded disabled with 365 days by migration `032_retention.sql`, with a
+floor of 30 days; `npm run db:retention` is the only thing that applies it.
+
+</details>

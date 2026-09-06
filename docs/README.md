@@ -50,12 +50,15 @@ Keeping it up: [deploying](running/deploy.md),
 [upgrades](running/migration.md),
 [host scheduling](running/host-scheduling.md),
 [platforms](running/cross-platform.md),
-[troubleshooting](running/troubleshooting.md) and [security](SECURITY.md).
+[troubleshooting](running/troubleshooting.md),
+[limitations](running/limitations.md) and [security](SECURITY.md).
 
 ## Reference
 
 The facts, not the path: the [HTTP API](reference/api.md), the
 [database schema](reference/schema.md), [spend](reference/spend.md),
+[the events the product records about itself](reference/analytics-events.md),
+[achievements](reference/achievements.md), [the quest ledger](reference/quests.md),
 [profiles and the skills catalogue](reference/catalog-and-profiles.md), and the
 [runtime architecture](reference/runtime-architecture.md).
 

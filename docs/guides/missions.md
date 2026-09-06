@@ -6,128 +6,208 @@ nav: 30
 audience: operator
 screen: /work/missions
 concepts: [mission, run, schedule]
-type: reference
-tags: [product, orchestration]
-compiled_from: normalised
+type: guide
+tags: [product, missions, schedules]
+compiled_from: authored
 ---
 # Missions
 
-How missions are stored, dispatched, and cancelled. Missions live in SQLite (`missions` table), and the database is the single source of truth. `PS_DATA_DIR/missions/` holds only legacy artifacts from the pre-rewrite bash dispatch. There are exactly three readers left: the one-time `*.json` import inside a baseline rebuild of a pre-rewrite database ([MIGRATION.md](../running/migration.md)), a fallback `.session` / `.output.log` read when a mission-born session has no transcript on disk, and a best-effort unlink of the old artifact names when a mission is deleted. Nothing writes there now, and no file overlays a mission row on read.
+Missions is where you write a job for the agent, decide when it should run, and read what came back.
 
-> Missions are intentionally **simple**: a single or recurring agent task (think "cron for AI agents"). For methodical, **multi-stage** workflows with conditional branches, loop-backs, and human-in-the-loop gates, use **[Composer](COMPOSER.md)** (a separate orchestrator). Missions are not phased.
+## What you see
 
-## Prompt model
+**The header.** The page title, a refresh icon that reloads the board by hand,
+and **New Mission**, which opens the composer. If no agent is installed on this
+machine, an orange notice sits under the header and says so. You can still write
+and save missions, but nothing will actually run until the agent is there.
 
-- The UI sends **raw** fields (`instruction`, `context`, `goals`, `outputFormat`, `constraints`, dirs, refs, skills, suggested toolsets) on dispatch/update.
-- The API builds the stored `prompt` via `buildMissionPrompt()` in `src/lib/missions/build-mission-prompt.ts`: XML under `<hermes_mission>` (agent payload).
-- The composer preview can toggle **Human** (form mirror) vs **AI** (stored agent prompt).
-- Editing uses `parseMissionPrompt()` for instruction/context/output/constraints; goals, dirs, refs, skills, and suggested toolsets load from DB columns.
-- **Recommended toolsets** are prompt hints only (`<recommended_toolsets>`); runtime tools still come from the mission profile's `platform_toolsets`. The composer lists only toolsets enabled on the selected profile. See [TOOLS_AND_MISSIONS.md](../reference/catalog-and-profiles.md).
-- `output_format` and `constraints` columns (baseline schema) persist those fields for edit round-trip.
-- Missions saved before the XML format may need re-save after deploy.
+**The summary strip.** Appears once you have at least one mission. A ring
+showing the mix of states, count tiles for Total, Running, Completed and Failed,
+and a success percentage worked out from finished missions only. It is counted
+from the same missions the board is showing, so the two always agree.
 
-## Dispatch modes
+**Quick load template.** Your templates as clickable pills, grouped into
+category accordions. Clicking one fills the composer and opens it; nothing is
+dispatched. On the right of that row are **Manage categories** and
+**Edit Templates**. Filter pills for template categories appear only when your
+templates span more than one category. The whole section hides while the
+composer is open.
 
-`POST /api/missions` with `action: "dispatch"` accepts `dispatchMode`:
+**Filters.** A row of category pills (All missions, then one per category with a
+count), a status filter (All, Draft, Queued, Running, Completed, Failed), and a
+search box.
 
-| Mode | Behavior |
-|------|----------|
-| `save` | Persists a **draft** (`status=queued`, `queued_for_run=0`). Does not spawn Hermes. Shown in the **Drafts** board column. |
-| `queue` | Persists as **queued for run** (`queued_for_run=1`). `MissionQueueSync` dispatches the oldest queued mission when no mission is `dispatched` (single-flight, ~15s tick) **and** the operator's hard spend stop allows unattended dispatch. The spend gate is checked first, so a blocked tick leaves the mission queued and still dispatchable by hand. |
-| `now` | Creates the mission and dispatches immediately via `dispatchMissionNow()`. |
-| `cron` | Creates a linked PatterStage `schedules` row and runs the **first** execution immediately; later runs are fired by the PatterStage scheduler. |
+**The board.** Five columns in that order. Each card carries a status dot, the
+mission's name, its category, and a labelled duration: "Queued 3m",
+"Running 2h 14m", "Completed 5m ago". A running mission's dot pulses. One that
+has passed its timeout turns orange and picks up a warning triangle. Each column
+header shows a count; Completed and Failed show their five most recent rows with
+a **Show all** link when there are more. If the board cannot load, a banner with
+a Retry appears in place of the list, so a failed read never looks like an empty
+install.
 
-A queued mission that will not start is worth checking against the spend stop first. `MissionQueueSync` treats a spend refusal as a deliberate outcome rather than a failure: it reports `success: true` with the reason carried in the result's `error` field, so it surfaces on the monitor rather than as a red sync error. See [SPEND.md](../reference/spend.md).
+**The detail panel.** Clicking a card expands it underneath the row. At the top,
+a grid of facts: Agent, Model, Provider, Scope, Timeout, how long the mission has
+been running or how long ago it finished, Category, Cadence ("One-shot" unless
+the mission has a schedule) and how many skills are attached. Then
+**Full Template Details**, which shows and hides the stored prompt; the Goals, if
+any; a Schedule card with the next and last run, the last result, and a line
+telling you when the schedule will not fire at all (paused, used up, or nothing
+scheduled next); a timing note saying how long is left before the timeout bites;
+the live output while the mission is running; the Result; and, on a failed
+mission, the agent's own error text.
 
-### Model resolution at dispatch
+The panel's buttons are Copy prompt, Duplicate, View sessions (only when the
+mission has produced one), Edit (Edit draft on a draft, Re-dispatch on a finished
+mission), Cancel or Remove from queue while it is still live, and a bin icon.
+Cancel and delete both ask a second time before they act.
 
-The models registry (`models` table) is the **single source of truth** for what any mission can run on. `parseMissionBodyFields()` in `src/lib/missions/mission-body.ts` validates the request body:
+**Scheduled missions.** The section at the bottom of the page, listing every
+recurring mission with how many are active and how many paused.
+**Schedule a mission** opens a short form that puts an existing saved mission on
+a timer. Each row shows the cadence, when it runs next, its last result, and
+Pause or Resume, Run, and delete.
 
-- `modelId` is checked against the registry via `findModelByModelId()`. A foreign `modelId` (not in the table) is **silently dropped**, and only the registry row's own `modelId` is stored.
-- `provider` is accepted **only alongside a `modelId` that resolved**, and is stripped whenever the `modelId` was dropped, so `missions.provider` can never contradict `missions.model_id`. It is not re-derived from the registry row: a resolved `modelId` lets the caller's `provider` string through verbatim onto the mission row, and `dispatchMissionRun` reads it straight back out onto the session.
-- If no valid `modelId` survives, `missions.model_id` stays NULL and nothing substitutes a default. **Runs carry no model over the wire at all**: `RunSubmit` has `input`, `idempotencyKey`, `profileName`, `sessionId` and friends, but no model field, so the profile's own Hermes configuration decides what actually answers. `mission.model_id` is recorded on the run's pre-registered session row for reporting, and that is the whole of its effect at dispatch time.
+**The composer.** A panel that slides in from the right, titled New Mission,
+Edit Mission, or Re-Dispatch with the mission's name. At the top: Category,
+Mission Name, Instruction, and Goals, one per line. Then four numbered steps.
 
-`getDefaultModel("agent")` is therefore not a dispatch-time fallback. It has two callers: the tie-break inside `findModelByModelId()` when two registry rows share a `model_id`, and `GET /api/models/defaults`, which the composer reads to pre-fill the model selector when opening a new mission.
+1. **Dispatch**, open by default: Save, Queue, Run now, Schedule. Choosing
+   Schedule reveals a cadence picker with presets, a custom day-and-time builder
+   and a raw cron box, and it previews the next three fire times.
+2. **Mission parameters**: working directories (with a folder browser, and a
+   branch selector when the folder is a git repository), references, recommended
+   agent skills, recommended Hermes toolsets, additional context, output format
+   and constraints.
+3. **Runtime**: model, agent profile, mission scope, and timeout, which is an
+   inactivity kill switch rather than a total run length.
+4. **Assembled agent prompt**: the prompt as it will be stored, with a Human and
+   AI toggle and a copy button. The Human view mirrors your form fields; the AI
+   view is what the agent is actually sent.
 
-### Board columns vs status
+The footer holds the submit button, whose label follows the dispatch mode you
+picked (Save draft, Queue mission, Dispatch now, Schedule mission), a
+**Save as template** button once the instruction has text, and Cancel. The submit
+button is disabled until the mission has a name and an instruction, and it says
+which of those is missing when you hover it.
 
-- **Drafts:** `status=queued` and `queued_for_run=0` (save).
-- **Queued:** `status=queued` and `queued_for_run=1` (queue, waiting for the worker).
-- **Dispatched / Completed / Failed:** same as `status` enum.
+## Typical use
 
-Dashboard **active** count includes `dispatched` missions and queued-for-run missions, not drafts.
+### Write a mission and run it now
 
-## Editing drafts and promoting queued missions
+1. Click **New Mission**.
+2. Give it a name and write the Instruction. Add goals, one per line, if you
+   want the agent working to a checklist.
+3. In **Dispatch**, choose **Run now**. Open **Runtime** first if this job needs
+   a particular agent profile rather than your default.
+4. Click **Dispatch now**. The composer closes, and the new mission appears on
+   the board in Running with its panel already open, streaming the agent's
+   output as it arrives.
 
-- **Draft** (`status=queued`, `queued_for_run=0`): edit in the composer, choose a dispatch mode, and submit. The UI calls `POST /api/missions` with `action: "promote"` (not `update`).
-- **Queued for run** (`status=queued`, `queued_for_run=1`): same promote path. You can update fields, move back to drafts (`dispatchMode: save`), keep in queue (`queue`), or run immediately (`now`).
-- **Running** (`status=dispatched`): `action: "update"` only. Fields and linked cron sync; no duplicate mission.
-- **Completed / failed**: re-dispatch creates a **new** mission id with `action: "dispatch"` and `dispatchMode: now`.
+### Put a mission on a repeat
 
-`promote` accepts the same payload fields as dispatch (instruction, profile, model, schedule, etc.). Queue promote triggers an immediate `runMissionQueueTick()` when nothing is already dispatched.
+1. Write the mission, or open a draft you saved earlier.
+2. In **Dispatch**, choose **Schedule** and pick a cadence. The picker shows the
+   next three times it would fire, so you can check it before committing.
+3. Click **Schedule mission**. The first run starts immediately, and the
+   schedule appears in **Scheduled missions** at the foot of the page.
+4. From that list you can pause it, resume it, fire it once by hand with
+   **Run**, or delete it. Deleting the schedule leaves the mission itself alone.
 
-### Sync bootstrap on missions API
+To put a mission you already have on a timer without going through the composer,
+use **Schedule a mission** in that same section: pick the mission, type a cadence
+or take one of the presets, and choose whether a missed occurrence should fire
+once late or be skipped.
 
-`GET` and `POST /api/missions` call `ensureSyncLayer()` so `MissionQueueSync` runs even when the operator stays on Orchestration → Missions without opening the dashboard (which polls `/api/monitor`).
+### Stop one, or send it again
 
-## Categories
+1. Expand a running mission and click **Cancel**, then **Confirm**. The agent's
+   run is stopped and the card reads Cancelled.
+2. To repeat a mission that already finished, expand it and click
+   **Re-dispatch**. The composer opens with its fields filled in, and submitting
+   creates a new mission and dispatches it. The original record stays on the
+   board so you can still read what it did.
 
-- User-managed categories live in `mission_categories` (SQLite).
-- Missions use `category_id` (nullable). Templates store `categoryId` in custom JSON.
-- APIs: `GET/POST/PUT/DELETE /api/mission-categories`.
-- Default categories are seeded via `src/lib/db/seeds/001_mission_categories.sql` and **`npm run db:seed`** (8 categories with `seed_key`).
+## Notes
 
-### Database migrations (operator)
+- The board refreshes itself every 15 seconds while the tab is visible, and
+  pauses while it is hidden. The refresh icon in the header forces a reload.
+- **Save** and **Queue** are not the same thing. A saved mission is a draft and
+  sits there until you come back to it. A queued mission is waiting to be picked
+  up on its own.
+- Only one mission runs at a time. Queued missions and scheduled missions both
+  wait for the running one to finish, which is why a queued mission can sit
+  there for a while. **Run now** is your own deliberate act and is not held back
+  by that rule, so it can start alongside something else.
+- If you have set a hard spend stop and reached it, unattended dispatch stops:
+  queued missions stay queued and schedules pause rather than skipping their
+  turn, and both resume when the period rolls over or you raise the figure. See
+  [spend](../concepts/spend.md).
+- Cancelling is recorded as your own action, not as a fault. The row reads
+  Cancelled with the note "Stopped by the operator", and is not painted in the
+  failure colour.
+- The model you pick is recorded against the mission and its
+  [session](../concepts/session.md), but what actually answers is decided by the
+  agent profile's own configuration. If you need a different model for real,
+  change it on the profile rather than only here.
+- Recommended skills and toolsets are hints written into the prompt. What the
+  agent is genuinely allowed to use comes from its profile, so recommending a
+  toolset the profile does not have will not grant it. See
+  [Tools](./tools.md) and [Skills](./skills.md).
+- Timeout is an inactivity kill switch, not a budget for the whole job. Mission
+  scope is a planning hint to the agent about how much work to take on.
+- Built-in templates cannot be edited or deleted; only the ones you save can.
+  **Save as template** overwrites an existing template of the same name, and
+  asks twice before it does.
+- Deleting a category asks where its missions and templates should go first,
+  either to another category or to none. Deleting a mission also removes any
+  schedule attached to it, and cannot be undone.
+- A mission is a single stage with no branches and no approval gates. If the job
+  needs several stages that check each other, that is
+  [Composer](./composer.md). If you want a shell script on a timer rather than
+  an agent, that is [Scripts](./scripts.md).
+- Everything a mission produced is on the sessions screen, and **View sessions**
+  in the detail panel opens it filtered to that mission. See
+  [Sessions](./sessions.md), and [mission](../concepts/mission.md) for how a
+  mission relates to a [run](../concepts/run.md) and a
+  [schedule](../concepts/schedule.md).
 
-Runtime database path: `PS_DATA_DIR/patterstage.db`. Setting `PS_DATA_DIR` (or the legacy `CH_DATA_DIR` / `CONTROL_HUB_DATA_DIR`) always wins and stops the guessing. With none of them set, PatterStage discovers the directory: it probes `~/PatterStage/data`, then `~/patterstage/data`, then the pre-rename `~/control-hub/data`, taking the first that already holds a database, else the first that merely exists, else creating `~/patterstage/data`. Inside that directory it prefers `patterstage.db` but opens a pre-existing `control-hub.db` when that is the only one, or the larger of the two when both exist. So an install can legitimately be running out of a capitalised directory or a legacy filename. Check which file the server actually opened before assuming it is `~/patterstage/data/patterstage.db`.
+<details>
+<summary>Under the hood</summary>
 
-1. After deploying new code, **restart** the PatterStage process so `getDb()` runs pending migrations.
-2. `npm run build` alone does **not** migrate your live DB (prebuild only touches `repo/data/`).
-3. If the UI shows “No categories loaded”, on the host run:
+Missions live in SQLite, in the `missions` table, and the database is the single
+source of truth. The board's five columns are two fields: a draft is
+`status=queued` with `queued_for_run=0`, a queued mission is the same status
+with `queued_for_run=1`, and Running, Completed and Failed are the `dispatched`,
+`successful` and `failed` statuses. A cancellation is stored as `failed` with
+the result "Cancelled by user"; the run row carries the honest `cancelled`
+status, which is what the board reads to print the word.
 
-   ```bash
-   npm run db:migrate
-   ```
+The composer sends raw fields and the server assembles the stored prompt as XML
+under `<hermes_mission>`, which is what the AI view of the preview shows. The
+personality behind the profile (SOUL and AGENTS files) comes from Hermes under
+`~/.hermes` and is not part of this prompt.
 
-   Ensure `PS_DATA_DIR` in `.env.local` matches where the server stores data, then restart.
+Every write goes to `POST /api/missions` with an `action`: `dispatch` for a new
+mission, `promote` for a draft or queued mission you are re-submitting, `update`
+for one that is running, plus `cancel` and `delete`. The dispatch modes map to
+`dispatchMode: "save" | "queue" | "now" | "cron"`. Recurring missions are rows
+in the `schedules` table, with PatterStage owning the timer: the scheduler tick
+recomputes from `next_run_at` rather than an in-memory timer, so it survives a
+restart, and a deterministic run id makes each occurrence fire exactly once.
+The agent's own `jobs.json` cron is not used. Cancelling calls the Hermes API
+server's stop endpoint over HTTP, with no signals or pid files, and finalises
+the local mission, run and session rows even if that call fails.
 
-4. Create categories from **Manage categories** (missions page) or the category combobox in the composer.
+Custom templates are one JSON file each under the templates folder in your data
+directory; built-in templates come from the catalogue in the database, which is
+why they are read-only. Categories are the `mission_categories` table, seeded
+with eight entries by `npm run db:seed`.
 
-## Recurring missions
+If the composer says "No categories loaded", the database is behind the code.
+Run `npm run db:migrate` on the host, check that `PS_DATA_DIR` in `.env.local`
+matches where the server keeps its data, and restart PatterStage; `npm run build`
+alone does not migrate a live database. See
+[Data storage](../running/data-storage.md).
 
-Recurring runs are **PatterStage-owned schedules**, and the agent's `jobs.json` cron is no longer used:
-
-- A `schedules` row links to a mission and holds the canonical schedule, `next_run_at`, `catch_up_policy`, and repeat count. The scheduler tick (`src/lib/orchestration/scheduler/`) selects due rows and dispatches a run via the runtime; **PatterStage owns the timer**.
-- Manage via `/api/schedules` or the **Scheduled missions** section on the **Orchestration → Missions** page (create, pause/resume, run-now, delete). Old-fashioned **host shell scripts** on a timer live on the separate **Orchestration → Scripts** page (system crontab), not here.
-- Restart-safe (recomputed from `next_run_at`, never an in-memory timer) and exactly-once per occurrence (deterministic run-id PK guard + `Idempotency-Key`).
-
-## Cancellation
-
-When you cancel a **running** mission, `cancelMissionRun()` (orchestration core):
-
-1. **Backend:** calls `runtime.stopRun(run_id)` over HTTP (the Hermes API Server's `POST /v1/runs/{id}/stop`). No process signals, no pid files, no `pkill`, no platform restriction.
-2. **SQLite:** the `runs` row becomes `cancelled`; the mission becomes `failed` with result `Cancelled by user`.
-3. **Session:** the linked session row is ended.
-
-Local run/mission/session state is finalised even if the backend stop call fails, so the board never shows a stuck "running" row.
-
-## Session closure bridge
-
-Every mission dispatch pre-registers a `sessions` row with `status="active"` before submitting the run (see `src/lib/orchestration/dispatch.ts`). The mission lifecycle and the session lifecycle therefore need to stay in lockstep. Otherwise the Sessions page shows a "live" pulsing dot on rows whose mission is already `successful` or `failed` days ago.
-
-The bridge is `closeSessionForMission(missionId, updates)` in `src/lib/sessions/session-repository.ts`, called from two places:
-
-1. **`reconcileActiveRuns()`** (`src/lib/orchestration/run-reconcile.ts`, on the 15s background tick via `RunSync`) polls each non-terminal run with `runtime.getRun()`. When the backend reports a terminal state (completed/failed/cancelled), or a stuck run passes its deadline, it writes the terminal state to the run, mission, and session rows in the same pass. This replaced the old `MissionSync` / `status.json` polling.
-2. **Admin backfill:** `POST /api/admin/sessions/backfill-status` with `{"dryRun": false}` runs the same logic for any pre-existing stuck rows. The matching `dryRun: true` returns counts without writing. Default is `dryRun: true` for safety.
-
-The recurring orphan-sweep in `syncHermesSessionsToDb` (every 15s sync tick) also calls `closeOrphanedActiveSessions()` to catch any sessions the mission-side bridge missed. It has two paths:
-
-- **Path A: parent-mission gated.** Active session whose `mission_id` points to a mission that is no longer `dispatched` (status `successful`/`failed`/`cancelled`/anything-else-terminal, or the mission is missing/soft-deleted). Closes as `completed`/`failed` derived from the parent.
-- **Path B: age-only fallback.** Active session with no `mission_id` AND (size > 0 with age > 5 min, OR age > 30 min). The 30-min orphan gate catches parentless empty sessions that the original `size > 0` guard would have missed (e.g. orphaned api/cli/telegram sessions whose gateway never wrote `end_reason`).
-
-Both paths share a 5-min boot safety window: a session that started in the last 5 minutes is never closed, even if its parent is long gone.
-
-## UI
-
-- **Compose:** right-side Sheet (`MissionCreateForm`) with category combobox and prompt preview.
-- **View:** inline `MissionEditorPanel` on the mission board (no sheet scroll).
+</details>
