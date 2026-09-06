@@ -158,13 +158,29 @@ export const RULES = [
     id: "no-raw-colour-in-tsx",
     law: "Colour comes from a token, never a literal. Design tokens are in globals.css @theme + src/lib/theme.ts (docs/contributing/design-tokens.md).",
     files: (f) => f.startsWith("src/") && f.endsWith(".tsx"),
-    pattern: /#[0-9a-fA-F]{3,8}\b|\brgba?\(\s*\d/,
+    // The lookbehind, not \b, and it excludes letters and digits but NOT the
+    // underscore. Tailwind writes a space as `_` inside an arbitrary value, so
+    // the character before `rgba(` in `shadow-[0_0_8px_rgba(6,214,214,0.3)]` is
+    // a word character and \b never matched: the rule reported "0 in 0 files"
+    // while two raw colours shipped (T-0114). Excluding `.` and `$` as well
+    // keeps `palette.rgba(1,2,3)`, a method call, out of it, which the old
+    // anchor did flag. Requiring a DIGIT after the paren is what leaves
+    // `rgb(var(--ps-rgb-neon-cyan) / 0.3)` alone: that is a token reference,
+    // four live call sites use it, and the built stylesheet proves it compiles.
+    pattern: /#[0-9a-fA-F]{3,8}\b|(?<![A-Za-z0-9.$])rgba?\(\s*\d/,
   },
   {
     id: "no-sub-12px-type",
-    law: "Type below 12px fails legibility for a dense operator surface and is unreadable at arm's length. Use the type scale.",
+    law: "Type below 12px fails legibility for a dense operator surface and is unreadable at arm's length. Use the type scale. An SVG chart sets its size as a prop, so fontSize={n} counts too.",
     files: (f) => f.startsWith("src/"),
-    pattern: /text-\[(?:[0-9]|1[01])(?:\.\d+)?px\]/,
+    // The second alternative is the SVG half. An axis label is text, it reads
+    // through --color-ps-text-*, and the class rule could never see it because
+    // a chart writes `fontSize={8}`, not a class. Three chart sites rendered at
+    // 8px and 9px, two thirds of the floor this rule exists to hold (T-0114).
+    // A computed size (`fontSize={size * 0.06}`) is out of scope for a regex
+    // and is left to the rendered census.
+    pattern:
+      /text-\[(?:[0-9]|1[01])(?:\.\d+)?px\]|\bfontSize=(?:\{(?:[0-9]|1[01])(?:\.\d+)?\}|"(?:[0-9]|1[01])(?:\.\d+)?")/,
   },
   {
     id: "hermes-outside-adapter",

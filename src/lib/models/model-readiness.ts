@@ -26,7 +26,7 @@
 // module exports the rule and the shape and no I/O of its own.
 // ═══════════════════════════════════════════════════════════════
 
-export type ModelReadinessState =
+type ModelReadinessState =
   /** The agent's config file names a model. It can answer. */
   | "ready"
   /** A model is chosen in the registry but has not reached the config file. */

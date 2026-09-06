@@ -477,44 +477,33 @@
 }
 
 /* ── Bloom tier: the field answering presence ────────────────────────────────
-   WG-WEB-011 ruled C (field-reactive) and WG-WEB-005 ruled C (full). The brand
-   physics is a field: brightness is a readout of energy in the system, not
-   decoration, so an idle console is dim and a working one is not.
+   Brightness is a readout of energy in the system rather than decoration, so an
+   idle console is dim and a working one is not. src/kit/BloomField.tsx, one
+   delegated listener mounted once in layout.tsx, sets --bx/--by/--bloom on the
+   [data-bloom] element under the cursor; this is the paint half.
 
-   src/kit/BloomField.tsx (vendored, one delegated listener, mounted once in
-   layout.tsx) sets --bx/--by/--bloom on the [data-bloom] element under the
-   cursor. This is the paint half. Ported from PatterTech_Website's globals.css
-   with one substitution: the literal rgba(51, 221, 255, a) becomes a mix of
-   --color-cherenkov-100, which is #33ddff, which IS 51, 221, 255. Same colour,
-   existing token, nothing minted.
+   The colour is a color-mix of --color-cherenkov-100 (#33ddff). That is the
+   form it was measured in and there is no reason to change it. An earlier
+   version of this comment said the --ps-rgb-* triplet form could not work in
+   this pipeline at all, and instructed the next maintainer not to repair the
+   twenty rules it called dead. That was true only while the mirrors held comma
+   lists, which they stopped doing on 2026-08-24; the comment never caught up.
+   Measured in the stylesheet npm run build emits, .glow-cyan compiles to a real
+   box-shadow through rgb(var(...) / .08) and the mirrors compile to
+   space-separated channels, so both spellings paint (T-0114).
 
-   Why not --ps-rgb-cherenkov-glow, which holds that triplet and which the task
-   named. Because a rule written that way paints NOTHING, and this was measured
-   in Chrome against a production build taken from 11c9d296, the commit this work branched from, rather than reasoned
-   about. The token holds a COMMA list, "51, 221, 255", so rgb(var(token) / a)
-   expands to rgb(51, 221, 255 / 0.07), which mixes a comma list with a slash
-   alpha and is invalid: the declaration is dropped. Authoring the legacy form
-   rgba(var(token), a) does not save it either, because Lightning CSS
-   normalises rgba(x, a) to rgb(x / a) during minification and hands back the
-   same dead declaration. There is no spelling of that token that survives this
-   build pipeline.
-
-   That is a live defect with nineteen other sites in this file, including
-   .scanlines, .grid-bg, .text-glow-* and every .glow-* box-shadow, all of
-   which currently paint nothing. It is pre-existing, it is much wider than
-   this task, and it is filed separately rather than quietly fixed here.
-   color-mix keeps the bloom out of it. Do not "simplify" these two lines onto
-   the --ps-rgb-* triplet; that is a straight revert to invisible.
+   The values are deliberately not restated here. lockbook-tokens.test.ts reads
+   this file as text, and a declaration written inside a comment is
+   indistinguishable from a real one.
 
    The 0.07 alpha under a 0.4s fade sits far below the pulse-glow / glow-surface
    threshold this console reserves for live and active state, so the bloom does
    not compete with "glow means running".
 
-   Both opt-outs are carried across from the source exactly. The fine-pointer
-   guard wraps the whole paint rule, because a touch device has no cursor to
-   answer and would otherwise be left with a permanently lit ::after. The
-   reduced-motion guard removes the pseudo-element outright: the field IS the
-   motion, so there is nothing left to soften once it is off. */
+   The fine-pointer guard wraps the whole paint rule, because a touch device has
+   no cursor to answer and would otherwise be left with a permanently lit
+   ::after. The reduced-motion guard removes the pseudo-element outright: the
+   field IS the motion, so there is nothing left to soften once it is off. */
 @media (hover: hover) and (pointer: fine) {
   [data-bloom] {
     position: relative;

@@ -195,6 +195,23 @@ describe("globals.css does not assert a defect the build disproves", () => {
     expect(text).toMatch(/reduced-motion/);
   });
 
+  /**
+   * Caught while writing the replacement: the first draft of that comment
+   * restated `--ps-rgb-neon-cyan` and its value verbatim as evidence, and
+   * lockbook-tokens.test.ts reads this file as TEXT with
+   * `/(--ps-rgb-[a-z-]+):\s*([^;]+);/g`. It matched the prose, captured
+   * everything up to the next semicolon twelve lines away, and failed. A
+   * comment that quotes a declaration is a declaration as far as that gate is
+   * concerned, so no comment in this file may look like one.
+   */
+  it("restates no token declaration in prose, because a gate reads this file as text", () => {
+    const withComments = css();
+    const withoutComments = withComments.replace(/\/\*[\s\S]*?\*\//g, "");
+    const declarations = (source: string): string[] =>
+      [...source.matchAll(/(--[a-z0-9-]+):\s*([^;]+);/g)].map((m) => m[1]);
+    expect(declarations(withComments)).toEqual(declarations(withoutComments));
+  });
+
   it("and the mirrors stay in the form that made the claim stale", () => {
     // Space-separated, per the 2026-08-24 correction. This is the fact the
     // comment was written before and never caught up with; if it ever reverts,

@@ -64,7 +64,7 @@ function LiveNodeView({ data }: NodeProps<LiveNode>) {
   return (
     <div
       title={data.hasRun ? "Click for stage details" : undefined}
-      className={`min-w-[150px] rounded-lg border bg-dark-900/90 px-3 py-2 shadow-lg backdrop-blur transition-colors ${STATUS_BORDER[data.status] ?? "border-white/15"} ${data.isCurrent ? "ring-1 ring-neon-cyan/60 shadow-[0_0_12px_2px_rgb(34_211_238/0.4)]" : ""} ${data.hasRun ? "cursor-pointer hover:border-white/40" : "cursor-default"}`}
+      className={`min-w-[150px] rounded-lg border bg-dark-900/90 px-3 py-2 shadow-lg backdrop-blur transition-colors ${STATUS_BORDER[data.status] ?? "border-white/15"} ${data.isCurrent ? "ring-1 ring-neon-cyan/60 shadow-[0_0_12px_2px_rgb(var(--ps-rgb-neon-cyan)_/_0.4)]" : ""} ${data.hasRun ? "cursor-pointer hover:border-white/40" : "cursor-default"}`}
     >
       <Handle type="target" position={Position.Top} className="!h-2 !w-2 !border-0 !bg-white/40" />
       <div className="flex items-center gap-1.5">

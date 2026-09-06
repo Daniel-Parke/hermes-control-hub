@@ -28,7 +28,7 @@ import {
  * aborting the request), so this is for the logs and for any caller that does
  * wait (T-0113).
  */
-export const CHAPTER_STOPPED_STATUS = 499;
+const CHAPTER_STOPPED_STATUS = 499;
 
 /**
  * Was this a Stop, or a failure?

@@ -16,6 +16,16 @@ interface DistributionHistogramProps {
 /**
  * Vertical bar histogram for a bucketed distribution (e.g. run durations).
  * Responsive width via viewBox; pure SVG with a "draw-up" transition.
+ *
+ * Known and deferred (T-0114, for the Results conversion): `preserveAspectRatio
+ * ="none"` stretches this chart horizontally to fill its card, and it is the one
+ * chart in viz/ that carries TEXT inside that stretch. In a 323px card the
+ * horizontal scale is 0.48, so a 12px label renders 14.4px tall and about 3.2px
+ * per character. Raising the sizes off 8px and 9px made both dimensions 1.5x
+ * larger and did not change the ratio, so this is strictly better than it was;
+ * it is not yet right. Fixing it means the chart knowing its own rendered width
+ * (there is no ResizeObserver anywhere in src/ yet) or moving the axis labels
+ * out of the SVG into an HTML row, and both belong with the Insights rebuild.
  */
 export default function DistributionHistogram({
   bins,
@@ -26,7 +36,7 @@ export default function DistributionHistogram({
   const W = 600;
   const H = height;
   const padX = 8;
-  const padTop = 10;
+  const padTop = 16;
   const padBottom = 22;
   const n = bins.length;
   if (n === 0) {
@@ -65,7 +75,7 @@ export default function DistributionHistogram({
               <title>{`${b.label}: ${b.value}`}</title>
             </rect>
             {b.value > 0 && (
-              <text x={x + barW / 2} y={y - 3} fill={neon(color)} fontSize={9} fontFamily="monospace" textAnchor="middle">
+              <text x={x + barW / 2} y={y - 3} fill={neon(color)} fontSize={12} fontFamily="monospace" textAnchor="middle">
                 {b.value}
               </text>
             )}
@@ -73,7 +83,7 @@ export default function DistributionHistogram({
               x={padX + i * slot + slot / 2}
               y={H - padBottom + 13}
               fill="var(--color-ps-text-faint)"
-              fontSize={8}
+              fontSize={12}
               fontFamily="monospace"
               textAnchor="middle"
             >

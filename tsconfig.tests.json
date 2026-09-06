@@ -12,10 +12,10 @@
   // top-level import/export is a global script to TypeScript, so those files
   // collided on every shared identifier (41 errors on their own).
   //
-  // NOT yet wired into `npm run lint`: 73 errors remain, mostly mock factories
-  // whose argument lists no longer match what they replace. Each needs reading
-  // rather than a codemod. `npm run typecheck:tests` lists them; move this into
-  // the lint gate once it reaches zero.
+  // Wired into `npm run lint` as its last step, and at zero. It was not always:
+  // this comment used to say 73 errors remained and that the gate should adopt
+  // it "once it reaches zero". It reached zero and the gate adopted it; the
+  // comment did not follow until T-0114.
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "noEmit": true,

@@ -24,9 +24,20 @@ export default function RadialActivityClock({
   const rInner = size * 0.18;
   const rOuter = size * 0.46;
   const max = Math.max(1, ...hours);
+  // The hour labels sit at rOuter + 10, which is 102 of a 200-unit box, so at
+  // any legible size they overhang the viewport and the outermost <svg> clips
+  // them. Padding the viewBox rather than moving the labels keeps every radius
+  // and every proportion exactly as it was; the drawing simply scales down a
+  // little inside the same container (T-0114).
+  const pad = size * 0.07;
 
   return (
-    <svg viewBox={`0 0 ${size} ${size}`} width="100%" height="100%" className={className}>
+    <svg
+      viewBox={`${-pad} ${-pad} ${size + pad * 2} ${size + pad * 2}`}
+      width="100%"
+      height="100%"
+      className={className}
+    >
       {/* guide rings */}
       <circle cx={cx} cy={cy} r={rOuter} fill="none" stroke="var(--color-ps-viz-guide)" />
       <circle cx={cx} cy={cy} r={rInner} fill="none" stroke="var(--color-ps-viz-guide)" />
@@ -61,7 +72,7 @@ export default function RadialActivityClock({
             x={p.x}
             y={p.y}
             fill="var(--color-ps-text-faint)"
-            fontSize={8}
+            fontSize={12}
             fontFamily="monospace"
             textAnchor="middle"
             dominantBaseline="middle"

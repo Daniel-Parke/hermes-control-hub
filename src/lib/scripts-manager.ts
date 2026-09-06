@@ -70,14 +70,14 @@ const RUN_MAX_OUTPUT_BYTES = 8 * 1024 * 1024;
  * no output, so reporting it as "exited non-zero, check Logs" sends the
  * operator to a log that says nothing about it.
  */
-export type ScriptRunOutcome = "succeeded" | "failed" | "not-started";
+type ScriptRunOutcome = "succeeded" | "failed" | "not-started";
 
 /**
  * Why a run did not start. The route answers 404 for the first and 503 for the
  * second: one is a script that is not there, the other is a host that cannot
  * run the script it has.
  */
-export type ScriptStartFailure = "script-missing" | "host-cannot-run";
+type ScriptStartFailure = "script-missing" | "host-cannot-run";
 
 /** The types the ledger records a run under. `script.run` means it ran. */
 const RUN_EVENT_TYPES = ["script.run", "script.run_not_started"] as const;

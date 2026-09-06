@@ -90,23 +90,24 @@ describe("the [data-bloom] paint rule", () => {
   });
 
   /**
-   * The one that caught a real defect, and the reason the rule above does NOT
-   * spell the colour as the --ps-rgb-cherenkov-glow triplet the task named.
+   * The one that caught a real defect, kept with an honest name (T-0114).
    *
-   * That token HELD a comma list, "51, 221, 255", when this rule was written.
+   * When this rule was written the mirrors HELD comma lists, so
    * rgb(var(token) / a) expanded to rgb(51, 221, 255 / 0.07), which mixes a
-   * comma list with a slash alpha
-   * and is invalid, so the declaration is dropped and the bloom paints nothing
-   * at all. Writing the legacy rgba(var(token), a) does not rescue it either:
-   * Lightning CSS normalises that to the slash form during minification, so it
-   * arrives in the browser just as dead. Verified against a production build,
-   * not reasoned about.
+   * comma list with a slash alpha, is invalid, and is dropped: the bloom
+   * painted nothing at all. Lightning CSS normalises the legacy rgba(var(t), a)
+   * to the same dead slash form, so there was no spelling that survived.
    *
-   * A signature animated piece that ships as a no-op would pass every
-   * text-matching assertion anyone would think to write about it. This is the
-   * assertion that would not have passed.
+   * The mirrors moved to space-separated form on 2026-08-24 and the triplet
+   * spelling works now: the built stylesheet emits
+   * `.glow-cyan{box-shadow:0 0 14px rgb(var(--ps-rgb-neon-cyan) / .08) …}`.
+   * The assertion is unchanged all the same, because color-mix is the form this
+   * rule was MEASURED in against a production build, and a signature animated
+   * piece that ships as a no-op passes every text-matching assertion anyone
+   * would think to write about it. Changing the spelling would mean measuring
+   * it again; nothing here asks for that.
    */
-  it("never spells the colour as a triplet token this pipeline cannot compute", () => {
+  it("keeps the colour in the form this rule was measured in", () => {
     expect(fine).not.toMatch(/var\(--ps-rgb-[a-z-]+\)/);
   });
 
