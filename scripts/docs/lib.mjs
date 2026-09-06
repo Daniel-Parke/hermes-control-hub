@@ -91,8 +91,13 @@ export const RETIRED_PATHS = [
  * thing the regroup retired. Ordinary prose containing the word "logs" is not a
  * refusal; `/results/logs` is not either, because it is not one of these words.
  */
+// The lookbehind carries a `.` so that `./logs.md` and `../logs.md` are read as
+// what they are -- a relative link to the sibling guide -- rather than as the
+// retired route `/logs`. Five guides are named for a retired route (logs,
+// sessions, memory, insights, models), so this fires the moment the guides link
+// to one another. A path beginning `./` or `../` is a file, never a URL.
 const RETIRED_RE =
-  /(?<![\w/\-})])\/(?:orchestration|operations|laboratory|config|sessions|logs|memory|insights|benchmarks)(?![\w-])(?:\/[\w-]+)*/g;
+  /(?<![\w/\-.})])\/(?:orchestration|operations|laboratory|config|sessions|logs|memory|insights|benchmarks)(?![\w-])(?:\/[\w-]+)*/g;
 
 /**
  * What B15's placeholder guides say about themselves.
@@ -720,11 +725,15 @@ export function checkDocs(input) {
 
       const missing = GUIDE_SECTIONS.filter((h) => !new RegExp(`^##\\s+${h}\\s*$`, "m").test(page.body));
       if (missing.length > 0) {
+        // The subject is the heading as a reader would type it, `##` and all,
+        // because the file's own invariant is that a message quotes its subject
+        // verbatim -- and because "Notes" alone is not a thing to search for.
+        const headings = missing.map((h) => `## ${h}`).join(", ");
         refusals.push({
           code: "guide-missing-sections",
           path: page.path,
-          subject: missing.join(", "),
-          message: `docs:check: ${page.path} is missing the section(s) every guide carries: ${missing.map((h) => `## ${h}`).join(", ")}`,
+          subject: headings,
+          message: `docs:check: ${page.path} is missing the section(s) every guide carries: ${headings}`,
         });
       }
     }

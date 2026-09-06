@@ -87,8 +87,21 @@ function lib(): DocsLib {
 
 const ROUTES = ["/work/chat", "/work/missions"];
 
+/**
+ * The three headings B18 requires of every guide.
+ *
+ * Appended to a GUIDE fixture's body rather than written into each case,
+ * because after B18 a guide without them is not a complete corpus, and a
+ * fixture that omitted them would make this file's green control red for a
+ * reason none of its cases are about. A case that wants to prove something
+ * about a body still writes that body; it just also gets the house shape.
+ */
+const HOUSE_SECTIONS = ["## What you see", "## Typical use", "## Notes"].join("\n\n");
+
 function makePage(over: Partial<DocPage> & { slug: string; data: DocFrontMatter }): DocPage {
-  return { path: `docs/${over.slug}.md`, body: "", ...over };
+  const page = { path: `docs/${over.slug}.md`, body: "", ...over };
+  if (!over.slug.startsWith("guides/")) return page;
+  return { ...page, body: `${page.body}\n\n${HOUSE_SECTIONS}\n` };
 }
 
 /** Every route covered, every reference resolvable, every block fresh. */
@@ -361,6 +374,47 @@ describe("B15 · docs:check refusal 6 — a leftover old group name", () => {
     expect(refusals[0].message).toBe(
       'docs:check: docs/guides/missions.md names the retired path "/orchestration/missions"',
     );
+  });
+
+  it("does not refuse a relative link to the sibling guide of the same name", () => {
+    // Five guides are named for a route the regroup retired -- logs, sessions,
+    // memory, insights, models -- so a guide linking to its neighbour writes
+    // exactly the string the matcher is hunting for. `../guides/logs.md` was
+    // always safe, because the segment in front of it fired the lookbehind;
+    // `./logs.md` had nothing in front of the dot. A path that begins `./` or
+    // `../` is a file on disk, and no reader can visit it as a URL.
+    const input = cleanInput();
+    const pages = input.pages.map((p) =>
+      p.slug === "guides/missions"
+        ? {
+            ...p,
+            body: [
+              "The [Logs](./logs.md) screen reads the same files, and a run leaves a",
+              "[transcript](./sessions.md) behind. See also [Insights](../guides/insights.md)",
+              "and what the agent [remembers](./memory.md).",
+            ].join("\n"),
+          }
+        : p,
+    );
+    const refusals = lib()
+      .checkDocs({ ...input, pages })
+      .filter((r) => r.code === "retired-path");
+    expect(refusals).toEqual([]);
+  });
+
+  it("still refuses a retired path used as a link target, which IS a URL", () => {
+    // The counterweight to the case above: the fix must not open a hole. A
+    // markdown target with no leading dot is a path the reader's browser will
+    // actually request, and that one is still wrong.
+    const input = cleanInput();
+    const pages = input.pages.map((p) =>
+      p.slug === "guides/missions" ? { ...p, body: "Open [the board](/orchestration/missions)." } : p,
+    );
+    const refusals = lib()
+      .checkDocs({ ...input, pages })
+      .filter((r) => r.code === "retired-path");
+    expect(refusals).toHaveLength(1);
+    expect(refusals[0].subject).toBe("/orchestration/missions");
   });
 
   it("lists the three retired groups the regroup replaced", () => {
