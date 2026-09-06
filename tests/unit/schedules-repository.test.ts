@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-require-imports */
 /**
  * @jest-environment node
  *
@@ -8,6 +7,7 @@
  * repo's `getDb()` calls hit the test DB; `inTransaction` is stubbed to run
  * the callback directly (the real one closes over the real singleton).
  */
+/* eslint-disable @typescript-eslint/no-require-imports */
 import type Database from "better-sqlite3";
 import type * as SchedulesRepo from "@/lib/schedules-repository";
 import { execBaselineSchema } from "../helpers/baseline-db";

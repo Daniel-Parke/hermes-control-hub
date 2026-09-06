@@ -1,4 +1,5 @@
 /** @jest-environment jsdom */
+/* eslint-disable @typescript-eslint/no-require-imports */
 
 // ═══════════════════════════════════════════════════════════════
 // One truth about the model: three screens, three answers (real-agent round).
@@ -45,13 +46,7 @@ jest.mock("next/link", () => ({
   ),
 }));
 
-jest.mock("lucide-react", () => {
-  const icon = (name: string) =>
-    function Icon(props: Record<string, unknown>) {
-      return <svg data-icon={name} aria-hidden="true" {...props} />;
-    };
-  return new Proxy({}, { get: (_t, prop: string) => icon(prop) });
-});
+jest.mock("lucide-react", () => require("../helpers/mocks").lucideMock());
 
 // The hook polls the gateway every 30s. No timers in this file: the poll is
 // not what is under test, the first read is.

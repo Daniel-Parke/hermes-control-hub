@@ -1,8 +1,8 @@
+/** @jest-environment node */
 // ═══════════════════════════════════════════════════════════════
 // update-api.test.ts — /api/update GET/POST behaviour
 // ═══════════════════════════════════════════════════════════════
 
-/** @jest-environment node */
 
 const mockExecSync = jest.fn();
 const mockExecFileSync = jest.fn();

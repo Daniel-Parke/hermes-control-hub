@@ -1,4 +1,5 @@
 /** @jest-environment jsdom */
+/* eslint-disable @typescript-eslint/no-require-imports */
 
 // ═══════════════════════════════════════════════════════════════
 // "Active" has to be about the model it is drawn next to.
@@ -25,13 +26,7 @@ import ModelsAgentDefaultSection from "@/components/models/ModelsAgentDefaultSec
 import type { ApiModel } from "@/components/models/types";
 import type { ModelReadiness } from "@/lib/models/model-readiness";
 
-jest.mock("lucide-react", () => {
-  const icon = (name: string) =>
-    function Icon(props: Record<string, unknown>) {
-      return <svg data-icon={name} aria-hidden="true" {...props} />;
-    };
-  return new Proxy({}, { get: (_t, prop: string) => icon(prop) });
-});
+jest.mock("lucide-react", () => require("../helpers/mocks").lucideMock());
 
 // Two rows, so "the slot points at one model and the agent runs the other" is
 // expressible. Both are real registry rows; only config.yaml decides which one

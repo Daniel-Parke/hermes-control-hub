@@ -1,4 +1,5 @@
 /** @jest-environment jsdom */
+/* eslint-disable @typescript-eslint/no-require-imports */
 
 /**
  * Regression tests for the chat page's toast rendering.
@@ -28,10 +29,7 @@ jest.mock("lucide-react", () => {
 });
 
 // ── Sub-component mocks ────────────────────────────────────────
-jest.mock("@/components/layout/AppPageShell", () => ({
-  __esModule: true,
-  default: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-}));
+jest.mock("@/components/layout/AppPageShell", () => require("../helpers/mocks").appPageShellMock());
 
 jest.mock("@/components/layout/PageHeader", () => ({
   __esModule: true,

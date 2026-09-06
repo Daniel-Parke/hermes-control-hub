@@ -1,5 +1,5 @@
-/* eslint-disable @typescript-eslint/no-require-imports */
 /** @jest-environment node */
+/* eslint-disable @typescript-eslint/no-require-imports */
 
 import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, existsSync } from "fs";
 import { tmpdir } from "os";
@@ -14,16 +14,7 @@ function loadRealBetterSqlite3(): typeof import("better-sqlite3") {
   return require("better-sqlite3/lib/index.js") as typeof import("better-sqlite3");
 }
 
-jest.mock("@/lib/db", () => {
-  const actualCrypto = jest.requireActual("crypto") as typeof import("crypto");
-  return {
-    getDb: () => testDb!,
-    inTransaction: <T,>(fn: () => T) => testDb!.transaction(fn)(),
-    uuid: () => actualCrypto.randomUUID(),
-    now: () => new Date().toISOString(),
-    ensureDb: () => undefined,
-  };
-});
+jest.mock("@/lib/db", () => require("../helpers/baseline-db").dbSingletonMock(() => testDb));
 
 jest.mock("@/modules/hermes/lib/profile-paths", () => {
   const actual = jest.requireActual("@/modules/hermes/lib/profile-paths") as typeof import("@/modules/hermes/lib/profile-paths");

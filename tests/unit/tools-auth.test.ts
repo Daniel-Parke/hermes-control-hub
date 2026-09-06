@@ -1,4 +1,5 @@
 /** @jest-environment node */
+/* eslint-disable @typescript-eslint/no-require-imports */
 
 // /api/tools only has GET and POST — PUT is tested via POST(action="configure").
 //
@@ -40,22 +41,7 @@ jest.mock("@/modules/hermes/lib/agent-runtime", () => ({
   })),
 }));
 
-jest.mock("@/lib/paths", () => ({
-  PS_DATA_DIR: "/tmp/ch-data",
-  PATHS: {
-    missions: "/tmp/ch-data/missions",
-    patterStageDb: "/tmp/ch-data/control-hub.db",
-    templates: "/tmp/ch-data/templates",
-    stories: "/tmp/ch-data/stories",
-    recroom: "/tmp/ch-data/recroom",
-    workspaces: "/tmp/ch-data/workspaces",
-    auditLog: "/tmp/ch-data/audit",
-    psScripts: "/tmp/ch-data/scripts",
-    psHardwareLogs: "/tmp/ch-data/logs",
-  },
-  getPsScriptsDir: () => "/tmp/ch-data/scripts",
-  getPsHardwareLogDir: () => "/tmp/ch-data/logs",
-}));
+jest.mock("@/lib/paths", () => require("../helpers/mocks").pathsMock());
 
 jest.mock("@/lib/api-logger", () => ({
   logApiError: jest.fn(),

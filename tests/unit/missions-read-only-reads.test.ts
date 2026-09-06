@@ -1,5 +1,5 @@
-/* eslint-disable @typescript-eslint/no-require-imports */
 /** @jest-environment node */
+/* eslint-disable @typescript-eslint/no-require-imports */
 // ═══════════════════════════════════════════════════════════════
 // Read-only mode still READS (T-0034, finding 6).
 //

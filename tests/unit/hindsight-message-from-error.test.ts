@@ -1,3 +1,4 @@
+/** @jest-environment node */
 /**
  * /api/memory/hindsight/route.ts — regression tests for the
  * `messageFromError` migration in session 128.
@@ -29,7 +30,6 @@
  * handleCount) and the empty-Error trap.
  */
 
-/** @jest-environment node */
 
 import { messageFromError } from "@/lib/api-fetch";
 

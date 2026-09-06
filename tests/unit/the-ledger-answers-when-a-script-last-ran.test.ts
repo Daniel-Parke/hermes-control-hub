@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-require-imports */
 /**
  * @jest-environment node
  *
@@ -16,6 +15,7 @@
  *     lands in the future and every "how long ago" reads "never". The reader
  *     hands back an ISO instant instead.
  */
+/* eslint-disable @typescript-eslint/no-require-imports */
 import type Database from "better-sqlite3";
 import { readFileSync } from "fs";
 import { join } from "path";

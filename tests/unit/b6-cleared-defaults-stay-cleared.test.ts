@@ -78,16 +78,7 @@ jest.mock("@/modules/hermes/lib/agent-runtime", () => {
 // model_defaults table, config.yaml and agent_root.config_yaml, and stubbing
 // any one of the three would cut out part of the loop this file exists to close.
 let testDb: import("better-sqlite3").Database | null = null;
-jest.mock("@/lib/db", () => {
-  const actualCrypto = jest.requireActual("crypto") as typeof import("crypto");
-  return {
-    getDb: () => testDb!,
-    inTransaction: <T,>(fn: () => T) => testDb!.transaction(fn)(),
-    uuid: () => actualCrypto.randomUUID(),
-    now: () => new Date().toISOString(),
-    ensureDb: () => undefined,
-  };
-});
+jest.mock("@/lib/db", () => require("../helpers/baseline-db").dbSingletonMock(() => testDb));
 
 // Neither the audit file nor the analytics table belongs in this oracle, and
 // the real audit writer resolves PS_DATA_DIR.

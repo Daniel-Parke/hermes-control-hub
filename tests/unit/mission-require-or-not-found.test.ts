@@ -1,5 +1,5 @@
-/* eslint-disable @typescript-eslint/no-require-imports */
 /** @jest-environment node */
+/* eslint-disable @typescript-eslint/no-require-imports */
 
 // Tests for the `requireMissionOrNotFound(body)` 2-step helper that
 // consolidates the `requireMissionId` + `getMissionOrNotFound` pattern

@@ -48,22 +48,9 @@ jest.mock("next/navigation", () => ({
   },
 }));
 
-jest.mock("next/link", () => ({
-  __esModule: true,
-  default: ({ href, children, ...rest }: { href: string; children: React.ReactNode }) => (
-    <a href={href} {...rest}>
-      {children}
-    </a>
-  ),
-}));
+jest.mock("next/link", () => require("../helpers/mocks").nextLinkMock());
 
-jest.mock("lucide-react", () => {
-  const icon = (name: string) =>
-    function Icon(props: Record<string, unknown>) {
-      return <svg data-icon={name} aria-hidden="true" {...props} />;
-    };
-  return new Proxy({}, { get: (_t, prop: string) => icon(prop) });
-});
+jest.mock("lucide-react", () => require("../helpers/mocks").lucideMock());
 
 const mockRecordEvent = jest.fn();
 jest.mock("@/lib/analytics/record-event", () => ({

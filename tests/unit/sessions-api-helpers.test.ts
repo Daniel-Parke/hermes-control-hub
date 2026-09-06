@@ -1,3 +1,4 @@
+/** @jest-environment node */
 /**
  * sessions-api-helpers — unit tests for the pure helpers extracted
  * from /api/sessions/route.ts. The route handler isn't invoked here;
@@ -6,7 +7,6 @@
  * constructed request with a synthetic URL is sufficient.
  */
 
-/** @jest-environment node */
 
 import { NextRequest } from "next/server";
 

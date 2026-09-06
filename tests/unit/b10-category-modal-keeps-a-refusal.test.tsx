@@ -1,4 +1,5 @@
 /** @jest-environment jsdom */
+/* eslint-disable @typescript-eslint/no-require-imports */
 
 /**
  * B10 oracle, the category manager's own half (T-0104, D71).
@@ -12,13 +13,7 @@
 
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 
-jest.mock("lucide-react", () => {
-  const icon = (name: string) =>
-    function Icon(props: Record<string, unknown>) {
-      return <svg data-icon={name} aria-hidden="true" {...props} />;
-    };
-  return new Proxy({}, { get: (_t, prop: string) => icon(prop) });
-});
+jest.mock("lucide-react", () => require("../helpers/mocks").lucideMock());
 
 import CategoryManagerModal, {
   type ManagedCategory,

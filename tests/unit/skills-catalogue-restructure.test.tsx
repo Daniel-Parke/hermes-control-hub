@@ -1,4 +1,5 @@
 /** @jest-environment jsdom */
+/* eslint-disable @typescript-eslint/no-require-imports */
 
 /**
  * ACCEPTANCE ORACLE for T-0032, the Skills Manager restructure (tier R2).
@@ -36,10 +37,7 @@ jest.mock("lucide-react", () => {
   return new Proxy({}, { get: (_t, prop: string) => passthrough(prop) });
 });
 
-jest.mock("@/components/layout/AppPageShell", () => ({
-  __esModule: true,
-  default: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-}));
+jest.mock("@/components/layout/AppPageShell", () => require("../helpers/mocks").appPageShellMock());
 
 jest.mock("@/components/layout/PageHeader", () => ({
   __esModule: true,

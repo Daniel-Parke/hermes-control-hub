@@ -1,4 +1,5 @@
 /** @jest-environment jsdom */
+/* eslint-disable @typescript-eslint/no-require-imports */
 // ═══════════════════════════════════════════════════════════════
 // B7 oracle, group memory-tab (T-0101, the plan's "confirm on directive and
 // mental-model delete").
@@ -17,13 +18,7 @@
 
 import { fireEvent, render, screen } from "@testing-library/react";
 
-jest.mock("lucide-react", () => {
-  const icon = (name: string) =>
-    function Icon(props: Record<string, unknown>) {
-      return <svg data-icon={name} aria-hidden="true" {...props} />;
-    };
-  return new Proxy({}, { get: (_t, prop: string) => icon(prop) });
-});
+jest.mock("lucide-react", () => require("../helpers/mocks").lucideMock());
 
 import DirectivesTab from "@/components/memory/hindsight/DirectivesTab";
 import MentalModelsTab from "@/components/memory/hindsight/MentalModelsTab";

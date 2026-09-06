@@ -1,4 +1,5 @@
 /** @jest-environment node */
+/* eslint-disable @typescript-eslint/no-require-imports */
 
 // Integration regression: PUT /api/config must deep-merge a nested
 // object patch into the existing section so sibling keys survive.
@@ -31,45 +32,9 @@ jest.mock("fs", () => ({
   unlinkSync: mockUnlinkSync,
 }));
 
-jest.mock("@/modules/hermes/lib/agent-runtime", () => ({
-  getActiveHermesPaths: jest.fn(() => ({
-    root: "/tmp/test-hermes",
-    config: "/tmp/test-hermes/config.yaml",
-    backups: "/tmp/test-hermes/backups",
-    env: "/tmp/test-hermes/.env",
-    soul: "/tmp/test-hermes/SOUL.md",
-    hermes: "/tmp/test-hermes/HERMES.md",
-    agents: "/tmp/test-hermes/AGENTS.md",
-    skills: "/tmp/test-hermes/skills",
-    profiles: "/tmp/test-hermes/profiles",
-    sessions: "/tmp/test-hermes/sessions",
-    logs: "/tmp/test-hermes/logs",
-    cronJobs: "/tmp/test-hermes/cron/jobs.json",
-    memoryDb: "/tmp/test-hermes/memory_store.db",
-  })),
-  getActiveHermesHome: jest.fn(() => "/tmp/test-hermes"),
-  getAgentLlmEndpoints: jest.fn(() => ({
-    apiUrl: "http://127.0.0.1:9/v1/chat/completions",
-    gatewayBase: "http://127.0.0.1:9",
-  })),
-}));
+jest.mock("@/modules/hermes/lib/agent-runtime", () => require("../helpers/mocks").agentRuntimeMock());
 
-jest.mock("@/lib/paths", () => ({
-  PS_DATA_DIR: "/tmp/ch-data",
-  PATHS: {
-    missions: "/tmp/ch-data/missions",
-    patterStageDb: "/tmp/ch-data/control-hub.db",
-    templates: "/tmp/ch-data/templates",
-    stories: "/tmp/ch-data/stories",
-    recroom: "/tmp/ch-data/recroom",
-    workspaces: "/tmp/ch-data/workspaces",
-    auditLog: "/tmp/ch-data/audit",
-    psScripts: "/tmp/ch-data/scripts",
-    psHardwareLogs: "/tmp/ch-data/logs",
-  },
-  getPsScriptsDir: () => "/tmp/ch-data/scripts",
-  getPsHardwareLogDir: () => "/tmp/ch-data/logs",
-}));
+jest.mock("@/lib/paths", () => require("../helpers/mocks").pathsMock());
 
 jest.mock("@/lib/api-logger", () => ({
   logApiError: jest.fn(),

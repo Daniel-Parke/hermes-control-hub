@@ -1,4 +1,5 @@
 /** @jest-environment node */
+/* eslint-disable @typescript-eslint/no-require-imports */
 
 // ═══════════════════════════════════════════════════════════════
 // B6 oracle, group config-route-builder, half two (T-0100, D77 + D78).
@@ -63,28 +64,7 @@ jest.mock("fs", () => ({
 const ROOT = "/tmp/test-hermes";
 const CONFIG_PATH = `${ROOT}/config.yaml`;
 
-jest.mock("@/modules/hermes/lib/agent-runtime", () => ({
-  getActiveHermesPaths: jest.fn(() => ({
-    root: "/tmp/test-hermes",
-    config: "/tmp/test-hermes/config.yaml",
-    backups: "/tmp/test-hermes/backups",
-    env: "/tmp/test-hermes/.env",
-    soul: "/tmp/test-hermes/SOUL.md",
-    hermes: "/tmp/test-hermes/HERMES.md",
-    agents: "/tmp/test-hermes/AGENTS.md",
-    skills: "/tmp/test-hermes/skills",
-    profiles: "/tmp/test-hermes/profiles",
-    sessions: "/tmp/test-hermes/sessions",
-    logs: "/tmp/test-hermes/logs",
-    cronJobs: "/tmp/test-hermes/cron/jobs.json",
-    memoryDb: "/tmp/test-hermes/memory_store.db",
-  })),
-  getActiveHermesHome: jest.fn(() => "/tmp/test-hermes"),
-  getAgentLlmEndpoints: jest.fn(() => ({
-    apiUrl: "http://127.0.0.1:9/v1/chat/completions",
-    gatewayBase: "http://127.0.0.1:9",
-  })),
-}));
+jest.mock("@/modules/hermes/lib/agent-runtime", () => require("../helpers/mocks").agentRuntimeMock());
 
 // The SAME root as the route's active paths: this is what lets the writer's
 // "is this the default root's config.yaml" guard say yes under jest.

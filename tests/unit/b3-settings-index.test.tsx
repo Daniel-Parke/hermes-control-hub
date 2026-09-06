@@ -1,4 +1,5 @@
 /** @jest-environment jsdom */
+/* eslint-disable @typescript-eslint/no-require-imports */
 /**
  * B3 (T-0097), D79: the Settings index derives its grid from the one section
  * catalogue (src/lib/config-sections.ts), so it can no longer print a count
@@ -13,14 +14,7 @@ jest.mock("next/navigation", () => ({
   usePathname: () => "/agent/settings",
   useRouter: () => ({ push: jest.fn(), replace: jest.fn() }),
 }));
-jest.mock("next/link", () => ({
-  __esModule: true,
-  default: ({ href, children, ...rest }: { href: string; children: React.ReactNode }) => (
-    <a href={href} {...rest}>
-      {children}
-    </a>
-  ),
-}));
+jest.mock("next/link", () => require("../helpers/mocks").nextLinkMock());
 jest.mock("@/hooks/useConfig", () => ({ useConfig: () => ({ data: { agent: { max_turns: 40 } }, isLoading: false, error: null, refetch: jest.fn() }) }));
 
 import SettingsIndexPage from "@/app/agent/settings/page";

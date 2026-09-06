@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-require-imports */
 /**
  * @jest-environment node
  *
@@ -13,6 +12,7 @@
  * Fix: deleteMission also unlinks the on-disk artifacts
  * (best-effort, ignore missing).
  */
+/* eslint-disable @typescript-eslint/no-require-imports */
 import Database from "better-sqlite3";
 import { mkdtempSync, rmSync, existsSync, writeFileSync } from "fs";
 import { join } from "path";

@@ -1,4 +1,5 @@
 /** @jest-environment node */
+/* eslint-disable @typescript-eslint/no-require-imports */
 
 // ═══════════════════════════════════════════════════════════════
 // B14 oracle, group spend-plumbing, part four: the handlers ask for it
@@ -36,22 +37,7 @@ jest.mock("@/lib/api-logger", () => ({
 }));
 
 // The house NextResponse double: the handlers answer through NextResponse.json.
-jest.mock("next/server", () => ({
-  NextResponse: class NextResponse {
-    status: number;
-    body: unknown;
-    constructor(status: number, body: unknown) {
-      this.status = status;
-      this.body = body;
-    }
-    async json() {
-      return this.body;
-    }
-    static json(data: unknown, init?: ResponseInit) {
-      return new NextResponse(init?.status ?? 200, data);
-    }
-  },
-}));
+jest.mock("next/server", () => require("../helpers/mocks").nextServerMock());
 
 import type { LLMOptions } from "@/lib/llm";
 import * as generate from "@/modules/rec-room/handlers/generate";

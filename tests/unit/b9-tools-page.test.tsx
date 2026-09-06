@@ -1,4 +1,5 @@
 /** @jest-environment jsdom */
+/* eslint-disable @typescript-eslint/no-require-imports */
 
 /**
  * B9 oracle, the Tools page (T-0103, D80, D82-adv, D84).
@@ -20,17 +21,8 @@ jest.mock("next/navigation", () => ({
   usePathname: () => "/agent/tools",
   useRouter: () => ({ push: jest.fn(), replace: jest.fn() }),
 }));
-jest.mock("@/components/layout/AppPageShell", () => ({
-  __esModule: true,
-  default: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-}));
-jest.mock("lucide-react", () => {
-  const icon = (name: string) =>
-    function Icon(props: Record<string, unknown>) {
-      return <svg data-icon={name} aria-hidden="true" {...props} />;
-    };
-  return new Proxy({}, { get: (_t, prop: string) => icon(prop) });
-});
+jest.mock("@/components/layout/AppPageShell", () => require("../helpers/mocks").appPageShellMock());
+jest.mock("lucide-react", () => require("../helpers/mocks").lucideMock());
 jest.mock("@/modules/hermes/components/ToolsInsights", () => ({
   __esModule: true,
   default: () => <div data-testid="tools-insights" />,

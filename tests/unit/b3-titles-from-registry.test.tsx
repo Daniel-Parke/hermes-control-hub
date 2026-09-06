@@ -1,4 +1,5 @@
 /** @jest-environment jsdom */
+/* eslint-disable @typescript-eslint/no-require-imports */
 /**
  * B3 (T-0097), D55 and D56: page titles and nav labels disagreed in seven
  * places ("Session History" under a rail entry that says Sessions, "System
@@ -19,14 +20,7 @@ jest.mock("next/navigation", () => ({ usePathname: () => pathname }));
 jest.mock("next/headers", () => ({ headers: async () => new Headers({ "x-ps-pathname": pathname }) }));
 jest.mock("next/font/local", () => () => ({ variable: "--font-test" }));
 jest.mock("@/app/globals.css", () => ({}));
-jest.mock("next/link", () => ({
-  __esModule: true,
-  default: ({ href, children, ...rest }: { href: string; children: React.ReactNode }) => (
-    <a href={href} {...rest}>
-      {children}
-    </a>
-  ),
-}));
+jest.mock("next/link", () => require("../helpers/mocks").nextLinkMock());
 
 import PageHeader from "@/components/layout/PageHeader";
 import PageTitle from "@/components/layout/PageTitle";

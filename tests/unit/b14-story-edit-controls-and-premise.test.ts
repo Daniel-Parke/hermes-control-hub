@@ -37,16 +37,7 @@ import type DatabaseNs from "better-sqlite3";
 type RealDb = DatabaseNs.Database;
 let testDb: RealDb | null = null;
 
-jest.mock("@/lib/db", () => {
-  const actualCrypto = jest.requireActual("crypto") as typeof import("crypto");
-  return {
-    getDb: () => testDb!,
-    inTransaction: <T,>(fn: () => T) => testDb!.transaction(fn)(),
-    uuid: () => actualCrypto.randomUUID(),
-    now: () => new Date().toISOString(),
-    ensureDb: () => undefined,
-  };
-});
+jest.mock("@/lib/db", () => require("../helpers/baseline-db").dbSingletonMock(() => testDb));
 
 const callLLMMock = jest.fn();
 jest.mock("@/lib/llm", () => ({ callLLM: (...a: unknown[]) => callLLMMock(...a) }));
@@ -57,22 +48,7 @@ jest.mock("@/lib/api-logger", () => ({
   serverErrorFromCatch: jest.fn(() => ({ status: 500, body: { error: "boom" } })),
 }));
 
-jest.mock("next/server", () => ({
-  NextResponse: class NextResponse {
-    status: number;
-    body: unknown;
-    constructor(status: number, body: unknown) {
-      this.status = status;
-      this.body = body;
-    }
-    async json() {
-      return this.body;
-    }
-    static json(data: unknown, init?: ResponseInit) {
-      return new NextResponse(init?.status ?? 200, data);
-    }
-  },
-}));
+jest.mock("next/server", () => require("../helpers/mocks").nextServerMock());
 
 import { handleEditChapter, handleContinue } from "@/modules/rec-room/handlers/edit";
 import { createStory, getStory, listStories, type Story } from "@/modules/rec-room/lib/story-repository";

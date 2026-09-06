@@ -24,13 +24,7 @@
 
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 
-jest.mock("lucide-react", () => {
-  const icon = (name: string) =>
-    function Icon(props: Record<string, unknown>) {
-      return <svg data-icon={name} aria-hidden="true" {...props} />;
-    };
-  return new Proxy({}, { get: (_t, prop: string) => icon(prop) });
-});
+jest.mock("lucide-react", () => require("../helpers/mocks").lucideMock());
 
 import MemoryTab from "@/components/memory/hindsight/MemoryTab";
 import HindsightBrowser from "@/components/memory/HindsightBrowser";

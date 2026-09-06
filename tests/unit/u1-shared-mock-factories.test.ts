@@ -39,10 +39,19 @@ import {
 
 const UNIT = join(__dirname);
 
-/** Every unit test's source, keyed by filename. */
+/**
+ * Every unit test's source, keyed by filename, EXCEPT this file.
+ *
+ * This one quotes each stanza verbatim, because a seam assertion has to name
+ * the thing it refuses. Without the exclusion it finds its own string literals
+ * and reports itself as the last offender, which is exactly how it failed the
+ * first time it ran against a migrated tree.
+ */
+const SELF = "u1-shared-mock-factories.test.ts";
+
 function corpus(): Array<[string, string]> {
   return readdirSync(UNIT)
-    .filter((f) => f.endsWith(".test.ts") || f.endsWith(".test.tsx"))
+    .filter((f) => f !== SELF && (f.endsWith(".test.ts") || f.endsWith(".test.tsx")))
     .map((f) => [f, readFileSync(join(UNIT, f), "utf-8").replace(/\r\n/g, "\n")]);
 }
 
@@ -230,5 +239,41 @@ describe("and the inline copies are gone", () => {
     expect(callers("nextLinkMock")).toBeGreaterThanOrEqual(8);
     const dbCallers = sources.filter((s) => s.includes("dbSingletonMock")).length;
     expect(dbCallers).toBeGreaterThanOrEqual(35);
+  });
+});
+
+/**
+ * Found while migrating, and unrelated to mocks except that it lives in the
+ * same three lines of every file.
+ *
+ * jest reads `@jest-environment` out of the FIRST block comment in a file, and
+ * `jest-docblock` treats `/*` and `/**` alike. So a pragma comment written
+ * above the docblock hides it, and the suite silently runs in the config's
+ * default environment instead of the one it asked for. Measured with a probe
+ * file: pragma first gave `typeof window === "object"`, the same file with the
+ * two swapped gave `undefined`.
+ *
+ * Forty-seven files were in that state, all of them asking for `node` and all
+ * of them getting jsdom. Nothing was failing, which is the problem: a file that
+ * says one thing and does another passes until the day someone writes a test
+ * that depends on the difference.
+ */
+describe("a file that asks for a jest environment gets the one it asked for", () => {
+  const FIRST_BLOCK = /^\s*(\/\*\*?(?:.|\r?\n)*?\*\/)/;
+
+  it("has files declaring an environment, so this cannot pass vacuously", () => {
+    const declaring = corpus().filter(([, s]) => s.includes("@jest-environment"));
+    expect(declaring.length).toBeGreaterThan(30);
+  });
+
+  it("puts the pragma in the first block comment, where jest looks for it", () => {
+    const hidden = corpus()
+      .filter(([, source]) => source.includes("@jest-environment"))
+      .filter(([, source]) => {
+        const first = FIRST_BLOCK.exec(source);
+        return !first || !first[1].includes("@jest-environment");
+      })
+      .map(([file]) => file);
+    expect(hidden).toEqual([]);
   });
 });

@@ -1,3 +1,4 @@
+/** @jest-environment node */
 /**
  * sessions-detail-in-flight-note — unit tests for the in-flight empty-state
  * note added to GET /api/sessions/[id] Step 1.
@@ -20,7 +21,6 @@
  * interfere.
  */
 
-/** @jest-environment node */
 
 // Mock better-sqlite3 to return a controllable handle. The real module is
 // not loadable in tests because it requires the native addon. We override

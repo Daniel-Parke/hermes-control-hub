@@ -46,22 +46,8 @@ jest.mock("@/lib/api-logger", () => ({
   serverErrorFromCatch: jest.fn(() => ({ status: 500, body: { error: "boom" } })),
 }));
 
-jest.mock("next/server", () => ({
-  NextResponse: class NextResponse {
-    status: number;
-    body: unknown;
-    constructor(status: number, body: unknown) {
-      this.status = status;
-      this.body = body;
-    }
-    async json() {
-      return this.body;
-    }
-    static json(data: unknown, init?: ResponseInit) {
-      return new NextResponse(init?.status ?? 200, data);
-    }
-  },
-}));
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+jest.mock("next/server", () => require("../helpers/mocks").nextServerMock());
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const { handleGenerateChapter, handleRetryChapter } = require("@/modules/rec-room/handlers/generate") as

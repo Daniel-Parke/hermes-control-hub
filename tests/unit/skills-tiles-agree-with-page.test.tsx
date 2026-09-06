@@ -1,4 +1,5 @@
 /** @jest-environment jsdom */
+/* eslint-disable @typescript-eslint/no-require-imports */
 
 /**
  * T-0044 · The Skills page and its own stat tiles must agree.
@@ -37,10 +38,7 @@ jest.mock("lucide-react", () => {
   return new Proxy({}, { get: (_t, prop: string) => passthrough(prop) });
 });
 
-jest.mock("@/components/layout/AppPageShell", () => ({
-  __esModule: true,
-  default: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-}));
+jest.mock("@/components/layout/AppPageShell", () => require("../helpers/mocks").appPageShellMock());
 
 jest.mock("@/components/layout/PageHeader", () => ({
   __esModule: true,

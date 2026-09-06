@@ -1,4 +1,5 @@
 /** @jest-environment jsdom */
+/* eslint-disable @typescript-eslint/no-require-imports */
 /**
  * B2 (T-0096), the read contract: a list read that failed shows an error with
  * Retry, never an empty state. Nine pages rendered "no X yet" over a failed
@@ -15,18 +16,9 @@ import { join } from "node:path";
 import LoadErrorBanner from "@/components/ui/LoadErrorBanner";
 
 jest.mock("next/navigation", () => ({ useRouter: () => ({ push: jest.fn() }) }));
-jest.mock("@/components/layout/AppPageShell", () => ({
-  __esModule: true,
-  default: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-}));
+jest.mock("@/components/layout/AppPageShell", () => require("../helpers/mocks").appPageShellMock());
 jest.mock("@/components/layout/PageHeader", () => ({ __esModule: true, default: () => <div /> }));
-jest.mock("lucide-react", () => {
-  const icon = (name: string) =>
-    function Icon(props: Record<string, unknown>) {
-      return <svg data-icon={name} aria-hidden="true" {...props} />;
-    };
-  return new Proxy({}, { get: (_t, prop: string) => icon(prop) });
-});
+jest.mock("lucide-react", () => require("../helpers/mocks").lucideMock());
 
 const ROOT = join(__dirname, "..", "..");
 

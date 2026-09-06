@@ -35,13 +35,7 @@ jest.mock("@/components/layout/PageHeader", () => ({
     </div>
   ),
 }));
-jest.mock("lucide-react", () => {
-  const icon = (name: string) =>
-    function Icon(props: Record<string, unknown>) {
-      return <svg data-icon={name} aria-hidden="true" {...props} />;
-    };
-  return new Proxy({}, { get: (_t, prop: string) => icon(prop) });
-});
+jest.mock("lucide-react", () => require("../helpers/mocks").lucideMock());
 jest.mock("@/modules/hermes/components/ToolsInsights", () => ({
   __esModule: true,
   default: () => <div data-testid="tools-insights" />,

@@ -1,4 +1,5 @@
 /** @jest-environment node */
+/* eslint-disable @typescript-eslint/no-require-imports */
 
 // T-0087, the lifecycle. Creation spends minutes inside an LLM call, and the
 // row's status during that window was "active" from birth: the UI has carried
@@ -11,16 +12,7 @@ import { execBaselineSchema } from "../helpers/baseline-db";
 
 let testDb: import("better-sqlite3").Database | null = null;
 
-jest.mock("@/lib/db", () => {
-  const actualCrypto = jest.requireActual("crypto") as typeof import("crypto");
-  return {
-    getDb: () => testDb!,
-    inTransaction: <T,>(fn: () => T) => testDb!.transaction(fn)(),
-    uuid: () => actualCrypto.randomUUID(),
-    now: () => new Date().toISOString(),
-    ensureDb: () => undefined,
-  };
-});
+jest.mock("@/lib/db", () => require("../helpers/baseline-db").dbSingletonMock(() => testDb));
 
 import {
   createStory,

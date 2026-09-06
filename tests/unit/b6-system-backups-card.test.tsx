@@ -1,4 +1,5 @@
 /** @jest-environment jsdom */
+/* eslint-disable @typescript-eslint/no-require-imports */
 
 // B6 (T-0100) oracle, group backups, the page half: the Backups card on
 // Settings > System (`src/app/agent/settings/system/page.tsx`).
@@ -27,21 +28,8 @@ jest.mock("next/navigation", () => ({
   usePathname: () => "/agent/settings/system",
   useRouter: () => ({ push: jest.fn(), replace: jest.fn() }),
 }));
-jest.mock("next/link", () => ({
-  __esModule: true,
-  default: ({ href, children, ...rest }: { href: string; children: React.ReactNode }) => (
-    <a href={href} {...rest}>
-      {children}
-    </a>
-  ),
-}));
-jest.mock("lucide-react", () => {
-  const icon = (name: string) =>
-    function Icon(props: Record<string, unknown>) {
-      return <svg data-icon={name} aria-hidden="true" {...props} />;
-    };
-  return new Proxy({}, { get: (_t, prop: string) => icon(prop) });
-});
+jest.mock("next/link", () => require("../helpers/mocks").nextLinkMock());
+jest.mock("lucide-react", () => require("../helpers/mocks").lucideMock());
 jest.mock("@/hooks/useFeatureFlags", () => ({ useFeatureFlags: () => ({ data: {} }) }));
 
 const versionState = {

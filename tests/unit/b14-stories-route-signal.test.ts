@@ -1,4 +1,5 @@
 /** @jest-environment node */
+/* eslint-disable @typescript-eslint/no-require-imports */
 
 // ═══════════════════════════════════════════════════════════════
 // B14 oracle, group stop, the route seam (D88, blocker). Contract section 3.3.
@@ -54,22 +55,7 @@ jest.mock("@/lib/api-logger", () => ({
   serverErrorFromCatch: jest.fn(() => ({ status: 500, body: { error: "boom" } })),
 }));
 
-jest.mock("next/server", () => ({
-  NextResponse: class NextResponse {
-    status: number;
-    body: unknown;
-    constructor(status: number, body: unknown) {
-      this.status = status;
-      this.body = body;
-    }
-    async json() {
-      return this.body;
-    }
-    static json(data: unknown, init?: ResponseInit) {
-      return new NextResponse(init?.status ?? 200, data);
-    }
-  },
-}));
+jest.mock("next/server", () => require("../helpers/mocks").nextServerMock());
 
 import { POST } from "@/app/api/stories/route";
 

@@ -1,4 +1,5 @@
 /** @jest-environment jsdom */
+/* eslint-disable @typescript-eslint/no-require-imports */
 // ═══════════════════════════════════════════════════════════════
 // B6 oracle, group config-ui, part 1 of 2 (T-0100, D75).
 //
@@ -43,14 +44,7 @@ jest.mock("next/navigation", () => ({
   usePathname: () => "/agent/settings",
   useRouter: () => ({ push: jest.fn(), replace: jest.fn() }),
 }));
-jest.mock("next/link", () => ({
-  __esModule: true,
-  default: ({ href, children, ...rest }: { href: string; children: React.ReactNode }) => (
-    <a href={href} {...rest}>
-      {children}
-    </a>
-  ),
-}));
+jest.mock("next/link", () => require("../helpers/mocks").nextLinkMock());
 
 import SettingsIndexPage from "@/app/agent/settings/page";
 

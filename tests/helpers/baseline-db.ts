@@ -57,3 +57,34 @@ export function execBaselineSchema(database: import("better-sqlite3").Database):
     .prepare("INSERT OR REPLACE INTO meta (key, value) VALUES (?, ?)")
     .run("schema_version", "3");
 }
+
+/**
+ * The `@/lib/db` singleton, pointed at a test's own in-memory database (U1,
+ * T-0115).
+ *
+ * This ten-line stanza was pasted identically into 38 test files. It lives here
+ * now and each of them calls it in one line:
+ *
+ *   let testDb: import("better-sqlite3").Database | null = null;
+ *   jest.mock("@/lib/db", () => require("../helpers/baseline-db").dbSingletonMock(() => testDb));
+ *
+ * `current` is a getter rather than the database itself, because `jest.mock` is
+ * hoisted above every statement in the file: at the moment the factory is
+ * built, `testDb` is still null, and it is `beforeEach` that fills it in. A
+ * factory that captured the VALUE would hand every test a null database.
+ *
+ * `jest.requireActual("crypto")` rather than `require`, because a handful of
+ * suites mock crypto to pin an id, and the singleton's `uuid` must keep
+ * producing real ones regardless: it is what the repository layer writes as a
+ * primary key.
+ */
+export function dbSingletonMock(current: () => import("better-sqlite3").Database | null) {
+  const actualCrypto = jest.requireActual("crypto") as typeof import("crypto");
+  return {
+    getDb: () => current()!,
+    inTransaction: <T,>(fn: () => T) => current()!.transaction(fn)(),
+    uuid: () => actualCrypto.randomUUID(),
+    now: () => new Date().toISOString(),
+    ensureDb: () => undefined,
+  };
+}

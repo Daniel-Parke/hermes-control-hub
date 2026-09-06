@@ -1,8 +1,8 @@
+/** @jest-environment node */
 // ═══════════════════════════════════════════════════════════════
 // deploy-status.test.ts — stale-running detection + isDeployInProgress
 // ═══════════════════════════════════════════════════════════════
 
-/** @jest-environment node */
 
 import { mkdirSync, readFileSync, writeFileSync, rmSync } from "fs";
 import { join } from "path";

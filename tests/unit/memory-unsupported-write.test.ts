@@ -1,3 +1,4 @@
+/** @jest-environment node */
 /**
  * /api/memory/route.ts — regression tests for the unified
  * `unsupportedWriteHandler` refactor. Before the refactor, the
@@ -16,7 +17,6 @@
  *     AUTH_HEADER should yield a 401, not a 400).
  */
 
-/** @jest-environment node */
 
 import { NextRequest } from "next/server";
 

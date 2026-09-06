@@ -1,6 +1,7 @@
 /**
  * @jest-environment jsdom
  */
+/* eslint-disable @typescript-eslint/no-require-imports */
 /**
  * A PatterStage install with no memory provider running is a supported state.
  * The regression this pins: the list endpoint answers 503 when nothing is
@@ -23,10 +24,7 @@ jest.mock("next/navigation", () => ({
   usePathname: () => "/agent/memory",
   useRouter: () => ({ push: jest.fn(), replace: jest.fn() }),
 }));
-jest.mock("@/components/layout/AppPageShell", () => ({
-  __esModule: true,
-  default: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-}));
+jest.mock("@/components/layout/AppPageShell", () => require("../helpers/mocks").appPageShellMock());
 
 import MemoryPage from "@/app/agent/memory/page";
 
