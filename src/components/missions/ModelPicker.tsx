@@ -23,7 +23,7 @@ interface ModelPickerProps {
  * (same shape as built-in templates and dispatch).
  */
 const EMPTY_DEFAULT_HINT =
-  "Configure models under Config → Models. Dispatch falls back to Hermes config when none selected.";
+  "Configure models under Agent → Models. Dispatch falls back to Hermes config when none selected.";
 
 export default function ModelPicker({
   modelId,

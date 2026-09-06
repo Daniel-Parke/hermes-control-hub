@@ -1,12 +1,16 @@
 // ═══════════════════════════════════════════════════════════════
-// ScheduledMissions — recurring agent missions on the PatterStage scheduler
+// ScheduledMissions: everything on the PatterStage scheduler's own timer
 //
 // Folded into the Missions page (replaces the standalone Schedules page). The
-// scheduler tick (orchestration/scheduler) fires these via the runtime — CH
-// owns the timer, no Hermes jobs.json. Lists schedules with pause/resume/
-// run-now/delete, plus a compact form to put an existing saved mission on a
-// timer (new missions get a schedule straight from the composer's "Schedule"
-// dispatch mode).
+// scheduler tick (orchestration/scheduler) fires these via the runtime;
+// PatterStage owns the timer, no Hermes jobs.json. Lists schedules with
+// pause/resume/run-now/delete, plus a compact form to put an existing saved
+// mission on a timer (new missions get a schedule straight from the composer's
+// "Schedule" dispatch mode).
+//
+// Both KINDS of row live here: a recurring mission, and a host script on a
+// machine with no scheduler of its own. Each row names the one it fires, which
+// is the difference between a list and a list you can act on.
 // ═══════════════════════════════════════════════════════════════
 
 "use client";
@@ -18,6 +22,7 @@ import ConfirmButton from "@/components/ui/ConfirmButton";
 import RunProgress from "@/components/schedule/RunProgress";
 import ConceptHint from "@/components/help/ConceptHint";
 import { useSchedules, useMissionOptions } from "@/hooks/useSchedules";
+import { describeScheduleTarget } from "@/lib/schedule/schedule-target";
 import { timeUntil } from "@/lib/utils";
 
 const PRESETS = ["every 30m", "every 1h", "0 9 * * *", "0 9 * * 1-5"];
@@ -86,8 +91,11 @@ export default function ScheduledMissions() {
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <CalendarClock className="h-4 w-4 text-neon-orange" />
+          {/* "Schedules", not "Scheduled missions": the list holds script rows
+              as well as mission ones, and a heading that names one kind is
+              wrong about half of them. Each row says which kind it is. */}
           <h2 className="font-mono text-sm uppercase tracking-wider text-ps-text-secondary">
-            <ConceptHint id="schedule">Scheduled</ConceptHint> missions
+            <ConceptHint id="schedule">Schedules</ConceptHint>
           </h2>
           {schedules.length > 0 && (
             <span className="font-mono text-xs text-ps-text-muted">
@@ -186,57 +194,74 @@ export default function ScheduledMissions() {
         <div className="py-6 text-center font-mono text-sm text-ps-text-muted">Loading schedules…</div>
       ) : schedules.length === 0 ? (
         <div className="rounded-xl border border-dashed border-white/10 bg-dark-900/20 px-4 py-6 text-center text-sm text-ps-text-muted">
-          No recurring missions yet. Use a mission&apos;s <span className="text-ps-text-muted">Schedule</span> dispatch mode, or schedule an existing one above.
+          No schedules yet. Use a mission&apos;s <span className="text-ps-text-muted">Schedule</span> dispatch mode, or put a saved mission on one above.
         </div>
       ) : (
         <div className="space-y-2">
-          {schedules.map((s) => (
-            <div key={s.id} className="flex items-center gap-4 rounded-xl border border-white/10 bg-dark-900/30 px-4 py-3">
-              <div className="min-w-0 flex-1">
-                <div className="truncate text-sm text-ps-text-primary">{s.name || s.scheduleDisplay || s.schedule}</div>
-                <div className="truncate font-mono text-xs text-ps-text-muted">
-                  {s.schedule}
-                  {" · "}
-                  {s.enabled ? (s.nextRunAt ? <>next {timeUntil(s.nextRunAt)}</> : "no next run") : "paused"}
-                  {s.lastStatus ? ` · last: ${s.lastStatus}` : ""}
+          {schedules.map((s) => {
+            // What this row fires, from the row itself. The headline is the
+            // schedule's own name, which is a nickname an operator chose and
+            // often the same on two rows over two different missions.
+            const target = describeScheduleTarget(s);
+            return (
+              <div key={s.id} className="flex items-center gap-4 rounded-xl border border-white/10 bg-dark-900/30 px-4 py-3">
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="shrink-0 rounded border border-white/10 px-1.5 py-0.5 font-mono text-xs uppercase tracking-wider text-ps-text-muted">
+                      {target.kindLabel}
+                    </span>
+                    <span className="truncate text-sm text-ps-text-primary">
+                      {s.name || s.scheduleDisplay || s.schedule}
+                    </span>
+                  </div>
+                  <div className="truncate font-mono text-xs text-ps-text-muted">
+                    <span className={target.missing ? "text-neon-orange" : "text-ps-text-secondary"}>
+                      {target.name}
+                    </span>
+                    {" · "}
+                    {s.schedule}
+                    {" · "}
+                    {s.enabled ? (s.nextRunAt ? <>next {timeUntil(s.nextRunAt)}</> : "no next run") : "paused"}
+                    {s.lastStatus ? ` · last: ${s.lastStatus}` : ""}
+                  </div>
                 </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActionError(null);
+                    toggle.mutate(
+                      { id: s.id, enabled: !s.enabled },
+                      { onError: failWith("Failed to update the schedule") },
+                    );
+                  }}
+                  className="rounded-lg border border-white/10 px-2.5 py-1 font-mono text-xs text-ps-text-muted hover:bg-white/5"
+                >
+                  {s.enabled ? "Pause" : "Resume"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => triggerRun(s.id)}
+                  className="flex items-center gap-1 rounded-lg border border-neon-cyan/30 px-2.5 py-1 font-mono text-xs text-neon-cyan hover:bg-neon-cyan/10"
+                >
+                  <Play className="h-3 w-3" /> Run
+                </button>
+                {/* Its own instance per row, so an arm on one row cannot fire on
+                    another, and the armed button is never disabled (D66). */}
+                <ConfirmButton
+                  variant="danger"
+                  size="sm"
+                  aria-label={`Delete the schedule "${s.name || s.schedule}"`}
+                  confirmLabel="Confirm?"
+                  onConfirm={() => {
+                    setActionError(null);
+                    remove.mutate(s.id, { onError: failWith("Failed to delete the schedule") });
+                  }}
+                >
+                  <Trash2 className="h-3 w-3" />
+                </ConfirmButton>
               </div>
-              <button
-                type="button"
-                onClick={() => {
-                  setActionError(null);
-                  toggle.mutate(
-                    { id: s.id, enabled: !s.enabled },
-                    { onError: failWith("Failed to update the schedule") },
-                  );
-                }}
-                className="rounded-lg border border-white/10 px-2.5 py-1 font-mono text-xs text-ps-text-muted hover:bg-white/5"
-              >
-                {s.enabled ? "Pause" : "Resume"}
-              </button>
-              <button
-                type="button"
-                onClick={() => triggerRun(s.id)}
-                className="flex items-center gap-1 rounded-lg border border-neon-cyan/30 px-2.5 py-1 font-mono text-xs text-neon-cyan hover:bg-neon-cyan/10"
-              >
-                <Play className="h-3 w-3" /> Run
-              </button>
-              {/* Its own instance per row, so an arm on one row cannot fire on
-                  another, and the armed button is never disabled (D66). */}
-              <ConfirmButton
-                variant="danger"
-                size="sm"
-                aria-label={`Delete the schedule "${s.name || s.schedule}"`}
-                confirmLabel="Confirm?"
-                onConfirm={() => {
-                  setActionError(null);
-                  remove.mutate(s.id, { onError: failWith("Failed to delete the schedule") });
-                }}
-              >
-                <Trash2 className="h-3 w-3" />
-              </ConfirmButton>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </section>

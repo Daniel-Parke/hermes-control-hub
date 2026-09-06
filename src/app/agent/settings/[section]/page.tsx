@@ -26,6 +26,7 @@ import { iconColorMap, colorBorderMap } from "@/lib/theme";
 import ConfigField from "@/components/config/ConfigField";
 import EnvLineRow from "@/components/config/EnvLineRow";
 import { ConfigYamlErrorAlert } from "@/components/config/ConfigYamlErrorAlert";
+import SettingsSubject from "@/components/config/SettingsSubject";
 
 /**
  * The recovery view for a slug that is not a config section.
@@ -108,6 +109,9 @@ export default function ConfigSectionPage() {
   // that has a 60s staleness budget, so a Save gate built on it would be up to a
   // minute wrong in both directions (T-0064).
   const [configError, setConfigError] = useState<string | null>(null);
+  // Which agent this editor writes to, answered by the route that answers the
+  // read rather than assumed here (T-0113). Null until the read lands.
+  const [subject, setSubject] = useState<string | null>(null);
   const saving = saveStatus === "saving";
   const [error, setError] = useState<string | null>(null);
 
@@ -199,6 +203,7 @@ export default function ConfigSectionPage() {
         const content = json.data?.content || "";
         setFileContent(content);
         setOriginalFileContent(content);
+        setSubject((json.data?.profile as string | undefined) ?? null);
       } else if (isPlatformToolsetsPreview) {
         const json = await apiFetch("/api/agent/profiles/default/toolsets", { signal });
         if (!json.data) throw new Error("Failed to load root toolsets");
@@ -206,9 +211,11 @@ export default function ConfigSectionPage() {
           (json.data?.platformToolsets as Record<string, unknown>) ?? {};
         setValues(platformToolsets);
         setOriginalValues({ ...platformToolsets });
+        setSubject((json.data?.profile as string | undefined) ?? null);
       } else {
         const json = await apiFetch("/api/config", { signal });
         setConfigError((json as { configError?: string }).configError ?? null);
+        setSubject((json as { subject?: string }).subject ?? null);
         const config = json.data || json;
         const sectionValues = (config[sectionId] as Record<string, unknown>) || {};
         setValues(sectionValues);
@@ -375,13 +382,21 @@ export default function ConfigSectionPage() {
       />
 
       <div className="max-w-3xl mx-auto px-6 py-6 flex-1 w-full">
+        {/* Which agent a save here lands on. The three screens before this one
+            in the chapter are about the profile in the picker, and this page
+            writes one file whatever that picker says (T-0113). */}
+        {subject && (
+          <div className="mb-6">
+            <SettingsSubject subject={subject} />
+          </div>
+        )}
         {sectionId === "platform_toolsets" ? (
           <p className="text-xs text-ps-text-muted font-mono border border-neon-orange/20 rounded-lg p-3 mb-6 bg-neon-orange/5">
             This section edits the <strong className="text-ps-text-secondary">root</strong> Hermes{" "}
             <code className="text-ps-text-muted">config.yaml</code> only. Per-profile toolsets are managed
             on{" "}
             <a href="/agent/tools" className="text-neon-orange hover:underline">
-              Operations → Tools
+              Agent → Tools
             </a>{" "}
             (profile selector + push).
           </p>
@@ -498,7 +513,7 @@ export default function ConfigSectionPage() {
                 <>
                   Edit Bob (root) toolsets on{" "}
                   <Link href="/agent/tools" className="text-neon-orange hover:underline">
-                    Operations → Tools
+                    Agent → Tools
                   </Link>{" "}
                   (profile: Bob / default), then Push to Hermes.
                 </>

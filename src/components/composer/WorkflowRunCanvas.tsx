@@ -163,7 +163,9 @@ function RunCanvasInner({
       >
         <Background color="var(--color-dark-700)" gap={18} />
       </ReactFlow>
-      {gate ? <div className="absolute right-3 top-3 z-10 w-72 rounded-lg border border-white/10 bg-dark-900/90 p-3 backdrop-blur">{gate}</div> : null}
+      {/* Wider and bounded since the gate carries the stage's output: the panel
+          scrolls inside the board rather than growing past the bottom of it. */}
+      {gate ? <div className="absolute right-3 top-3 z-10 w-[22rem] max-w-[calc(100%-1.5rem)] max-h-[calc(100%-1.5rem)] overflow-y-auto rounded-lg border border-white/10 bg-dark-900/90 p-3 backdrop-blur">{gate}</div> : null}
     </div>
   );
 }

@@ -27,10 +27,27 @@ export async function POST(request: NextRequest) {
 
   try {
     const result = await runScriptFile(name);
-    if (!result.ok && result.exitCode === null) return notFound(result.error ?? "Script not found");
-    // The operator ran it; the exit code is what happened (T-0098).
-    recordEvent("script.run", { entityType: "script", entityId: name, metadata: { exitCode: result.exitCode } });
-    return ok({ name, exitCode: result.exitCode, ok: result.ok });
+    if (result.outcome === "not-started") {
+      // A script that is not there is a lookup that found nothing: a 404, and
+      // nothing to record, because nobody ran anything.
+      if (result.startFailure === "script-missing") return notFound(result.error ?? "Script not found");
+      const reason = result.error ?? "the host could not start it";
+      // Recorded under its own type, never as `script.run`: the ledger's
+      // record of a run is a record of a script that ran.
+      recordEvent("script.run_not_started", { entityType: "script", entityId: name, metadata: { reason } });
+      // Not a 200 with a failure buried in the body. The host was asked to run
+      // a script and could not, so a client that reads only the status must
+      // not be told this worked.
+      return serviceUnavailable(`${name} did not start: ${reason}`);
+    }
+    // The operator ran it; the exit code is what happened (T-0098), and the
+    // outcome says whether that code is a success.
+    recordEvent("script.run", {
+      entityType: "script",
+      entityId: name,
+      metadata: { outcome: result.outcome, exitCode: result.exitCode },
+    });
+    return ok({ name, outcome: result.outcome, exitCode: result.exitCode, ok: result.ok });
   } catch (error) {
     return serverErrorFromCatch("POST /api/scripts/run", name, error, "Failed to run script");
   }

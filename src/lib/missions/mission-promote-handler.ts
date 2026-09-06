@@ -181,7 +181,7 @@ export async function promoteMission(
     try {
       const current = getMission(input.missionId)!;
       const next = computeNextRun(input.schedule!, new Date());
-      const schedule = createSchedule({
+      createSchedule({
         missionId: input.missionId,
         name: current.name,
         schedule: input.schedule!,
@@ -190,18 +190,9 @@ export async function promoteMission(
         profileName: input.profileName ?? current.profileName ?? null,
         nextRunAt: next ? next.toISOString() : null,
       });
-
-      // Best-effort first run, linked to the schedule.
-      try {
-        await dispatchMissionNow(input.missionId, {
-          profileName: input.profileName,
-          modelId: input.modelId,
-          provider: input.provider,
-          scheduleId: schedule.id,
-        });
-      } catch (err) {
-        logApiError("promoteMission", "schedule first-run", err);
-      }
+      // No first run here, for the reason the dispatch handler gives at the
+      // same spot: putting a mission on a timer is not asking for a run now,
+      // and the operator had a Run now button to choose instead (T-0114).
     } catch (err) {
       logApiError("promoteMission", "schedule promote", err);
       updateMission(input.missionId, { status: "failed" });

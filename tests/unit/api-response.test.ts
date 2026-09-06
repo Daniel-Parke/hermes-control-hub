@@ -171,12 +171,16 @@ describe("methodNotAllowed", () => {
   });
 
   it("preserves the exact error message including special characters", async () => {
+    // The fixture is the message /api/tools actually sends, and that message
+    // moved from "Operations → Tools" to "Agent → Tools" when the stale section
+    // names were corrected. The assertion is unchanged in what it proves (the
+    // arrow survives the round trip); only the sentence it quotes has caught up.
     const res = methodNotAllowed(
-      "Tool registry mutations are disabled. Configure Hermes runtime toolsets on Operations → Tools (profile-scoped platform_toolsets).",
+      "Tool registry mutations are disabled. Configure Hermes runtime toolsets on Agent → Tools (profile-scoped platform_toolsets).",
     );
     const body = await res.json();
     expect(body.error).toBe(
-      "Tool registry mutations are disabled. Configure Hermes runtime toolsets on Operations → Tools (profile-scoped platform_toolsets).",
+      "Tool registry mutations are disabled. Configure Hermes runtime toolsets on Agent → Tools (profile-scoped platform_toolsets).",
     );
   });
 

@@ -35,8 +35,13 @@ agent work goes on a timer rather than host work.
 Then the list itself, one row per file. Each row shows the filename, and beneath
 it the file's size, then either the schedule as five cron fields or "not
 scheduled". Where PatterStage is holding the timer rather than the machine, the
-row adds "Runs while PatterStage is running". Where the script has produced
-output before, the row ends with how long ago that was.
+row adds "Runs while PatterStage is running". The row then ends with how the
+last run went: "ran 3h ago", "failed 3h ago (exit code 2)", or "did not start
+3h ago". Where there is no recorded run to describe the latest output, the row
+shows "last run 3h ago" instead, which is the log file's own timestamp and says
+nothing about how the run went. That is what you see for a script whose last
+run predates this record, and for one the machine's own crontab fired, which
+PatterStage never sees.
 
 Four buttons sit at the right of every row:
 
@@ -89,10 +94,13 @@ rather type one.
 
 1. Click **Run**. The button shows a spinner while the script runs, and the
    page waits for it to finish.
-2. A message reports either that it ran, or that it ended with a non-zero exit
-   code and that you should look at the logs.
+2. A message reports one of three things: that it ran, that it failed and with
+   which exit code, or that it did not start at all and why. Only the middle
+   one sends you to the logs, because it is the only one that produced any.
 3. Click **Logs**. Each run is appended under a dated separator line, so the
    most recent run is at the bottom.
+4. The row itself keeps the answer after the message has gone, so you can come
+   back tomorrow and see whether last night's run worked.
 
 ### Put it on a timer
 
@@ -112,8 +120,10 @@ rather type one.
 `.mjs`, `.cjs` and `.js` run under the same Node that PatterStage runs under, so
 they work everywhere. `.sh` needs bash. `.ps1` needs PowerShell. `.bat` and
 `.cmd` run only on Windows. If nothing on the machine can run that kind of file,
-Run reports that it exited non-zero and sends you to the log; the log will be
-empty, and a missing interpreter is the usual reason.
+Run says the script did not start and names the kind of file nothing here runs.
+That is a different answer from a script that ran and failed, and deliberately
+so: a script that never started has no exit code and printed nothing. The
+reason is written into the log as well, under the run's separator line.
 
 **Scheduling on native Windows.** Windows without WSL2 has no host scheduler
 PatterStage can write to, so schedules made here are kept by PatterStage and
@@ -142,8 +152,11 @@ A script that prints a very large amount of output will be stopped as well, so
 write to a file of your own if you need volume.
 
 **Scheduled runs appear here too.** Whether the machine's crontab or
-PatterStage fires it, the output lands in the same log, so **Logs** and the "last
-run" time on the row cover scheduled runs as well as ones you started. The
+PatterStage fires it, the output lands in the same log, so **Logs** and the row's
+last-run line cover scheduled runs as well as ones you started. A run PatterStage
+fired on its own timer is recorded whichever way it went, so a backup that failed
+last night says so on the row this morning. A run the machine's own crontab
+fired is not: nothing of PatterStage is in that path, so the log is all there is. The
 [Logs](logs.md) screen reads the agent's own log directory, which is a
 different place, a script's output is only visible through the **Logs** button
 on its row.
@@ -189,8 +202,10 @@ Reading the list, a file and a log stays available in both cases.
 
 The list is every file with a known ending that is actually in the folder, not a
 registry, so a file copied in by hand appears on the next refresh, and a file
-removed by hand disappears the same way. The "last run" time is the log's
-modification time, which is a good proxy and not a record: clearing the log
-clears the time.
+removed by hand disappears the same way. How the last run went comes from the
+[analytics ledger](../reference/analytics-events.md), which records every run
+PatterStage starts, by hand or on a timer, and survives the log being cleared.
+The fallback "last run" time is the log's modification time, which is a proxy
+rather than a record: clearing the log clears it.
 
 </details>

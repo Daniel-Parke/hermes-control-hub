@@ -11,7 +11,7 @@ export default function SkillsDenylistNote() {
       <code className="text-ps-text-muted">skills.disabled</code> in config.yaml). Short names in YAML
       are matched to catalog paths (e.g. <code className="text-ps-text-muted">apple-notes</code> →{" "}
       <code className="text-ps-text-muted">apple/apple-notes</code>). If you edited disk config,
-      use <strong className="text-ps-text-secondary">Operations → Agents → Pull</strong> for that profile
+      use <strong className="text-ps-text-secondary">Agent → Agents</strong> and pull that profile
       before toggling <ConceptHint id="skill">skills</ConceptHint> here.
     </p>
   );

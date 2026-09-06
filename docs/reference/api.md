@@ -49,7 +49,7 @@ Every `route.ts` under `src/app/api` has a row, here or in the Chat / Composer /
 | `/api/cron/hardware/meta` | `GET` | `{ scriptsDir, logDir }`. |
 | `/api/scripts` | `GET` | List host script files under `PS_DATA_DIR/scripts` with each file's schedule, where that schedule lives (`scheduleSource`: `host` or `patterstage`) and last-run hint, plus `scheduler: { available, reason }` saying whether this host schedules without PatterStage. |
 | `/api/scripts/[name]` | `GET`, `PUT`, `DELETE` | Read, upsert (`{ content }`) or delete one host script. Path-validated under `PS_DATA_DIR/scripts`; powers the in-app editor. |
-| `/api/scripts/run` | `POST` | Run a script on demand (`{ name }`). Path-validated, no shell. |
+| `/api/scripts/run` | `POST` | Run a script on demand (`{ name }`). Path-validated, no shell. Answers `{ outcome: "succeeded" \| "failed", exitCode }` when the script ran, 404 when there is no such script, and 503 naming the reason when the machine could not start it. |
 | `/api/scripts/logs` | `GET` | Tail a script's log (`?name=&lines=`). |
 | `/api/schedules` | `GET`, `POST` | PatterStage-owned recurring work (the scheduler fires these; no `jobs.json`). `POST` takes `kind`: a `mission` row needs `missionId`, a `script` row needs `scriptName`, and each is refused by name if its own id is missing. |
 | `/api/schedules/[id]` | `GET`, `PATCH`, `DELETE` | Read one schedule (404 when missing), pause/resume or edit it (`enabled`, `name`, `schedule`, `scheduleDisplay`, `catchUpPolicy`, `repeatTimes`, `profileName`), or delete it. |
@@ -138,7 +138,7 @@ Graph orchestration. Every route below, the SSE stream included, returns **503**
 | `/api/composer/runs/[id]` | `GET` | One run + its node-runs + the workflow graph. Answers `{ run, nodeRuns, graph, approvals }`. |
 | `/api/composer/runs/[id]/events` | `GET` | Live **SSE** (`{ run, nodeRuns }` snapshots), closing when the run is terminal. |
 | `/api/composer/runs/[id]/cancel` | `POST` | Cancel a run: the run and its live node-runs are marked cancelled and their backend runs are stopped. |
-| `/api/composer/runs/[id]/nodes/[nodeId]/approve` | `POST` | Resolve a human-in-the-loop gate (`accept` \| `reject` \| `review` \| `add_feature`) and advance the graph. |
+| `/api/composer/runs/[id]/nodes/[nodeId]/approve` | `POST` | Resolve a human-in-the-loop gate (`accept` \| `reject`) and advance the graph. |
 | `/api/composer/runs/[id]/clarify` | `POST` | Answer a stage's clarification question (`{ answer }`); the answer enriches the objective and re-dispatches the asking stage. |
 
 ### Laboratory

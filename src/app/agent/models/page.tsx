@@ -170,7 +170,7 @@ export default function ModelsPage() {
           PatterStage stores mission defaults and the <ConceptHint id="model">model</ConceptHint>{" "}
           registry here. Hermes chat/gateway
           runtime defaults live in each profile&apos;s <strong className="text-ps-text-secondary">config.yaml</strong>{" "}
-          (imported via Operations → Agents pull, or <code className="text-ps-text-muted">hermes model</code>).
+          (imported by the pull on Agent → Agents, or <code className="text-ps-text-muted">hermes model</code>).
           Seeds never set <code className="text-ps-text-muted">model.default</code>.
         </p>
         {error && <LoadErrorBanner error={error} />}

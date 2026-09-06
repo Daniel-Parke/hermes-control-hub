@@ -51,6 +51,12 @@ export const ANALYTICS_EVENT_TYPES = [
   "mission.cancelled",
   "script.saved",
   "script.run",
+  // A run that never happened. `script.run` is the record of a script that
+  // RAN, whatever it exited with, and it is what the "run a script" quest is
+  // proved by; a missing interpreter or a spawn the host refused would tick
+  // that quest for a run nobody performed. So it is recorded as its own
+  // failure, the way mission.failed and composer.run_failed are.
+  "script.run_not_started",
   "script.scheduled",
   "artifact.saved",
   "backup.taken",
@@ -119,7 +125,12 @@ export type AnalyticsEntityType = (typeof ANALYTICS_ENTITY_TYPES)[number];
 const NOT_YET_EMITTED: readonly string[] = ["research.cancelled"];
 
 /** Failures are recorded and charted; they are never something to collect. */
-const FAILURE_TYPES: readonly string[] = ["mission.failed", "research.failed", "composer.run_failed"];
+const FAILURE_TYPES: readonly string[] = [
+  "mission.failed",
+  "research.failed",
+  "composer.run_failed",
+  "script.run_not_started",
+];
 
 /**
  * The curated list the Completionist achievement is measured against: every

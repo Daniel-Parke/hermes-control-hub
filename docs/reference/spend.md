@@ -17,7 +17,7 @@ The short version: **spend is always visible, a budget is optional, a budget onl
 
 ## Where to find it
 
-**Laboratory > Insights**, in the Provider spend panel near the top. It is on screen by default. There is nothing to enable.
+**Results > Insights**, in the Provider spend panel near the top. It is on screen by default. There is nothing to enable.
 
 ## What it shows
 

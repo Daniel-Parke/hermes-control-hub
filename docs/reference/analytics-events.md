@@ -54,9 +54,16 @@ mission has been moved to dispatched, never before the backend accepted it. A
 research run is recorded finished after the terminal row is written, so a write
 that throws leaves no event claiming an outcome the table does not hold. A
 schedule records a firing only when the dispatch came back ok. A backup is
-recorded after the file exists. A script you run yourself carries the exit code
-it actually returned; a script the scheduler fired is recorded only when it
-succeeded, and carries the source rather than the code.
+recorded after the file exists. A script run carries how it went and the exit
+code it actually returned, whether you started it yourself or the scheduler
+did.
+
+A script that never started is the one place where "after the write succeeded"
+needs saying carefully. Nothing ran, so nothing is recorded as a run: a machine
+that has no interpreter for that kind of file, or an interpreter that would not
+start, is recorded as `script.run_not_started` instead, with the reason. That
+keeps `script.run` an honest count of scripts that did run, which matters
+because a quest is proved by it.
 
 Recording is best effort and never interferes with the action it describes.
 Nothing is written while the console is in read-only mode, and a failed insert
@@ -110,7 +117,8 @@ section, a guide.
 
 ## Every event type
 
-Forty-two types, listed in the order the Insights chart stacks their categories.
+Forty-three types, listed in the order the Insights chart stacks their
+categories.
 
 | Type | What it records | Category |
 |---|---|---|
@@ -138,7 +146,8 @@ Forty-two types, listed in the order the Insights chart stacks their categories.
 | `schedule.created` | A schedule was saved | Automation |
 | `schedule.fired` | A schedule came due and its dispatch succeeded | Automation |
 | `script.saved` | A host script file was created or replaced | Automation |
-| `script.run` | A host script ran. By your hand, with the exit code it returned; by the scheduler, only when it succeeded, and with the source instead of the code | Automation |
+| `script.run` | A host script ran, by your hand or on its timer. The payload carries how it went and the exit code it returned | Automation |
+| `script.run_not_started` | A host script could not be started at all: nothing on the machine runs that kind of file, or the interpreter would not start. Nothing ran, so this is not recorded as a run | Automation |
 | `script.scheduled` | A script was given a system cron entry | Automation |
 | `logs.opened` | A log file's lines were handed back to the Logs page | Automation |
 | `skill.toggled` | A skill was enabled or disabled for a profile | Config |
@@ -166,7 +175,7 @@ reads are categorised where the thing being read lives.
 
 The Completionist achievement asks you to trigger every event type, and it is
 measured against a curated list rather than against the whole taxonomy. The
-three failures are outside it, because a failure is recorded and charted but is
+four failures are outside it, because a failure is recorded and charted but is
 never something to collect. So is `research.cancelled`: the list still treats it
 as a type nothing records, which stopped being true when the cancel button began
 recording one. Cancelling a research run is charted like any other event; it is
@@ -209,6 +218,7 @@ not one of the types this achievement asks for.
 | `mission.cancelled` | yes |
 | `script.saved` | yes |
 | `script.run` | yes |
+| `script.run_not_started` | no |
 | `script.scheduled` | yes |
 | `artifact.saved` | yes |
 | `backup.taken` | yes |

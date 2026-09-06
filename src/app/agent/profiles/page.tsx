@@ -30,7 +30,8 @@ import { API_FETCH_BULK_TIMEOUT_MS, apiFetch, toastError } from "@/lib/api-fetch
 import { profileSyncBody } from "@/lib/profile-sync-body";
 import { runSyncAction } from "@/lib/operation-sync-action";
 import { agentFileUrl } from "@/components/agents/agent-file-url";
-import { slugifyDisplayName } from "@/lib/profile-slug";
+import { DEFAULT_PROFILE_SLUG, slugifyDisplayName } from "@/lib/profile-slug";
+import { useSelectedProfile } from "@/hooks/useSelectedProfile";
 import AgentsPageHeader from "@/components/agents/AgentsPageHeader";
 import AgentSetupNotice from "@/components/agents/AgentSetupNotice";
 import AgentProfilesOverview from "@/components/agents/AgentProfilesOverview";
@@ -54,7 +55,10 @@ export default function BehaviourPage() {
   // The profiles read's failure, kept apart from the list: a failed load
   // looked like an empty install with no way to retry (T-0096, D22).
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [selectedProfileId, setSelectedProfileId] = useState<string | null>(null);
+  // Shared with Skills and Tools. The selection used to be this page's own
+  // useState, so the profile an operator picked here was not the profile whose
+  // skills and toolsets the next two screens edited (T-0113).
+  const [selectedProfileId, setSelectedProfileId] = useSelectedProfile();
   const [editor, setEditor] = useState<EditorState | null>(null);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
   // `saving` is derived from saveStatus so the two are never out of sync.
@@ -234,12 +238,13 @@ export default function BehaviourPage() {
 
   useEffect(() => { loadProfiles(); }, [loadProfiles]);
 
+  // A selection carried in from another screen may name a profile this install
+  // no longer has (it was deleted, or the list is from a different machine).
+  // This page holds the list, so this page is where it is reconciled.
   useEffect(() => {
     if (profiles.length === 0) return;
-    setSelectedProfileId((prev) =>
-      prev && profiles.some((p) => p.id === prev) ? prev : profiles[0].id,
-    );
-  }, [profiles]);
+    if (!profiles.some((p) => p.id === selectedProfileId)) setSelectedProfileId(profiles[0].id);
+  }, [profiles, selectedProfileId, setSelectedProfileId]);
 
   const handleCreate = async () => {
     if (creating || !createName.trim()) return;
@@ -280,7 +285,9 @@ export default function BehaviourPage() {
         // those setters stay inline.
         closeDelete();
         if (selectedProfileId === target) {
-          setSelectedProfileId(null);
+          // The root agent is the one profile that cannot be deleted, so it is
+          // always there to fall back to.
+          setSelectedProfileId(DEFAULT_PROFILE_SLUG);
           closeEditor();
         }
         await loadProfiles();

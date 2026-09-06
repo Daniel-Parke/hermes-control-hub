@@ -11,8 +11,10 @@ audience: operator
 ## What it is
 
 A stage in a [workflow](workflow.md) that stops and waits for you. When a run
-reaches one it goes no further until you accept, reject, ask for a review or ask
-for something to be added, and you can leave a note with the decision.
+reaches one it goes no further until you accept it or reject it, and you can
+leave a note with the decision. A stage that judges its own work can be a gate
+too, and its verdict is advice: a fail is shown to you with the work rather than
+ending the run, because the point of the gate is that the decision is yours.
 
 The note is not decoration. It is recorded against the run, shown on the stage
 where it was taken, and carried into the next stage the engine dispatches, so a

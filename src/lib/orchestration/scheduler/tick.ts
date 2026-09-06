@@ -87,20 +87,37 @@ async function fireScriptSchedule(sched: ScheduleRecord, nowDate: Date): Promise
   }
 
   const result = await runScriptFile(sched.scriptName);
+  const notStartedReason = result.error ?? "the host could not start it";
   advanceToNext(
     sched,
     nowDate,
     null,
-    result.ok ? "ran" : `error: ${result.error ?? "script exited non-zero"}`,
+    result.outcome === "succeeded"
+      ? "ran"
+      : result.outcome === "not-started"
+        ? `did not start: ${notStartedReason}`
+        : `error: ${result.error ?? "script exited non-zero"}`,
     true,
   );
   // After the advance, never before it: no event claims a run the row does not
   // record.
-  if (result.ok) {
+  //
+  // Recorded whichever way it went, which it was not before: a nightly backup
+  // that failed left nothing behind at all, so "did last night's backup work?"
+  // and "did last night's backup run?" had the same answer, silence. A failure
+  // is recorded as a failure, so the row that says nothing is now only ever a
+  // run that did not happen.
+  if (result.outcome === "not-started") {
+    recordEvent("script.run_not_started", {
+      entityType: "script",
+      entityId: sched.scriptName,
+      metadata: { source: "scheduler", reason: notStartedReason },
+    });
+  } else {
     recordEvent("script.run", {
       entityType: "script",
       entityId: sched.scriptName,
-      metadata: { source: "scheduler" },
+      metadata: { source: "scheduler", outcome: result.outcome, exitCode: result.exitCode },
     });
   }
   return result.ok;

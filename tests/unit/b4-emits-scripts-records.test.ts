@@ -231,7 +231,7 @@ describe("POST /api/scripts/run records script.run", () => {
   const run = (body: unknown) => postRun(mockRequest("http://localhost/api/scripts/run", "POST", body));
 
   it("a script that exits 0 is recorded with its exit code", async () => {
-    mockRunScriptFile.mockResolvedValue({ ok: true, exitCode: 0 });
+    mockRunScriptFile.mockResolvedValue({ ok: true, outcome: "succeeded", exitCode: 0 });
 
     const res = await run({ name: "ps-backup.mjs" });
 
@@ -248,7 +248,7 @@ describe("POST /api/scripts/run records script.run", () => {
   });
 
   it("a script that exits non-zero still ran, and is recorded with that code", async () => {
-    mockRunScriptFile.mockResolvedValue({ ok: false, exitCode: 2, error: "exit 2" });
+    mockRunScriptFile.mockResolvedValue({ ok: false, outcome: "failed", exitCode: 2, error: "exit 2" });
 
     const res = await run({ name: "ps-backup.mjs" });
 
@@ -283,7 +283,17 @@ describe("POST /api/scripts/run records script.run", () => {
   });
 
   it("the script does not exist: 404, nothing ran, nothing recorded", async () => {
-    mockRunScriptFile.mockResolvedValue({ ok: false, exitCode: null, error: "Script not found" });
+    // The DOUBLE moved with the runner, not the assertion below it: a result
+    // now names which of the three things happened, and the route reads that
+    // rather than inferring "not found" from a null exit code. What is being
+    // asserted is unchanged.
+    mockRunScriptFile.mockResolvedValue({
+      ok: false,
+      outcome: "not-started",
+      startFailure: "script-missing",
+      exitCode: null,
+      error: "Script not found",
+    });
 
     const res = await run({ name: "missing.mjs" });
 

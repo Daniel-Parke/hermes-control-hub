@@ -94,7 +94,7 @@ An agent that sounds like you want it to and reaches only for what you allow.
 | **3.7** Retain a fact | Give the agent one thing worth remembering between runs. | proved by the `memory.retained` event, once | `/agent/memory` | Memory | - |
 | **3.8** Push to Hermes | Push a profile to the agent on disk, so the two agree. | proved by the `profile.pushed` event, once | `/agent/profiles` | Profile | - |
 
-On a host without it, **3.7** says: No memory provider is reachable, so there is nothing to retain a fact into yet.
+On a host without it, **3.7** says: No memory provider is answering, so there is nothing to retain a fact into yet. Connect one on the Memory screen and this one unlocks.
 
 ### 4. Automate and watch
 

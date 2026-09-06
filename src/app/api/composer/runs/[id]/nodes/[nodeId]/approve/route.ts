@@ -1,8 +1,8 @@
 // ═══════════════════════════════════════════════════════════════
 // POST /api/composer/runs/[id]/nodes/[nodeId]/approve — resolve a HIL gate
 //
-// Records the gate decision (accept/reject/review/add_feature), resumes the
-// run, and advances the workflow graph (the engine routes on_approve/on_reject).
+// Records the gate decision (accept/reject, the two verbs T-0089 left), resumes
+// the run, and advances the workflow graph (the engine routes on_approve/on_reject).
 // Gated by the `composer` flag.
 // ═══════════════════════════════════════════════════════════════
 

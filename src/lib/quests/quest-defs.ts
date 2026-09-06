@@ -94,7 +94,11 @@ export type QuestRequirement = "gateway" | "memory" | "composer" | "host-schedul
 export const HOST_REQUIREMENT_COPY: Record<QuestRequirement, string> = {
   gateway:
     "No agent is reachable yet: install the agent on this machine, or point PatterStage at a gateway, and this one unlocks.",
-  memory: "No memory provider is reachable, so there is nothing to retain a fact into yet.",
+  // Until T-0113 this could not render: the capability behind it was true on
+  // every install, so the sentence stopped at what was missing. It shows now,
+  // so it names the way out, like the other three.
+  memory:
+    "No memory provider is answering, so there is nothing to retain a fact into yet. Connect one on the Memory screen and this one unlocks.",
   composer:
     "The Composer is switched off on this install (PS_COMPOSER). Turn it on to run a workflow.",
   "host-scheduler":

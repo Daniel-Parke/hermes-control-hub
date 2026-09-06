@@ -56,6 +56,7 @@ jest.mock("@/lib/api-fetch", () => ({
 }));
 
 import AgentsPage from "@/app/agent/profiles/page";
+import { setSelectedProfile } from "@/hooks/useSelectedProfile";
 import AgentProfileList from "@/components/agents/AgentProfileList";
 import type { AgentProfile } from "@/types/console";
 
@@ -141,6 +142,11 @@ async function leavePreview(): Promise<HTMLElement> {
 }
 
 async function renderLoaded() {
+  // The selected profile is shared with Skills and Tools and outlives a render
+  // now (T-0113), so a test that wants a fresh page has to start from a fresh
+  // selection: without this, the file's own "select QA" case leaks into every
+  // case after it and the detail column names QA rather than Bob.
+  setSelectedProfile("default");
   render(withQuery(<AgentsPage />));
   await screen.findByText("QA Engineer");
   // The list arrives one render before the auto-selection does, and the

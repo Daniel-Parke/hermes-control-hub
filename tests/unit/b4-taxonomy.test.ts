@@ -77,18 +77,41 @@ const ADDED = [
  */
 const READS = ["artifact.opened", "logs.opened"] as const;
 
+/**
+ * The type added when a script run began recording how it went.
+ *
+ * Its own list, like READS above and for the same reason: this file is the
+ * record of which change added what. `script.run` is the record of a script
+ * that RAN, whatever it exited with, and it is what the "run a script" quest
+ * is proved by. A run the host could not start therefore needed a type of its
+ * own rather than a `script.run` row that would tick that quest for a run
+ * nobody performed.
+ */
+const NEVER_STARTED = ["script.run_not_started"] as const;
+
 /** Types with no emitter until a later batch (B14). backup.taken got one in B6, help.opened in B16. */
 const NOT_YET_EMITTED = ["research.cancelled"] as const;
 
 /** Failures: recorded, charted, never required of anyone. */
-const FAILURES = ["mission.failed", "research.failed", "composer.run_failed"] as const;
+const FAILURES = [
+  "mission.failed",
+  "research.failed",
+  "composer.run_failed",
+  // AMENDED with the taxonomy it mirrors: a run that never started is a
+  // failure, so it is charted and is not something to collect.
+  "script.run_not_started",
+] as const;
 
 const keyOf = (t: string) => categoryForEventType(t)?.key ?? null;
 
 describe("the taxonomy after B4", () => {
-  it("keeps the original fourteen, B4's twenty-six and T-0111's two reads, each once", () => {
-    for (const t of [...ORIGINAL, ...ADDED, ...READS]) expect(ANALYTICS_EVENT_TYPES).toContain(t);
-    expect(ANALYTICS_EVENT_TYPES).toHaveLength(ORIGINAL.length + ADDED.length + READS.length);
+  it("keeps the original fourteen, B4's twenty-six, T-0111's two reads and the non-start, each once", () => {
+    for (const t of [...ORIGINAL, ...ADDED, ...READS, ...NEVER_STARTED]) {
+      expect(ANALYTICS_EVENT_TYPES).toContain(t);
+    }
+    expect(ANALYTICS_EVENT_TYPES).toHaveLength(
+      ORIGINAL.length + ADDED.length + READS.length + NEVER_STARTED.length,
+    );
     expect(new Set(ANALYTICS_EVENT_TYPES).size).toBe(ANALYTICS_EVENT_TYPES.length);
   });
 
@@ -135,7 +158,10 @@ describe("the taxonomy after B4", () => {
     );
     expectKey(["help.opened"], "help");
     expectKey(["mission.dispatched", "mission.completed", "mission.failed", "mission.cancelled", "template.saved"], "missions");
-    expectKey(["schedule.created", "schedule.fired", "script.saved", "script.run", "script.scheduled"], "automation");
+    expectKey(
+      ["schedule.created", "schedule.fired", "script.saved", "script.run", "script.run_not_started", "script.scheduled"],
+      "automation",
+    );
     expectKey(
       [
         "skill.toggled", "personality.changed", "model.configured", "model.added", "credential.added",

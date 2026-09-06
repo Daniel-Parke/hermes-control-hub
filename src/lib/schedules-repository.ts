@@ -149,11 +149,40 @@ export function getSchedule(id: string): ScheduleRecord | null {
   return rowToSchedule(row);
 }
 
-export function listSchedules(opts?: { limit?: number }): ScheduleRecord[] {
+/**
+ * A schedule row plus the name of the mission it fires.
+ *
+ * The list is the only place a schedule is read without its mission beside it,
+ * and it showed neither the mission nor the kind: two rows over two different
+ * missions read identically, and a script row looked like a mission one
+ * (T-0114). The name comes from the same read rather than a second call per
+ * row, which is the N+1 the board's schedule read was written to avoid.
+ */
+export interface ScheduleListItem extends ScheduleRecord {
+  /** The mission's name, or null for a script row or a deleted mission. */
+  missionName: string | null;
+}
+
+export function listSchedules(opts?: { limit?: number }): ScheduleListItem[] {
   const rows = getDb()
-    .prepare("SELECT * FROM schedules ORDER BY created_at DESC LIMIT ?")
-    .all(clampLimit(opts?.limit, SCHEDULE_LIST_BOUNDS)) as ScheduleRow[];
-  return rows.map(rowToSchedule).filter((s): s is ScheduleRecord => s !== null);
+    .prepare(
+      // LEFT JOIN, not JOIN: a script row has no mission, and an orphaned row
+      // must still be listed so the operator can see and delete it.
+      `SELECT s.*, m.name AS mission_name
+         FROM schedules s
+         LEFT JOIN missions m ON m.id = s.mission_id AND m.deleted_at IS NULL
+        ORDER BY s.created_at DESC
+        LIMIT ?`,
+    )
+    .all(clampLimit(opts?.limit, SCHEDULE_LIST_BOUNDS)) as (ScheduleRow & {
+    mission_name: string | null;
+  })[];
+  return rows
+    .map((row) => {
+      const record = rowToSchedule(row);
+      return record ? { ...record, missionName: row.mission_name ?? null } : null;
+    })
+    .filter((s): s is ScheduleListItem => s !== null);
 }
 
 /**

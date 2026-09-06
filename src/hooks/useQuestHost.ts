@@ -52,9 +52,19 @@ export function useQuestHost(): QuestHostCapabilities {
       const row = rows?.find((r) => r.id === id);
       return row ? row.state !== "down" : true;
     };
+    // Memory is the one row that never goes down. collectSubsystems reports an
+    // unreachable provider as DEGRADED on purpose, because the agent still runs
+    // without memory, so `up` answered true on an install with no provider at
+    // all and quest 3.7 could never read as unavailable (T-0113). Only "ok" is a
+    // provider that can retain a fact. An absent or unread row is still unknown,
+    // and unknown stays true.
+    const memoryAnswering = (): boolean => {
+      const row = rows?.find((r) => r.id === "memory");
+      return row ? row.state === "ok" : true;
+    };
     return {
       gateway: up("gateway"),
-      memory: up("memory"),
+      memory: memoryAnswering(),
       composer: composerFlag !== false,
       hostScheduler: platform ? platform !== "win32" : true,
     };

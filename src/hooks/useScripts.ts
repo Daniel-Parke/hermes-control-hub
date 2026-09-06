@@ -13,6 +13,9 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { safeApiCall } from "@/lib/api-fetch";
 
+/** How a run ended. "not-started" never reached the script at all. */
+export type ScriptRunOutcome = "succeeded" | "failed" | "not-started";
+
 export interface ScriptFile {
   name: string;
   path: string;
@@ -25,6 +28,16 @@ export interface ScriptFile {
   scheduleId: string | null;
   hasLog: boolean;
   lastRun: string | null;
+  /**
+   * How the last recorded run ended, from the ledger, or null when it holds
+   * nothing for this script. `lastRun` above is the log file's timestamp: it
+   * says when output was last written, never whether the run worked.
+   */
+  lastOutcome: ScriptRunOutcome | null;
+  /** When that recorded run happened, or null when there is none. */
+  lastOutcomeAt: string | null;
+  /** The code that run returned, when it ran at all. */
+  lastExitCode: number | null;
 }
 
 /** Whether this host schedules without PatterStage, and what that means. */
@@ -58,11 +71,13 @@ export function useScripts() {
   const invalidate = () => qc.invalidateQueries({ queryKey: ["scripts"] });
 
   const run = useMutation({
+    // A run that could not be started answers non-2xx with the reason, so the
+    // caller reads `ok` and the outcome, not an exit code that never existed.
     mutationFn: (name: string) =>
-      safeApiCall<{ data?: { exitCode: number | null; ok: boolean } }>("/api/scripts/run", {
-        method: "POST",
-        body: { name },
-      }),
+      safeApiCall<{ data?: { outcome: ScriptRunOutcome; exitCode: number | null; ok: boolean } }>(
+        "/api/scripts/run",
+        { method: "POST", body: { name } },
+      ),
     onSuccess: invalidate,
   });
 

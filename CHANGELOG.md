@@ -218,6 +218,15 @@ The work leading to the 1.0.0 release.
 - **A mission schedule that can never fire is refused before the mission is
   created**, rather than after, so a rejected schedule no longer leaves a stranded
   draft behind.
+- **Choosing Schedule no longer starts a run there and then.** Putting a mission
+  on a timer wrote the schedule and immediately dispatched a run, which on a paid
+  provider is money nobody asked to spend. The mission now waits for the first
+  time on its cadence, and **Run** on its row in Schedules still fires one by hand.
+- **A schedule says what it runs.** A row showed its own name and its cadence and
+  nothing else, so two schedules over two different missions were impossible to
+  tell apart. Each row now says whether it runs a mission or a script and names
+  it. The section is called Schedules, because it has been listing scripts as
+  well as missions since scripts could be put on PatterStage's own timer.
 - **Cancelling a finished mission is a success**, not an error in the log.
 - **A chat no longer loses its session** when its title collides with an existing
   one. The name is retried with a suffix, and if it still cannot be created the
@@ -236,6 +245,20 @@ The work leading to the 1.0.0 release.
   not-found. All seven kinds (`.sh`, `.mjs`, `.cjs`, `.js`, `.ps1`, `.bat`,
   `.cmd`) now work end to end, and saving from the editor no longer adds a second
   extension to the file name.
+- **A script that could not start no longer reports an exit code it never had.**
+  A missing interpreter, or one the machine refused to start, was reported as
+  "exited non-zero, check Logs", and the log it sent you to had nothing in it.
+  Run now says the script did not start and why, the reason is written into the
+  log as well, and only a script that really ran and failed sends you to the
+  output.
+- **The Scripts page remembers how the last run went.** The answer used to
+  appear once, in a message, and was then gone, so nothing on screen could tell
+  you whether last night's backup worked. Each row now says "ran", "failed" with
+  the exit code, or "did not start", and how long ago that was. Runs PatterStage
+  starts are recorded either way, including the ones its own timer fires, which
+  previously left no trace at all when they failed. A run the machine's own
+  crontab fires is still invisible to PatterStage, and the row falls back to the
+  log's timestamp for it.
 - **The skill viewer no longer crashes on top-level skills.** Two routes were
   sending two different shapes; there is one now, and the thinnest payload renders
   as a page.

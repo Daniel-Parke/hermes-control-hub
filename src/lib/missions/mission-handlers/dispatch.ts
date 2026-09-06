@@ -170,16 +170,21 @@ export async function handleDispatchMission(
     // PatterStage owns the timer: a `schedules` row (mission_id FK) is the
     // source of truth and the scheduler tick (orchestration/scheduler)
     // dispatches each occurrence via the runtime. There is NO Hermes
-    // jobs.json bridge. The first run is kicked off immediately
-    // (best-effort) so the user sees activity without waiting for the next
-    // tick — the schedule is durable regardless of that run's outcome.
-    // Shape and satisfiability were both judged above, before the row
-    // existed (T-0079 for the never-fires case, T-0088 for the position).
+    // jobs.json bridge. Shape and satisfiability were both judged above,
+    // before the row existed (T-0079 for the never-fires case, T-0088 for the
+    // position).
+    //
+    // Nothing runs here. This branch used to fire a best-effort first run the
+    // moment the schedule was written, which is a run the operator did not ask
+    // for: the composer offers Schedule and Run now as separate choices, and
+    // the cadence picker prints the times it WILL fire. On a paid provider
+    // that first run is the operator's money. A run now is still one click
+    // away, on the schedule's own Run button (T-0114).
     const parsedSchedule = parseSchedule(scheduleVal!);
 
     try {
       const next = computeNextRun(scheduleVal!, new Date());
-      const schedule = createSchedule({
+      createSchedule({
         missionId: mission.id,
         name: mission.name,
         schedule: scheduleVal!,
@@ -188,16 +193,6 @@ export async function handleDispatchMission(
         profileName: profileName ?? mission.profileName ?? null,
         nextRunAt: next ? next.toISOString() : null,
       });
-
-      // Immediate first run — best-effort (the schedule fires on the next
-      // tick even if this run fails, e.g. the backend is momentarily down).
-      // Pass scheduleId so this first run is linked to its schedule (the
-      // run row's schedule_id), matching scheduler-fired runs.
-      try {
-        await dispatchMissionNow(mission.id, { profileName, modelId, provider, scheduleId: schedule.id });
-      } catch (err) {
-        logApiError("POST /api/missions", "schedule first-run", err);
-      }
 
       appendAuditLine({ action: "mission.schedule_dispatch", resource: mission.id, ok: true });
       return missionResponse(mission.id, 201);

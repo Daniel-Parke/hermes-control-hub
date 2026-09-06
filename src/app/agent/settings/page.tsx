@@ -25,6 +25,7 @@ import { pluralise } from "@/lib/utils";
 import { iconColorMap, colorBorderMap, badgeBgMap } from "@/lib/theme";
 import { useConfig } from "@/hooks/useConfig";
 import { ConfigYamlErrorAlert } from "@/components/config/ConfigYamlErrorAlert";
+import SettingsSubject from "@/components/config/SettingsSubject";
 import type { AccentColor } from "@/types/console";
 
 const TOOL_ICONS = { Globe, RotateCcw, Settings } as const;
@@ -124,7 +125,7 @@ function SectionCard({
 }
 
 export default function SettingsIndexPage() {
-  const { data: config, isLoading: loading, error, refetch, configError } = useConfig();
+  const { data: config, isLoading: loading, error, refetch, configError, subject } = useConfig();
   const [query, setQuery] = useState("");
   const q = query.trim().toLowerCase();
   const sectionCount = settingsSectionIds().length;
@@ -153,6 +154,11 @@ export default function SettingsIndexPage() {
       />
 
       <div className="max-w-7xl mx-auto px-6 py-6 space-y-8 flex-1 w-full">
+        {/* Whose settings these are. Nothing said so, and the three screens
+            before this one in the chapter are about a profile this page cannot
+            edit (T-0113). Absent while the read is in flight: an unknown
+            subject is not a claim worth making. */}
+        {subject && <SettingsSubject subject={subject} />}
         <div className="relative max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ps-text-muted" />
           <input

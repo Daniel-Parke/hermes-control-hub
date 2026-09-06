@@ -11,7 +11,7 @@ compiled_from: normalised
 ---
 # Catalog and professional profiles
 
-PatterStage SQLite is the **source of truth** for agent profiles (including Bob), the global skills catalog, and per-profile policy (`disabled_skills`, `platform_toolsets`). Hermes disk is a **runtime mirror** updated via push/pull sync (same contract as Config → Models).
+PatterStage SQLite is the **source of truth** for agent profiles (including Bob), the global skills catalog, and per-profile policy (`disabled_skills`, `platform_toolsets`). Hermes disk is a **runtime mirror** updated via push/pull sync (same contract as Agent → Models).
 
 ## Data flow
 
@@ -55,7 +55,7 @@ Hermes identity is `SOUL.md`. PatterStage stores root/profile SOUL content in SQ
 
 ## Tools
 
-Hermes runtime toolsets are profile-scoped `platform_toolsets` in SQLite (`agent_root` / `agent_profiles`), pushed into Hermes `config.yaml`. Edit on **Operations → Tools**; sync with **Pull** / **Push** (same contract as Agents). Pull normalizes duplicate or CLI-expanded toolset lists.
+Hermes runtime toolsets are profile-scoped `platform_toolsets` in SQLite (`agent_root` / `agent_profiles`), pushed into Hermes `config.yaml`. Edit on **Agent → Tools**; sync with **Pull** / **Push** (same contract as Agents). Pull normalizes duplicate or CLI-expanded toolset lists.
 
 The `/api/tools` route exposes a **read-only catalog** of known Hermes toolset IDs. It does not enable/disable runtime tools. See [TOOLS_AND_MISSIONS.md](catalog-and-profiles.md).
 
@@ -72,7 +72,7 @@ The `/api/tools` route exposes a **read-only catalog** of known Hermes toolset I
 Seed state: `PS_DATA_DIR/seed-state.json`.
 
 `GET /api/seed` also answers `pack`, the count of what the shipped set contains,
-read from `data/seed/**` rather than from the database. **Settings > Restore**
+read from `data/seed/**` rather than from the database. **Agent > Settings > Restore**
 renders those numbers, so a fresh install reads "0 of 7 agents" instead of
 claiming the pack itself is empty.
 
@@ -160,10 +160,10 @@ PatterStage stores toolsets in SQLite (`agent_profiles.platform_toolsets`, `agen
 
 | Surface | Action |
 |---------|--------|
-| **Operations → Tools** | One **enabled toolsets** grid per profile (fans out to all gateways on save, the same idea as `hermes tools` → configure all platforms). Optional **advanced per-platform** overrides and JSON. **Save & push** writes SQLite and `config.yaml`. |
+| **Agent → Tools** | One **enabled toolsets** grid per profile (fans out to all gateways on save, the same idea as `hermes tools` → configure all platforms). Optional **advanced per-platform** overrides and JSON. **Save & push** writes SQLite and `config.yaml`. |
 | **Pull from Hermes** | Import disk `config.yaml` into SQLite (normalizes duplicates / `hermes-cli` expansion). |
 | **Push to Hermes** | Write assembled config from SQLite to `HERMES_HOME` or `profiles/<slug>/`. |
-| **Operations → Agents** | Push/pull all profile content (includes toolsets in full `config.yaml`). Push Bob re-applies Models registry defaults to root `config.yaml`. |
+| **Agent → Agents** | Push/pull all profile content (includes toolsets in full `config.yaml`). Push Bob re-applies Models registry defaults to root `config.yaml`. |
 
 `/api/tools` (GET) returns a read-only catalog of known toolset IDs; POST is not supported.
 
@@ -183,6 +183,6 @@ npx tsx scripts/tooling/import-hermes-state.ts   # when ~/.hermes exists
 npm run db:seed
 ```
 
-Then open **Operations → Tools**, select each profile, **Pull from Hermes** if you edited toolsets with `hermes tools`, or confirm seeded toolsets appear. **Save & push** when editing in PatterStage.
+Then open **Agent → Tools**, select each profile, **Pull from Hermes** if you edited toolsets with `hermes tools`, or confirm seeded toolsets appear. **Save & push** when editing in PatterStage.
 
 A fresh install starts from the squashed `001_baseline.sql`; an upgrade from `main` applies `002_profiles_tools_parity.sql` once. Neither is where the database ends up: `runMigrations` then applies the whole chain. For the number the running database is actually at, read `getSchemaVersion()` rather than any figure written into prose. See [CATALOG_AND_PROFILES.md](catalog-and-profiles.md#schema).

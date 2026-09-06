@@ -10,6 +10,13 @@
 // named once in @/lib/scripts/script-ext.ts. The header used to say ".sh only"
 // in four places while the product shipped .mjs scripts and ran .ps1 (T-0107).
 //
+// A run ends in one of three ways, and this file is where they are told apart:
+// it ran and succeeded, it ran and failed, or it never started. The third was
+// reported as the second for as long as the page existed, which sent operators
+// to a log that had nothing in it. Each run PatterStage starts is recorded in
+// the analytics ledger, and `listScriptFiles` reads the last one back, so the
+// row can answer "did last night's backup work?" after the toast has gone.
+//
 // A schedule can live in two places. The host crontab is the first, and the
 // better one: those rows fire whether PatterStage is up or not. Where the host
 // has none (native Windows) a PatterStage `schedules` row carries it instead,
@@ -40,14 +47,40 @@ import { interpreterFor } from "@/lib/platform";
 import { getHostScheduler } from "@/lib/host-scheduler";
 import {
   SCRIPT_EXT_LIST,
+  SCRIPT_EXT_RE,
   extractScriptName,
   hasScriptExt,
   stripScriptExt,
 } from "@/lib/scripts/script-ext";
 import { listScriptSchedules, type ScheduleRecord } from "@/lib/schedules-repository";
+import { latestEventPerEntity } from "@/lib/analytics/analytics-repository";
 
 /** Max script size accepted by the editor write API (256 KB). */
 const MAX_SCRIPT_BYTES = 256 * 1024;
+
+/** How long a run may take, and how much output it may produce, before it is stopped. */
+const RUN_TIMEOUT_MS = 10 * 60_000;
+const RUN_MAX_OUTPUT_BYTES = 8 * 1024 * 1024;
+
+/**
+ * How a run ended.
+ *
+ * "not-started" is the one this file could not say before, and it is not a
+ * pedantic distinction: a script that never started has no exit code and wrote
+ * no output, so reporting it as "exited non-zero, check Logs" sends the
+ * operator to a log that says nothing about it.
+ */
+export type ScriptRunOutcome = "succeeded" | "failed" | "not-started";
+
+/**
+ * Why a run did not start. The route answers 404 for the first and 503 for the
+ * second: one is a script that is not there, the other is a host that cannot
+ * run the script it has.
+ */
+export type ScriptStartFailure = "script-missing" | "host-cannot-run";
+
+/** The types the ledger records a run under. `script.run` means it ran. */
+const RUN_EVENT_TYPES = ["script.run", "script.run_not_started"] as const;
 
 export interface ScriptFile {
   name: string; // e.g. "ps-backup.sh"
@@ -61,10 +94,24 @@ export interface ScriptFile {
   scheduleId: string | null;
   hasLog: boolean;
   lastRun: string | null; // ISO mtime of the log (a proxy for "last ran")
+  /**
+   * How the last run the ledger recorded ended, or null when it holds none for
+   * this script (or holds one too old to say). The log's mtime above says WHEN
+   * something last wrote output; this says whether it worked.
+   */
+  lastOutcome: ScriptRunOutcome | null;
+  /** When that recorded run happened (ISO), or null when there is none. */
+  lastOutcomeAt: string | null;
+  /** The code that run returned, when it ran at all. */
+  lastExitCode: number | null;
 }
 
 export interface RunScriptResult {
   ok: boolean;
+  /** Which of the three things happened. `ok` alone cannot tell the last two apart. */
+  outcome: ScriptRunOutcome;
+  /** Set when, and only when, the outcome is "not-started". */
+  startFailure?: ScriptStartFailure;
   exitCode: number | null;
   error?: string;
   logFile: string;
@@ -191,6 +238,61 @@ function parseScheduleMap(crontab: string): Map<string, string> {
   return map;
 }
 
+/** What the ledger says about one script's last run. */
+interface RecordedRun {
+  outcome: ScriptRunOutcome | null;
+  at: string;
+  exitCode: number | null;
+}
+
+/**
+ * The last recorded run per script, from the analytics ledger.
+ *
+ * The ledger is the record the product already keeps of what an operator did,
+ * and a script run has been in it since B4; nothing had ever read it back, so
+ * the outcome lived in one toast and then nowhere. Rows written before the
+ * outcome was recorded carry only an exit code, and are read from that; a row
+ * that carries neither says nothing rather than guessing, because a wrong
+ * "succeeded" on last night's backup is worse than a blank.
+ */
+function recordedRuns(): Map<string, RecordedRun> {
+  const out = new Map<string, RecordedRun>();
+  // Same try/catch as the schedule read below, for the same reason: this runs
+  // on a route that must still list files before the database exists.
+  try {
+    for (const ev of latestEventPerEntity("script", RUN_EVENT_TYPES)) {
+      const meta = parseMetadata(ev.metadataJson);
+      const exitCode = typeof meta.exitCode === "number" ? meta.exitCode : null;
+      out.set(ev.entityId, { outcome: outcomeOf(ev.eventType, meta, exitCode), at: ev.createdAt, exitCode });
+    }
+  } catch {
+    /* no database yet; the file listing is still worth answering */
+  }
+  return out;
+}
+
+function parseMetadata(json: string | null): Record<string, unknown> {
+  if (!json) return {};
+  try {
+    const parsed: unknown = JSON.parse(json);
+    return parsed && typeof parsed === "object" ? (parsed as Record<string, unknown>) : {};
+  } catch {
+    return {};
+  }
+}
+
+function outcomeOf(
+  eventType: string,
+  meta: Record<string, unknown>,
+  exitCode: number | null,
+): ScriptRunOutcome | null {
+  if (eventType === "script.run_not_started") return "not-started";
+  const recorded = meta.outcome;
+  if (recorded === "succeeded" || recorded === "failed" || recorded === "not-started") return recorded;
+  if (exitCode === null) return null;
+  return exitCode === 0 ? "succeeded" : "failed";
+}
+
 /** List the script files under the scripts dir, with schedule + last-run hints. */
 export async function listScriptFiles(): Promise<ScriptFile[]> {
   const dir = getPsScriptsDir();
@@ -206,6 +308,7 @@ export async function listScriptFiles(): Promise<ScriptFile[]> {
   } catch {
     /* no database yet; the host crontab still answers */
   }
+  const runs = recordedRuns();
   const files = readdirSync(dir).filter(hasScriptExt).sort();
   return files.map((name) => {
     const abs = join(dir, name);
@@ -214,6 +317,7 @@ export async function listScriptFiles(): Promise<ScriptFile[]> {
     const hasLog = existsSync(logFile);
     const host = hostSchedules.get(name) ?? null;
     const mine = host ? null : own.get(name) ?? null;
+    const run = runs.get(name) ?? null;
     return {
       name,
       path: abs,
@@ -224,8 +328,65 @@ export async function listScriptFiles(): Promise<ScriptFile[]> {
       scheduleId: mine?.id ?? null,
       hasLog,
       lastRun: hasLog ? statSync(logFile).mtime.toISOString() : null,
+      lastOutcome: run?.outcome ?? null,
+      // Only alongside an outcome: a time with nothing to say about it is
+      // already covered by lastRun above.
+      lastOutcomeAt: run?.outcome ? run.at : null,
+      lastExitCode: run?.exitCode ?? null,
     };
   });
+}
+
+/** Append one line to a script's log. Best-effort, as all logging here is. */
+function appendToLog(logFile: string, text: string): void {
+  try {
+    appendFileSync(logFile, text);
+  } catch {
+    /* logging is best-effort: a run is not failed by a log that would not write */
+  }
+}
+
+/**
+ * Read node's execFile error, which carries three different failures in one
+ * shape and tells them apart only by which fields are set:
+ *
+ *   - a NUMBER code is an exit status: the script ran and returned it;
+ *   - `killed`/`signal` is a process we started and then stopped (the time
+ *     limit, or the output cap);
+ *   - anything else with a STRING code (ENOENT, EACCES) is a spawn that never
+ *     happened, and there is no exit status because nothing exited.
+ *
+ * The old reader collapsed the last two into `exitCode: 1`, which is how a
+ * missing interpreter came to be reported as a script that exited non-zero.
+ */
+function readExecError(err: Error, command: string): RunScriptResult {
+  const code = (err as { code?: unknown }).code;
+  const killed = (err as { killed?: unknown }).killed === true || typeof (err as { signal?: unknown }).signal === "string";
+  if (typeof code === "number") {
+    return { ok: false, outcome: "failed", exitCode: code, error: err.message, logFile: "" };
+  }
+  if (killed) {
+    const tooMuchOutput = code === "ERR_CHILD_PROCESS_STDIO_MAXBUFFER";
+    return {
+      ok: false,
+      outcome: "failed",
+      exitCode: null,
+      error: tooMuchOutput
+        ? `The script was stopped after printing more than ${Math.round(RUN_MAX_OUTPUT_BYTES / 1024 / 1024)} MB`
+        : `The script was stopped after ${Math.round(RUN_TIMEOUT_MS / 60_000)} minutes`,
+      logFile: "",
+    };
+  }
+  return {
+    ok: false,
+    outcome: "not-started",
+    startFailure: "host-cannot-run",
+    exitCode: null,
+    // Names the command that could not be started, because that is the thing
+    // the operator has to install or fix.
+    error: `${command} could not be started (${String(code ?? err.message)})`,
+    logFile: "",
+  };
 }
 
 /** Run a script on demand. Path-validated; output is appended to its log. */
@@ -233,31 +394,45 @@ export function runScriptFile(name: string): Promise<RunScriptResult> {
   return new Promise((res) => {
     const abs = resolveScriptPath(name);
     if (!abs) {
-      res({ ok: false, exitCode: null, error: "Script not found under the scripts directory", logFile: "" });
+      res({
+        ok: false,
+        outcome: "not-started",
+        startFailure: "script-missing",
+        exitCode: null,
+        error: "Script not found under the scripts directory",
+        logFile: "",
+      });
       return;
     }
     const logFile = logPathFor(name);
     try {
       mkdirSync(getPsHardwareLogDir(), { recursive: true });
-      appendFileSync(logFile, `\n===== run ${new Date().toISOString()} =====\n`);
     } catch {
       /* logging is best-effort */
     }
+    appendToLog(logFile, `\n===== run ${new Date().toISOString()} =====\n`);
     // Resolve the interpreter by extension + OS (node/.sh-bash/PowerShell/cmd).
     const interp = interpreterFor(abs);
     if (!interp) {
-      res({ ok: false, exitCode: null, error: `No interpreter available for this script type on ${process.platform}`, logFile });
+      // The extension comes from the one rule, not a second list of endings.
+      const ext = name.match(SCRIPT_EXT_RE)?.[0] ?? "";
+      const error = `nothing on this machine can run ${ext} files`;
+      // Into the log as well as into the answer: the operator who opens Logs
+      // after a failed run used to find the run header and nothing under it.
+      appendToLog(logFile, `did not start: ${error}\n`);
+      res({ ok: false, outcome: "not-started", startFailure: "host-cannot-run", exitCode: null, error, logFile });
       return;
     }
     // No shell, no user args — the resolved interpreter runs the validated path only.
-    execFile(interp.cmd, interp.args, { timeout: 10 * 60_000, maxBuffer: 8 * 1024 * 1024 }, (err, stdout, stderr) => {
-      try {
-        appendFileSync(logFile, `${stdout ?? ""}${stderr ?? ""}`);
-      } catch {
-        /* ignore */
+    execFile(interp.cmd, interp.args, { timeout: RUN_TIMEOUT_MS, maxBuffer: RUN_MAX_OUTPUT_BYTES }, (err, stdout, stderr) => {
+      appendToLog(logFile, `${stdout ?? ""}${stderr ?? ""}`);
+      if (!err) {
+        res({ ok: true, outcome: "succeeded", exitCode: 0, logFile });
+        return;
       }
-      const code = err && typeof (err as { code?: unknown }).code === "number" ? (err as { code: number }).code : err ? 1 : 0;
-      res({ ok: !err, exitCode: code, error: err ? (err as Error).message : undefined, logFile });
+      const result = readExecError(err, interp.cmd);
+      if (result.outcome === "not-started") appendToLog(logFile, `did not start: ${result.error}\n`);
+      res({ ...result, logFile });
     });
   });
 }

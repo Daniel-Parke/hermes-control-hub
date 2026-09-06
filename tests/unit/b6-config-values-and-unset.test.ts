@@ -92,6 +92,10 @@ jest.mock("@/modules/hermes/lib/profile-paths", () => ({
   getHermesDefaultRoot: () => "/tmp/test-hermes",
   resolveProfileHermesHome: (slug: string) =>
     slug === "default" ? "/tmp/test-hermes" : `/tmp/test-hermes/profiles/${slug}`,
+  // GET names the agent whose config.yaml it answers with, so the Settings
+  // screens can say whose settings they are editing (T-0113). The harness root
+  // is the install root, which is the root agent.
+  profileOfHermesHome: () => "default",
 }));
 
 jest.mock("@/lib/agent-root-repository", () => ({

@@ -88,7 +88,7 @@ Full table: **[ENV_REFERENCE.md](env-reference.md)**.
 | Script | What it backs up | When to use |
 |--------|------------------|-------------|
 | [`scripts/bootstrap/backup-hermes-config.sh`](../../scripts/bootstrap/backup-hermes-config.sh) | Entire `PS_DATA_DIR` tree (SQLite, missions, templates, stories) | Manual operator backup before risky changes |
-| [`scripts/hardware/ps-backup.sh`](../../scripts/hardware/ps-backup.sh) | Hindsight memory JSON via `hindsight_bridge.py` under `$HERMES_HOME` | Schedule it from Orchestration → Scripts |
+| [`scripts/hardware/ps-backup.sh`](../../scripts/hardware/ps-backup.sh) | Hindsight memory JSON via `hindsight_bridge.py` under `$HERMES_HOME` | Schedule it from Work → Scripts |
 
 `ps-backup.sh` is copied into `PS_DATA_DIR/scripts` during setup when missing, along with every other `.sh` and `.mjs` in `scripts/hardware/`. `backup-hermes-config.sh` is not scheduled by PatterStage.
 
@@ -141,7 +141,7 @@ After **`npm run build`**, **`setup.sh`**, and **`ps-deploy update` / `rebuild`*
 1. **`npm run db:migrate`**: SQLite migrations on `PS_DATA_DIR/patterstage.db`
 2. **`npm run db:seed`**: upsert categories, catalog templates, and `agent_profiles`, then push profiles to **`HERMES_HOME/profiles/<slug>/`**
 
-PatterStage SQLite is the **source of truth** for professional profiles; Hermes disk is the **runtime target** for missions/cron. Restore defaults at **Settings → Restore** (`/agent/settings/restore`), which snapshots the database before any overwrite.
+PatterStage SQLite is the **source of truth** for professional profiles; Hermes disk is the **runtime target** for missions/cron. Restore defaults at **Agent → Settings → Restore** (`/agent/settings/restore`), which snapshots the database before any overwrite.
 
 Shipped seeds: **`data/seed/profiles/`**, **`data/seed/template-packs/patterstage-professional-v1.json`**. Optional install-only bash copy from **`data/seed/profiles/`**: [`scripts/lib/ps-hermes-profile-templates.sh`](../../scripts/lib/ps-hermes-profile-templates.sh) (`INSTALL_HERMES_PROFILE_TEMPLATES=yes` on non-interactive `install.sh`).
 
@@ -153,7 +153,7 @@ Use a reverse proxy with automatic certificates (Let's Encrypt). Do not commit T
 
 ## Hindsight Memory: Safe Reconnection After Deploy
 
-Deploy updates (`ps-deploy update`, `seed-catalog.ts --replace`, or Config → Seed
+Deploy updates (`ps-deploy update`, `seed-catalog.ts --replace`, or a restore from **Agent → Settings → Restore**
 push) can strip Hindsight memory configuration from `~/.hermes/config.yaml` if the
 SQLite `agent_root` row is out of sync with disk, for example if Hindsight was
 wired after the initial import.

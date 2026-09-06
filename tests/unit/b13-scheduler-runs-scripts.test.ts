@@ -78,6 +78,10 @@ jest.mock("@/lib/orchestration/dispatch", () => ({
 
 interface RunScriptResultShape {
   ok: boolean;
+  /** Which of the three things happened. A run that never started is not a
+   *  run that failed, and the tick now reads this rather than `ok` alone. */
+  outcome: "succeeded" | "failed" | "not-started";
+  startFailure?: "script-missing" | "host-cannot-run";
   exitCode: number | null;
   error?: string;
   logFile: string;
@@ -143,7 +147,7 @@ beforeEach(() => {
   hasDispatchedMission.mockReturnValue(false);
   createRun.mockReturnValue({ id: "run1" });
   dispatchMissionRun.mockResolvedValue({ ok: true, backendRunId: "b1" });
-  runScriptFile.mockResolvedValue({ ok: true, exitCode: 0, logFile: "/data/logs/x.log" });
+  runScriptFile.mockResolvedValue({ ok: true, outcome: "succeeded", exitCode: 0, logFile: "/data/logs/x.log" });
   listScriptFiles.mockResolvedValue([]);
   createSchedule.mockImplementation((input: Record<string, unknown>) => ({
     ...sched(),
@@ -335,7 +339,7 @@ describe("the scheduler tick, on a script schedule", () => {
   });
 
   it("a failed script advances with the failure, and does not count as fired", async () => {
-    runScriptFile.mockResolvedValue({ ok: false, exitCode: 1, error: "boom", logFile: "/l" });
+    runScriptFile.mockResolvedValue({ ok: false, outcome: "failed", exitCode: 1, error: "boom", logFile: "/l" });
     getDueSchedules.mockReturnValue([sched()]);
     const res = await runSchedulerTick({ now: NOW });
     expect(res.fired).toBe(0);
@@ -343,8 +347,46 @@ describe("the scheduler tick, on a script schedule", () => {
       "sch-s1",
       expect.objectContaining({ lastStatus: "error: boom", incrementDone: true }),
     );
-    // And no event claims it ran. The ledger is what the operator reads to
-    // decide whether the backup happened.
+    // AMENDED, and the reason is the sentence that was already here: the
+    // ledger is what the operator reads to decide whether the backup happened.
+    // While a failure was recorded nowhere, "it failed" and "it never ran"
+    // both read as silence, so the ledger could not answer that question at
+    // all. The failure is now recorded AS a failure -- no event claims it ran,
+    // which is what this line was defending.
+    expect(recordEvent).toHaveBeenCalledWith(
+      "script.run",
+      expect.objectContaining({
+        entityType: "script",
+        entityId: "ps-db-backup.mjs",
+        metadata: expect.objectContaining({ outcome: "failed", exitCode: 1 }),
+      }),
+    );
+  });
+
+  it("a script the host could not start is recorded as one, and not as a run", async () => {
+    runScriptFile.mockResolvedValue({
+      ok: false,
+      outcome: "not-started",
+      startFailure: "host-cannot-run",
+      exitCode: null,
+      error: "nothing on this machine can run .sh files",
+      logFile: "/l",
+    });
+    getDueSchedules.mockReturnValue([sched()]);
+    const res = await runSchedulerTick({ now: NOW });
+    expect(res.fired).toBe(0);
+    expect(advanceSchedule).toHaveBeenCalledWith(
+      "sch-s1",
+      expect.objectContaining({ lastStatus: "did not start: nothing on this machine can run .sh files" }),
+    );
+    expect(recordEvent).toHaveBeenCalledWith(
+      "script.run_not_started",
+      expect.objectContaining({
+        entityType: "script",
+        entityId: "ps-db-backup.mjs",
+        metadata: expect.objectContaining({ reason: "nothing on this machine can run .sh files" }),
+      }),
+    );
     expect(recordEvent).not.toHaveBeenCalledWith("script.run", expect.anything());
   });
 

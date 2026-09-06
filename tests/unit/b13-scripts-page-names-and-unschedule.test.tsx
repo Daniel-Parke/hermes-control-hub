@@ -74,6 +74,12 @@ function row(over: Partial<Row> = {}): Row {
     lastRun: null,
     scheduleSource: null,
     scheduleId: null,
+    // A listed script now carries how its last run went. Null here: nothing in
+    // this file is about the outcome, and a fixture that claimed one would be
+    // making a statement it does not test.
+    lastOutcome: null,
+    lastOutcomeAt: null,
+    lastExitCode: null,
     ...over,
   };
 }

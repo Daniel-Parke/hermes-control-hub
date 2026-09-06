@@ -10,7 +10,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { safeApiCall } from "@/lib/api-fetch";
-import type { ScheduleRecord, CatchUpPolicy } from "@/lib/schedules-repository";
+import type { ScheduleListItem, CatchUpPolicy } from "@/lib/schedules-repository";
 
 export interface CreateScheduleBody {
   missionId: string;
@@ -21,8 +21,10 @@ export interface CreateScheduleBody {
   profileName?: string | null;
 }
 
-async function fetchSchedules(): Promise<ScheduleRecord[]> {
-  const res = await safeApiCall<{ data?: { schedules: ScheduleRecord[] } }>("/api/schedules");
+// ScheduleListItem, not ScheduleRecord: the list read resolves the mission's
+// name so a row can say what it fires (T-0114).
+async function fetchSchedules(): Promise<ScheduleListItem[]> {
+  const res = await safeApiCall<{ data?: { schedules: ScheduleListItem[] } }>("/api/schedules");
   if (!res.ok) throw new Error(res.error ?? "Failed to load schedules");
   return res.data?.data?.schedules ?? [];
 }

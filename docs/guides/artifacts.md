@@ -76,8 +76,11 @@ concluding the list is empty.
 ## Notes
 
 Capture is automatic. A Deep Research run saves its report when it finishes, a
-[Composer](./composer.md) run saves the output of its final stage, and a
-[mission](./missions.md) saves its output when it completes. A run you cancelled
+[Composer](./composer.md) run saves the output of the last stage that produced
+work rather than judged it, and a [mission](./missions.md) saves its output when
+it completes. A workflow that ends on a review therefore files the piece and not
+the review of it, and the artifact is named after the stage that wrote it,
+followed by the objective the run was given. A run you cancelled
 and a run that crashed leave nothing behind, on the grounds that half a report is
 not a deliverable. One case does file something despite failing: a Deep Research
 run whose search provider was down for every attempt is recorded as failed and

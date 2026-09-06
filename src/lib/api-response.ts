@@ -95,7 +95,7 @@ export function conflict(error: string): NextResponse {
  * DELETE on a resource where it isn't supported). The error message
  * should explain WHY the verb isn't supported, not just "method not
  * allowed" — e.g. "Tool registry mutations are disabled. Configure
- * Hermes runtime toolsets on Operations → Tools." Sibling of the rest
+ * Hermes runtime toolsets on Agent → Tools." Sibling of the rest
  * of the factory set — same body shape, different status code.
  *
  * (Previously inline at 3 sites; promoted in session 76 when the

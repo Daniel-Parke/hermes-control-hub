@@ -17,7 +17,7 @@ import type { RunStatus } from "@/lib/runtime/types";
 import { isFeatureEnabled } from "@/lib/feature-flags";
 import { checkUnattendedSpend } from "@/lib/spend/spend-guard";
 import { getResearchRunByComposerNodeRunId } from "@/lib/laboratory/deep-research/research-repository";
-import { parseVerdict } from "./verdict";
+import { isAssessingKind, parseVerdict } from "./verdict";
 import { dispatchComposerNode } from "./dispatch";
 import {
   getComposerRun,
@@ -282,23 +282,58 @@ function describeStageFailure(node: ComposerNode, nodeRun: ComposerNodeRun, cond
   return `${node.label} ${verb} and the workflow has no recovery path from here.`;
 }
 
-/** Capture a completed top-level Composer run's final stage output as an
- *  artifact (idempotent; best-effort). Nested sub-workflow runs are skipped —
+/**
+ * The stage-run whose output IS the run's deliverable.
+ *
+ * Not simply the stage that routed to the end. A workflow may END on its
+ * reviewer (the seeded "Draft and review" does), and that stage's output is a
+ * critique of the deliverable rather than the deliverable, so filing it as the
+ * run's output filed the commentary and left the draft filed nowhere. The
+ * deliverable is the last completed stage that produced work rather than judged
+ * it, and `isAssessingKind` is already the product's word for the ones that
+ * judge.
+ *
+ * Falls back to the routing stage, so a run made entirely of assessing stages
+ * still files what it produced rather than nothing.
+ */
+function deliverableNodeRun(composerRunId: string, fromNodeRun: ComposerNodeRun): ComposerNodeRun {
+  const produced = listNodeRuns(composerRunId).filter(
+    (nr) =>
+      nr.status === "completed" &&
+      (nr.output ?? "").trim().length > 0 &&
+      !isAssessingKind(getNode(nr.nodeId)?.kind ?? ""),
+  );
+  if (produced.length === 0) return fromNodeRun;
+  // Latest by completion, the array's own order breaking a tie, because two
+  // stages of one run can be written within the same millisecond.
+  return produced.reduce((a, b) =>
+    (b.completedAt ?? b.createdAt) >= (a.completedAt ?? a.createdAt) ? b : a,
+  );
+}
+
+/** Capture a completed top-level Composer run's deliverable as an artifact
+ *  (idempotent; best-effort). Nested sub-workflow runs are skipped, because
  *  the parent run's deliverable is the one users care about. */
 function captureComposerArtifact(composerRunId: string, fromNodeRun: ComposerNodeRun): void {
   try {
-    const output = fromNodeRun.output;
-    if (!output || output.trim().length === 0) return;
     const run = getComposerRun(composerRunId);
     if (!run || run.parentNodeRunId) return;
+    const source = deliverableNodeRun(composerRunId, fromNodeRun);
+    const output = source.output;
+    if (!output || output.trim().length === 0) return;
+    const stage = getNode(source.nodeId)?.label ?? "Stage";
     const title =
       (run.input ?? "").split("\n").map((l) => l.trim()).find((l) => l.length > 0) ?? "Composer result";
+    // The artifacts list shows the NAME and never the description, so the name
+    // is where the honesty has to live: it says which stage's output this is,
+    // instead of the objective alone implying it is the finished article.
+    const name = `${stage}: ${title}`;
     captureArtifactOnce({
       sourceKind: "composer",
       sourceRunId: composerRunId,
-      sourceNodeId: fromNodeRun.id,
-      name: title.length > 80 ? `${title.slice(0, 80)}…` : title,
-      description: "Composer run output",
+      sourceNodeId: source.id,
+      name: name.length > 80 ? `${name.slice(0, 80)}…` : name,
+      description: `Output of the "${stage}" stage`,
       mimeType: "text/markdown",
       content: output,
       tags: ["composer"],
@@ -449,14 +484,22 @@ export async function advanceComposerRun(composerRunId: string): Promise<void> {
     return;
   }
 
-  // A stage that FAILED is not eligible for approval. The gate branch used to run
-  // first, so `resolveNext` saw an approval and routed `on_approve` — meaning a
-  // human clicking Accept on a crashed stage could carry the run to "completed"
-  // with no artifact behind it. A failed stage routes on_fail whatever the gate
-  // says; there is nothing for a human to approve.
-  const stageFailed = current.status === "failed" || current.verdict?.pass === false;
+  // A stage whose own RUN crashed is not eligible for approval. The gate branch
+  // used to run first, so `resolveNext` saw an approval and routed `on_approve`,
+  // meaning a human clicking Accept on a crashed stage could carry the run to
+  // "completed" with no artifact behind it. A crashed stage routes on_fail
+  // whatever the gate says; there is nothing for a human to approve.
+  //
+  // A FAIL VERDICT is not that, and used to be counted here as though it were.
+  // The stage ran, produced its output, and a reviewing model wrote a judgement
+  // on it, which is precisely the judgement a stage badged HIL promises a
+  // person gets to overrule. Counting it as a failure let the model end the run
+  // before anyone was asked, on a gate whose only edges are on_approve and
+  // on_reject (the seeded "Check the findings"), so the badge promised a
+  // decision the code never put to anybody.
+  const stageCrashed = current.status === "failed";
 
-  if (node.gate === "hil" && !stageFailed) {
+  if (node.gate === "hil" && !stageCrashed) {
     const approval = approvalSince(composerRunId, node.id, current.completedAt ?? current.createdAt);
     if (!approval) {
       updateComposerRun(composerRunId, { status: "awaiting_approval" });

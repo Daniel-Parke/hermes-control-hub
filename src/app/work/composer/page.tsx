@@ -444,8 +444,14 @@ export default function ComposerPage() {
                         onSubmit={(answer) => void submitClarification(answer)}
                       />
                     ) : (
+                      // The stage being decided on goes to the panel with the
+                      // decision: its output and its verdict are the evidence,
+                      // and the sheet that used to be the only place to read
+                      // them covers this panel when it opens.
                       <ComposerGatePrompt
                         nodeLabel={graph.nodes.find((n) => n.id === run.currentNodeId)?.label ?? "stage"}
+                        output={latestNodeRun(run.currentNodeId)?.output ?? null}
+                        verdict={latestNodeRun(run.currentNodeId)?.verdict ?? null}
                         busy={gateBusy}
                         onAction={decideGate}
                       />

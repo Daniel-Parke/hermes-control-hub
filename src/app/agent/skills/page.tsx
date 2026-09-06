@@ -53,11 +53,14 @@ import {
 } from "@/lib/skills-page-helpers";
 import { pluralise } from "@/lib/utils";
 import type { Skill, SkillsData } from "@/types/console";
+import { useSelectedProfile } from "@/hooks/useSelectedProfile";
 
 export default function SkillsPage() {
   const [data, setData] = useState<SkillsData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [selectedProfile, setSelectedProfile] = useState("default");
+  // Shared with Agents and Tools, so a profile chosen on one of them is the
+  // profile whose skills this page turns on and off (T-0113).
+  const [selectedProfile, setSelectedProfile] = useSelectedProfile();
 
   // ── View state ─────────────────────────────────────────────────────────────
   //

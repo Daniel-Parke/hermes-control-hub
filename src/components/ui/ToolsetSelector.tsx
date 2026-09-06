@@ -112,7 +112,7 @@ export default function ToolsetSelector({
               </div>
             ) : available.length === 0 ? (
               <p className="text-xs text-ps-text-muted px-2 py-3">
-                No toolsets on this profile. Configure on Operations → Tools.
+                No toolsets on this profile. Configure on Agent → Tools.
               </p>
             ) : filtered.length === 0 ? (
               <p className="text-xs text-ps-text-muted px-2 py-3">No matches</p>

@@ -5,6 +5,7 @@ import { z } from "zod";
 
 import { getAgentWorkspace } from "@/lib/runtime/workspace";
 import { writeHermesConfigFile } from "@/modules/hermes/lib/hermes-config-write";
+import { profileOfHermesHome } from "@/modules/hermes/lib/profile-paths";
 import { loadHermesConfigFromString } from "@/modules/hermes/lib/hermes-config-read";
 import { toError } from "@/lib/api-fetch";
 import { logApiError, serverErrorFromCatch } from "@/lib/api-logger";
@@ -67,7 +68,12 @@ export async function GET(_request: NextRequest) {
     // repaired the YAML would face a dead Save for a minute, and one who has
     // just broken it would get a live Save.
     const { config, error: configError } = readCachedConfigResult();
-    return ok(maskConfigSecrets(config), configError ? { configError } : undefined);
+    // WHOSE config.yaml this is. The Settings screens edit one file and the
+    // rest of the Agent section is scoped to the profile in the picker, so the
+    // screens name their subject rather than leaving the operator to assume it
+    // is the one they chose two screens ago (T-0113).
+    const subject = profileOfHermesHome(getAgentWorkspace().root);
+    return ok(maskConfigSecrets(config), configError ? { configError, subject } : { subject });
   } catch (error) {
     return serverErrorFromCatch(
       "GET /api/config",

@@ -51,7 +51,7 @@ it:
 | Label | Written when |
 |---|---|
 | `manual` | You pressed the button |
-| `pre-restore` | Before a restore on Settings > Restore overwrites rows |
+| `pre-restore` | Before a restore on Agent > Settings > Restore overwrites rows |
 | `pre-clean` | Before a purge of throwaway test data |
 | `pre-migrate` | By the deploy path, before a schema migration |
 | `pre-baseline` | Before a database too old to upgrade in place is rebuilt |
@@ -77,7 +77,7 @@ file. And the `-wal` and `-shm` sidecars have to go, because a stale write-ahead
 log left beside a restored database is replayed onto it, which quietly undoes
 part of the restore you just performed.
 
-**Settings > Restore is a different thing.** It puts back what PatterStage
+**Agent > Settings > Restore is a different thing.** It puts back what PatterStage
 ships: the seeded profiles, mission templates, categories and catalogue entries.
 It does not read your backups. It does take a `pre-restore` snapshot before any
 overwrite, and refuses to proceed if it cannot take one.

@@ -117,8 +117,26 @@ export default function ScriptsPage() {
     (s: ScriptFile) => {
       run.mutate(s.name, {
         onSuccess: (res) => {
-          const ok = res.ok && res.data?.data?.ok !== false;
-          showToast(ok ? `Ran ${s.name}` : `${s.name} exited non-zero — check Logs`, ok ? "success" : "error");
+          // Three answers, not two. A script the host could not start has no
+          // exit code and wrote nothing to its log, so the old sentence
+          // ("exited non-zero, check Logs") sent the operator to an empty file
+          // for a run that never happened. That case answers non-2xx now, and
+          // the server's message is the reason.
+          if (!res.ok) {
+            showToast(res.error ?? `Could not run ${s.name}`, "error");
+            return;
+          }
+          if (res.data?.data?.outcome === "succeeded") {
+            showToast(`Ran ${s.name}`, "success");
+            return;
+          }
+          const code = res.data?.data?.exitCode;
+          showToast(
+            typeof code === "number"
+              ? `${s.name} failed with exit code ${code}. Check Logs.`
+              : `${s.name} failed. Check Logs.`,
+            "error",
+          );
         },
         onError: () => showToast(`Failed to run ${s.name}`, "error"),
       });

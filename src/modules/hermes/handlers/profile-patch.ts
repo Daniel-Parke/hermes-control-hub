@@ -164,7 +164,10 @@ export function toPatchResponse(
       ...result,
       error:
         `Saved to PatterStage, but the push to Hermes did not complete: ${reason}. ` +
-        `Your change is not lost — retry the push from Operations → Agents.`,
+        // The section is Agent and the screen is Agents, both from the registry.
+        // This said "Operations → Agents", a section this product has never had,
+        // and it said it in the one sentence an operator reads mid-failure.
+        `Your change is not lost. Retry the push from Agent → Agents.`,
     },
     fallbackError,
   );

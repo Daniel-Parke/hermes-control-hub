@@ -37,9 +37,12 @@ import ToolsInsights from "@/modules/hermes/components/ToolsInsights";
 import { Panel } from "@/components/dashboard/Panel";
 import ToolsetReferenceTable from "@/components/tools/ToolsetReferenceTable";
 import ConceptHint from "@/components/help/ConceptHint";
+import { useSelectedProfile } from "@/hooks/useSelectedProfile";
 
 export default function ToolsPage() {
-  const [selectedProfile, setSelectedProfile] = useState("default");
+  // Shared with Agents and Skills. Three pickers in three useStates meant three
+  // subjects for one word (T-0113).
+  const [selectedProfile, setSelectedProfile] = useSelectedProfile();
   const [toolsetsJson, setToolsetsJson] = useState("{}");
   const [toolsetsSource, setToolsetsSource] = useState<string | null>(null);
   const [loadingToolsets, setLoadingToolsets] = useState(true);
@@ -234,7 +237,11 @@ export default function ToolsPage() {
     });
   };
 
-  const enabledCount = unifiedEnabled.length;
+  // What the profile HAS, which is what the last read returned. The counters
+  // used to report `unifiedEnabled`, the pending choice, so a toggle moved the
+  // header and the Enabled tile before anything was written and the screen
+  // described a state the agent had never been given (T-0113).
+  const enabledCount = loadedEnabled.length;
 
   const listsDiffer =
     unifiedEnabled.length !== loadedEnabled.length ||
@@ -275,11 +282,22 @@ export default function ToolsPage() {
         subtitle={
           loadingToolsets
             ? "Loading profile toolsets…"
-            : `${enabledCount} toolset${pluralise(enabledCount)} enabled for selected profile`
+            : `${enabledCount} toolset${pluralise(enabledCount)} enabled for the selected profile${
+                toolsetsDirty ? ", and you have changes that are not saved yet" : ""
+              }`
         }
         color="orange"
         actions={
           <div className="flex items-center gap-2 flex-wrap justify-end">
+            {/* The page has always known this: `toolsetsDirty` guarded a profile
+                switch and was rendered nowhere, so the only way to learn that
+                the grid was ahead of the profile was to try to leave. */}
+            {toolsetsDirty && !loadingToolsets && (
+              <span className="text-xs font-mono text-semantic-warning flex items-center gap-1">
+                <Info className="w-3 h-3" />
+                Unsaved changes
+              </span>
+            )}
             <Button
               variant="ghost"
               size="sm"

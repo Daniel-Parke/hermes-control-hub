@@ -260,6 +260,59 @@ export function topEntities(eventType: AnalyticsEventType, limit = 5): TopEntity
   );
 }
 
+export interface LatestEntityEvent {
+  entityId: string;
+  eventType: string;
+  /** An ISO instant, not the raw column. See `isoFromSqliteUtc` below. */
+  createdAt: string;
+  metadataJson: string | null;
+}
+
+/**
+ * `datetime('now')` writes "2026-09-06 01:00:00": UTC, a space, no zone marker.
+ * `new Date()` reads a string in that shape as LOCAL time, so on a machine an
+ * hour ahead of UTC the row lands in the future and every "how long ago" reader
+ * in the app answers "never". Every row this table holds took the column
+ * DEFAULT (insertEvent passes no created_at), so the shape is known.
+ */
+function isoFromSqliteUtc(value: string): string {
+  return /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(value) ? `${value.replace(" ", "T")}Z` : value;
+}
+
+/**
+ * The most recent event of the given types, one row per entity_id.
+ *
+ * The Scripts page reads this to answer "did last night's backup work?" from
+ * the ledger that already records it, rather than from a second store of its
+ * own. Bare columns beside a lone `max()` take their values from the row that
+ * produced the maximum: that is documented SQLite behaviour for min/max, and it
+ * is what makes each row here the LATEST event rather than a mixture of one
+ * entity's newest timestamp and its oldest payload.
+ */
+export function latestEventPerEntity(
+  entityType: AnalyticsEntityType,
+  eventTypes: readonly AnalyticsEventType[],
+): LatestEntityEvent[] {
+  if (eventTypes.length === 0) return [];
+  return safeRead(() => {
+    const placeholders = eventTypes.map(() => "?").join(", ");
+    const rows = getDb()
+      .prepare(
+        `SELECT entity_id AS id, event_type AS type, metadata_json AS meta, MAX(created_at) AS at
+         FROM analytics_events
+         WHERE entity_type = ? AND entity_id IS NOT NULL AND event_type IN (${placeholders})
+         GROUP BY entity_id`,
+      )
+      .all(entityType, ...eventTypes) as { id: string; type: string; meta: string | null; at: string }[];
+    return rows.map((r) => ({
+      entityId: r.id,
+      eventType: r.type,
+      createdAt: isoFromSqliteUtc(r.at),
+      metadataJson: r.meta,
+    }));
+  }, []);
+}
+
 /** Distinct profiles seen (optionally for one event type) — feeds breadth achievements. */
 export function distinctProfileCount(eventType?: AnalyticsEventType): number {
   return safeRead(() => {

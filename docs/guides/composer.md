@@ -76,7 +76,8 @@ gate decisions taken at it, any error, and its raw output with a **Save as
 artifact** button.
 
 While the run is waiting, a small panel appears in the top right corner of the
-board. If a [gate](../concepts/gate.md) is open it names the stage and offers a
+board. If a [gate](../concepts/gate.md) is open it names the stage, shows what
+that stage produced, shows the verdict it reached if it reached one, and offers a
 note box with **Accept** and **Reject**. If a stage stopped to ask you something
 instead, the panel shows the question, an answer box and **Submit answer**.
 
@@ -124,8 +125,9 @@ followed by an outcome word of your own.
 
 1. When the run reaches **Check the findings** it stops. Its row in **Runs** says
    it is waiting at a gate, and the stage on the board carries the **HIL** badge.
-2. A panel appears in the corner of the board. Type a note saying what you want
-   changed, or why you are happy.
+2. A panel appears in the corner of the board carrying what the stage produced,
+   so you can read the work where you are being asked about it. Type a note
+   saying what you want changed, or why you are happy.
 3. **Accept** sends the work on to the next stage. **Reject** sends it back along
    the route marked for a rejection, which in this workflow is back to Research,
    and your note travels with it into the stage being redone.
@@ -166,6 +168,12 @@ the summary. *Draft and review* drafts the piece and then reviews it against the
 brief, looping back to the draft until the review passes. *Software Delivery* is
 sixteen stages of engineering pipeline, which is a fine third workflow and an
 intimidating first one.
+
+**A gate is your decision, not the model's.** A stage can both reach a verdict
+and be a gate. A verdict of fail there does not end the run: the panel shows the
+fail and its reasons next to the work, and the run goes wherever you send it. A
+stage that failed outright is not the same thing. It produced nothing to judge,
+so it takes its failure route, or stops the run if the workflow has none.
 
 **Loops are bounded.** A workflow can send failed work backwards, so a run could
 in principle circle for ever. It cannot: one stage runs at most five times, and

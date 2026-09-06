@@ -69,7 +69,7 @@ The timer lives in PatterStage, not the agent.
 - The tick (`scheduler/tick.ts`) selects due rows, claims each occurrence with a deterministic run id (PK guard → exactly-once under double-tick), dispatches via the runtime, and advances `next_run_at` using the dependency-free cron/interval math in `src/lib/schedule/next-run.ts`.
 - Restart-safe: due work is recomputed from `next_run_at`, never an in-memory timer.
 
-Manage via `/api/schedules` or **Orchestration → Schedules**.
+Manage via `/api/schedules` or the Schedules section on **Work → Missions**.
 
 ## Data model
 

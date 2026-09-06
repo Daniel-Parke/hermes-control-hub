@@ -30,8 +30,8 @@ weaker guarantee is met before it is relied on.
 
 ## Where you meet it
 
-In the scheduled missions section of [Missions](../guides/missions.md), and on
-the [Scripts](../guides/scripts.md) page for host scripts.
+In the schedules section of [Missions](../guides/missions.md), and on the
+[Scripts](../guides/scripts.md) page for host scripts.
 
 ## The idea behind it
 

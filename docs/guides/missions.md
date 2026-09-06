@@ -67,11 +67,15 @@ mission has produced one), Edit (Edit draft on a draft, Re-dispatch on a finishe
 mission), Cancel or Remove from queue while it is still live, and a bin icon.
 Cancel and delete both ask a second time before they act.
 
-**Scheduled missions.** The section at the bottom of the page, listing every
-recurring mission with how many are active and how many paused.
-**Schedule a mission** opens a short form that puts an existing saved mission on
-a timer. Each row shows the cadence, when it runs next, its last result, and
-Pause or Resume, Run, and delete.
+**Schedules.** The section at the bottom of the page, listing everything on
+PatterStage's own timer with how many are active and how many paused. A row
+says whether it runs a mission or a script and names the one it runs, then the
+cadence, when it runs next, its last result, and Pause or Resume and delete.
+Mission rows also carry Run, which fires that mission once without waiting for
+its next turn; script rows do not, because running a script by hand belongs on
+the Scripts page beside its output. **Schedule a mission** opens a short form that puts an existing saved
+mission on a timer. Script rows arrive here from the
+[Scripts](scripts.md) page, on a machine with no host scheduler of its own.
 
 **The composer.** A panel that slides in from the right, titled New Mission,
 Edit Mission, or Re-Dispatch with the mission's name. At the top: Category,
@@ -118,8 +122,10 @@ mode. Hovering says which of the three is missing.
 1. Write the mission, or open a draft you saved earlier.
 2. In **Dispatch**, choose **Schedule** and pick a cadence. The picker shows the
    next three times it would fire, so you can check it before committing.
-3. Click **Schedule mission**. The first run starts immediately, and the
-   schedule appears in **Scheduled missions** at the foot of the page.
+3. Click **Schedule mission**. Nothing runs yet: the schedule appears in
+   **Schedules** at the foot of the page, and the first run happens at the next
+   time on the cadence. The mission itself waits in **Draft** until then, with
+   its cadence and next run in its panel.
 4. From that list you can pause it, resume it, fire it once by hand with
    **Run**, or delete it. Deleting the schedule leaves the mission itself alone.
 

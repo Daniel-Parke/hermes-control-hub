@@ -83,7 +83,10 @@ async function renderLoaded() {
   // The list first (the spinner is gone), then the auto-selection (the detail
   // column is up). "Select a profile" is absent during loading too, so waiting
   // only for that waits for nothing.
-  await screen.findByText(/Bob/);
+  // findAllBy, not findBy: the list and the detail column now render the name
+  // in the same commit, because the selection no longer arrives a render late
+  // (T-0113). Two matches is the page working, not an ambiguity.
+  await screen.findAllByText(/Bob/);
   await waitFor(() => expect(screen.queryByText("Select a profile")).toBeNull());
 }
 

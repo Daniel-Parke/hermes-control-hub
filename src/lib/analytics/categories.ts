@@ -48,6 +48,7 @@ const TYPE_TO_KEY: Record<AnalyticsEventType, string> = {
   "schedule.fired": "automation",
   "script.saved": "automation",
   "script.run": "automation",
+  "script.run_not_started": "automation",
   "script.scheduled": "automation",
   "skill.toggled": "config",
   "personality.changed": "config",

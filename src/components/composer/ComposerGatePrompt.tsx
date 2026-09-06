@@ -5,6 +5,13 @@
 // older Review / Add-feature buttons were removed: they were recorded but never
 // routed (Review behaved like Reject, Add-feature like Accept), so their effect
 // was ambiguous. The note is persisted on the approval.
+//
+// The panel also shows the work: the stage's output and the verdict a reviewing
+// stage reached on it. It used to take a label and nothing else, so the one
+// question the product stops everything to ask was asked with nothing on screen
+// to answer it by. The evidence was in the stage sheet, which is a modal dialog
+// with a full-viewport backdrop, and opening it covers this panel, so reading the
+// work and deciding on it could not be done at the same time.
 // ═══════════════════════════════════════════════════════════════
 
 "use client";
@@ -13,20 +20,32 @@ import { useState } from "react";
 import { ShieldQuestion } from "lucide-react";
 
 import ConceptHint from "@/components/help/ConceptHint";
+import type { NodeVerdict } from "@/lib/composer/schema";
 
 export type GateDecision = "accept" | "reject";
 
+function Label({ children }: { children: React.ReactNode }) {
+  return <h3 className="text-xs font-mono uppercase tracking-widest text-ps-text-muted">{children}</h3>;
+}
+
 export default function ComposerGatePrompt({
   nodeLabel,
+  output,
+  verdict,
   busy,
   onAction,
 }: {
   nodeLabel: string;
+  /** What the stage being decided on produced. */
+  output?: string | null;
+  /** The verdict that stage reached, when it is a kind that reaches one. */
+  verdict?: NodeVerdict | null;
   busy?: boolean;
   onAction: (action: GateDecision, note?: string) => void;
 }) {
   const [note, setNote] = useState("");
   const decide = (action: GateDecision) => onAction(action, note.trim() || undefined);
+  const body = (output ?? "").trim();
 
   return (
     <div className="space-y-2 rounded-lg border border-neon-yellow/30 bg-neon-yellow/[0.08] px-3 py-2.5">
@@ -39,6 +58,40 @@ export default function ComposerGatePrompt({
           <span className="font-mono text-neon-yellow">{nodeLabel}</span> — your call:
         </span>
       </div>
+
+      {/* A stage may reach a verdict and still be a gate: the model advises,
+          the person decides. A FAIL here is the reviewer's opinion, not the end
+          of the run, so it is shown rather than acted on. */}
+      {verdict ? (
+        <div className="space-y-1">
+          <Label>Verdict</Label>
+          <span className={`font-mono text-xs ${verdict.pass ? "text-neon-green" : "text-neon-pink"}`}>
+            {verdict.pass ? "PASS" : "FAIL"}
+          </span>
+          {verdict.reasons.length > 0 ? (
+            <ul className="space-y-1 text-xs text-ps-text-secondary">
+              {verdict.reasons.map((r, i) => (
+                <li key={i} className="flex gap-1.5">
+                  <span className="text-ps-text-faint">•</span>
+                  <span>{r}</span>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+        </div>
+      ) : null}
+
+      <div className="space-y-1">
+        <Label>What this stage produced</Label>
+        {body ? (
+          <pre className="max-h-44 overflow-auto whitespace-pre-wrap break-words rounded border border-white/10 bg-dark-950/60 px-2 py-1.5 text-xs leading-relaxed text-ps-text-secondary">
+            {body}
+          </pre>
+        ) : (
+          <p className="text-xs text-ps-text-muted">This stage recorded no output.</p>
+        )}
+      </div>
+
       <textarea
         value={note}
         onChange={(e) => setNote(e.target.value)}

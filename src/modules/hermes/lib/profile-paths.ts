@@ -8,6 +8,7 @@ import { basename, isAbsolute, join, relative, resolve } from "path";
 
 import { buildHermesPathBundle, normPath, type HermesPathBundle } from "@/modules/hermes/lib/paths";
 import { getHermesHome } from "@/modules/hermes/lib/home";
+import { DEFAULT_PROFILE_SLUG } from "@/lib/profile-slug";
 
 const NATIVE_HERMES_HOME = join(homedir(), ".hermes");
 
@@ -89,6 +90,21 @@ export function resolveProfileHermesHome(profileName: string): string {
   }
 
   return join(defaultRoot, "profiles", profile);
+}
+
+/**
+ * Which profile a Hermes home IS.
+ *
+ * The Settings screens name the agent whose config.yaml they are editing, and
+ * that agent is whatever the configured home holds: the root agent ordinarily,
+ * a named profile when HERMES_HOME points inside profiles/ (T-0113). Naming it
+ * mattered because the rest of the Agent section is scoped to the profile in
+ * the picker and this file is not.
+ */
+export function profileOfHermesHome(home: string): string {
+  const resolved = normPath(home || "");
+  if (!resolved) return DEFAULT_PROFILE_SLUG;
+  return isProfileHermesHome(resolved) ? basename(resolve(resolved)) : DEFAULT_PROFILE_SLUG;
 }
 
 /** Path bundle for a specific profile (or current env home for default). */

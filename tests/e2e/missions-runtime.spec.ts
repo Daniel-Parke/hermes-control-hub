@@ -13,7 +13,7 @@ import { test, expect } from "@playwright/test";
 // cadence they chose, pause it, reload to prove it survived the round trip to
 // the database, and remove it again. Every affordance the old file asserted is
 // still touched on the way through: the Missions heading, the New Mission
-// button, the Scheduled missions section, the "every 30m" preset, the Create
+// button, the Schedules section, the "every 30m" preset, the Create
 // schedule button, the Scripts page and its sidebar link, so nothing it
 // covered was traded away for the conversion.
 //
@@ -51,7 +51,9 @@ test.describe("Scheduling a mission", () => {
 
     const scheduled = page
       .locator("section")
-      .filter({ has: page.getByRole("heading", { name: "Scheduled missions", exact: true }) });
+      // "Schedules", since the section lists script rows as well as mission
+      // ones and the heading stopped naming only one of them (T-0114).
+      .filter({ has: page.getByRole("heading", { name: "Schedules", exact: true }) });
     await expect(scheduled).toBeVisible();
 
     // ── Open the create form ────────────────────────────────────────────────

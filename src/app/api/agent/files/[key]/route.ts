@@ -60,6 +60,7 @@ function buildFileResponse(
   resolved: { path: string; name: string; description: string },
   key: string,
   variant: FileResponseVariant,
+  profile: string,
 ) {
   const data: {
     key: string;
@@ -68,6 +69,8 @@ function buildFileResponse(
     description: string;
     exists: boolean;
     size: number;
+    /** Whose file this is. The Settings editors name the agent they write to (T-0113). */
+    profile: string;
     lastModified?: string;
   } = {
     key,
@@ -76,6 +79,7 @@ function buildFileResponse(
     description: resolved.description,
     exists: variant.exists,
     size: variant.size,
+    profile,
   };
   if (variant.lastModified !== undefined) {
     data.lastModified = variant.lastModified;
@@ -158,24 +162,29 @@ export async function GET(
       const stored = readManagedFileContent(profileSlug, key as ManagedFileKey);
       if (stored) {
         return ok(
-          buildFileResponse(resolved, key, {
-            content: stored.content,
-            size: stored.content.length,
-            exists: stored.content.length > 0,
-            lastModified: stored.updatedAt,
-          }),
+          buildFileResponse(
+            resolved,
+            key,
+            {
+              content: stored.content,
+              size: stored.content.length,
+              exists: stored.content.length > 0,
+              lastModified: stored.updatedAt,
+            },
+            profileSlug,
+          ),
         );
       }
     }
 
     if (!existsSync(resolved.path)) {
       return ok(
-        buildFileResponse(resolved, key, {
-          content: "",
-          size: 0,
-          exists: false,
-          lastModified: undefined,
-        }),
+        buildFileResponse(
+          resolved,
+          key,
+          { content: "", size: 0, exists: false, lastModified: undefined },
+          profileSlug,
+        ),
       );
     }
 
@@ -187,12 +196,12 @@ export async function GET(
     // File confirmed to exist above; safeStat never null.
     const stats = safeStat(resolved.path)!;
     return ok(
-      buildFileResponse(resolved, key, {
-        content,
-        size: stats.size,
-        exists: true,
-        lastModified: stats.mtime,
-      }),
+      buildFileResponse(
+        resolved,
+        key,
+        { content, size: stats.size, exists: true, lastModified: stats.mtime },
+        profileSlug,
+      ),
     );
   }
   catch (error) {
