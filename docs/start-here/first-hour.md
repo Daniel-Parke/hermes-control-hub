@@ -24,9 +24,72 @@ Install it on the same machine from the
 and run `hermes setup` if it asks you to. The bootstrap installer offers to do
 this for you.
 
-If the agent lives on another box instead, that works too: point
-`HERMES_GATEWAY_URL` at its API server and make sure `API_SERVER_KEY` matches on
-both sides. PatterStage treats a reachable gateway as a usable agent.
+Then give the agent a model to think with, if `hermes setup` did not:
+
+```bash
+hermes model
+```
+
+`hermes status` should now show a model and a provider. Until it does, nothing
+you dispatch can succeed.
+
+## 1b. Switch on the agent's API server
+
+PatterStage talks to Hermes over an HTTP API that the agent serves on port
+`8642`. Hermes ships it switched off, and it refuses to start without a shared
+key even when it only listens on your own machine.
+
+**If you installed with `install.sh`, this is already done.** Setup generates the
+key, switches the API server on in the agent's environment file, and writes the
+same key into PatterStage's `.env.local`. Skip to running the gateway below.
+
+Do it by hand only when the installer has not: when you installed Hermes
+separately, or you are running PatterStage from a checkout. Add both lines to the
+agent's environment file, `~/.hermes/.env` (on Windows,
+`%LOCALAPPDATA%\hermes\.env`):
+
+```bash
+API_SERVER_ENABLED=true
+API_SERVER_KEY=<any long random string you invent>
+```
+
+Do not do this if setup already ran: you would invent a second key, the two sides
+would disagree, and the Gateway row would tell you the agent rejects your key.
+Look in the agent's `.env` first, and reuse what is there.
+
+Then run the gateway, which is what hosts that API:
+
+```bash
+hermes gateway run
+```
+
+Check it from another terminal. This should answer, and answer 401 without the
+key, which is the point of the key:
+
+```bash
+curl -H "Authorization: Bearer <your key>" http://127.0.0.1:8642/health
+```
+
+If you set the key by hand, tell PatterStage the same one in its own
+`.env.local` (setup does this for you):
+
+```bash
+API_SERVER_KEY=<the same string>
+```
+
+`API_SERVER_KEY` is a shared secret between the two programs on your machine. It
+is not a provider API key, it costs nothing, and you invent it yourself. It is
+also not PatterStage's own sign-in token, which is a separate thing you will meet
+in the next step.
+
+If the agent lives on another box instead, the same applies with one addition:
+point `HERMES_GATEWAY_URL` at that machine's API server. PatterStage treats a
+reachable gateway as a usable agent.
+
+**If the Subsystems panel says the gateway is unreachable**, work down this list:
+`hermes gateway run` is not running; `API_SERVER_ENABLED` is not set in the
+agent's `.env`; the two `API_SERVER_KEY` values do not match; or something else
+holds port 8642.
 
 ## 2. Start PatterStage and open the link it prints
 
