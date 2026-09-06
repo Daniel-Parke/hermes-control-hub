@@ -126,16 +126,17 @@ labelled optional and say so.
 3. Each change is confirmed by a message naming the slot. A model that is the
    default for something picks up a badge in the Default For column of the
    table.
-4. To clear a slot, set its picker back to the dash. The choice is removed from
-   the agent's configuration as well, so it stops running the model you have
-   taken away.
+4. To clear a slot, set its picker back to ", none, " (the Default Model picker
+   above reads ", None, "). The choice is removed from the agent's configuration
+   as well, so it stops running the model you have taken away.
 
 ### Replace a key that has expired
 
 1. In **Credentials**, find the row and click **Rotate key**.
 2. Paste the new key into the box and click **Save new key**. The message
-   confirms the new hint, and says whether the agent's own copy of the key moved
-   with it.
+   confirms the new hint, and adds a note when the agent's own copy of the key
+   moved with it. A provider that signs in through the agent's command line has
+   no copy to move, so no note appears.
 3. Every model pointing at that credential keeps pointing at it. This is why
    rotating is worth doing rather than deleting the credential and adding it
    again, which would leave those models with no key at all.
@@ -185,9 +186,10 @@ labelled optional and say so.
   provider still needs it. Deleting a model is the same two clicks.
 - A model is called directly when it has both a base URL and a key. Otherwise
   the call goes through the agent's own gateway. This is what the Protocol
-  column is about, and `auto` is the normal reading for a model you added here:
-  the wire format is worked out from the provider and base URL when the call is
-  made.
+  column is about. `auto` is what an imported model reads, because the import
+  leaves the protocol unrecorded and it is worked out from the provider and base
+  URL when the call is made. A model you add here is given one at the moment you
+  create it, so it reads `anthropic` or `openai`.
 - The fallback chain saves as you go. Adding, reordering, enabling and deleting
   each take effect immediately and are mirrored to the agent as they happen; the
   three settings save themselves shortly after you stop changing them.

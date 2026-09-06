@@ -158,9 +158,12 @@ the session was not found.
 
 **Nothing here changes anything.** The page reads; it does not delete, edit or
 re-run. There is no cost to opening a transcript, because nothing is sent to a
-[model](../concepts/model.md) to show it. Sessions are stored in the PatterStage
-database, so they travel with a [backup](../running/backup.md) and come back with
-a restore.
+[model](../concepts/model.md) to show it. The session list is stored in the
+PatterStage database, so it travels with a [backup](../running/backup.md) and
+comes back with a restore. The transcripts themselves are read from the agent's
+own home, or from mission output files sitting beside the database, and a
+snapshot covers neither, so a restore brings the list back rather than the text.
+The backup guide sets out the three stores and which one it takes.
 
 Related reading: [session](../concepts/session.md) and
 [transcript](../concepts/transcript.md) for the two ideas behind this screen,

@@ -29,17 +29,19 @@ opened the tab. It is arranged top to bottom, health first, then work.
 a standard install, with the words "Agent Framework" beside it. Under the name,
 the model that agent will use. If a model has been chosen in Models but not yet
 written to the agent, the line says so. On the right, a badge reading ONLINE,
-REMOTE or NOT INSTALLED, which reports what the last check actually found
-rather than assuming an agent is there, and a **?** that opens the guide for
-whichever screen you are on.
+REMOTE or NOT INSTALLED, which reports NOT INSTALLED or REMOTE when the check
+says the agent is absent; until a check has said so, including while the board
+is still loading, the badge reads ONLINE. Beside it, a **?** that opens the
+guide for whichever screen you are on.
 
 **Start here.** A card with one thing to do next, and only one. It names the
 chapter it comes from, the quest, a sentence saying what to do, and a **Go**
 button that takes you to the screen where you can do it. **All quests** opens
-the full list, and **Hide this guide** puts the card away. The count on the
-right is how many of the thirty-two quests you have finished. The card does not
-appear until the health checks have answered, and it disappears once there is
-nothing left it can offer.
+the full list, and **Hide this guide** puts the card away. The pair on the
+right is how many quests you have finished out of the ones still on your list;
+skipping a quest takes it out of both halves. The card does not appear until
+the health checks have answered, and it disappears once there is nothing left
+it can offer.
 
 **Subsystems.** Five rows, each a coloured dot, a name, a state in words and
 the reason behind it: Gateway, Memory, Sync, config.yaml and Gateway gate. The
@@ -48,8 +50,8 @@ reading, because it names the address that refused a connection or the source
 whose last sync failed rather than leaving you to guess. The panel header shows
 the time of the check.
 
-**Six pills.** A row of six links, each a headline value with a smaller line of
-detail beneath it.
+**Six pills.** A row of six links, each a headline value, most with a smaller
+line of detail beneath it.
 
 - **Gateway** repeats the gateway's state and shows the address it probed. It
   reads "Checking…" until the first check comes back, and "Unknown" if the
@@ -130,8 +132,9 @@ Nothing on this board is green until it has actually been read. A pill that
 says "Checking…" has not had an answer yet, and one that says "Unknown" means
 the check failed, which is a different thing from the subsystem being down.
 The Gateway pill reports the check most recently made, so it can flicker on a
-single failed probe; the header badge and the Start here card wait for a
-settled reading before they speak.
+single failed probe; the Start here card waits for a settled reading before it
+speaks. The badge reads ONLINE until a check says otherwise, so it is showing
+ONLINE during the first load too.
 
 The charts, the mission mix over time and the trophy case used to live here and
 now live on [Insights](insights.md). This screen answers what is happening
@@ -178,8 +181,8 @@ rate of whichever model that mission runs on.
 
 The board is assembled from several reads on independent timers, so one slow
 answer does not hold up the others. `/api/monitor` every 10 seconds feeds the
-header, the Memory, Processes and Errors pills, the Platforms panel and the
-Errors panel. `/api/agents` and `/api/missions` every 15 seconds feed the
+header, the Memory and Errors pills, the Platforms panel and the Errors panel.
+`/api/agents` and `/api/missions` every 15 seconds feed the Processes pill, the
 process cards and the active missions. `/api/status/subsystems` every 15
 seconds feeds the Subsystems panel and the Gateway and Memory pills.
 `/api/spend` every 30 seconds feeds the Spend pill. `/api/stats` carries the

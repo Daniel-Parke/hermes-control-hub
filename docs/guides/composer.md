@@ -101,8 +101,9 @@ is a **HIL gate**, the **Start**, and the **End**. The start stage carries one
 more group, **Workflow input (Run form)**, which is where the objective label, the
 hint and the click-to-fill examples on the Run tab come from.
 
-Clicking a connector opens the **Route** inspector instead: its **Condition**, and
-an optional label that is drawn on the line. The conditions are listed under the
+Clicking a connector opens the **Route** inspector instead: its **Condition**,
+which is the word drawn on the line, and an optional label that is saved with the
+route but not shown on the board. The conditions are listed under the
 field: `always`, `on_pass`, `on_fail`, `on_approve`, `on_reject`, or `on_`
 followed by an outcome word of your own.
 
@@ -151,11 +152,13 @@ found", this install has it turned off, and turning it back on takes an edit to
 the environment and a restart. See the
 [environment reference](../running/env-reference.md).
 
-**Every stage is a full agent run.** A stage costs tokens and takes as long as
+**Most stages are a full agent run.** A stage costs tokens and takes as long as
 the agent takes, so a sixteen-stage workflow is sixteen of those, one after the
-other. The cost lands in your [spend](../concepts/spend.md) figures attributed to
-Composer. This is the reason to start with a three-stage workflow rather than the
-long one.
+other, and the cost lands in your [spend](../concepts/spend.md) figures attributed
+to Composer. A Research stage runs the research engine instead, and its cost is
+counted under Deep Research rather than Composer; a Group stage runs a whole
+sub-workflow, so it costs whatever that workflow costs. This is the reason to
+start with a three-stage workflow rather than the long one.
 
 **Three workflows are there on the first start.** *Research then summarise*
 researches a question, stops at a gate so you can check the findings, then writes
@@ -165,7 +168,7 @@ sixteen stages of engineering pipeline, which is a fine third workflow and an
 intimidating first one.
 
 **Loops are bounded.** A workflow can send failed work backwards, so a run could
-in principle circle for ever. It cannot: one stage re-runs at most five times, and
+in principle circle for ever. It cannot: one stage runs at most five times, and
 a run stops after a hundred stage executions in total. Either way it ends with a
 readable reason rather than by grinding on.
 
@@ -184,13 +187,14 @@ straight away and the agent is asked to stop the stage that was in flight. A run
 that has already finished, failed or been rejected refuses the cancellation and
 says why rather than pretending.
 
-**If the live connection drops.** A banner appears at the top saying live updates
-failed. The board keeps working from ordinary polling, so it stays correct, it
-just updates less promptly.
+**If the live feed reports a failure.** A banner appears at the top saying what
+went wrong. A connection that merely drops says nothing: the board falls back to
+ordinary polling, so it stays correct and updates less promptly.
 
-**The address bar remembers.** The workflow you are editing and the run you are
-watching are both written into the page address, so a reload or a shared link
-comes back to the same view.
+**The address bar remembers the run.** The workflow you are launching and the run
+you are watching are written into the page address, so a reload or a shared link
+comes back to the same run. The Build tab is not addressed: a reload returns you
+to the Run tab, and the board to a new workflow.
 
 **How this relates to its neighbours.** A [mission](missions.md) is one job,
 optionally on a timer, with no branching and no stages. Composer is for the case

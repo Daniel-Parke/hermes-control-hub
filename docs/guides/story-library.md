@@ -49,8 +49,8 @@ With no stories at all, the list is replaced by "Your bookshelf is empty" and a 
 
 1. Choose the **Completed** filter and click a story.
 2. Read it with the arrows at the foot of the page, or jump about with the chapter list.
-3. On a chapter you want changed, press **Edit**, describe what should be different, and confirm. That chapter is rewritten, and the chapters after it are written again so they still follow on.
-4. On a story that has reached its last chapter, **Continue** asks for a direction and how many more chapters you want, then plans and writes them onto the end.
+3. On a chapter you want changed, press **Edit**, describe what should be different, choose how long the chapter should be and how many chapters to regenerate, then press **Edit chapter**. That chapter is rewritten, and the chapters after it, up to the count you chose, are emptied back to unwritten. The count includes the chapter you edited, so the default of three empties the two after it. Write them again with **Write chapter N** or **Keep writing** so they still follow on.
+4. On a story whose chapters are all written and which is marked finished, **Continue** asks for a direction, how many more chapters you want, and how long they should be. It plans them and adds them to the end as chapters still to write; write them with **Write chapter N** or **Keep writing**.
 
 ### Clear a story off the shelf
 
@@ -61,9 +61,9 @@ With no stories at all, the list is replaced by "Your bookshelf is empty" and a 
 
 Reading costs nothing. Writing a chapter, editing one, or continuing a story is a call to the model that writes it, so each of those takes time and, on a paid provider, money. See [Models](./models.md) and [spend](../concepts/spend.md).
 
-The status words here are the product's single set, and they are the same words the [Story Weaver](./story-weaver.md) hub uses for the same states. The one thing to watch is the second filter: it holds everything that is not finished, so a story showing **Running** or **Failed** turns up under **Waiting for you** as well.
+The status words here are the product's single set, and they are the same words the [Story Weaver](./story-weaver.md) hub uses for the same states. The one thing to watch is the third filter: it holds everything that is not finished, so a story showing **Running** or **Failed** turns up under **Waiting for you** as well.
 
-A story counts as completed here once every one of its chapters is written, whether or not the story itself was ever marked finished. That is why the library's Completed count is sometimes one higher than the hub's.
+A story counts as completed here once every one of its chapters is written, whether or not the story itself was ever marked finished. That is why the library's Completed count is sometimes higher than the hub's.
 
 The list is read once, when you open the screen. A story being written in another tab keeps whatever status it had when this page loaded, so leave and come back to see it move on. There is no search and no sort: stories are listed newest first, by when they were created.
 

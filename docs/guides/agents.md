@@ -17,13 +17,11 @@ Every agent you can run lives on this screen: what it sounds like, the files it 
 
 ## What you see
 
-![Agents screen](../images/agents.png)
-
 The header reads **Agent Profiles**, with the number of profiles configured under it and a **New Profile** button on the right.
 
-Below it, one sentence says what a profile is: one agent, its voice, the skills it may use and the tools it may reach. A **Where a profile is stored** link folds out the file names behind that sentence if you want them.
+Directly under the header, if no agent is installed on this machine, an orange notice says so. You can still configure everything on this page, but nothing will run until the agent is installed.
 
-If no agent is installed on this machine, an orange notice sits here saying so. You can still configure everything on this page, but nothing will run until the agent is installed.
+Then one sentence says what a profile is: one agent, its voice, the skills it may use and the tools it may reach. A **Where a profile is stored** link folds out the file names behind that sentence if you want them.
 
 Then two strips that appear only when they have something to say. **Agent performance · from real activity** is one tile per agent that has actually done work, showing its runs, its mission success rate, tokens used and average run time; an agent that has not done anything yet is not listed. Under it, an orange banner appears when the console and the files on disk disagree, or when a push did not complete. It names the counts and carries a **Push all to Hermes** button.
 
@@ -76,9 +74,9 @@ The **editor** opens as a card at the bottom of the right-hand column. It names 
 - **The default agent is not an ordinary profile.** It cannot be deleted, and renaming it with **Edit profile** changes only the name PatterStage shows. Nothing is written into its own files, so you can rename it back.
 - **Renaming any other profile moves it.** Its short name changes and its directory on disk is renamed to match, which is why the page follows the rename rather than dropping your selection.
 - **Deleting is permanent.** It removes the profile from PatterStage and its files from disk, and there is no undo.
-- **Drift is a real disagreement, not a missing file.** `config.yaml` is compared by meaning, so key order and spacing do not count. The other files are compared by content. A file that does not exist on disk yet is not reported as drift.
+- **Drift is a real disagreement, not a missing file.** `config.yaml` is compared by meaning, so key order and spacing do not count. The other files are compared by content. A behaviour file that does not exist on disk yet is not reported as drift. `config.yaml` is the exception: if it is missing and PatterStage holds settings to write, that counts as drift and a push clears it.
 - **Pull all does more than pull.** As well as re-reading every profile, it imports any profile directory it finds on disk that PatterStage does not know about, and imports skills from disk. **Import discovered** does the adoption step on its own.
-- **Push all re-applies your model defaults** into each `config.yaml` as it writes.
+- **Push all re-applies your model defaults** into the default agent's `config.yaml` as it writes. A named profile's `config.yaml` is rebuilt from its own voice, skills and toolsets, with any model block it already held carried across untouched.
 - Skills counts and toolset counts on this page are set elsewhere: see [Skills](./skills.md) and [Tools](./tools.md). What the agent remembers is on [Memory](./memory.md), and the models it can reach are on [Models](./models.md).
 - Nothing on this page calls a model, so nothing here costs anything. It reads and writes local files and the local database.
 - Background on the words used here: [profile](../concepts/profile.md), [personality](../concepts/personality.md) and [agent](../concepts/agent.md). If this is your first session, [the first hour](../start-here/first-hour.md) puts it in order.
@@ -86,9 +84,9 @@ The **editor** opens as a card at the bottom of the right-hand column. It names 
 <details>
 <summary>Under the hood</summary>
 
-The database is the source of truth. Profiles live in the `profiles` table; the default agent is a single row in `agent_root` rather than a profile row, which is why it has its own rules above. File bodies are held in a managed-files table and mirrored to disk on every write.
+The database is the source of truth. Profiles live in the `agent_profiles` table; the default agent is a single row in `agent_root` rather than a profile row, which is why it has its own rules above. File bodies are columns on those same rows, `soul_md`, `agents_md`, `user_md`, `memory_md` and `config_yaml`, and are mirrored to disk on every write.
 
-On disk, the agent's root is `~/.hermes` unless `HERMES_HOME` says otherwise, and named profiles live in `profiles/<short-name>/` beneath it. Each profile directory holds `SOUL.md`, `AGENTS.md`, `USER.md`, `MEMORY.md`, `config.yaml` and a `backups/` folder that receives a timestamped copy of any file before it is overwritten. `HERMES.md` belongs to the root agent only; saving it against a named profile is refused rather than silently discarded.
+On disk, the agent's root is `~/.hermes` unless `HERMES_HOME` says otherwise, and named profiles live in `profiles/<short-name>/` beneath it. Each profile directory holds `SOUL.md`, `AGENTS.md` and `config.yaml`, a `memories/` folder holding `USER.md` and `MEMORY.md`, and a `backups/` folder that receives a timestamped copy of any file before it is overwritten. `HERMES.md` belongs to the root agent only; saving it against a named profile is refused rather than silently discarded.
 
 `config.yaml` is assembled from the database on every push. `agent.personality` is the Voice shown on the Identity tab, `skills.disabled` holds the skills this profile may not use, and `platform_toolsets` holds the tools it may reach.
 

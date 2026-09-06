@@ -45,19 +45,21 @@ PatterStage's key. Each one names what to do about it. Two more are advisory and
 only show on an empty conversation: one while the first connection check is
 still running, and one saying no model is ready for chat.
 
-Before the first message there is an empty state: the conversation's title, a
-line describing the mode you are in, and a line telling you that your message is
-the [prompt](../concepts/prompt.md). The word **prompt** there carries a hint you
+Before the first message there is an empty state: the conversation's title, or
+"Chat with your agent" when nothing is selected yet, then a line describing the
+mode you are in, and a line telling you that your message is the
+[prompt](../concepts/prompt.md). The word **prompt** there carries a hint you
 can open, and in Agent mode so does the word **agent**.
 
-Once there are messages, your turns sit on the right and the agent's on the left
-behind a small avatar, each stamped with the time it was sent. An agent reply can
-carry two things above its text. A **Reasoning** panel, collapsed, holding the
-thinking the model streamed before it answered. And one card for each
-[tool](../concepts/tool.md) the turn used, showing the tool's name and where it
-got to: running, done, failed, or awaiting approval. Code blocks inside a reply
-show a **Copy** button when you hover them. While a reply is on its way but has
-produced nothing yet, three bouncing dots stand in for it.
+Once there are messages, your turns sit on the right and the agent's on the
+left, each behind a small avatar of its own and each stamped with the time it
+was sent. An agent reply can carry two things above its text. A **Reasoning**
+panel, collapsed, holding the thinking the model streamed before it answered.
+And one card for each [tool](../concepts/tool.md) the turn used, showing the
+tool's name and where it got to: running, done, failed, or awaiting approval.
+Code blocks inside a reply show a **Copy** button when you hover them. While a
+reply is on its way but has produced nothing yet, its bubble reads "Thinking…",
+with three bouncing dots below it.
 
 At the bottom is the message box, which grows as you type. Enter sends, Shift
 and Enter together start a new line, and the placeholder says so. To its right
@@ -117,13 +119,18 @@ it. If the "Model not ready for chat" banner appears, set an agent default on
 
 **Naming.** Typing into a Chat with no conversations creates one named after the
 first fifty characters of your message. Clicking **New Chat** creates one called
-New Chat, and it keeps that name. Clicking **New Chat** again while an unused
-one is still there reuses it rather than making a second.
+New Chat, and it keeps that name only until you send something. Your first
+message renames it, using the message's first line trimmed to about fifty
+characters. That rename is why clicking **New Chat** again while an unused one
+is still there reuses it rather than making a second: a row still called New
+Chat is a row nothing has been said in.
 
 **Stop does different things in each mode.** In Agent mode it cancels the run,
-and the turn keeps whatever text had arrived; a turn cancelled before any text
-reads "Stopped". In Fast mode it halts the text on your screen, but there is no
-run to cancel, so the stored turn is left unfinished and tidied up later.
+and the reply on screen is replaced by "Stopped."; the text that had streamed in
+is not kept, because it was only ever on your screen and the cancelled turn is
+re-read from the server. In Fast mode there is no run to cancel, so stopping
+ends the stream and the partial reply goes with it; the message reverts to its
+placeholder, and the stored turn is left unfinished and tidied up later.
 
 **An interrupted reply resolves itself, eventually.** Close the tab during an
 agent turn and the reply keeps going on the server; reopening the conversation
@@ -148,7 +155,9 @@ completion and opens no run, so your provider still bills it but PatterStage
 does not count it.
 
 **The left column holds the hundred most recent conversations.** Older ones stay
-in the database and stay exportable, but they stop appearing in the list.
+in the database, but they stop appearing in the list, and because the download
+buttons live on the list rows, a conversation you cannot see is one you cannot
+export from here either.
 
 **A failed read says so.** If the conversation list cannot be fetched you get
 the reason and a **Retry** where the list would be, not an empty sidebar reading

@@ -50,8 +50,8 @@ nested values, and **file** on the two cards in Files.
 
 Opening a card gives you that section's own page: its name and description in
 the header, a back arrow to the index, and one card of fields. Each field is a
-switch, a number box, a drop-down or a text box, with its description beneath
-it and, under that, one of two things:
+switch, a number box, a drop-down or a text box, with its description above the
+control and, beneath the control, one of two things:
 
 - **Not set**, with the line *Hermes uses its own default*. The agent has no
   value of its own for this field, so it uses whatever it would have used if
@@ -92,9 +92,9 @@ works** disclosure explains the mechanics for anyone who wants them.
 Then the sections, each with its own buttons:
 
 - **Restore everything**, with **Restore everything**, **Restore Bob** and
-  **Add what's missing**. Below the buttons, a line reading how many agents and
-  templates are installed now out of how many the pack holds, and the date of
-  the last restore.
+  **Add what's missing**. Above the buttons, a line reading how many agents and
+  templates are installed now out of how many the pack holds; below them, the
+  date of the last restore.
 - **Professional agents**, one row per bundled agent with its sync state and a
   **Restore this agent** button.
 - **Mission templates**, one row per shipped template with a **Restore**
@@ -176,10 +176,10 @@ ranges and option lists in the browser and again on the server, so a number
 outside the range is refused rather than written and met later by the agent.
 
 If the agent's configuration file cannot be read, an orange alert appears at
-the top of the index and on every section page, saying that the sections read
-as unconfigured because the file did not parse rather than because it is
-empty. Saving is disabled until it is repaired. The two file cards keep
-working, because they do not write that file.
+the top of the index, saying the sections read as unconfigured because the file
+did not parse rather than because it is empty, and on every section page that
+writes that file, saying saving is disabled there until it is repaired. The two
+file cards keep working, because they do not write that file.
 
 Some things here are shown rather than offered. Complex nested values are
 read-only. The memory **Provider** field displays what is active and links to

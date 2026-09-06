@@ -71,10 +71,10 @@ bottom, a dot and the word **Active** or **Inactive**, then two buttons:
 - **View** opens a preview of the same text inside the card. The button becomes
   **Hide** while it is open.
 
-Typing in the search box replaces both halves with a flat list of matches, active
-and inactive together, above a line saying how many matched out of how many were
-searched. The cards behave exactly as they do in a category, and page the same
-way. Nothing matching gives you **No skills match**.
+Typing in the search box replaces both halves with a line saying how many matched
+out of how many were searched, and under it a flat list of matches, active and
+inactive together. The cards behave exactly as they do in a category, and page
+the same way. Nothing matching gives you **No skills match**.
 
 With nothing in the catalogue at all, the page is a single panel, **No skills in
 catalog**, with an **Import skills from Hermes** button that reads the agent's
@@ -131,9 +131,11 @@ default for every profile until you turn it off.
 
 **Toggles apply immediately, and say so when they fail.** Each click writes
 straight through to the agent's configuration for that profile, with a backup of
-the previous version kept. If the write fails, the switch flips back to where it
-was and a message names the failure rather than leaving you with a switch that
-lies.
+the previous version kept. If the write fails, the switch flips back and a
+message names the failure. One failure is worth reading closely: if the change
+was recorded here but the push to the agent's own configuration did not complete,
+the message says so, the switch you are looking at has flipped back, but the
+change is not lost and will be there when the page next loads.
 
 **Import is offered only when the catalogue is empty.** Once there is anything in
 it, the button is gone. You do not usually need it again: a skill you add to the
@@ -147,10 +149,11 @@ a skill's description on its card can be emptied by an edit made here. For a
 skill whose header matters, edit the file with your own editor instead.
 
 **Categories are the skill's own.** They come from each skill's file, falling
-back to the first part of its path, and anything without one lands in **Other**.
-Spellings that would print the same label ("Control Hub" and "control-hub") are
-folded into one row. **Other** can appear in both halves at once; the two are
-separate rows that open and page independently.
+back to the first part of its path, so a skill that names no category is filed
+under the folder it lives in. Spellings that would print the same label ("Control
+Hub" and "control-hub") are folded into one row. A category holding both active
+and inactive skills appears as a row in each half; the two are separate rows that
+open and page independently.
 
 **Search covers names and descriptions**, not the body of a skill. To search
 inside the instructions, open the skill and read them.

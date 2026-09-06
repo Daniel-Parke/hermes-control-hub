@@ -21,9 +21,10 @@ one, run it by hand, read what it printed, and put it on a timer.
 ![Scripts screen](../images/scripts.png)
 
 The header names the page and counts what was found, for example "4 host
-scripts", with two buttons beside it. **New script** opens an empty editor.
-**Refresh** re-reads the folder, which the page also does on its own every
-thirty seconds.
+scripts", with two buttons beside it. **New script** opens the editor on a
+two-line bash starting point, a `#!/usr/bin/env bash` shebang and
+`set -euo pipefail`, which you can replace outright. **Refresh** re-reads the
+folder, which the page also does on its own every thirty seconds.
 
 Under the header, one line names the seven kinds of file the page picks up:
 `.sh`, `.mjs`, `.cjs`, `.js`, `.ps1`, `.bat` and `.cmd`. Any file with one of
@@ -111,7 +112,8 @@ rather type one.
 `.mjs`, `.cjs` and `.js` run under the same Node that PatterStage runs under, so
 they work everywhere. `.sh` needs bash. `.ps1` needs PowerShell. `.bat` and
 `.cmd` run only on Windows. If nothing on the machine can run that kind of file,
-Run fails and says so rather than pretending.
+Run reports that it exited non-zero and sends you to the log; the log will be
+empty, and a missing interpreter is the usual reason.
 
 **Scheduling on native Windows.** Windows without WSL2 has no host scheduler
 PatterStage can write to, so schedules made here are kept by PatterStage and
@@ -142,7 +144,9 @@ write to a file of your own if you need volume.
 **Scheduled runs appear here too.** Whether the machine's crontab or
 PatterStage fires it, the output lands in the same log, so **Logs** and the "last
 run" time on the row cover scheduled runs as well as ones you started. The
-[Logs](logs.md) screen reads the same files.
+[Logs](logs.md) screen reads the agent's own log directory, which is a
+different place, a script's output is only visible through the **Logs** button
+on its row.
 
 **A fresh install is not empty.** Setting up PatterStage copies its own bundled
 maintenance scripts into the folder, including a database backup, a disk report,
@@ -177,8 +181,10 @@ minutes and an 8 MB output buffer, and the logs window shows the last 400 lines.
 
 Two settings switch this page off. With `PS_READ_ONLY` set, saving, deleting,
 running and scheduling are all refused with an explanation. With
-`PS_AUTH_MODE=none`, the same actions are refused, because a script is code the
-host executes and an unauthenticated install must not be able to write it.
+`PS_AUTH_MODE=none`, saving, deleting, running a script and writing a machine
+schedule are refused, because a script is code the host executes and an
+unauthenticated install must not be able to write it. A PatterStage-held
+schedule, the native-Windows path, is not yet covered by that refusal.
 Reading the list, a file and a log stays available in both cases.
 
 The list is every file with a known ending that is actually in the folder, not a

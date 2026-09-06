@@ -143,10 +143,13 @@ chapters, Medium six and Long ten. That count is fixed once the story exists. A
 finished story can be extended later with **Continue** in the reader, but not
 from here.
 
-**Some choices follow the story for the rest of its life.** The writing model and
-the chapter length band are stored with the story, and every later chapter,
-rewrite and continuation uses them. Neither can be changed afterwards, so if you
-want a different model, the choice has to be made on this page.
+**The writing model follows the story for the rest of its life.** It is stored
+with the story, every later chapter, rewrite and continuation uses it, and it
+cannot be changed afterwards, so if you want a different model, the choice has to
+be made on this page. The chapter length band is only the band this story starts
+on. The reader's rewrite and **Continue** dialogs each offer the same six bands
+again, they open on 1.8-2.5k rather than on the band you chose here, and a
+continuation writes the band you pick into the story for every chapter after it.
 
 **Writing costs money at your provider.** Creating a story is at least two model
 calls, one for the plan and chapter one, one for the running summary that keeps
@@ -166,11 +169,13 @@ you entered, so a second try is one more click on **Begin Writing**.
 
 **The form saves itself as you type, once.** There is one draft, kept in this
 browser, replaced continuously while the page is open and cleared the moment a
-story is created. **Load Draft** appears when a draft from an earlier visit
-survives, and it restores the title, premise, chips, cast, parameters and model.
-Chips you added yourself with **+ Add** are the exception: the rows go back to
-the standard options on a reload, so a custom value can still be carried in the
-draft with no chip lit to show it.
+story is created. **Load Draft** appears when a draft was found in this browser.
+It is a within-visit safety net rather than a way of picking up where you left
+off: the form starts saving itself the moment the page opens, which replaces the
+stored draft with the freshly loaded form, so what Load Draft brings back is the
+form as it stands now. Chips you added yourself with **+ Add** are not kept at
+all: the rows go back to the standard options on a reload, so a custom value can
+sit in the stored draft with no chip lit to show it.
 
 **Templates and themes are not the same thing.** A template replaces everything,
 cast and parameters included. A saved theme replaces only the premise and the

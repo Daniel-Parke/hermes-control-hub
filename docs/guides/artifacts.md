@@ -45,8 +45,10 @@ which changes to **Confirm delete?** on the first click rather than acting
 straight away.
 
 If the list cannot be read at all, a banner takes its place with the reason and a
-**Retry**. You never see the empty state over a failure, so "No artifacts yet"
-always means what it says.
+**Retry**. The empty panel is never shown over a read that failed, that is what
+the banner is for. It does appear, though, when the dropdown is narrowed to a
+kind nothing has been filed under yet, so put it back to **All kinds** before
+concluding the list is empty.
 
 ## Typical use
 
@@ -73,12 +75,19 @@ always means what it says.
 
 ## Notes
 
-Capture is automatic and happens once. A Deep Research run saves its report when
-it finishes, a [Composer](./composer.md) run saves the output of its final stage,
-and a [mission](./missions.md) saves its output when it completes. A run that
-failed or that you cancelled leaves nothing behind, on the grounds that half a
-report is not a deliverable, and re-running something does not produce a second
-copy of the same artifact.
+Capture is automatic. A Deep Research run saves its report when it finishes, a
+[Composer](./composer.md) run saves the output of its final stage, and a
+[mission](./missions.md) saves its output when it completes. A run you cancelled
+and a run that crashed leave nothing behind, on the grounds that half a report is
+not a deliverable. One case does file something despite failing: a Deep Research
+run whose search provider was down for every attempt is recorded as failed and
+still files its report, because that report was written without any external
+sources and the run's own error says so. Read the error before you trust it.
+
+A single run files its deliverable once, however many times its finish is
+processed. Running the same workflow again, or asking the same research question
+again, is a new run, so it files a second artifact alongside the first rather
+than replacing it.
 
 You can also keep a single stage's output by hand. That control lives on the
 Composer run canvas, not here: click a stage, and **Save as artifact** sits above

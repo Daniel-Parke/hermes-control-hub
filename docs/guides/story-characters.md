@@ -68,8 +68,9 @@ failed read never looks like an empty shelf.
 
 1. Click **New character**.
 2. Fill in the name, pick a role, and write as much or as little as you want.
-   The parts a model can actually use are the description, the backstory and the
-   speech patterns.
+   Everything except the tags reaches the model when the character is used in a
+   story. The description, backstory and speech patterns do the most work, but
+   the appearance, personality and relationships are passed too.
 3. Add personality traits one at a time, pressing Enter after each.
 4. Click **Save character**. The panel closes and the character appears in the
    list, in its alphabetical place.
@@ -99,8 +100,10 @@ failed read never looks like an empty shelf.
   copies its text into that story. Editing the sheet afterwards, or deleting it
   outright, changes nothing about stories that were already created from it.
 - **Only the name is required.** A sheet with a name and nothing else saves
-  fine, and is not much use to a model. Description, backstory and speech
-  patterns are what actually shape how the character reads.
+  fine, and gives a model nothing to work with. Everything else you fill in is
+  written into the prompt when the character is used in a story: description,
+  personality, appearance, backstory, speech patterns and relationships. The
+  tags are for your own grouping and stay here.
 - **The list has no search or filter.** It is alphabetical by name and shows
   everything at once, which is why tags are worth using once the shelf gets
   long.

@@ -20,10 +20,11 @@ a time, newest line at the top.
 ![Logs screen](../images/logs.png)
 
 The header names the file you are reading. Under the title sits a line of
-facts about it: the file name, how many lines it holds, its size on disk, and
-how long ago it was last written to, as in `agent.log · 4213 lines · 218 KB ·
-written 6s ago`. Before a file has loaded it reads "Hermes agent and gateway
-logs" instead.
+facts about it: the file name, how many lines came back in this read, its size
+on disk, and how long ago it was last written to, as in `agent.log · 771 lines
+· 414 KB · written 6s ago`. That count is of the block the server read from the
+end of the file, not of the whole file. Before a file has loaded it reads
+"Hermes agent and gateway logs" instead.
 
 To the right of the header are four controls. A small refresh button turns the
 five second auto-refresh on and off; it glows and spins while it is on, and its
@@ -57,7 +58,7 @@ percentage marked **clean**, which is the share of lines not counted as errors.
 Hovering any tile says exactly what it counted.
 
 The log itself is drawn as a terminal pane. Its bar names the file and how much
-of it you are looking at, as in `agent.log (showing 200/4213)`, and the lines
+of it you are looking at, as in `agent.log (showing 200/771)`, and the lines
 below sit in three columns: **Time**, **Level** and **Message**, coloured by
 level. An empty file reads "Log file is empty"; a filter that matches nothing
 reads "No matching lines".
@@ -93,9 +94,10 @@ reads "No matching lines".
 
 - Lines are newest first. This is the opposite of reading the file in a text
   editor, so the top of the pane is the end of the log.
-- You are reading a window, not the whole file. The header and the terminal bar
-  both say how many lines exist behind it. Raising **Lines to show** widens the
-  window; the maximum is 1000.
+- You are reading a window from the end of the file. The header and the
+  terminal bar say how many lines that read pulled back, which on a large file
+  is more than the window shows but still less than the file holds, the only
+  way to see further back is a bigger **Lines to show**, up to 1000.
 - **Copy** and **Download** are not the same selection. Copy takes the filtered
   lines on screen; Download saves the whole loaded window, filter or no filter,
   in the same newest-first order.
@@ -111,10 +113,12 @@ reads "No matching lines".
 - On a fresh install there are no logs yet. The screen says so in a plain grey
   message, not a red one, and the files appear the first time the agent runs. A
   read that genuinely fails gets a red banner with a **Retry** button.
-- Opening a log is recorded on this machine, which is what completes the "Read
-  the logs" quest on [Quests](quests.md) and what the counts on
-  [Insights](insights.md) are made of. Nothing about the log's contents is
-  recorded, only that a file was read.
+- Every successful read is recorded on this machine. The first one completes
+  the "Read the logs" quest on [Quests](quests.md), and because auto-refresh
+  reads the file again every five seconds, a screen left open keeps adding to
+  the counts on [Insights](insights.md). Turn the auto-refresh button off if
+  you would rather it did not. Nothing about the log's contents is recorded,
+  only that a file was read.
 - If the logs point at something broken in the install itself, the
   [troubleshooting guide](../running/troubleshooting.md) covers the usual
   causes.
@@ -127,7 +131,11 @@ from the `logs` directory inside the agent's install root. A basename may only
 contain letters, digits, dots, underscores and hyphens, and the resolved path
 must stay inside that directory, so no name can walk out of it. The server caps
 the request at 1000 lines and reads the tail in 64KB chunks from the end of the
-file, so a multi-megabyte log is never loaded whole.
+file, stopping as soon as it has the lines it was asked for, so a
+multi-megabyte log is never loaded whole. The count in the header and the
+terminal bar is the number of lines in the chunks that read collected, which is
+why it grows with **Lines to show** and stops well short of a long file's real
+length.
 
 Grouping in the sidebar is by name: `agent`, `errors` and `gateway` are Core,
 anything beginning `ch-` is System, everything else is Other. The green dot

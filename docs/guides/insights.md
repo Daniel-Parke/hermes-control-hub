@@ -20,7 +20,7 @@ The history page: what you have done with PatterStage, what it cost, and what yo
 
 ![Insights screen](../images/insights.png)
 
-The header carries the page title and, on the right, a range switch reading **7d**, **30d** and **90d**. It opens on 30d. That switch drives most of the charts below it, and the cards say so in their own titles.
+The header carries the page title and, on the right, a range switch reading **7d**, **30d** and **90d**. It opens on 30d. That switch drives most of the charts below it, and the cards that ignore it say so in their titles: **By category (all-time)**, **Mission mix (all-time)** and **Run activity, last 91 days**.
 
 If nothing has been recorded yet, a single panel sits at the top: **No activity yet**, with a **Go to Missions** button. Everything else fills in as you use the product.
 
@@ -32,7 +32,7 @@ Below that, top to bottom:
 - **When you work (hour of day)**, a 24 hour clock where a longer spoke means more activity in that hour; **Run duration**, a histogram bucketed from under five seconds to over five minutes; and **Mission success trend**, completed against failed per day.
 - **Tokens by model**, **Top missions** by number of runs, and **Mission mix (all-time)**, a ring splitting every mission you have ever written into Successful, Failed, Dispatched, Queued and Draft.
 - **Run activity**, a heatmap of the last 91 days with a count of active days and total runs beside the title.
-- **Achievements**, a compact trophy case at the foot of the page. It shows your points, a tally per rarity, your rarest earned badges and the ones you are closest to unlocking. **Show all** expands it into the full grid, with **All**, **Unlocked** and **Locked** filters.
+- **Achievements**, a compact trophy case at the foot of the page. It shows your points, a tally per rarity, your rarest earned badges and the ones you are closest to unlocking. The button below it reads **Show all** with the number of achievements after it, and expands the panel into the full grid, with **All**, **Unlocked** and **Locked** filters. Once the grid is open the button reads **Show less**.
 
 Most card titles carry a small information icon. Hovering it explains what that chart counts.
 
@@ -68,7 +68,7 @@ Nothing on this page can be edited except the budget. Everything else is a readi
 - **Achievements are worked out fresh every time the page loads.** Nothing is stored, so they cannot drift out of step with what you did. The toast that congratulates you on an unlock belongs to the app shell and can appear on any screen; this page never fires one.
 - **The same record of what you have done drives [Quests](./quests.md)**, which turn it into a guided path rather than a chart.
 - **Your agents' levels are not here.** A level belongs to an agent rather than to you, so it is shown per agent on [Agents](./agents.md).
-- **When a read fails**, a red banner appears at the top naming what failed, with a reminder that analytics start empty and fill in as you use PatterStage. Its **Retry** button refetches every query on the page at once, so a single broken chart does not stay broken while the others recover. The figures otherwise refresh themselves every 30 seconds.
+- **When a read fails**, a red banner appears at the top naming what failed, with a reminder that analytics start empty and fill in as you use PatterStage. Its **Retry** button refetches the streak and stats, the summary, the timeseries and the insights bundle together, so a single broken chart does not stay broken while the others recover. The provider spend panel is not on that button and reloads on its own poll. The figures otherwise refresh themselves every 30 seconds, and the streak, tokens, mission mix, heatmap and achievements every 20.
 - **This is all local.** The history lives in the same database as everything else on your machine, and nothing here is sent anywhere. It is included in a [backup](../running/backup.md).
 
 <details>
@@ -76,14 +76,15 @@ Nothing on this page can be edited except the budget. Everything else is a readi
 
 Every recorded interaction is one row in the `analytics_events` table, appended by the server after the action it describes has succeeded. There is no way for a browser to write one, so achievement progress cannot be forged.
 
-The page reads four endpoints, all of them GET only:
+The page reads five endpoints:
 
 | Endpoint | What it returns |
 |---|---|
 | `/api/analytics` | Per type counts, all time and last 30 days, plus distinct active days |
-| `/api/analytics/timeseries?type=&days=` | Gap filled daily counts, `days` clamped to 1 to 365 |
-| `/api/analytics/insights?days=N` | The composed bundle behind most cards: hour of day, category series, duration buckets, model usage, top missions, success trend |
+| `/api/analytics/timeseries?type=&days=` | Gap filled daily counts; `days` must be 1 to 365, and anything else is refused |
+| `/api/analytics/insights?days=N` | The composed bundle behind most cards: hour of day, category series, duration buckets, model usage, top missions, success trend. Here `days` is clamped to 1 to 365 rather than refused |
 | `/api/stats` | Streaks, mission mix, run activity and the achievement catalogue |
+| `/api/spend` | Spend per period and per source, the budget, and the verdict against it |
 
 The budget is the one write: `PUT /api/spend`. Clearing the figure disarms the hard stop with it, a rule the database enforces as well as the form.
 

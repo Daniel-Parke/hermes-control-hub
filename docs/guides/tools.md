@@ -110,10 +110,12 @@ anywhere except in a text box.
 2. All fifteen individual toolsets immediately show as pressed and stop
    responding, and the line under the grid names them as included in Hermes CLI.
    They are on, through the bundle.
-3. Click **Save & push toolsets**. The count under the title now reads one
-   toolset, because the stored list is the single bundle.
+3. Click **Save & push toolsets**. The stored list is the single bundle: the
+   save drops the fifteen, because **Hermes CLI** already carries them.
 4. To choose individual toolsets again, turn **Hermes CLI** off first. The
-   fifteen become clickable and go back to whatever you set them to.
+   fifteen become clickable again, but the save in the previous step stored the
+   bundle alone, so they come back off and have to be chosen again. Only inside
+   an unsaved session do earlier picks survive turning the bundle off.
 
 **Take back a change that was made outside PatterStage.**
 
@@ -122,7 +124,9 @@ anywhere except in a text box.
 2. The grid, the count and the numbers strip all redraw from what was on disk.
    Anything you had changed and not saved is replaced.
 3. To send in the other direction instead, use **Push to Hermes**, which writes
-   the profile PatterStage holds without changing the toolsets you have selected.
+   the profile PatterStage already holds out to the agent. It redraws the grid
+   from what is stored just as **Pull** does, so anything you had clicked and
+   not saved is replaced. Push sends what was saved, not what is on screen.
 
 ## Notes
 
@@ -142,9 +146,11 @@ to one list. The advanced JSON box is the way out if you genuinely need them to
 differ.
 
 The count in the header and the **Enabled** figure in the numbers strip count
-the stored list, not the buttons that look pressed. With **Hermes CLI** on and
-nothing else, fifteen buttons read as on and the count reads one. That is the
-honest number: one entry is what is written to the agent.
+the toolsets you have selected, which is not the same as the buttons that look
+pressed: a toolset a bundle covers is on without being an entry of its own. With
+**Hermes CLI** on and nothing else, sixteen buttons read as on, the bundle and
+the fifteen it covers, and the count reads one. The count moves as you click,
+so it matches what is stored only once you have saved.
 
 Only **Hermes CLI** covers other toolsets on this screen. The six other gateway
 bundles are enabled and disabled on their own and do not mark anything else as
@@ -153,8 +159,10 @@ covered.
 The advanced JSON box takes over once you type in it. The buttons in the grid
 are disabled from then until you save or press **Discard JSON edits**, so your
 typing is never overwritten by a click you did not think of as an edit. What you
-have typed is what gets sent, and a value that is not an object of gateway names
-is answered with **Invalid JSON object** and saves nothing.
+have typed is what gets sent, and a value that is not an object at all, a list,
+a number, a bare string, is answered with **Invalid JSON object** and saves
+nothing. The key names are not checked, so a mistyped gateway name is stored as
+written rather than refused.
 
 Switching profile with unsaved changes does not throw them away. The selector
 holds, and a small panel offers **Discard changes** or **Keep editing**. There

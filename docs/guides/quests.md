@@ -50,10 +50,10 @@ agent, Automate and watch, Multi-stage work, Rec Room and Keep it healthy.
 - **Skip** underneath, or **Unskip** on one you have already skipped.
 
 **A quest this machine cannot run.** In place of Go, a panel headed
-"Unavailable on this host" with one sentence naming what is missing and what
-would change it: no agent is reachable, no memory provider is reachable, the
-Composer is switched off on this install, or host script scheduling that native
-Windows does not have. The card still shows, it still keeps its place in the
+"Unavailable on this host" with one sentence naming what is missing, and for
+most of them what would change it: no agent is reachable, no memory provider is
+reachable, the Composer is switched off on this install, or host script
+scheduling that native Windows does not have. The card still shows, it still keeps its place in the
 count, and it never claims to be complete.
 
 **While the read is in flight**, a spinner reading "Reading your progress...".
@@ -81,9 +81,10 @@ would otherwise look as though it had simply done nothing.
 
 1. Find the card. "Add a credential" is the usual one: a local provider that
    needs no API key makes it impossible rather than merely undone.
-2. Press **Skip**. The card dims, its marker changes to **Skipped**, and the
-   totals at the top and on its chapter each drop by one, so the number stays a
-   description of what you still mean to do.
+2. Press **Skip**. The card dims and its marker changes to **Skipped** at once;
+   the totals at the top and on its chapter each drop by one the next time your
+   progress is read, so the number stays a description of what you still mean to
+   do.
 3. Press **Unskip** on the same card to put it back into the count.
 
 **See what a chapter is going to ask of you.**
@@ -114,8 +115,9 @@ The completion message appears wherever you are in the console, not only on this
 page, and each quest announces itself at most once per visit. A skipped quest
 never announces anything.
 
-The rail carries how many quests are left beside the Quests link, as a count
-when the rail is wide and a dot when it is collapsed to icons. It disappears
+The rail carries your progress beside the Quests link, how many you have
+finished out of how many are counted, as a count when the rail is wide and a
+dot when it is collapsed to icons. It disappears
 entirely once there is nothing left, and the [Dashboard](dashboard.md) shows the
 single next quest you can attempt on its Start here card.
 

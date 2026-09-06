@@ -68,8 +68,10 @@ interrupted rather than that the page has nothing to say.
 **The ?** sits at the top right of every other screen's header, beside that
 screen's own buttons. It opens the guide for the screen you are on, and its
 tooltip names it: "Help for Missions", "Help for Models". No screen can opt out
-of it, and it is never dead: a screen with no guide of its own, or a console
-whose documentation has not been built, lands you on the contents instead.
+of it, and it is never dead: a screen with no guide of its own lands you on
+**Documentation**, the front page of the set, instead; on a console whose
+documentation has not been built it lands you on the panel that tells you how to
+build it.
 
 **The ? key** does the same thing from the keyboard. Press it anywhere that is
 not a text box and you go to the same page the header's **?** points at. Typing
@@ -77,14 +79,18 @@ a question mark into a message, a filter or a name is left alone, and so are
 combinations that hold ctrl, cmd or alt.
 
 **Dotted underlines.** Seventeen words carry this product, and on nine screens
-they are underlined with a dotted cyan line: agent and prompt on Chat; mission,
-run and schedule on Missions; profile and personality on Agents; skill on
-Skills; tool and toolset on Tools; memory on Memory; model, provider and API key
-on Models; workflow and gate on Composer; artifact on Research. Press one and a
-small panel opens just beneath it with the word, a one-sentence definition, and
-a **Read more about** link into its Concepts page. It covers nothing, traps
-nothing and stops no scrolling. Escape, or a press anywhere else, puts the
-screen back as it was.
+they are underlined with a dotted cyan line. A screen underlines its own wording
+of the word, so where that differs from the concept the panel names, the concept
+is in brackets here: agent and prompt on Chat; mission, run and Scheduled
+(schedule) on Missions; profile and voice (personality) on Agents; skill on
+Skills; tool and toolset on Tools; Memory provider (memory) on Memory, which
+reads Set up memory while the store is unreachable; model, provider and
+Credentials (API key) on Models; workflow and gate on Composer; report
+(artifact) on Research. Press one and a small panel opens just beneath it with
+the concept's own name, a one-sentence definition, and a link that ends with
+that name, **Read more about Mission**, **Read more about API key**, into its
+Concepts page. It covers nothing, traps nothing and stops no scrolling. Escape,
+or a press anywhere else, puts the screen back as it was.
 
 ## Typical use
 
@@ -108,8 +114,9 @@ screen back as it was.
 
 1. Press the word where it is underlined with dots.
 2. Read the sentence in the panel that opens.
-3. Press **Read more about** to open the full Concepts page for it, or Escape to
-   close the panel and carry on with what you were doing.
+3. Press **Read more about**, which ends with the concept's own name, to open
+   the full Concepts page for it, or Escape to close the panel and carry on with
+   what you were doing.
 
 ## Notes
 

@@ -22,7 +22,7 @@ How I run this in production and on a home LAN: ports, scripts, and the deploy b
 
 ## Host and port
 
-Next.js reads **`PORT`**. After **`bash scripts/bootstrap/setup.sh`**, `.env.local` contains **`PORT`** (first free in **42069–42100** by default, or your chosen port) and **`PS_ALLOWED_DEV_ORIGINS`** for LAN development.
+Next.js reads **`PORT`**. After **`bash scripts/bootstrap/setup.sh`**, `.env.local` contains **`PORT`** (first free in **42069, 42100** by default, or your chosen port) and **`PS_ALLOWED_DEV_ORIGINS`** for LAN development.
 
 For **production / household LAN**, use **`npm run start:network`** (`next start -H 0.0.0.0`). Note that **`npm run start`** reaches the LAN too: `next start` already defaults to `0.0.0.0`, and `start:network` only states the bind explicitly. The dev-only cross-origin check on `/_next/webpack-hmr` this section used to cite belongs to `next dev`, covered next.
 
@@ -70,7 +70,7 @@ bash scripts/application/ps-deploy.sh rebuild --branch dev   # optional local ch
 
 - **`ps-deploy.sh update`** runs **`git reset --hard origin/<branch>`**. That **discards local commits** on the checked-out branch. Use only on machines where the app directory is a throwaway deploy checkout.
 - **`rebuild`** does **not** pull or reset; it builds the **current working tree** unless you pass **`--branch`** to switch local checkout first.
-- **`ps-deploy.sh restart`** stops whatever is listening on **`PORT`** (from the environment, else the last `PORT=` line in `.env.local`, else the first free port in **42069–42100**). It resolves the listening PIDs with **`ss -tlnp sport = :<port>`** and falls back to **`lsof -tiTCP:<port> -sTCP:LISTEN`**, then kills each process tree. A wrong **`PORT`** can kill an unrelated process; set it deliberately. If you migrated from an old install on **3000**, do a **one-time manual** cleanup of stale listeners; the script does not clear arbitrary ports by default.
+- **`ps-deploy.sh restart`** stops whatever is listening on **`PORT`** (from the environment, else the last `PORT=` line in `.env.local`, else the first free port in **42069, 42100**). It resolves the listening PIDs with **`ss -tlnp sport = :<port>`** and falls back to **`lsof -tiTCP:<port> -sTCP:LISTEN`**, then kills each process tree. A wrong **`PORT`** can kill an unrelated process; set it deliberately. If you migrated from an old install on **3000**, do a **one-time manual** cleanup of stale listeners; the script does not clear arbitrary ports by default.
 
 ## Required environment
 

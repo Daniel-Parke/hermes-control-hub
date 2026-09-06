@@ -97,9 +97,9 @@ case, so a failed read never looks like an empty shelf.
   the chapters are written by a model at your provider, so each one is billed.
   One chapter is more than one call: the chapter itself, a short call to give it
   a title, and another to update the running summary that keeps later chapters
-  consistent. Creating a story costs several more, since the plan, the first
-  chapter and the first summary are all written then. See
-  [spend](../concepts/spend.md).
+  consistent. Creating a story costs about the same, since the plan and the
+  first chapter come back from one call and the first summary from a second.
+  See [spend](../concepts/spend.md).
 - **That cost is counted with everything else.** It appears on
   [Insights](./insights.md) as the **Story Weaver** line in the provider spend
   panel, next to Agent runs, Composer stages and Deep Research, and it counts
@@ -119,9 +119,11 @@ case, so a failed read never looks like an empty shelf.
   flight. A failed story is counted in **Stories** but in none of the three
   status tiles, so those three will not always add up to the first.
 - **A restart is not resumable.** If PatterStage stops while a chapter is being
-  written, the story is marked Failed on the next start with the reason
+  written, that chapter is marked Failed on the next start with the reason
   "Generation was interrupted by a restart. Retry to continue." Nothing is lost
-  except that chapter, and the reader offers a retry for it.
+  except that chapter, the story keeps its Waiting for you word, and the reader
+  offers a retry for the chapter. A story interrupted while it was still being
+  created is marked Failed itself, with the same reason.
 - **Recent stories is the three most recently created**, not the three you read
   last. [The library](./story-library.md) has all of them, with filters for
   completed and waiting.

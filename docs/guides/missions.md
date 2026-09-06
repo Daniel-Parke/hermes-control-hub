@@ -27,7 +27,8 @@ and save missions, but nothing will actually run until the agent is there.
 **The summary strip.** Appears once you have at least one mission. A ring
 showing the mix of states, count tiles for Total, Running, Completed and Failed,
 and a success percentage worked out from finished missions only. It is counted
-from the same missions the board is showing, so the two always agree.
+from every mission on the board, so it does not narrow when you filter or
+search; the column counts beside it do.
 
 **Quick load template.** Your templates as clickable pills, grouped into
 category accordions. Clicking one fills the composer and opens it; nothing is
@@ -41,8 +42,9 @@ count), a status filter (All, Draft, Queued, Running, Completed, Failed), and a
 search box.
 
 **The board.** Five columns in that order. Each card carries a status dot, the
-mission's name, its category, and a labelled duration: "Queued 3m",
-"Running 2h 14m", "Completed 5m ago". A running mission's dot pulses. One that
+mission's name, its category, and a labelled duration: "Queued 3m 20s",
+"Running 2h 14m", "Completed 5m 12s ago"; seconds are dropped only above an
+hour. A running mission's dot pulses. One that
 has passed its timeout turns orange and picks up a warning triangle. Each column
 header shows a count; Completed and Failed show their five most recent rows with
 a **Show all** link when there are more. If the board cannot load, a banner with
@@ -88,11 +90,15 @@ Mission Name, Instruction, and Goals, one per line. Then four numbered steps.
    AI toggle and a copy button. The Human view mirrors your form fields; the AI
    view is what the agent is actually sent.
 
-The footer holds the submit button, whose label follows the dispatch mode you
-picked (Save draft, Queue mission, Dispatch now, Schedule mission), a
-**Save as template** button once the instruction has text, and Cancel. The submit
-button is disabled until the mission has a name and an instruction, and it says
-which of those is missing when you hover it.
+The footer holds the submit button, a **Save as template** button once the
+instruction has text, and Cancel. On a new mission or a draft the submit label
+follows the dispatch mode you picked (Save draft, Queue mission, Dispatch now,
+Schedule mission). Re-dispatching reads Re-Dispatch Now and editing a running
+mission reads Update Mission, whatever mode is selected; on a queued mission,
+Save reads Move to drafts and Queue reads Update queue. The submit button is
+disabled until the mission has a name and an instruction, and, on a new mission,
+until the Dispatch step is open, since being open is how you acknowledge the run
+mode. Hovering says which of the three is missing.
 
 ## Typical use
 

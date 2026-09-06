@@ -170,10 +170,12 @@ The card reads and writes `GET`/`PUT /api/memory/config`, and **Test connection*
 is a `POST` to the same route with `action: "test"`. The active provider row,
 its host, port and bank live in the `memory_providers` table in PatterStage's
 database; the seeded default is `127.0.0.1:9177` with bank `hermes`, flagged
-unconfirmed until a save. A save also writes `memory.provider` into the agent's
-`config.yaml` so the agent's own file agrees with the database. Nothing reads
-that file back to decide which provider is active, and a file that will not
-parse is reported on the save rather than overwritten.
+unconfirmed until a save. A save that switches which provider is active also
+writes `memory.provider` into the agent's `config.yaml`, so the agent's own file
+agrees with the database. Editing the host, port or bank of the provider that is
+already active changes how it is reached rather than which one it is, and leaves
+the file alone. Nothing reads that file back to decide which provider is active,
+and a file that will not parse is reported on the save rather than overwritten.
 
 Everything below the card goes through `/api/memory/hindsight`, which talks
 directly to the Hindsight HTTP server: `list` (50 at a time), `recall`,

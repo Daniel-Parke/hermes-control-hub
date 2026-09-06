@@ -92,7 +92,8 @@ what went wrong.
    page or close the tab; the run carries on without you.
 4. When the state reads completed, read **In brief** first, then use **On this
    page** to jump to the section you want. To check a claim, click its **[n]**
-   and you land on that source.
+   and you jump to its numbered entry in **Sources**, where the link opens the
+   page it came from.
 
 **Save a configuration you want again.**
 
@@ -135,7 +136,7 @@ search snippets instead.
 
 A finished report is kept as an artifact, named after the question, so it
 outlives the run and turns up on [Artifacts](./artifacts.md) alongside
-everything else your agents produced. A cancelled run keeps nothing: half a
+everything else your agents produced. A cancelled run leaves no artifact: half a
 report is not a deliverable. **Copy** puts the report on your clipboard as
 Markdown; **View report** opens a self-contained page with the report, the
 sources and the timeline on it; **Download** saves that same page as a file you
@@ -214,7 +215,8 @@ because a run whose cost was never reported is not a free one.
 
 The job is fire and forget, so nothing in the process resumes it after a crash.
 `failStuckResearchRuns()` runs from `src/instrumentation.ts` at boot and fails
-standalone runs left running past the deadline. Research nodes driven by
-Composer are bounded separately by that engine.
+every run left `running` past the deadline, Composer-spawned ones included. A
+Composer research node is additionally capped by that engine, which force-fails
+the node-run at twenty minutes.
 
 </details>
