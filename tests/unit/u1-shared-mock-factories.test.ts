@@ -28,6 +28,7 @@
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 
+import { dbSingletonMock } from "../helpers/baseline-db";
 import {
   agentRuntimeMock,
   appPageShellMock,
@@ -275,5 +276,74 @@ describe("a file that asks for a jest environment gets the one it asked for", ()
       })
       .map(([file]) => file);
     expect(hidden).toEqual([]);
+  });
+});
+
+/**
+ * The db singleton's own contract, which the sweep found unasserted.
+ *
+ * Thirty-nine suites drive real repository code against a real in-memory
+ * SQLite through this factory, and `inTransaction` is the one member whose
+ * behaviour is not obvious from its shape: written as `(fn) => fn()` it looks
+ * right, passes every existing test, and silently stops rolling anything back.
+ * A repository test that asserts "a failed write leaves nothing behind" would
+ * then pass for the wrong reason.
+ */
+describe("the db singleton wraps a transaction body in a real transaction", () => {
+  const openDb = () => {
+    const Database = require("better-sqlite3/lib/index.js") as typeof import("better-sqlite3");
+    const db = new (Database as unknown as new (path: string) => import("better-sqlite3").Database)(
+      ":memory:",
+    );
+    db.exec("CREATE TABLE t (id TEXT PRIMARY KEY)");
+    return db;
+  };
+
+  it("commits a body that returns", () => {
+    const db = openDb();
+    const mod = dbSingletonMock(() => db);
+    const out = mod.inTransaction(() => {
+      db.prepare("INSERT INTO t (id) VALUES (?)").run("a");
+      return "done";
+    });
+    expect(out).toBe("done");
+    expect(db.prepare("SELECT COUNT(*) AS n FROM t").get()).toEqual({ n: 1 });
+    db.close();
+  });
+
+  it("rolls back everything a body wrote before it threw", () => {
+    const db = openDb();
+    const mod = dbSingletonMock(() => db);
+    expect(() =>
+      mod.inTransaction(() => {
+        db.prepare("INSERT INTO t (id) VALUES (?)").run("a");
+        db.prepare("INSERT INTO t (id) VALUES (?)").run("b");
+        throw new Error("half way");
+      }),
+    ).toThrow("half way");
+    // Without a real transaction both rows would still be here.
+    expect(db.prepare("SELECT COUNT(*) AS n FROM t").get()).toEqual({ n: 0 });
+    db.close();
+  });
+
+  it("reads the database through the getter, so beforeEach can replace it", () => {
+    let db = openDb();
+    const mod = dbSingletonMock(() => db);
+    expect(mod.getDb()).toBe(db);
+    const first = db;
+    db = openDb();
+    expect(mod.getDb()).toBe(db);
+    expect(mod.getDb()).not.toBe(first);
+    first.close();
+    db.close();
+  });
+
+  it("mints a different id every time, because they are primary keys", () => {
+    const db = openDb();
+    const mod = dbSingletonMock(() => db);
+    const ids = new Set([mod.uuid(), mod.uuid(), mod.uuid()]);
+    expect(ids.size).toBe(3);
+    for (const id of ids) expect(id).toMatch(/^[0-9a-f-]{36}$/);
+    db.close();
   });
 });
