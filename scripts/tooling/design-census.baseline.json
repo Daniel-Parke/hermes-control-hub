@@ -1,0 +1,30 @@
+{
+  "note": "Measured by tests/e2e/design-census.spec.ts against the running product. Sprawl counts may fall and never rise; contrast readings may rise and never fall. Rewrite with UPDATE_CENSUS=1 npm run census, and say why in the commit.",
+  "viewport": {
+    "width": 1440,
+    "height": 900
+  },
+  "counts": {
+    "routes": 23,
+    "distinctFontSizes": 7,
+    "twelvePxShare": 0.7,
+    "monoShare": 0.63,
+    "textBelowFloor": 0,
+    "distinctBorderColours": 36,
+    "distinctCardChromes": 108,
+    "distinctButtonHeights": 23,
+    "distinctButtonChromes": 89,
+    "distinctRadii": 7,
+    "distinctBoxShadows": 16,
+    "distinctZLayers": 1,
+    "controlBordersBelowThree": 320,
+    "decorativeBordersBelowThree": 619,
+    "hitTargetsBelowTwentyFour": 85,
+    "routesWithMisalignedHeading": 21,
+    "worstHeadingOffset": 289,
+    "distinctContentWidths": 8,
+    "routesOverflowingX": 0,
+    "railVsPageContrast": 1.06,
+    "railDividerContrast": 1.26
+  }
+}

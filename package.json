@@ -27,6 +27,8 @@
     "test:coverage": "jest --coverage",
     "test:e2e": "cross-env PORT=3000 playwright test",
     "screenshots": "cross-env PORT=3477 CAPTURE_SCREENSHOTS=1 playwright test screenshots.spec.ts",
+    "census": "cross-env PORT=3577 RUN_CENSUS=1 playwright test design-census.spec.ts",
+    "census:update": "cross-env PORT=3577 UPDATE_CENSUS=1 playwright test design-census.spec.ts",
     "test:full-install": "python tests/integration/test_full_install_update_process.py --profile smoke --skip-http",
     "test:full-install-release": "python tests/integration/test_full_install_update_process.py --profile release --skip-http",
     "test:full-install-hermes": "python tests/integration/test_full_install_update_process.py --profile release --skip-http --with-real-hermes-install",

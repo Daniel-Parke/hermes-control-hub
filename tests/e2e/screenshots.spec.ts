@@ -20,6 +20,17 @@
  *  - Anything SECRET or MACHINE-SPECIFIC is masked: the auth token, the data
  *    directory, the database path and the agent home all name this machine, and
  *    a manual should not publish the reviewer's home directory.
+ *  - ANIMATION is stopped before the shutter (see `freeze` below), and the
+ *    captures run SERIALLY. Before both, two identical runs produced 22 of 23
+ *    images different (T-0114).
+ *
+ * One image is still not byte-stable and deliberately so: `dashboard.png`
+ * carries the Subsystems panel, whose "checked HH:MM:SS" and "last cycle clean
+ * at <ISO>" are read from the server at capture time. Normalising every
+ * clock-shaped string in the page would fix it and would also flatten every
+ * timestamp in the Logs and Sessions images into one repeated value, which is a
+ * worse manual. So the dashboard moves by about 400 pixels per capture, and no
+ * other image moves at all.
  */
 import { readFileSync, readdirSync, mkdirSync } from "fs";
 import { join } from "path";
@@ -89,8 +100,43 @@ async function redact(page: Page, values: string[]): Promise<void> {
   }, values);
 }
 
+/**
+ * Stop every animation and transition before the shutter.
+ *
+ * Sixteen of the twenty-three images differed between two identical runs by a
+ * handful of pixels in one 32x32 square: the rail's animated-border logo, whose
+ * `gradient-shift` runs on a 4s loop, so its phase at capture time was whatever
+ * the machine felt like (T-0114). `emulateMedia({ reducedMotion })` would not
+ * help, because this product's reduced-motion block is an allowlist of seven
+ * class names and `.animated-border` is not one of them.
+ *
+ * This is a capture-time override injected into the page, not a change to the
+ * product: a manual wants the resting state anyway, and a screenshot is a
+ * single frame of an animation whichever frame it picks.
+ */
+async function freeze(page: Page): Promise<void> {
+  await page.addStyleTag({
+    content:
+      "*, *::before, *::after { animation: none !important; transition: none !important; " +
+      "animation-play-state: paused !important; caret-color: transparent !important; }",
+  });
+  // One frame for the override to take effect before the shutter.
+  await page.waitForTimeout(120);
+}
+
 test.describe("doc screenshots", () => {
   test.skip(!RUN, "set CAPTURE_SCREENSHOTS=1 (npm run screenshots) to regenerate");
+
+  // Serial, in the order `shots()` returns.
+  //
+  // The captures used to run in parallel against ONE shared server, and every
+  // visit writes: a route view is an analytics event, and analytics events feed
+  // the quest badge in the rail, the achievement count, and every chart on
+  // Insights. So the state each screen was photographed in depended on which
+  // worker happened to get there first, and two identical runs differed in 22
+  // of 23 images (T-0114). A screenshot set that changes on every capture is
+  // the diff nobody can review that this file's own header warns about.
+  test.describe.configure({ mode: "serial" });
 
   test.beforeAll(async ({ request }) => {
     mkdirSync(OUT, { recursive: true });
@@ -110,6 +156,7 @@ test.describe("doc screenshots", () => {
       await page.waitForTimeout(2_000);
 
       await redact(page, secrets());
+      await freeze(page);
       await page.screenshot({ path: join(OUT, shot.file), fullPage: true });
     });
   }
