@@ -399,8 +399,17 @@ describe("the census ratchets, the way design-lint's baseline does", () => {
     expect(describeRegression(found[0])).toBe("railVsPageContrast fell from 1.5 to 1.2");
   });
 
-  it("does not treat adding a route as a regression", () => {
-    expect(regressions(counts(), counts({ routes: 24 }))).toEqual([]);
+  /**
+   * Both directions, and the second is the one that matters. This programme
+   * DELETES routes: the Rec Room merge takes twenty-three to twenty. Asserting
+   * only that adding one is fine left the exemption untested, and the sweep's
+   * mutant survived on exactly that gap.
+   */
+  it.each([
+    ["adding one", 24],
+    ["deleting three, as the Rec Room merge will", 20],
+  ])("does not treat %s as a regression", (_name, routes) => {
+    expect(regressions(counts(), counts({ routes }))).toEqual([]);
   });
 
   it("reports every measure that moved the wrong way, not just the first", () => {

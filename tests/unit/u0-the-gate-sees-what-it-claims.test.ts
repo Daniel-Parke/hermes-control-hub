@@ -129,7 +129,12 @@ describe("no-sub-12px-type sees a size set as a prop, not only as a class", () =
     ["a size above the floor", "  <text fontSize={14}>"],
     ["a three-digit size", "  <text fontSize={100}>"],
     ["a size the component computes", "  <text fontSize={size * 0.06}>"],
-    ["a prop that merely ends in fontSize", "  <Chart cssFontSize={8} />"],
+    // Lowercase f, deliberately. The first draft of this case wrote
+    // `cssFontSize={8}`, whose capital F could never match a lowercase pattern,
+    // so it proved nothing and the sweep's word-boundary mutant walked straight
+    // through it. A batch whose whole subject is a boundary in the wrong place
+    // does not get to leave its own boundary untested.
+    ["a longer identifier ending in the prop name", "  <Chart labelfontSize={8} />"],
   ])("does not fire on %s", (_name, line) => {
     expect(rulesTripped("src/components/viz/x.tsx", line)).not.toContain("no-sub-12px-type");
   });
