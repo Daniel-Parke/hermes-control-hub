@@ -38,26 +38,50 @@ Dark scales are slightly mixed toward `#0071c2` so panels read “cool reactor c
 | `dark-700` | `#1c2d40` |
 | `dark-600` | `#263d54` |
 
-### Layer B2, surface roles (the semantic layer)
+### Layer B2, the surface and edge ladder
 
-Layer B names surfaces for how they look, which is why it cannot say whether
-`dark-900` is a panel or a well. These four say it. Ruled at the first-build
-lock-in sitting of 2026-08-24 (`org/LOCKBOOK.md`, Tokens), derived from what the
-tree already paints, and minting no new colour.
+Layer B names colours for how they look, which is why it cannot say whether
+`dark-900` is a panel or a well. These seven say it, and every one of them is
+SOLVED rather than picked: `scripts/tooling/derive-surface-ladder.mjs` is given
+a ground, a ray and a target ratio, and `contrast-check.mjs` recomputes each
+ratio from the hex actually written in `globals.css`. An edit that looks nicer
+and measures worse fails the gate.
+
+**Fills.** Each rung is at least 1.45:1 above the one it sits on.
 
 | Role | Utility | Is | Use |
 |------|---------|----|-----|
-| ground | `bg-ps-surface-ground` | `var(--color-dark-950)` | the page itself |
-| panel | `bg-ps-surface-panel` | `var(--color-dark-900)` | a raised card, panel or bar |
-| well | `bg-ps-surface-well` | `var(--color-dark-800)` | a sunken field, code block or row |
-| hairline | `border-ps-surface-hairline` | `rgb(255 255 255 / 0.10)` | the rule between two surfaces |
+| ground | `bg-ps-surface-ground` | `#040b12` | the page itself |
+| panel | `bg-ps-surface-panel` | `#1e3042` | rail, header, card, any raised region |
+| raised | `bg-ps-surface-raised` | `#2e4a66` | dialog, popover, active row, table head |
+| inset | `bg-ps-surface-inset` | = ground | input, code block, well |
 
-The hairline is the one role with no `dark-*` rung behind it: the tree draws its
-rules as `border-white/10`, which matches no rung, so the composite is recorded
-rather than a rung invented. `dark-700` and `dark-600` carry no role.
+`inset` reusing `ground` is deliberate. A near-black page cannot go darker, so
+a well is made by being its parent's lower rung rather than by a new colour.
 
-New surfaces use the role names. The appearance-named spellings still paint the
-same pixels and are still everywhere, so both are live until the migration lands.
+**Rules.** A separate ladder on a cooler, far less saturated ray, because on the
+surface ray a 3:1 stroke comes out a blue line rather than an edge.
+
+| Role | Utility | Is | Use |
+|------|---------|----|-----|
+| edge | `border-ps-edge` | `#6c7887` | a control's boundary and the shell's seams. 3:1, WCAG 1.4.11 |
+| hairline | `border-ps-edge-hairline` | `#474f59` | a card outline, a rule inside one surface. 1.63:1 |
+| emphasis | `border-ps-edge-emphasis` | `#8797aa` | selected, armed, focused. 4.52:1 |
+
+The hairline is deliberately below 3:1. A card whose fill already sits 1.47:1
+off the page does not also need a 3:1 stroke, and drawing one round every tile
+reads as wireframe. A CONTROL is different: its boundary is what identifies it,
+and that is the one WCAG 1.4.11 is about. When in doubt, ask whether the thing
+can be operated.
+
+A hairline is measured against the PANEL. On `raised` it comes out at 1.11:1,
+so a seam inside a dialog or a menu uses `edge`.
+
+No component picks a rung off the `dark-*` ramp any more, and none draws a
+boundary with a raw white alpha: `tests/unit/u4-surfaces-and-edges.test.ts`
+holds both, `tests/e2e/design-invariants.spec.ts` measures the result on every
+route, and the census ratchets what is left. `dark-700` and `dark-600` carry no
+role and are not used.
 
 ### Measures
 

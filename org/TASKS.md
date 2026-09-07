@@ -130,3 +130,4 @@ The records under org/tasks/ are canonical.
 | T-0115 | standard | R1 | done | t0115-u1-mock-factories-2026-09-07 |
 | T-0116 | standard | R1 | done | t0116-u2-token-layer-2026-09-07 |
 | T-0117 | standard | R1 | done | t0117-u3-page-geometry-2026-09-07 |
+| T-0118 | standard | R1 | done | t0118-u4-surfaces-and-edges-2026-09-07 |
