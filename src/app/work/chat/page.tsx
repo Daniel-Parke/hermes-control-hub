@@ -73,8 +73,9 @@ export default function ChatPage() {
     isStreaming && lastMessage?.role === "assistant" && !lastMessage.content && !lastMessage.reasoning;
 
   return (
-    <AppPageShell className="flex flex-col h-full min-h-0">
-      <div className="flex flex-col flex-1 min-h-0">
+    <AppPageShell density="pane"
+      className="flex flex-col h-full min-h-0"
+      header={
         <PageHeader
           icon={MessageCircle}
           title="Chat"
@@ -99,7 +100,9 @@ export default function ChatPage() {
             </div>
           }
         />
-
+      }
+    >
+      <div className="flex flex-col flex-1 min-h-0">
         <div className="flex flex-1 overflow-hidden">
           {/* Sidebar */}
           <div className="w-60 shrink-0 border-r border-white/10 bg-white/[0.01] flex flex-col min-h-0">

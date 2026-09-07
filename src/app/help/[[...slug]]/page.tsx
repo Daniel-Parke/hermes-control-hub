@@ -39,7 +39,10 @@ import { loadHelpFragment, loadHelpManifest, loadHelpSearchIndex } from "@/lib/h
 // would serve whatever was on disk the first time anyone asked.
 export const dynamic = "force-dynamic";
 
-const CONTENT_FRAME = "flex-1 w-full flex flex-col md:flex-row gap-6 px-6 py-6 max-w-6xl mx-auto";
+// The two columns and the gap between them. No width, no centring and no
+// padding: the shell's container owns all three, so Help's left edge is the
+// same one every other screen has.
+const CONTENT_FRAME = "flex-1 w-full flex flex-col md:flex-row gap-6";
 
 /**
  * What Help looks like before the docs have been generated.
@@ -50,8 +53,7 @@ const CONTENT_FRAME = "flex-1 w-full flex flex-col md:flex-row gap-6 px-6 py-6 m
  */
 function HelpNotBuilt(): ReactElement {
   return (
-    <AppPageShell>
-      <HelpHeader subtitle="A guide for every screen, and the ideas behind it" />
+    <AppPageShell header={<HelpHeader subtitle="A guide for every screen, and the ideas behind it" />}>
       <div className={CONTENT_FRAME}>
         <div className="min-w-0 flex-1 space-y-4 rounded-lg border border-white/10 bg-dark-900/50 px-4 py-4">
           <h2 className="text-base font-bold text-ps-text-primary">Help has not been built yet.</h2>
@@ -98,11 +100,14 @@ export default async function HelpPage({
 
   const { prev, next } = helpNeighbours(manifest, wanted);
   return (
-    <AppPageShell>
-      {/* An expression, not a literal: the walk in b3-titles-from-registry only
-          reads title="..." string literals, and a page whose name is the guide's
-          name is not a header contradicting its rail entry. */}
-      <HelpHeader title={page.title} subtitle={page.summary} />
+    <AppPageShell
+      header={
+        /* An expression, not a literal: the walk in b3-titles-from-registry only
+           reads title="..." string literals, and a page whose name is the guide's
+           name is not a header contradicting its rail entry. */
+        <HelpHeader title={page.title} subtitle={page.summary} />
+      }
+    >
       <div className={CONTENT_FRAME}>
         <HelpNav sections={helpNavOrder(manifest)} current={wanted} />
         <div className="min-w-0 flex-1 space-y-6">

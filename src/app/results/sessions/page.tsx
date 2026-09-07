@@ -250,19 +250,21 @@ export default function SessionsPage() {
   }, [urlRead, debouncedSearch, sourceFilter, failedOnly, page, pageSize, missionId]);
 
   return (
-    <AppPageShell>
-      <PageHeader
-        icon={Clock}
-        subtitle={`${data?.total ?? 0} recorded sessions across all agents`}
-        color="orange"
-      />
-
+    <AppPageShell
+      header={
+        <PageHeader
+          icon={Clock}
+          subtitle={`${data?.total ?? 0} recorded sessions across all agents`}
+          color="orange"
+        />
+      }
+    >
       {/* An empty session list means one of two very different things. On an
           install with no agent it is not "you have not run anything yet", it is
           "nothing can produce a transcript here". Say which. */}
       <AgentSetupNotice what="Recording sessions" />
 
-      <div className="px-6 py-6">
+      <div>
         {loadError && (
           <LoadErrorBanner
             error={loadError}

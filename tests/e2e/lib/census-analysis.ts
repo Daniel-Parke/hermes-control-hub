@@ -141,6 +141,8 @@ export interface GeometryRecord {
   headingLeft: number | null;
   /** Left edge of the first block of page content beneath the header. */
   contentLeft: number | null;
+  /** Which element that was, so a moved number can be found again. */
+  contentLeftWhat: string | null;
   /** Width of the container the page centres its content in. */
   contentWidth: number | null;
   /** main.scrollWidth minus main.clientWidth; > 0 means silent sideways scroll. */
@@ -198,6 +200,13 @@ export interface CensusCounts {
   /** Worst |h1.left - content.left| across every route, in px. */
   worstHeadingOffset: number;
   distinctContentWidths: number;
+  /**
+   * How many different x the product's h1 sits at. One container means one.
+   * This is cause 2 stated as a number: twenty pages centred their own column
+   * in one of seven widths, and the sticky header then disagreed with the body
+   * beneath it on all but one screen.
+   */
+  distinctHeadingLefts: number;
   routesOverflowingX: number;
   /** Rail surface against the page it sits beside. Higher is better. */
   railVsPageContrast: number;
@@ -224,6 +233,7 @@ export const LOWER_IS_BETTER: ReadonlySet<keyof CensusCounts> = new Set([
   "routesWithMisalignedHeading",
   "worstHeadingOffset",
   "distinctContentWidths",
+  "distinctHeadingLefts",
   "routesOverflowingX",
 ]);
 
@@ -256,6 +266,7 @@ export function summarise(raw: RawCensus[]): CensusCounts {
   const shadows = new Set<string>();
   const zLayers = new Set<string>();
   const contentWidths = new Set<number>();
+  const headingLefts = new Set<number>();
 
   let textNodes = 0;
   let twelvePx = 0;
@@ -300,7 +311,11 @@ export function summarise(raw: RawCensus[]): CensusCounts {
       if (box.radius) radii.add(box.radius);
       if (box.shadow && box.shadow !== "none") shadows.add(box.shadow);
       if (box.zIndex && box.zIndex !== "auto") zLayers.add(box.zIndex);
-      if (box.control) {
+      // `w`/`h` are zeroed for a control that is inline in a sentence (see the
+      // collector, and WCAG 2.5.8). Its box is the line, not the control, so
+      // it is no more a button height here than it is a hit target there: one
+      // reflowed paragraph would otherwise register as a new button size.
+      if (box.control && box.h > 0) {
         if (box.height > 0 && box.height < 60) buttonHeights.add(box.height);
         if (box.chrome) buttonChromes.add(`${box.height}|${box.chrome}`);
         if (box.w > 0 && box.h > 0 && (box.w < HIT_TARGET_FLOOR_PX || box.h < HIT_TARGET_FLOOR_PX)) {
@@ -311,6 +326,7 @@ export function summarise(raw: RawCensus[]): CensusCounts {
 
     const g = page.geometry;
     if (g.contentWidth !== null) contentWidths.add(Math.round(g.contentWidth));
+    if (g.headingLeft !== null) headingLefts.add(Math.round(g.headingLeft));
     if (g.headingLeft !== null && g.contentLeft !== null) {
       const offset = Math.abs(g.headingLeft - g.contentLeft);
       if (offset > HEADING_ALIGNMENT_TOLERANCE_PX) misaligned += 1;
@@ -350,6 +366,7 @@ export function summarise(raw: RawCensus[]): CensusCounts {
     routesWithMisalignedHeading: misaligned,
     worstHeadingOffset: worstOffset,
     distinctContentWidths: contentWidths.size,
+    distinctHeadingLefts: headingLefts.size,
     routesOverflowingX: overflowing,
     railVsPageContrast: Number.isFinite(railVsPage) ? round2(railVsPage) : 0,
     railDividerContrast: Number.isFinite(railDivider) ? round2(railDivider) : 0,

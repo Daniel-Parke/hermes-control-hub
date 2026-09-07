@@ -308,23 +308,25 @@ export default function SkillsPage() {
   const total = data?.skills.length || 0;
 
   return (
-    <AppPageShell>
+    <AppPageShell
+      header={
+        <PageHeader
+          icon={FileText}
+          subtitle={`${total} skill${pluralise(total)} — active = catalog minus skills.disabled for ${selectedProfile}`}
+          color="green"
+          actions={
+            <ProfileSelector
+              value={selectedProfile}
+              onChange={(id) => setSelectedProfile(id)}
+              compact={false}
+            />
+          }
+        />
+      }
+    >
       <LastResult result={lastResult} />
       {toastElement}
-      <PageHeader
-        icon={FileText}
-        subtitle={`${total} skill${pluralise(total)} — active = catalog minus skills.disabled for ${selectedProfile}`}
-        color="green"
-        actions={
-          <ProfileSelector
-            value={selectedProfile}
-            onChange={(id) => setSelectedProfile(id)}
-            compact={false}
-          />
-        }
-      />
-
-      <div className="px-6 py-4">
+      <div>
         <SkillsDenylistNote />
         {!loading && total > 0 && (
           <SkillsInsights skills={allSkills} activeCount={activeSkills.length} />

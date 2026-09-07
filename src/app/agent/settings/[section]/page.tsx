@@ -40,17 +40,19 @@ import SettingsSubject from "@/components/config/SettingsSubject";
  */
 function UnknownConfigSection({ slug }: { slug: string }) {
   return (
-    <AppPageShell>
-      <PageHeader
-        icon={AlertCircle}
-        title="Unknown Config Section"
-        subtitle="Pick the section you meant"
-        color="orange"
-        backHref="/agent/settings"
-        backLabel="CONFIG"
-      />
-
-      <div className="max-w-5xl mx-auto px-6 py-6 flex-1 w-full">
+    <AppPageShell
+      header={
+        <PageHeader
+          icon={AlertCircle}
+          title="Unknown Config Section"
+          subtitle="Pick the section you meant"
+          color="orange"
+          backHref="/agent/settings"
+          backLabel="CONFIG"
+        />
+      }
+    >
+      <div>
         <p className="text-sm text-ps-text-muted font-mono mb-6">
           No config section is called{" "}
           <code className="text-ps-text-primary">{slug}</code>. These are the
@@ -330,58 +332,60 @@ export default function ConfigSectionPage() {
     (sectionDef.fields.length > 0 || isFileSection);
 
   return (
-    <AppPageShell>
-      <PageHeader
-        icon={SectionIcon}
-        title={sectionDef.label}
-        subtitle={sectionDef.description}
-        color={sectionDef.color}
-        backHref="/agent/settings"
-        backLabel="CONFIG"
-        actions={
-          showActions ? (
-            <>
-              {hasChanges && (
-                <span className="text-xs text-neon-orange font-mono flex items-center gap-1">
-                  <AlertCircle className="w-3 h-3" />
-                  UNSAVED
-                </span>
-              )}
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={handleReset}
-                disabled={!hasChanges}
-                icon={RotateCcw}
-              >
-                Reset
-              </Button>
-              <Button
-                variant="primary"
-                color={sectionDef.color}
-                size="sm"
-                onClick={handleSave}
-                disabled={!hasChanges || yamlSaveBlocked || fieldProblems.length > 0}
-                title={
-                  yamlSaveBlocked
-                    ? `config.yaml did not parse: ${configError}`
-                    : problemSummary || undefined
-                }
-                loading={saving}
-                icon={saveStatus === "saved" ? Check : Save}
-              >
-                {saveStatus === "saving"
-                  ? "Saving..."
-                  : saveStatus === "saved"
-                  ? "Saved!"
-                  : "Save"}
-              </Button>
-            </>
-          ) : undefined
-        }
-      />
-
-      <div className="max-w-3xl mx-auto px-6 py-6 flex-1 w-full">
+    <AppPageShell
+      header={
+        <PageHeader
+          icon={SectionIcon}
+          title={sectionDef.label}
+          subtitle={sectionDef.description}
+          color={sectionDef.color}
+          backHref="/agent/settings"
+          backLabel="CONFIG"
+          actions={
+            showActions ? (
+              <>
+                {hasChanges && (
+                  <span className="text-xs text-neon-orange font-mono flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3" />
+                    UNSAVED
+                  </span>
+                )}
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={handleReset}
+                  disabled={!hasChanges}
+                  icon={RotateCcw}
+                >
+                  Reset
+                </Button>
+                <Button
+                  variant="primary"
+                  color={sectionDef.color}
+                  size="sm"
+                  onClick={handleSave}
+                  disabled={!hasChanges || yamlSaveBlocked || fieldProblems.length > 0}
+                  title={
+                    yamlSaveBlocked
+                      ? `config.yaml did not parse: ${configError}`
+                      : problemSummary || undefined
+                  }
+                  loading={saving}
+                  icon={saveStatus === "saved" ? Check : Save}
+                >
+                  {saveStatus === "saving"
+                    ? "Saving..."
+                    : saveStatus === "saved"
+                    ? "Saved!"
+                    : "Save"}
+                </Button>
+              </>
+            ) : undefined
+          }
+        />
+      }
+    >
+      <div>
         {/* Which agent a save here lands on. The three screens before this one
             in the chapter are about the profile in the picker, and this page
             writes one file whatever that picker says (T-0113). */}

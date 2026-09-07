@@ -25,14 +25,14 @@ The board reads the machine while it is open and re-reads it every few seconds,
 so what you are looking at is current rather than a snapshot from when you
 opened the tab. It is arranged top to bottom, health first, then work.
 
-**The header.** The name of the agent framework driving this install, Hermes on
-a standard install, with the words "Agent Framework" beside it. Under the name,
-the model that agent will use. If a model has been chosen in Models but not yet
-written to the agent, the line says so. On the right, a badge reading ONLINE,
-REMOTE or NOT INSTALLED, which reports NOT INSTALLED or REMOTE when the check
-says the agent is absent; until a check has said so, including while the board
-is still loading, the badge reads ONLINE. Beside it, a **?** that opens the
-guide for whichever screen you are on.
+**The header.** The word Dashboard, the same word the rail entry beside it
+uses. Under it, the agent framework driving this install, Hermes on a standard
+install, and the model that agent will use. If a model has been chosen in
+Models but not yet written to the agent, the line says so. On the right, a badge
+reading ONLINE, REMOTE or NOT INSTALLED, which reports NOT INSTALLED or REMOTE
+when the check says the agent is absent; until a check has said so, including
+while the board is still loading, the badge reads ONLINE. Beside it, a **?**
+that opens the guide for whichever screen you are on.
 
 **Start here.** A card with one thing to do next, and only one. It names the
 chapter it comes from, the quest, a sentence saying what to do, and a **Go**

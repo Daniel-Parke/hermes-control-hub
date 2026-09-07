@@ -22,10 +22,9 @@ jest.mock("next/navigation", () => ({
   usePathname: () => "/agent/tools",
   useRouter: () => ({ push: jest.fn(), replace: jest.fn() }),
 }));
-jest.mock("@/components/layout/AppPageShell", () => ({
-  __esModule: true,
-  default: ({ children }: { children: ReactNode }) => <div>{children}</div>,
-}));
+jest.mock("@/components/layout/AppPageShell", () =>
+  require("../helpers/mocks").appPageShellMock(),
+);
 jest.mock("@/components/layout/PageHeader", () => ({
   __esModule: true,
   default: ({ subtitle, actions }: { subtitle?: ReactNode; actions?: ReactNode }) => (

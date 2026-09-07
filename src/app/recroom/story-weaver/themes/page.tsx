@@ -130,7 +130,27 @@ export default function PromptsPage() {
   }
 
   return (
-    <AppPageShell variant="scanlines">
+    <AppPageShell density="prose"
+      variant="scanlines"
+      header={
+        <PageHeader
+          icon={FileText}
+          subtitle={`${themes.length} themes`}
+          color="green"
+          backHref="/recroom/story-weaver"
+          backLabel="STORY WEAVER"
+          actions={
+            <button
+              type="button"
+              onClick={startNew}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-green-500/30 bg-green-500/10 text-xs font-mono text-green-400 hover:bg-green-500/20"
+            >
+              <Plus className="w-3 h-3" /> New theme
+            </button>
+          }
+        />
+      }
+    >
       {/* Edit Modal */}
       {editing && (
         <div className="fixed inset-0 z-[60] bg-dark-950/80 backdrop-blur-sm flex items-start justify-center p-4 pt-12 overflow-y-auto" onClick={closeEditor} role="presentation">
@@ -227,24 +247,7 @@ export default function PromptsPage() {
         </div>
       )}
 
-      <PageHeader
-        icon={FileText}
-        subtitle={`${themes.length} themes`}
-        color="green"
-        backHref="/recroom/story-weaver"
-        backLabel="STORY WEAVER"
-        actions={
-          <button
-            type="button"
-            onClick={startNew}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-green-500/30 bg-green-500/10 text-xs font-mono text-green-400 hover:bg-green-500/20"
-          >
-            <Plus className="w-3 h-3" /> New theme
-          </button>
-        }
-      />
-
-      <div className="max-w-4xl mx-auto px-6 py-8 flex-1 w-full">
+      <div>
         {loadError && <LoadErrorBanner error={loadError} onRetry={load} />}
         {loadError ? null : themes.length === 0 ? (
           <div className="text-center py-16">

@@ -23,7 +23,7 @@ import { render, screen } from "@testing-library/react";
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 
-import AppPageShell from "@/components/layout/AppPageShell";
+import AppPageShell, { PAGE_MEASURE } from "@/components/layout/AppPageShell";
 
 const ROOT = join(__dirname, "..", "..");
 
@@ -64,9 +64,12 @@ describe("the shell owns the measure", () => {
     const measured = [...container.querySelectorAll("[data-ps-container]")];
     expect(measured).toHaveLength(2);
     const [headerBox, bodyBox] = measured;
-    // The same class string, not merely a similar one: two containers that
-    // agree by coincidence are two containers that will stop agreeing.
-    expect(headerBox.className).toBe(bodyBox.className);
+    // The same MEASURE, verbatim: the same max-width and the same horizontal
+    // padding, which between them are what decide a left edge. Not the same
+    // whole class string, because a pane's container also has to fill the
+    // remaining height and the header's must not become a column.
+    expect(headerBox.className).toContain(PAGE_MEASURE);
+    expect(bodyBox.className).toContain(PAGE_MEASURE);
     expect(headerBox.contains(screen.getByRole("heading"))).toBe(true);
     expect(bodyBox.textContent).toContain("body");
   });
@@ -125,11 +128,17 @@ describe("density decides what is inside the container, never what it is", () =>
    * same one the header used, so the left edge cannot move between screens.
    */
   it.each(["board", "prose", "pane"] as const)(
-    "leaves the container alone at %s, so the left edge never moves",
+    "leaves the measure alone at %s, so the left edge never moves",
     (density) => {
       const boxes = [...shell(density).querySelectorAll("[data-ps-container]")];
       expect(boxes).toHaveLength(2);
-      expect(boxes[0].className).toBe(boxes[1].className);
+      for (const box of boxes) expect(box.className).toContain(PAGE_MEASURE);
+      // And no second width anywhere on the container itself: two max-widths on
+      // one element are resolved by the order the rules happen to sit in the
+      // emitted stylesheet, which no call site can see.
+      for (const box of boxes) {
+        expect(box.className.match(/\bmax-w-[\w-]+/g)).toEqual(["max-w-ps-page"]);
+      }
     },
   );
 
@@ -154,12 +163,18 @@ describe("and no page owns a measure of its own", () => {
     expect(pages().length).toBeGreaterThan(25);
   });
 
-  it.each([
-    ["a max-width", /className=(?:"|\{`)[^"`]*\bmax-w-/],
-    ["a centring margin", /className=(?:"|\{`)[^"`]*\bmx-auto/],
-  ])("no page declares %s", (_what, pattern) => {
+  /**
+   * Not "no page may ever cap a width". Capping a paragraph at a reading
+   * measure is something this programme asks for, and centring a 12px icon in
+   * an empty state is not a layout decision. What a page may not own is a
+   * container at the PAGE's own scale: seven of those across twenty pages are
+   * what produced eight left gutters and eight content widths at 1920.
+   */
+  const PAGE_SCALE = /\bmax-w-(?:4xl|5xl|6xl|7xl|screen-[\w-]+|ps-[\w-]+)\b/;
+
+  it("no page declares a container at the page's own scale", () => {
     const offenders = pages()
-      .filter(([, source]) => codeLines(source).some((l) => pattern.test(l)))
+      .filter(([, source]) => codeLines(source).some((l) => PAGE_SCALE.test(l)))
       .map(([path]) => path);
     expect(offenders).toEqual([]);
   });
@@ -178,9 +193,16 @@ describe("and no page owns a measure of its own", () => {
     expect(offenders).toEqual([]);
   });
 
+  /**
+   * The bar's CHROME, not the <header> tag. The dashboard painted its own bar
+   * with shellHeaderBarClasses inside a plain <div>, so a tag ban misses the
+   * only real offender; and /quests renders a <header> that is a banner for
+   * the quest list, inside <main>, which is not a landmark and not a bar.
+   * shellHeaderBarClasses now belongs to AppPageShell and to nothing else.
+   */
   it("and hands it a header rather than writing its own bar", () => {
     const offenders = pages()
-      .filter(([, source]) => codeLines(source).some((l) => /<header[\s>]/.test(l)))
+      .filter(([, source]) => source.includes("shellHeaderBarClasses"))
       .map(([path]) => path);
     expect(offenders).toEqual([]);
   });

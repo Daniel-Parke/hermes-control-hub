@@ -351,7 +351,28 @@ function CreateStoryPage() {
   }, [genStoryId, router]);
 
   return (
-    <AppPageShell variant="scanlines">
+    <AppPageShell density="prose"
+      variant="scanlines"
+      header={
+        <PageHeader
+          icon={Sparkles}
+          color="purple"
+          backHref="/recroom/story-weaver"
+          backLabel="STORY WEAVER"
+          actions={
+            hasDraft ? (
+              <button
+                type="button"
+                onClick={loadDraft}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-orange-500/20 text-xs font-mono text-orange-400 hover:bg-orange-500/10"
+              >
+                <FolderOpen className="w-3 h-3" /> Load Draft
+              </button>
+            ) : undefined
+          }
+        />
+      }
+    >
       <GenerateOverlay title={title || "Your Story"} visible={generating} done={genDone} onComplete={handleGenComplete} />
 
       {/* Error banner */}
@@ -435,25 +456,7 @@ function CreateStoryPage() {
         </div>
       )}
 
-      <PageHeader
-        icon={Sparkles}
-        color="purple"
-        backHref="/recroom/story-weaver"
-        backLabel="STORY WEAVER"
-        actions={
-          hasDraft ? (
-            <button
-              type="button"
-              onClick={loadDraft}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-orange-500/20 text-xs font-mono text-orange-400 hover:bg-orange-500/10"
-            >
-              <FolderOpen className="w-3 h-3" /> Load Draft
-            </button>
-          ) : undefined
-        }
-      />
-
-      <div className="max-w-4xl mx-auto px-6 py-8 space-y-6 flex-1 w-full">
+      <div className="space-y-6">
 
         {/* ═══ SECTION A: Templates + Clear ═══ */}
         <div className="rounded-xl border border-neon-purple/15 bg-dark-900/50 p-5">

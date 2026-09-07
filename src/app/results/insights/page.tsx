@@ -146,32 +146,34 @@ export default function InsightsPage() {
   return (
     // B3 split the Laboratory into two route groups, so its single layout no
     // longer reached these three pages and they lost the app's grid (D103).
-    <AppPageShell>
+    <AppPageShell
+      header={
+        <PageHeader
+          icon={BarChart3}
+          title="Insights"
+          subtitle="Interaction analytics & achievements"
+          color="cyan"
+          actions={
+            <div className="flex items-center gap-1 rounded-lg border border-white/10 bg-dark-900/60 p-0.5">
+              {RANGES.map((r) => (
+                <button
+                  key={r}
+                  type="button"
+                  onClick={() => setDays(r)}
+                  className={`rounded-md px-2.5 py-1 text-xs font-mono transition-colors ${
+                    days === r ? "bg-neon-cyan/20 text-neon-cyan" : "text-ps-text-muted hover:text-ps-text-secondary"
+                  }`}
+                >
+                  {r}d
+                </button>
+              ))}
+            </div>
+          }
+        />
+      }
+    >
     <div className="flex h-full flex-col">
-      <PageHeader
-        icon={BarChart3}
-        title="Insights"
-        subtitle="Interaction analytics & achievements"
-        color="cyan"
-        actions={
-          <div className="flex items-center gap-1 rounded-lg border border-white/10 bg-dark-900/60 p-0.5">
-            {RANGES.map((r) => (
-              <button
-                key={r}
-                type="button"
-                onClick={() => setDays(r)}
-                className={`rounded-md px-2.5 py-1 text-xs font-mono transition-colors ${
-                  days === r ? "bg-neon-cyan/20 text-neon-cyan" : "text-ps-text-muted hover:text-ps-text-secondary"
-                }`}
-              >
-                {r}d
-              </button>
-            ))}
-          </div>
-        }
-      />
-
-      <div className="flex-1 space-y-4 overflow-y-auto p-6">
+      <div className="flex-1 space-y-4 overflow-y-auto">
         {error && (
           <LoadErrorBanner
             error={error}

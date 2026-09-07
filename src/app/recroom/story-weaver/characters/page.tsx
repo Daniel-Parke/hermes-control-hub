@@ -152,7 +152,28 @@ export default function CharactersPage() {
   }
 
   return (
-    <AppPageShell variant="scanlines">
+    <AppPageShell density="prose"
+      variant="scanlines"
+      header={
+        <PageHeader
+          icon={Users}
+          title="Characters"
+          subtitle={`${characters.length} characters`}
+          color="purple"
+          backHref="/recroom/story-weaver"
+          backLabel="STORY WEAVER"
+          actions={
+            <button
+              type="button"
+              onClick={startNew}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-neon-purple/30 bg-neon-purple/10 text-xs font-mono text-neon-purple hover:bg-neon-purple/20"
+            >
+              <Plus className="w-3 h-3" /> New character
+            </button>
+          }
+        />
+      }
+    >
       {/* Edit Modal */}
       {editing && (
         <div className="fixed inset-0 z-[60] bg-dark-950/80 backdrop-blur-sm flex items-start justify-center p-4 pt-12 overflow-y-auto" onClick={closeEditor} role="presentation">
@@ -275,25 +296,7 @@ export default function CharactersPage() {
         </div>
       )}
 
-      <PageHeader
-        icon={Users}
-        title="Characters"
-        subtitle={`${characters.length} characters`}
-        color="purple"
-        backHref="/recroom/story-weaver"
-        backLabel="STORY WEAVER"
-        actions={
-          <button
-            type="button"
-            onClick={startNew}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-neon-purple/30 bg-neon-purple/10 text-xs font-mono text-neon-purple hover:bg-neon-purple/20"
-          >
-            <Plus className="w-3 h-3" /> New character
-          </button>
-        }
-      />
-
-      <div className="max-w-4xl mx-auto px-6 py-8 flex-1 w-full">
+      <div>
         {loadError && <LoadErrorBanner error={loadError} onRetry={load} />}
         {loadError ? null : characters.length === 0 ? (
           <div className="text-center py-16">

@@ -144,16 +144,18 @@ export default function SettingsIndexPage() {
   const nothing = groups.length === 0 && tools.length === 0;
 
   return (
-    <AppPageShell>
-      <PageHeader
-        icon={Settings}
-        subtitle={`${sectionCount} sections of config.yaml, edited with a backup each time, plus Models, Restore and System`}
-        color="orange"
-        backHref="/"
-        backLabel="HOME"
-      />
-
-      <div className="max-w-7xl mx-auto px-6 py-6 space-y-8 flex-1 w-full">
+    <AppPageShell
+      header={
+        <PageHeader
+          icon={Settings}
+          subtitle={`${sectionCount} sections of config.yaml, edited with a backup each time, plus Models, Restore and System`}
+          color="orange"
+          backHref="/"
+          backLabel="HOME"
+        />
+      }
+    >
+      <div className="space-y-8">
         {/* Whose settings these are. Nothing said so, and the three screens
             before this one in the chapter are about a profile this page cannot
             edit (T-0113). Absent while the read is in flight: an unknown

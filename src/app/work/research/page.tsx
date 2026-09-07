@@ -165,14 +165,16 @@ export default function DeepResearchPage() {
   return (
     // B3 split the Laboratory into two route groups, so its single layout no
     // longer reached this page and it lost the app's grid (D103).
-    <AppPageShell>
-    <div className="mx-auto w-full max-w-6xl space-y-4 p-4">
-      <PageHeader
-        icon={Telescope}
-        subtitle="Provider-flexible iterative research → an interactive, cited report"
-        color="cyan"
-      />
-
+    <AppPageShell
+      header={
+        <PageHeader
+          icon={Telescope}
+          subtitle="Provider-flexible iterative research → an interactive, cited report"
+          color="cyan"
+        />
+      }
+    >
+    <div className="space-y-4">
       {runsError ? <LoadErrorBanner error={runsError} onRetry={() => void refetch()} /> : null}
       {/* A failed live read, as distinct from a dropped socket. The run
           detail below still renders from the polled copy (T-0046). */}

@@ -188,85 +188,87 @@ export default function SessionDetailPage() {
     .join(String.fromCharCode(10, 10));
 
   return (
-    <AppPageShell>
-      <PageHeader
-        icon={MessageSquare}
-        title={data.title || data.id}
-        subtitle={subtitleParts.join(" · ")}
-        color="orange"
-        backHref="/results/sessions"
-        backLabel="SESSIONS"
-        actions={
-          <div className="flex items-center gap-2 flex-wrap justify-end">
-            {data.missionId && (
-              <a
-                href={`${MISSIONS_PATH}?mission=${data.missionId}`}
-                className="text-xs font-mono px-2 py-1 rounded bg-neon-green/10 text-neon-green hover:bg-neon-green/20 transition-colors"
-                title="Open the parent mission"
-              >
-                ↗ Mission
-              </a>
-            )}
-            <button
-              type="button"
-              onClick={() => setExpandAll((v) => (v === true ? false : true))}
-              className="text-xs font-mono px-2 py-1 rounded bg-white/5 text-ps-text-muted hover:text-white transition-colors"
-            >
-              {expandAll === true ? "Collapse all" : "Expand all"}
-            </button>
-            <button
-              type="button"
-              onClick={() => void copy(transcriptText)}
-              className="text-xs font-mono px-2 py-1 rounded bg-white/5 text-ps-text-muted hover:text-white transition-colors"
-              title="Copy the messages currently shown"
-            >
-              {copied ? "Copied" : "Copy transcript"}
-            </button>
-            {isRunning && (
-              <button
-                type="button"
-                onClick={() => void refetch()}
-                className="text-xs font-mono px-2 py-1 rounded bg-neon-cyan/10 text-neon-cyan hover:bg-neon-cyan/20 transition-colors"
-                title="Reload to check for new messages"
-              >
-                ⟳ Refresh
-              </button>
-            )}
-            {Object.entries(roleCounts).map(([role, count]) => {
-              const m = ROLE_META[role] || ROLE_META.system;
-              const isActive = roleFilter === role;
-              return (
-                <button
-                  key={role}
-                  type="button"
-                  onClick={() => handleRoleBadgeClick(role)}
-                  onDoubleClick={() => scrollToNextRole(role)}
-                  title={`Click to filter · Double-click to jump to next ${role}`}
-                  className={`text-xs font-mono px-2 py-1 rounded transition-colors cursor-pointer ${
-                    isActive
-                      ? `${m.bgSolid} ${m.text} ring-1 ring-white/20`
-                      : `${m.bgSolid} ${m.text} opacity-60 hover:opacity-100`
-                  }`}
+    <AppPageShell
+      header={
+        <PageHeader
+          icon={MessageSquare}
+          title={data.title || data.id}
+          subtitle={subtitleParts.join(" · ")}
+          color="orange"
+          backHref="/results/sessions"
+          backLabel="SESSIONS"
+          actions={
+            <div className="flex items-center gap-2 flex-wrap justify-end">
+              {data.missionId && (
+                <a
+                  href={`${MISSIONS_PATH}?mission=${data.missionId}`}
+                  className="text-xs font-mono px-2 py-1 rounded bg-neon-green/10 text-neon-green hover:bg-neon-green/20 transition-colors"
+                  title="Open the parent mission"
                 >
-                  {count} {role}
-                </button>
-              );
-            })}
-            {roleFilter && (
+                  ↗ Mission
+                </a>
+              )}
               <button
                 type="button"
-                onClick={clearRoleFilter}
-                className="text-xs font-mono text-ps-text-muted hover:text-ps-text-secondary px-1.5 py-1 rounded bg-white/5"
+                onClick={() => setExpandAll((v) => (v === true ? false : true))}
+                className="text-xs font-mono px-2 py-1 rounded bg-white/5 text-ps-text-muted hover:text-white transition-colors"
               >
-                clear
+                {expandAll === true ? "Collapse all" : "Expand all"}
               </button>
-            )}
-          </div>
-        }
-      />
-
+              <button
+                type="button"
+                onClick={() => void copy(transcriptText)}
+                className="text-xs font-mono px-2 py-1 rounded bg-white/5 text-ps-text-muted hover:text-white transition-colors"
+                title="Copy the messages currently shown"
+              >
+                {copied ? "Copied" : "Copy transcript"}
+              </button>
+              {isRunning && (
+                <button
+                  type="button"
+                  onClick={() => void refetch()}
+                  className="text-xs font-mono px-2 py-1 rounded bg-neon-cyan/10 text-neon-cyan hover:bg-neon-cyan/20 transition-colors"
+                  title="Reload to check for new messages"
+                >
+                  ⟳ Refresh
+                </button>
+              )}
+              {Object.entries(roleCounts).map(([role, count]) => {
+                const m = ROLE_META[role] || ROLE_META.system;
+                const isActive = roleFilter === role;
+                return (
+                  <button
+                    key={role}
+                    type="button"
+                    onClick={() => handleRoleBadgeClick(role)}
+                    onDoubleClick={() => scrollToNextRole(role)}
+                    title={`Click to filter · Double-click to jump to next ${role}`}
+                    className={`text-xs font-mono px-2 py-1 rounded transition-colors cursor-pointer ${
+                      isActive
+                        ? `${m.bgSolid} ${m.text} ring-1 ring-white/20`
+                        : `${m.bgSolid} ${m.text} opacity-60 hover:opacity-100`
+                    }`}
+                  >
+                    {count} {role}
+                  </button>
+                );
+              })}
+              {roleFilter && (
+                <button
+                  type="button"
+                  onClick={clearRoleFilter}
+                  className="text-xs font-mono text-ps-text-muted hover:text-ps-text-secondary px-1.5 py-1 rounded bg-white/5"
+                >
+                  clear
+                </button>
+              )}
+            </div>
+          }
+        />
+      }
+    >
       {/* Messages */}
-      <div className="max-w-4xl mx-auto px-6 py-6 flex-1 w-full">
+      <div>
         {data.status === "failed" && (
           <div
             role="alert"

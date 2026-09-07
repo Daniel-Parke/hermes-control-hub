@@ -1,5 +1,5 @@
 {
-  "note": "Measured by tests/e2e/design-census.spec.ts against the running product. Sprawl counts may fall and never rise; contrast readings may rise and never fall. Rewrite with UPDATE_CENSUS=1 npm run census, and say why in the commit.",
+  "note": "Measured by tests/e2e/design-census.spec.ts against the running product. Sprawl counts may fall and never rise; contrast readings may rise and never fall. Rewrite with UPDATE_CENSUS=1 npm run census, and say why in the commit.\n\nT-0117 corrected how contentLeft is read, so the three geometry numbers are not comparable to the ones U0 committed. contentLeft was the COMMONEST left among painted blocks inside <main>, which is a vote: /results/logs paints hundreds of log lines inside its terminal pane and elected the pane's inner left; /work/missions elected an <h2> that outnumbered the cards it sits in, by exactly those cards' padding. It is now the LEFTMOST outermost painted block that is not the page's own ground. Re-measured on the tree U0 baselined, that reads worstHeadingOffset 237 across 23 of 23 routes, not 289 across 21 - the old instrument understated both the size and the reach of the defect. distinctHeadingLefts (7 there, 1 here) was added in the same batch because it states cause 2 without a heuristic at all: how many different x the product's h1 sits at. distinctButtonHeights fell by one for the same kind of reason - a control that is inline in a sentence has a line box, not a height, which the hit-target measure already knew and this one did not.",
   "viewport": {
     "width": 1440,
     "height": 900
@@ -12,17 +12,18 @@
     "textBelowFloor": 0,
     "distinctBorderColours": 36,
     "distinctCardChromes": 108,
-    "distinctButtonHeights": 23,
+    "distinctButtonHeights": 22,
     "distinctButtonChromes": 89,
     "distinctRadii": 7,
     "distinctBoxShadows": 16,
     "distinctZLayers": 1,
     "controlBordersBelowThree": 320,
-    "decorativeBordersBelowThree": 619,
+    "decorativeBordersBelowThree": 618,
     "hitTargetsBelowTwentyFour": 85,
-    "routesWithMisalignedHeading": 21,
-    "worstHeadingOffset": 289,
-    "distinctContentWidths": 8,
+    "routesWithMisalignedHeading": 0,
+    "worstHeadingOffset": 0,
+    "distinctContentWidths": 1,
+    "distinctHeadingLefts": 1,
     "routesOverflowingX": 0,
     "railVsPageContrast": 1.06,
     "railDividerContrast": 1.26

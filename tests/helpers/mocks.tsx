@@ -41,11 +41,20 @@ export function lucideMock(): Record<string, unknown> {
 /** The page frame as a plain div: 29 pages wear it and no test is about it. */
 export function appPageShellMock(): {
   __esModule: true;
-  default: (props: { children: ReactNode }) => ReactElement;
+  default: (props: { children: ReactNode; header?: ReactNode }) => ReactElement;
 } {
   return {
     __esModule: true,
-    default: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+    // `header` is rendered, not dropped. It is a PROP rather than a child
+    // (T-0117), so a mock that only forwarded children would silently erase
+    // every page's title, subtitle and header actions — and the assertions
+    // that look for them would then be passing against nothing.
+    default: ({ children, header }: { children: ReactNode; header?: ReactNode }) => (
+      <div>
+        {header}
+        {children}
+      </div>
+    ),
   };
 }
 

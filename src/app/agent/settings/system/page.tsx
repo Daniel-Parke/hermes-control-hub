@@ -110,11 +110,13 @@ export default function SystemPage() {
   const readOnly = runtime.data?.readOnly === true;
 
   return (
-    <AppPageShell>
+    <AppPageShell
+      header={
+        <PageHeader icon={Settings} subtitle="How this install is configured, updates, and backups" color="orange" backHref="/agent/settings" backLabel="SETTINGS" />
+      }
+    >
       {toastElement}
-      <PageHeader icon={Settings} subtitle="How this install is configured, updates, and backups" color="orange" backHref="/agent/settings" backLabel="SETTINGS" />
-
-      <div className="max-w-4xl mx-auto px-6 py-6 space-y-6 flex-1 w-full">
+      <div className="space-y-6">
         <Card icon={HardDrive} title="This install">
           {runtime.error ? (
             <LoadErrorBanner error={runtime.error} onRetry={() => void runtime.refetch()} className="mb-0" />

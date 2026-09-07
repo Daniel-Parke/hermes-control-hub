@@ -86,15 +86,17 @@ export default function ArtifactsPage() {
   const isMarkup = detail && (detail.mimeType.includes("markdown") || detail.mimeType.includes("html"));
 
   return (
-    <AppPageShell>
-    <div className="mx-auto max-w-5xl space-y-4 p-4">
-      <PageHeader
-        icon={FileStack}
-        title="Artifacts"
-        subtitle="Deliverables your agents produced — reports, run outputs, saved snippets — collected to view + download"
-        color="orange"
-      />
-
+    <AppPageShell
+      header={
+        <PageHeader
+          icon={FileStack}
+          title="Artifacts"
+          subtitle="Deliverables your agents produced — reports, run outputs, saved snippets — collected to view + download"
+          color="orange"
+        />
+      }
+    >
+    <div className="space-y-4">
       {error ? <LoadErrorBanner error={error} onRetry={() => void refetch()} /> : null}
       {writeError ? <LoadErrorBanner error={writeError} /> : null}
 

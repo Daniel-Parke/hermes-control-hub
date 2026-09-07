@@ -225,15 +225,18 @@ export default function RestorePage() {
     : 0;
 
   return (
-    <AppPageShell>
-      <PageHeader
-        icon={RotateCcw}
-        subtitle="Put back what PatterStage ships, or clear out test clutter"
-        color="cyan"
-        backHref="/agent/settings"
-        backLabel="CONFIG"
-      />
-      <div className="p-4 md:p-6 max-w-4xl mx-auto space-y-8">
+    <AppPageShell
+      header={
+        <PageHeader
+          icon={RotateCcw}
+          subtitle="Put back what PatterStage ships, or clear out test clutter"
+          color="cyan"
+          backHref="/agent/settings"
+          backLabel="CONFIG"
+        />
+      }
+    >
+      <div className="space-y-8">
         {loading ? (
           <LoadingSpinner text="Reading the restore status…" />
         ) : (

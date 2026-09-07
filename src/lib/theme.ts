@@ -4,9 +4,20 @@
 
 import type { AccentColor } from "@/types/console";
 
-/** Aligns main-column top bar with Sidebar brand row (`--ps-shell-header-min-height` in globals.css). */
+/**
+ * The header BAR's own chrome, used by AppPageShell and nowhere else.
+ *
+ * It carries no measure and no horizontal padding on purpose: the bar spans the
+ * viewport so its bottom rule reaches both edges, and the container INSIDE it
+ * owns the left edge. It used to carry `px-6`, which made every page's header
+ * pad itself independently of its body — one of the reasons 21 of 23 routes
+ * measured an h1 that did not line up with its own content.
+ *
+ * The min-height is what keeps the bar level with the Sidebar's brand row
+ * (`--ps-shell-header-min-height` in globals.css).
+ */
 export const shellHeaderBarClasses =
-  "border-b border-white/10 bg-dark-900/50 backdrop-blur-xl min-h-[var(--ps-shell-header-min-height)] flex items-center px-6";
+  "border-b border-white/10 bg-dark-900/50 backdrop-blur-xl min-h-[var(--ps-shell-header-min-height)] flex items-center";
 
 // ═══════════════════════════════════════════════════════════════
 // The surface ladder and the measures — the code mirror of the tokens ruled at

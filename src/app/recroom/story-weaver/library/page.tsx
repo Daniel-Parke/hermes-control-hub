@@ -79,17 +79,20 @@ export default function LibraryPage() {
   const filterWord = FILTERS.find((f) => f.id === filter)?.label.replace(/ \(\d+\)$/, "") ?? "";
 
   return (
-    <AppPageShell variant="scanlines">
-      <PageHeader
-        icon={BookMarked}
-        title="Library"
-        subtitle="Your personal bookshelf"
-        color="purple"
-        backHref="/recroom/story-weaver"
-        backLabel="STORY WEAVER"
-      />
-
-      <div className="max-w-5xl mx-auto px-6 py-8 space-y-6 flex-1 w-full">
+    <AppPageShell density="prose"
+      variant="scanlines"
+      header={
+        <PageHeader
+          icon={BookMarked}
+          title="Library"
+          subtitle="Your personal bookshelf"
+          color="purple"
+          backHref="/recroom/story-weaver"
+          backLabel="STORY WEAVER"
+        />
+      }
+    >
+      <div className="space-y-6">
         {error && <LoadErrorBanner error={error} onRetry={fetchStories} />}
 
         {/* Stats */}

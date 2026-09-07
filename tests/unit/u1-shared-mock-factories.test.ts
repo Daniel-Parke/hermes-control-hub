@@ -114,12 +114,26 @@ describe("the factories behave the way the stanzas they replace behaved", () => 
     expect(el.props.className).toBe("w-4 h-4");
   });
 
-  it("the page shell renders its children and nothing else", () => {
+  it("the page shell renders its header and its children, and nothing else", () => {
     const mod = appPageShellMock();
     expect(mod.__esModule).toBe(true);
-    const el = mod.default({ children: "inside" }) as { type: string; props: { children: unknown } };
+    const el = mod.default({ children: "inside", header: "titled" }) as {
+      type: string;
+      props: { children: unknown };
+    };
     expect(el.type).toBe("div");
-    expect(el.props.children).toBe("inside");
+    // Both, in that order. The header is a PROP rather than a child since
+    // T-0117, and a mock that forwarded only children would silently erase
+    // every page's title, subtitle and header actions - leaving the six suites
+    // that assert on them passing against nothing.
+    expect(el.props.children).toEqual(["titled", "inside"]);
+  });
+
+  it("and forwards no header for a page that hands it none", () => {
+    const el = appPageShellMock().default({ children: "inside" }) as {
+      props: { children: unknown };
+    };
+    expect(el.props.children).toEqual([undefined, "inside"]);
   });
 
   it("next/link renders a real anchor carrying href and the rest of its props", () => {

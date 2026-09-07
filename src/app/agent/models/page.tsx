@@ -131,41 +131,43 @@ export default function ModelsPage() {
   const closeFallbackModal = useCallback(() => setEditingFallbackEntry(null), []);
 
   return (
-    <AppPageShell>
-      <PageHeader
-        icon={Globe}
-        title="Models"
-        subtitle={`${models.length} model${pluralise(models.length)} in registry · ${credentials.length} credential${pluralise(credentials.length)}`}
-        color="purple"
-        backHref="/agent/settings"
-        backLabel="CONFIG"
-        actions={
-          <>
-            <Button
-              variant="secondary"
-              color="purple"
-              icon={refreshing ? Loader2 : RefreshCw}
-              onClick={handleRefresh}
-              disabled={refreshing}
-              // design-lint-disable-next-line hermes-outside-adapter -- tooltip copy. It names the two files Refresh reads so the operator knows what a refresh will and will not pick up; a button that hid the files it reads would be less honest, not better layered.
-              title="Sync models from ~/.hermes/config.yaml and ~/.hermes/.env"
-            >
-              {refreshing ? "Re-importing…" : "Re-import from config"}
-            </Button>
-            <Button
-              variant="primary"
-              color="purple"
-              icon={Plus}
-              onClick={openAddModel}
-            >
-              Add Model
-            </Button>
+    <AppPageShell
+      header={
+        <PageHeader
+          icon={Globe}
+          title="Models"
+          subtitle={`${models.length} model${pluralise(models.length)} in registry · ${credentials.length} credential${pluralise(credentials.length)}`}
+          color="purple"
+          backHref="/agent/settings"
+          backLabel="CONFIG"
+          actions={
+            <>
+              <Button
+                variant="secondary"
+                color="purple"
+                icon={refreshing ? Loader2 : RefreshCw}
+                onClick={handleRefresh}
+                disabled={refreshing}
+                // design-lint-disable-next-line hermes-outside-adapter -- tooltip copy. It names the two files Refresh reads so the operator knows what a refresh will and will not pick up; a button that hid the files it reads would be less honest, not better layered.
+                title="Sync models from ~/.hermes/config.yaml and ~/.hermes/.env"
+              >
+                {refreshing ? "Re-importing…" : "Re-import from config"}
+              </Button>
+              <Button
+                variant="primary"
+                color="purple"
+                icon={Plus}
+                onClick={openAddModel}
+              >
+                Add Model
+              </Button>
 
-          </>
-        }
-      />
-
-      <div className="max-w-6xl mx-auto px-6 py-6 w-full flex-1 space-y-10">
+            </>
+          }
+        />
+      }
+    >
+      <div className="space-y-10">
         <p className="text-xs text-ps-text-muted font-mono border border-white/10 rounded-lg p-3 bg-dark-900/50">
           PatterStage stores mission defaults and the <ConceptHint id="model">model</ConceptHint>{" "}
           registry here. Hermes chat/gateway

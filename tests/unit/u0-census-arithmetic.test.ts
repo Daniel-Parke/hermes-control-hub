@@ -169,7 +169,7 @@ const page = (over: Partial<RawCensus> = {}): RawCensus => ({
   borders: [],
   text: [],
   boxes: [],
-  geometry: { headingLeft: null, contentLeft: null, contentWidth: null, overflowX: 0, route: "/" },
+  geometry: { headingLeft: null, contentLeft: null, contentLeftWhat: null, contentWidth: null, overflowX: 0, route: "/" },
   pageBackground: "rgb(4, 11, 18)",
   railBackground: null,
   railDivider: null,
@@ -303,19 +303,22 @@ describe("summarise", () => {
 
   it("counts a heading as misaligned past one pixel, and keeps the worst offset", () => {
     const counts = summarise([
-      page({ geometry: { route: "/a", headingLeft: 100, contentLeft: 100.5, contentWidth: 800, overflowX: 0 } }),
-      page({ geometry: { route: "/b", headingLeft: 281, contentLeft: 409, contentWidth: 896, overflowX: 0 } }),
-      page({ geometry: { route: "/c", headingLeft: 461, contentLeft: 405, contentWidth: 854, overflowX: 0 } }),
+      page({ geometry: { route: "/a", headingLeft: 100, contentLeft: 100.5, contentLeftWhat: null, contentWidth: 800, overflowX: 0 } }),
+      page({ geometry: { route: "/b", headingLeft: 281, contentLeft: 409, contentLeftWhat: null, contentWidth: 896, overflowX: 0 } }),
+      page({ geometry: { route: "/c", headingLeft: 461, contentLeft: 405, contentLeftWhat: null, contentWidth: 854, overflowX: 0 } }),
     ]);
     expect(counts.routesWithMisalignedHeading).toBe(2);
     expect(counts.worstHeadingOffset).toBe(128);
     expect(counts.distinctContentWidths).toBe(3);
+    // Cause 2 as one number: three headings, three different x. One container
+    // means one, whatever each page then does inside it.
+    expect(counts.distinctHeadingLefts).toBe(3);
   });
 
   it("counts a route that scrolls sideways inside main", () => {
     const counts = summarise([
-      page({ geometry: { route: "/", headingLeft: null, contentLeft: null, contentWidth: null, overflowX: 40 } }),
-      page({ geometry: { route: "/b", headingLeft: null, contentLeft: null, contentWidth: null, overflowX: 0 } }),
+      page({ geometry: { route: "/", headingLeft: null, contentLeft: null, contentLeftWhat: null, contentWidth: null, overflowX: 40 } }),
+      page({ geometry: { route: "/b", headingLeft: null, contentLeft: null, contentLeftWhat: null, contentWidth: null, overflowX: 0 } }),
     ]);
     expect(counts.routesOverflowingX).toBe(1);
   });
@@ -361,6 +364,7 @@ const counts = (over: Partial<CensusCounts> = {}): CensusCounts => ({
   routesWithMisalignedHeading: 24,
   worstHeadingOffset: 289,
   distinctContentWidths: 7,
+  distinctHeadingLefts: 7,
   routesOverflowingX: 1,
   railVsPageContrast: 1.06,
   railDividerContrast: 1.25,

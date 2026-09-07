@@ -441,7 +441,7 @@ export default function StoryReaderPage() {
   const view = deriveReaderView(story, currentChapter);
 
   return (
-    <AppPageShell variant="scanlines" className="flex flex-col">
+    <AppPageShell density="pane" variant="scanlines" className="flex flex-col">
       <PageTitle title={story?.title || "Story Weaver"} />
       <StoryReaderOverlays
         story={story}

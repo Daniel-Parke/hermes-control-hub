@@ -43,12 +43,10 @@ test.describe("the ? on a header opens that screen's guide", () => {
     await expect(page.getByTestId("ps-app-shell")).toBeVisible();
 
     // Wait for the page's OWN header before looking for the control inside it.
-    // The shell is server-rendered and the rail comes with it, but every screen
-    // in this app is a client component, so its PageHeader (and therefore the ?)
-    // does not exist until hydration. Under parallel workers on a cold
-    // production start that is slower than the 5s an assertion waits, and the
-    // failure reads as "the ? is missing" rather than "the page had not
-    // rendered yet".
+    // Under parallel workers on a cold production start, a client screen can
+    // take longer to appear than the 5s an assertion waits, and the failure
+    // then reads as "the ? is missing" rather than "the page had not rendered
+    // yet".
     await expect(page.getByRole("heading", { level: 1, name: "Missions" })).toBeVisible({
       timeout: 30_000,
     });
@@ -65,9 +63,17 @@ test.describe("the ? on a header opens that screen's guide", () => {
       const active = document.activeElement;
       if (active instanceof HTMLElement) active.blur();
     });
-    await page.keyboard.press("?");
-
-    await page.waitForURL(`**/help/${slug}`);
+    // Press until it lands, rather than once. The h1 above is NOT proof of
+    // hydration: since T-0117 the missions loading branch renders the same
+    // header as the loaded one, so the heading is in the server HTML and
+    // arrives before the keydown listener does. One press into an
+    // un-hydrated page is a 30s timeout that says nothing about the shortcut.
+    // This is stricter, not looser: the shortcut still has to work, and within
+    // the same budget.
+    await expect(async () => {
+      await page.keyboard.press("?");
+      await page.waitForURL(`**/help/${slug}`, { timeout: 2_000 });
+    }).toPass({ timeout: 25_000 });
     await expect(page.getByTestId("ps-app-shell")).toBeVisible();
   });
 });

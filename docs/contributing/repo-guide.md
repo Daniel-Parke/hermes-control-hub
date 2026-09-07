@@ -176,9 +176,14 @@ The shell/effect custom properties are **`--ps-*`** (`--ps-rgb-neon-*`,
 `--ch-*` variables: this file told contributors to write them for months and the
 resulting CSS silently did nothing.
 
-- **Page chrome:** `PageHeader` for sticky top bars; `shellHeaderBarClasses` only
-  when extending the shell outside it.
+- **Page chrome:** hand the header to `AppPageShell`'s `header` prop, as a
+  `PageHeader`. The shell renders the bar full-bleed and puts the header's
+  CONTENT in the same container as the body, so a page cannot end up with its
+  h1 on a different left edge from the content under it. `shellHeaderBarClasses`
+  is the bar's own chrome and belongs to the shell alone.
 - **Page frame:** `AppPageShell` instead of repeating `min-h-screen bg-dark-950 grid-bg`.
+  It owns the measure and the page rhythm; pick a `density` (`board`, `prose`,
+  `pane`) rather than writing a `max-w-*` or an `mx-auto` on a page.
 - **Data viz:** hand-rolled SVG only, primitives in `@/components/viz`. Entrance via
   `.viz-draw`, gated on `prefers-reduced-motion`. Scale/path maths goes in
   `viz/geometry.ts` so it is unit-testable.

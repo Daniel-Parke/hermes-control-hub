@@ -119,26 +119,28 @@ export default function SkillDetailPage() {
   const linkedFiles = data.linkedFiles ?? [];
 
   return (
-    <AppPageShell>
-      <PageHeader
-        icon={FileText}
-        title={data.name}
-        subtitle={subtitle}
-        color="green"
-        backHref="/agent/skills"
-        backLabel="SKILLS"
-        actions={
-          <button
-            type="button"
-            onClick={() => setShowRaw(!showRaw)}
-            className="text-xs font-mono text-ps-text-muted hover:text-ps-text-secondary px-3 py-1.5 rounded-lg border border-white/10 hover:border-white/20 transition-colors"
-          >
-            {showRaw ? "Rendered" : "Raw"}
-          </button>
-        }
-      />
-
-      <div className="max-w-4xl mx-auto px-6 py-6 flex-1 w-full">
+    <AppPageShell
+      header={
+        <PageHeader
+          icon={FileText}
+          title={data.name}
+          subtitle={subtitle}
+          color="green"
+          backHref="/agent/skills"
+          backLabel="SKILLS"
+          actions={
+            <button
+              type="button"
+              onClick={() => setShowRaw(!showRaw)}
+              className="text-xs font-mono text-ps-text-muted hover:text-ps-text-secondary px-3 py-1.5 rounded-lg border border-white/10 hover:border-white/20 transition-colors"
+            >
+              {showRaw ? "Rendered" : "Raw"}
+            </button>
+          }
+        />
+      }
+    >
+      <div>
         <div className="flex gap-6">
           {/* Main content */}
           <div className="flex-1 min-w-0">

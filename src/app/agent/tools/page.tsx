@@ -275,64 +275,66 @@ export default function ToolsPage() {
   };
 
   return (
-    <AppPageShell>
+    <AppPageShell
+      header={
+        <PageHeader
+          icon={Wrench}
+          subtitle={
+            loadingToolsets
+              ? "Loading profile toolsets…"
+              : `${enabledCount} toolset${pluralise(enabledCount)} enabled for the selected profile${
+                  toolsetsDirty ? ", and you have changes that are not saved yet" : ""
+                }`
+          }
+          color="orange"
+          actions={
+            <div className="flex items-center gap-2 flex-wrap justify-end">
+              {/* The page has always known this: `toolsetsDirty` guarded a profile
+                  switch and was rendered nowhere, so the only way to learn that
+                  the grid was ahead of the profile was to try to leave. */}
+              {toolsetsDirty && !loadingToolsets && (
+                <span className="text-xs font-mono text-semantic-warning flex items-center gap-1">
+                  <Info className="w-3 h-3" />
+                  Unsaved changes
+                </span>
+              )}
+              <Button
+                variant="ghost"
+                size="sm"
+                color="orange"
+                icon={syncing === "pull" ? undefined : Download}
+                onClick={() => void pullFromHermes("pull")}
+                disabled={syncing !== null}
+              >
+                {syncing === "pull" ? "Pulling…" : "Pull from Hermes"}
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                color="orange"
+                icon={syncing === "push" ? undefined : Upload}
+                onClick={() => void pullFromHermes("push")}
+                disabled={syncing !== null}
+              >
+                {syncing === "push" ? "Pushing…" : "Push to Hermes"}
+              </Button>
+              <Button
+                variant="primary"
+                color="orange"
+                size="sm"
+                icon={savingToolsets ? undefined : RefreshCw}
+                onClick={() => void saveToolsets()}
+                disabled={savingToolsets || loadingToolsets}
+              >
+                {savingToolsets ? "Saving…" : "Save & push toolsets"}
+              </Button>
+            </div>
+          }
+        />
+      }
+    >
       {toastElement}
-      <PageHeader
-        icon={Wrench}
-        subtitle={
-          loadingToolsets
-            ? "Loading profile toolsets…"
-            : `${enabledCount} toolset${pluralise(enabledCount)} enabled for the selected profile${
-                toolsetsDirty ? ", and you have changes that are not saved yet" : ""
-              }`
-        }
-        color="orange"
-        actions={
-          <div className="flex items-center gap-2 flex-wrap justify-end">
-            {/* The page has always known this: `toolsetsDirty` guarded a profile
-                switch and was rendered nowhere, so the only way to learn that
-                the grid was ahead of the profile was to try to leave. */}
-            {toolsetsDirty && !loadingToolsets && (
-              <span className="text-xs font-mono text-semantic-warning flex items-center gap-1">
-                <Info className="w-3 h-3" />
-                Unsaved changes
-              </span>
-            )}
-            <Button
-              variant="ghost"
-              size="sm"
-              color="orange"
-              icon={syncing === "pull" ? undefined : Download}
-              onClick={() => void pullFromHermes("pull")}
-              disabled={syncing !== null}
-            >
-              {syncing === "pull" ? "Pulling…" : "Pull from Hermes"}
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              color="orange"
-              icon={syncing === "push" ? undefined : Upload}
-              onClick={() => void pullFromHermes("push")}
-              disabled={syncing !== null}
-            >
-              {syncing === "push" ? "Pushing…" : "Push to Hermes"}
-            </Button>
-            <Button
-              variant="primary"
-              color="orange"
-              size="sm"
-              icon={savingToolsets ? undefined : RefreshCw}
-              onClick={() => void saveToolsets()}
-              disabled={savingToolsets || loadingToolsets}
-            >
-              {savingToolsets ? "Saving…" : "Save & push toolsets"}
-            </Button>
-          </div>
-        }
-      />
-
-      <div className="px-6 py-6 max-w-5xl">
+      <div>
         <LastResult result={lastResult} />
         {profileSyncStatus === "drift" && (
           <div className="mb-4 p-3 rounded-lg bg-semantic-warning/10 border border-semantic-warning/30 flex items-start gap-2">

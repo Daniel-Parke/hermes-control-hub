@@ -154,9 +154,36 @@ export default function MissionsPage() {
   // whatever had last been open (T-0104, D70). closeTemplateEditor clears it.
   const closeTemplateEditor = vm.closeTemplateEditor;
 
+  // One header, both shells. The loading branch used to render none at all, so
+  // the busiest screen in the product opened as an unnamed spinner: no title,
+  // no Refresh, no way into the guide until the fetch came back.
+  const header = (
+    <PageHeader
+      icon={Rocket}
+      title="Missions"
+      subtitle="Dispatch and track agent missions"
+      color="cyan"
+      actions={
+        <>
+          <button
+            type="button"
+            onClick={fetchData}
+            className="p-2 rounded-lg text-ps-text-muted hover:text-ps-text-secondary hover:bg-white/5 transition-colors"
+            aria-label="Refresh missions"
+          >
+            <RefreshCw className="w-4 h-4" />
+          </button>
+          <Button onClick={handleOpenCreate} size="sm">
+            <Plus className="w-3.5 h-3.5" /> New Mission
+          </Button>
+        </>
+      }
+    />
+  );
+
   if (loading) {
     return (
-      <AppPageShell variant="scanlines">
+      <AppPageShell variant="scanlines" header={header}>
         <div className="flex flex-1 min-h-[50vh] items-center justify-center">
           <Loader2 className="w-8 h-8 text-neon-cyan animate-spin" />
         </div>
@@ -177,37 +204,15 @@ export default function MissionsPage() {
   })();
 
   return (
-    <AppPageShell variant="scanlines">
+    <AppPageShell variant="scanlines" header={header}>
       {toastElement}
-
-      <PageHeader
-        icon={Rocket}
-        title="Missions"
-        subtitle="Dispatch and track agent missions"
-        color="cyan"
-        actions={
-          <>
-            <button
-              type="button"
-              onClick={fetchData}
-              className="p-2 rounded-lg text-ps-text-muted hover:text-ps-text-secondary hover:bg-white/5 transition-colors"
-              aria-label="Refresh missions"
-            >
-              <RefreshCw className="w-4 h-4" />
-            </button>
-            <Button onClick={handleOpenCreate} size="sm">
-              <Plus className="w-3.5 h-3.5" /> New Mission
-            </Button>
-          </>
-        }
-      />
 
       {/* Renders nothing when an agent is configured. On an install without
           one, this is the only place the page admits that composing a mission
           here will not dispatch anywhere. */}
       <AgentSetupNotice what="Dispatching a mission" />
 
-      <div className="max-w-screen-xl mx-auto w-full px-4 sm:px-6">
+      <div>
         <MissionInsights missions={missions} />
         <MissionsList vm={vm} />
         <ScheduledMissions />
@@ -232,7 +237,7 @@ export default function MissionsPage() {
           />
         }
       >
-        <div className="max-w-screen-xl mx-auto w-full px-6 py-5">
+        <div>
           <MissionCreateForm
             embedded
             editingId={editingId}

@@ -109,6 +109,7 @@ export function collectCensus(route: string): RawCensus {
       route,
       headingLeft: null,
       contentLeft: null,
+      contentLeftWhat: null,
       contentWidth: null,
       overflowX: main ? Math.max(0, main.scrollWidth - main.clientWidth) : 0,
     },
@@ -135,6 +136,12 @@ export function collectCensus(route: string): RawCensus {
   // sizeable node under main is usually the padding wrapper, whose left is the
   // column's, not the content's.
   const contentLefts: number[] = [];
+  // The elements already counted as content blocks. A painted region inside
+  // one of these is its CONTENTS - a log line, a table cell, a row - and a
+  // page whose terminal pane holds four hundred of them would otherwise report
+  // the pane's inner left as the page's content column.
+  const countedBlocks: HTMLElement[] = [];
+  const contentBlockNames = new Map<number, string>();
   let widestContainer = 0;
 
   const all = Array.from(document.querySelectorAll<HTMLElement>("*"));
@@ -238,7 +245,17 @@ export function collectCensus(route: string): RawCensus {
     // ── geometry ───────────────────────────────────────────────────────────
     if (main && !inHeader && !inRail && main.contains(el) && rect.width >= 200 && rect.height >= 20) {
       const paints = Boolean(borderColour) || !invisible(bg) || ownText.trim().length > 0;
-      if (paints) contentLefts.push(Math.round(rect.left));
+      // A region painted in the page's own background, with no border, is the
+      // GROUND rather than a block on it: it has no edge, so nothing lines up
+      // with it. AppPageShell's root is exactly that, and being outermost it
+      // would otherwise swallow every real block inside it.
+      const isGround = !borderColour && ownText.trim().length === 0 && bg === result.pageBackground;
+      if (paints && !isGround && !countedBlocks.some((b) => b.contains(el))) {
+        const left = Math.round(rect.left);
+        contentLefts.push(left);
+        countedBlocks.push(el);
+        if (!contentBlockNames.has(left)) contentBlockNames.set(left, describe(el));
+      }
       if (style.maxWidth !== "none") {
         widestContainer = Math.max(widestContainer, Math.round(rect.width));
       }
@@ -251,19 +268,14 @@ export function collectCensus(route: string): RawCensus {
   }
 
   if (contentLefts.length > 0) {
-    const tally = new Map<number, number>();
-    for (const left of contentLefts) tally.set(left, (tally.get(left) ?? 0) + 1);
-    let best = contentLefts[0];
-    let bestCount = -1;
-    for (const [left, count] of tally) {
-      // Ties go to the leftmost, so a page whose content and whose one wide
-      // banner disagree reports the column, not the banner.
-      if (count > bestCount || (count === bestCount && left < best)) {
-        best = left;
-        bestCount = count;
-      }
-    }
+    // The LEFTMOST, not the commonest. A vote elects whatever a page happens to
+    // repeat: on /work/missions the <h2> inside each card outnumbered the cards
+    // themselves and won by 24px, which is the cards' padding and not a
+    // misalignment. The column's left edge is the leftmost edge its content
+    // reaches, and a card always beats its own heading.
+    const best = Math.min(...contentLefts);
     result.geometry.contentLeft = best;
+    result.geometry.contentLeftWhat = contentBlockNames.get(best) ?? null;
   }
 
   result.geometry.contentWidth =

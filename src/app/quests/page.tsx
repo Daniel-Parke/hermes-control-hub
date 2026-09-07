@@ -85,13 +85,16 @@ export default function QuestsPage() {
   const available = useCallback((quest: QuestState) => questAvailable(quest, host), [host]);
 
   return (
-    <AppPageShell>
-      <PageHeader
-        icon={Trophy}
-        subtitle="Real actions, tracked, from your first message to your first backup"
-        color="orange"
-      />
-      <div className="mx-auto w-full max-w-4xl flex-1 space-y-4 px-6 py-8">
+    <AppPageShell density="prose"
+      header={
+        <PageHeader
+          icon={Trophy}
+          subtitle="Real actions, tracked, from your first message to your first backup"
+          color="orange"
+        />
+      }
+    >
+      <div className="space-y-4">
         {error && (
           <LoadErrorBanner
             error={error}

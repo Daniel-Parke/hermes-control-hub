@@ -372,7 +372,13 @@ export const RULES = [
     id: "one-container-per-page",
     law: "The shell owns the measure. A page that centres its own column is how 21 of 23 screens end up with their h1 on a different left edge from their content, by as much as 289px, across eight content widths.",
     files: (f) => f.startsWith("src/app/") && f.endsWith("page.tsx"),
-    pattern: /(?:^|[^\w-])max-w-(?!ps-prose)[\w[\]./-]+/,
+    // The page's OWN scale: 4xl (56rem) and up, a viewport width, or a house
+    // measure other than the prose one. Deliberately not every cap. Holding a
+    // paragraph to a reading measure is something the programme asks for, and
+    // centring a 12px icon in an empty state is not a layout decision at all;
+    // a rule that banned those would be making the product worse to satisfy a
+    // rule about something else. What a page may not own is a CONTAINER.
+    pattern: /(?:^|[^\w-])max-w-(?:4xl|5xl|6xl|7xl|screen-[\w-]+|ps-(?!prose\b)[\w-]+)\b/,
   },
   {
     id: "no-raw-colour-in-css",

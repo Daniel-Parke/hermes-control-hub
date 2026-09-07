@@ -21,13 +21,16 @@ export default function MemoryPage() {
   const reload = useCallback(() => setReloadToken((t) => t + 1), []);
 
   return (
-    <AppPageShell>
-      <PageHeader
-        icon={Brain}
-        subtitle="Knowledge graph memory with semantic search"
-        color="pink"
-      />
-      <div className="space-y-6 px-6 py-6">
+    <AppPageShell
+      header={
+        <PageHeader
+          icon={Brain}
+          subtitle="Knowledge graph memory with semantic search"
+          color="pink"
+        />
+      }
+    >
+      <div className="space-y-6">
         <MemoryProviderSettings storeHealth={health} onReconnected={reload} onRetry={reload} />
         <HindsightBrowser onHealthChange={setHealth} reloadToken={reloadToken} />
       </div>

@@ -48,17 +48,20 @@ export default function StoryWeaverDashboard() {
   const recent = stories.slice(0, 3);
 
   return (
-    <AppPageShell variant="scanlines">
-      <PageHeader
-        icon={BookOpen}
-        title="Story Weaver"
-        subtitle="Collaborative interactive fiction"
-        color="purple"
-        backHref="/"
-        backLabel="HOME"
-      />
-
-      <div className="max-w-5xl mx-auto px-6 py-8 space-y-8 flex-1 w-full">
+    <AppPageShell density="prose"
+      variant="scanlines"
+      header={
+        <PageHeader
+          icon={BookOpen}
+          title="Story Weaver"
+          subtitle="Collaborative interactive fiction"
+          color="purple"
+          backHref="/"
+          backLabel="HOME"
+        />
+      }
+    >
+      <div className="space-y-8">
         {error && <LoadErrorBanner error={error} onRetry={fetchStories} />}
 
         {/* Stats, in the one status vocabulary (decision 13): a story is

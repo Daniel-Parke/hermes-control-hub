@@ -423,10 +423,16 @@ describe("A. useDashboard exposes the monitor and subsystems queries' error and 
 // ═══════════════════════════════════════════════════════════════
 
 describe("B. the header", () => {
-  it("GREEN CONTROL: names the agent, the model and says ONLINE", () => {
+  it("GREEN CONTROL: is headed Dashboard, and names the agent, the model and ONLINE", () => {
     render(<Dashboard />);
-    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Hermes");
-    expect(screen.getByText("gpt-4o · openai")).toBeInTheDocument();
+    // The h1 names the PLACE, from the same registry row that draws its rail
+    // entry. It read "Hermes AGENT FRAMEWORK" until T-0117 — the name of the
+    // dependency, on the one screen in the product whose heading did not match
+    // its own rail label, and the one screen that painted its own header bar.
+    // What framework and which model are facts about the agent, so they are
+    // the subtitle; nothing was lost from the bar.
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Dashboard");
+    expect(screen.getByText("Hermes · gpt-4o · openai")).toBeInTheDocument();
     expect(screen.getByText("ONLINE")).toBeInTheDocument();
   });
 

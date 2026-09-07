@@ -457,11 +457,14 @@ export default function BehaviourPage() {
 
   if (loading) {
     return (
-      <AppPageShell>
+      <AppPageShell
+      header={
+        <PageHeader icon={Users} title="Agents" subtitle="Loading profiles..." color="purple" />
+      }
+    >
         <LastResult result={lastResult} />
         {toastElement}
-        <PageHeader icon={Users} title="Agents" subtitle="Loading profiles..." color="purple" />
-        <div className="px-6 py-12"><LoadingSpinner text="Loading profiles..." /></div>
+        <div><LoadingSpinner text="Loading profiles..." /></div>
       </AppPageShell>
     );
   }
@@ -476,7 +479,7 @@ export default function BehaviourPage() {
           the alarms. */}
       <AgentSetupNotice what="Pushing and pulling profiles" />
 
-      <div className="px-6 py-6">
+      <div>
         {/* The read contract (T-0096, D22): a failed profiles read is this,
             with a Retry, and the list under it is not an empty install. */}
         {loadError && <LoadErrorBanner error={loadError} onRetry={() => void loadProfiles()} />}

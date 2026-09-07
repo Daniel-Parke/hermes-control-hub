@@ -12,6 +12,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { GitBranch, Plus } from "lucide-react";
 
+import AppPageShell from "@/components/layout/AppPageShell";
 import PageHeader from "@/components/layout/PageHeader";
 import Card from "@/components/ui/Card";
 import LoadErrorBanner from "@/components/ui/LoadErrorBanner";
@@ -221,14 +222,16 @@ export default function ComposerPage() {
   }
 
   return (
-    <div className="space-y-4">
-      <PageHeader
-        icon={GitBranch}
-        title="Composer"
-        subtitle="Graph-orchestrated, multi-stage agent workflows — with loops and human-in-the-loop gates"
-        color="cyan"
-      />
-
+    <AppPageShell
+      header={
+        <PageHeader
+          icon={GitBranch}
+          title="Composer"
+          subtitle="Graph-orchestrated, multi-stage agent workflows — with loops and human-in-the-loop gates"
+          color="cyan"
+        />
+      }
+    >
       {workflowsError ? <LoadErrorBanner error={workflowsError} onRetry={() => void refetchWorkflows()} /> : null}
       {/* A failed live read, as distinct from a dropped socket. The run
           detail below still renders from the polled copy (T-0046). */}
@@ -472,6 +475,6 @@ export default function ComposerPage() {
       />
         </>
       </div>
-    </div>
+    </AppPageShell>
   );
 }

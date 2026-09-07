@@ -176,33 +176,35 @@ export default function ScriptsPage() {
   );
 
   return (
-    <AppPageShell>
-      <PageHeader
-        icon={Terminal}
-        title="Scripts"
-        subtitle={scripts.length > 0 ? `${scripts.length} host script${scripts.length === 1 ? "" : "s"} · run, schedule, and view logs` : "Host shell scripts on a timer"}
-        color="cyan"
-        actions={
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => openNew()}
-              className="flex items-center gap-1.5 rounded-lg border border-neon-cyan/30 px-3 py-1.5 font-mono text-xs text-neon-cyan transition-colors hover:bg-neon-cyan/10"
-            >
-              <Plus className="h-3 w-3" /> New script
-            </button>
-            <button
-              type="button"
-              onClick={() => refetch()}
-              className="flex items-center gap-1.5 rounded-lg border border-white/10 px-3 py-1.5 font-mono text-xs text-ps-text-muted transition-colors hover:bg-white/5 hover:text-ps-text-primary"
-            >
-              <RefreshCw className="h-3 w-3" /> Refresh
-            </button>
-          </div>
-        }
-      />
-
-      <div className="px-6 py-6">
+    <AppPageShell
+      header={
+        <PageHeader
+          icon={Terminal}
+          title="Scripts"
+          subtitle={scripts.length > 0 ? `${scripts.length} host script${scripts.length === 1 ? "" : "s"} · run, schedule, and view logs` : "Host shell scripts on a timer"}
+          color="cyan"
+          actions={
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => openNew()}
+                className="flex items-center gap-1.5 rounded-lg border border-neon-cyan/30 px-3 py-1.5 font-mono text-xs text-neon-cyan transition-colors hover:bg-neon-cyan/10"
+              >
+                <Plus className="h-3 w-3" /> New script
+              </button>
+              <button
+                type="button"
+                onClick={() => refetch()}
+                className="flex items-center gap-1.5 rounded-lg border border-white/10 px-3 py-1.5 font-mono text-xs text-ps-text-muted transition-colors hover:bg-white/5 hover:text-ps-text-primary"
+              >
+                <RefreshCw className="h-3 w-3" /> Refresh
+              </button>
+            </div>
+          }
+        />
+      }
+    >
+      <div>
         <p className="mb-5 max-w-3xl font-mono text-xs text-ps-text-muted">
           Drop a <span className="text-ps-text-secondary">{SCRIPT_EXT_LIST}</span> file under{" "}
           <span className="text-ps-text-secondary">PS_DATA_DIR/scripts</span> and it appears here — backups, cleanups, health

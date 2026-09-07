@@ -19,15 +19,14 @@ import {
   Radio,
   Timer,
   Wallet,
+  Zap,
 } from "lucide-react";
 import { useToast } from "@/components/ui/Toast";
 import { timeAgo } from "@/lib/utils";
-import { shellHeaderBarClasses } from "@/lib/theme";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import LoadErrorBanner from "@/components/ui/LoadErrorBanner";
 import AppPageShell from "@/components/layout/AppPageShell";
-import PageTitle from "@/components/layout/PageTitle";
-import HelpLink from "@/components/help/HelpLink";
+import PageHeader from "@/components/layout/PageHeader";
 import { StatPill, StatPillSkeleton } from "@/components/dashboard/StatPill";
 import DispatchStrip from "@/components/dashboard/DispatchStrip";
 import NextQuestCard from "@/components/dashboard/NextQuestCard";
@@ -276,55 +275,44 @@ export default function Dashboard() {
   const errorCount = monitor?.errors.length ?? 0;
 
   return (
-    <AppPageShell variant="scanlines">
-      <PageTitle title="Dashboard" />
-      {/* Top Bar */}
-      <div className={`${shellHeaderBarClasses} sticky top-0 z-30 justify-between gap-4 w-full`}>
-        <div>
-          {/* Agent Framework + Model details. The app/brand identity
-              ("PatterStage · The Stage is Yours") lives in the far-left
-              Sidebar logo — we don't repeat it here. This header names the
-              active agent framework (Hermes today — the sole AgentRuntime
-              implementation, see src/lib/runtime/types.ts) plus the model. */}
-          <h1 className="text-xl font-bold tracking-tight flex items-baseline gap-2">
-            {/* The framework's name from the frameworks row, not a literal (T-0097, D56). */}
-            <span className="text-neon-cyan text-glow-cyan">{agentName}</span>
-            <span className="hidden sm:inline text-xs font-normal font-mono text-ps-text-muted uppercase tracking-wider">
-              Agent Framework
-            </span>
-          </h1>
-          <p className="text-xs text-ps-text-muted font-mono">{modelSubtitle}</p>
-        </div>
-        {/* The dashboard paints its own header bar instead of rendering
-            PageHeader, so it is the one screen that has to hang the ? itself.
-            Leaving it off would put the guide on every screen but the first
-            one an operator ever sees. */}
-        <div className="flex items-center gap-3 flex-shrink-0">
-          {/* The badge used to be a hardcoded green ONLINE, sitting directly
-              under the agent-framework heading. On an install with no agent it
-              claimed the agent was up. It now reports what the monitor actually
-              found. */}
-          {agentConfigured ? (
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-neon-green pulse-glow" />
-              <span className="text-xs text-ps-text-secondary font-mono">ONLINE</span>
-            </div>
-          ) : (
-            gatewaySettledReachable ? (
+    <AppPageShell
+      variant="scanlines"
+      header={
+        <PageHeader
+          icon={Zap}
+          // No title prop: the registry row that draws the rail entry is what
+          // names the h1, so the two cannot drift (T-0097, D55). It used to read
+          // "Hermes AGENT FRAMEWORK", which names the dependency rather than the
+          // place, on the one screen that painted its own bar. The app's own
+          // identity ("PatterStage · The Stage is Yours") lives in the far-left
+          // Sidebar logo; we do not repeat it here.
+          subtitle={`${agentName} · ${modelSubtitle}`}
+          color="cyan"
+          actions={
+            /* The badge used to be a hardcoded green ONLINE, sitting directly
+               under the agent-framework heading. On an install with no agent it
+               claimed the agent was up. It now reports what the monitor
+               actually found. */
+            agentConfigured ? (
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-neon-green pulse-glow" />
+                <span className="text-xs text-ps-text-secondary font-mono">ONLINE</span>
+              </div>
+            ) : gatewaySettledReachable ? (
               <div className="flex items-center gap-2" title={`${agentName} runs through the gateway at ${gatewaySettledUrl}`}>
                 <div className="w-2 h-2 rounded-full bg-neon-cyan" />
                 <span className="text-xs text-neon-cyan font-mono">REMOTE</span>
               </div>
             ) : (
-            <div className="flex items-center gap-2" title={`${agentName} is not installed on this machine`}>
-              <div className="w-2 h-2 rounded-full bg-neon-orange" />
-              <span className="text-xs text-neon-orange font-mono">NOT INSTALLED</span>
-            </div>
+              <div className="flex items-center gap-2" title={`${agentName} is not installed on this machine`}>
+                <div className="w-2 h-2 rounded-full bg-neon-orange" />
+                <span className="text-xs text-neon-orange font-mono">NOT INSTALLED</span>
+              </div>
             )
-          )}
-          <HelpLink />
-        </div>
-      </div>
+          }
+        />
+      }
+    >
       {toastElement}
 
       {!ready ? (
@@ -332,7 +320,7 @@ export default function Dashboard() {
           <LoadingSpinner text="Loading dashboard..." />
         </div>
       ) : (
-        <div className="max-w-7xl mx-auto px-6 py-6 space-y-6">
+        <div className="space-y-6">
         {/* Start here: the next quest, before the widgets. Renders nothing once
             every quest is done or the operator has hidden the guide, and
             nothing at all until both reads it depends on have answered — a

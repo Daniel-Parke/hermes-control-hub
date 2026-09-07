@@ -63,10 +63,20 @@ same pixels and are still everywhere, so both are live until the migration lands
 
 | Utility | Value | Is |
 |---------|-------|----|
-| `max-w-ps-reading` | 48rem | the longform column (reader, research report, artifact viewer) |
-| `max-w-ps-wide` | 56rem | the ordinary page shell |
-| `max-w-ps-full` | 80rem | the dense boards |
+| `max-w-ps-page` | 82rem | every page. `AppPageShell` applies it; no page spells it |
+| `max-w-ps-prose` | 46rem | longform, as a LEFT-aligned column inside the page container |
+| `max-w-ps-reading` | 48rem | legacy |
+| `max-w-ps-wide` | 56rem | legacy |
+| `max-w-ps-full` | 80rem | legacy |
 | `space-y-ps-block` | 1.5rem | the gap between blocks on a page shell |
+
+The first two are the ones to use, and a page uses neither directly: it picks a
+`density` and the shell applies the measure. That is the whole mechanism. When
+twenty pages centred their own column in one of seven widths, twenty-three of
+twenty-three screens put their h1 on a different left edge from their own
+content, by up to 237px, across eight content widths and eight padding rhythms
+(T-0117). The three legacy measures are what the last attempt declared; between
+them they had one call site in the tree, on a 404 page.
 
 Text hierarchy is the `--color-ps-text-*` tiers in `globals.css`, gated by
 `scripts/tooling/contrast-check.mjs`; the derivation is in the comment beside

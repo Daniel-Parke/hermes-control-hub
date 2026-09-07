@@ -237,42 +237,44 @@ export default function LogsPage() {
   const logAge = formatLogAge(data?.modified, Date.now());
 
   return (
-    <AppPageShell>
-      <PageHeader
-        icon={Terminal}
-        subtitle={
-          data
-            ? [
-                `${data.name}.log`,
-                `${data.totalLines} lines`,
-                formatBytes(data.size),
-                // The mtime has always been in the response and never on the
-                // screen, so a log that stopped being written three days ago
-                // looked exactly like one being appended to right now.
-                logAge ? `written ${logAge} ago` : null,
-              ]
-                .filter(Boolean)
-                .join(" · ")
-            : "Hermes agent and gateway logs"
-        }
-        color="cyan"
-        actions={
-          <LogsHeaderActions
-            hasLogs={(availableLogs?.length ?? 0) > 0}
-            autoRefresh={autoRefresh}
-            onToggleAutoRefresh={toggleAutoRefresh}
-            lineCount={lineCount}
-            onLineCountChange={setLineCount}
-            refreshing={refreshing}
-            onRefresh={() => void handleRefresh()}
-            deleteArmed={deleteArmed}
-            onDeleteAll={() => void handleDeleteAllLogs()}
-            onCancelDelete={cancelDelete}
-          />
-        }
-      />
-
-      <div className="px-6 py-6 flex-1 flex flex-col min-h-0">
+    <AppPageShell density="pane"
+      header={
+        <PageHeader
+          icon={Terminal}
+          subtitle={
+            data
+              ? [
+                  `${data.name}.log`,
+                  `${data.totalLines} lines`,
+                  formatBytes(data.size),
+                  // The mtime has always been in the response and never on the
+                  // screen, so a log that stopped being written three days ago
+                  // looked exactly like one being appended to right now.
+                  logAge ? `written ${logAge} ago` : null,
+                ]
+                  .filter(Boolean)
+                  .join(" · ")
+              : "Hermes agent and gateway logs"
+          }
+          color="cyan"
+          actions={
+            <LogsHeaderActions
+              hasLogs={(availableLogs?.length ?? 0) > 0}
+              autoRefresh={autoRefresh}
+              onToggleAutoRefresh={toggleAutoRefresh}
+              lineCount={lineCount}
+              onLineCountChange={setLineCount}
+              refreshing={refreshing}
+              onRefresh={() => void handleRefresh()}
+              deleteArmed={deleteArmed}
+              onDeleteAll={() => void handleDeleteAllLogs()}
+              onCancelDelete={cancelDelete}
+            />
+          }
+        />
+      }
+    >
+      <div className="flex-1 flex flex-col min-h-0">
         {loadError && noLogsYet(errorBody) ? (
           // A normal condition in a red banner is the other kind of lie
           // (T-0087). Same reason, calm tone, still a live region.
