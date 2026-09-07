@@ -415,3 +415,41 @@ export function describeRegression(r: Regression): string {
   const direction = r.lowerIsBetter ? "rose" : "fell";
   return `${r.key} ${direction} from ${r.was} to ${r.now}`;
 }
+
+/** The shortest reason that is a reason rather than a word. */
+export const MIN_GROWTH_REASON = 12;
+
+/**
+ * Why a rewrite of the baseline should be refused, or null if it should not.
+ *
+ * The check path has always refused a reading that moved the wrong way. The
+ * UPDATE path used to overwrite the file with whatever it had just measured -
+ * no comparison, no reason, and the `allowed` field the baseline's own type
+ * declares had never once been written. design-lint settled this argument in
+ * its own words: "the baseline is the ratchet pawl, and a pawl you can wind
+ * backwards with a flag is decorative."
+ *
+ * Pure, and here rather than in the spec, so a unit test can prove it refuses.
+ */
+export function growthRefusal(
+  previous: CensusCounts | null,
+  now: CensusCounts,
+  reason: string,
+): string | null {
+  const rose = previous ? regressions(previous, now) : [];
+  if (rose.length === 0) return null;
+  if (!reason.trim()) {
+    return [
+      "refusing to write a census baseline that GROWS.",
+      "",
+      ...rose.map(describeRegression).map((r) => `  ${r}`),
+      "",
+      "Fix them, or say in writing why the growth is warranted:",
+      '  CENSUS_ALLOW_GROWTH="<reason>" npm run census:update',
+    ].join("\n");
+  }
+  if (reason.trim().length < MIN_GROWTH_REASON) {
+    return "CENSUS_ALLOW_GROWTH must be a reason, not a word.";
+  }
+  return null;
+}

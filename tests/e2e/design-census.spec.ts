@@ -37,6 +37,7 @@ import { expect, test } from "@playwright/test";
 import { documentedRoutes } from "../../src/lib/modules/registry";
 import {
   describeRegression,
+  growthRefusal,
   parseRgba,
   regressions,
   summarise,
@@ -139,25 +140,10 @@ test.describe("design census", () => {
         : null;
       const rose = previous ? regressions(previous.counts, counts) : [];
 
-      // The same pawl the check path has, on the way out. design-lint settled
-      // this: a baseline you can wind backwards with a flag is decorative. A
-      // number that rose needs a reason, and the reason is recorded here beside
-      // the numbers rather than in a commit message nobody reads next to them.
-      if (rose.length > 0 && !ALLOW_GROWTH) {
-        throw new Error(
-          [
-            "refusing to write a census baseline that GROWS.",
-            "",
-            ...rose.map(describeRegression).map((r) => `  ${r}`),
-            "",
-            "Fix them, or say in writing why the growth is warranted:",
-            '  CENSUS_ALLOW_GROWTH="<reason>" npm run census:update',
-          ].join("\n"),
-        );
-      }
-      if (rose.length > 0 && ALLOW_GROWTH.trim().length < 12) {
-        throw new Error("CENSUS_ALLOW_GROWTH must be a reason, not a word.");
-      }
+      // The same pawl the check path has, on the way out. The decision itself
+      // lives in census-analysis, where a unit test can prove it refuses.
+      const refusal = growthRefusal(previous?.counts ?? null, counts, ALLOW_GROWTH);
+      if (refusal) throw new Error(refusal);
 
       const file: BaselineFile = {
         // The note survives a rewrite. It is where a reader learns why a number
