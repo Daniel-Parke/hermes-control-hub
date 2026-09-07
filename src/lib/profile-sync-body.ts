@@ -7,7 +7,7 @@
 //   - { slug: "<name>" } for a named profile
 //
 // This helper consolidates the logic so callers don't have to remember
-// the discriminator. Used by Operations → Agents and Operations → Tools.
+// the discriminator. Used by Agent → Agents and Agent → Tools.
 
 export type ProfileSyncBody = { root: true } | { slug: string };
 

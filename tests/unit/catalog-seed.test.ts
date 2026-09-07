@@ -1,5 +1,5 @@
-/* eslint-disable @typescript-eslint/no-require-imports */
 /** @jest-environment node */
+/* eslint-disable @typescript-eslint/no-require-imports */
 
 import { existsSync } from "fs";
 import { join } from "path";
@@ -15,25 +15,16 @@ function loadRealBetterSqlite3(): typeof import("better-sqlite3") {
   return require("better-sqlite3/lib/index.js") as typeof import("better-sqlite3");
 }
 
-jest.mock("@/lib/db", () => {
-  const actualCrypto = jest.requireActual("crypto") as typeof import("crypto");
-  return {
-    db: () => testDb!,
-    inTransaction: <T,>(fn: () => T) => testDb!.transaction(fn)(),
-    uuid: () => actualCrypto.randomUUID(),
-    now: () => new Date().toISOString(),
-    ensureDb: () => undefined,
-  };
-});
+jest.mock("@/lib/db", () => require("../helpers/baseline-db").dbSingletonMock(() => testDb));
 
-jest.mock("@/lib/hermes-profile-sync", () => ({
+jest.mock("@/modules/hermes/lib/profile-push", () => ({
   pushProfileToHermes: jest.fn(() => ({ success: true, slug: "qa", backupPath: null, error: null })),
   pushAllProfiles: jest.fn(() => [{ success: true, slug: "qa", backupPath: null, error: null }]),
 }));
 
 jest.mock("@/lib/paths", () => ({
-  CH_DATA_DIR: join(repoRoot, "data"),
-  PATHS: { controlHubDb: join(repoRoot, "data/control-hub.db") },
+  PS_DATA_DIR: join(repoRoot, "data"),
+  PATHS: { patterStageDb: join(repoRoot, "data/control-hub.db") },
 }));
 
 beforeEach(() => {
@@ -53,7 +44,7 @@ afterEach(() => {
 describe("runCatalogSeed", () => {
   (hasSeedPack ? it : it.skip)("merge seeds profiles and templates idempotently", () => {
     const { runCatalogSeed } = require("@/lib/seed/catalog-seed") as typeof import("@/lib/seed/catalog-seed");
-    const { listProfiles } = require("@/lib/profiles-repository") as typeof import("@/lib/profiles-repository");
+    const { listProfiles } = require("@/modules/hermes/lib/profiles-repository") as typeof import("@/modules/hermes/lib/profiles-repository");
 
     const first = runCatalogSeed({ target: "all", mode: "merge" });
     expect(first.profiles).toBeGreaterThanOrEqual(6);

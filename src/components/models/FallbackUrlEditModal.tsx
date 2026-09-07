@@ -1,6 +1,7 @@
 "use client";
 
-import type { FallbackChainEntry } from "@/types/hermes";
+import type { FallbackChainEntry } from "@/types/console";
+import { useDialogA11y } from "@/hooks/useDialogA11y";
 
 interface FallbackUrlEditModalProps {
   entry: FallbackChainEntry | null;
@@ -19,6 +20,9 @@ export default function FallbackUrlEditModal({
   onClose,
   onSave,
 }: FallbackUrlEditModalProps) {
+  // Hooks before the early return. A dialog on the shared contract
+  // (T-0096, D116): Escape closes, Tab stays inside, focus returns.
+  const panelRef = useDialogA11y({ open: entry !== null, onClose });
   if (!entry) return null;
 
   return (
@@ -28,38 +32,41 @@ export default function FallbackUrlEditModal({
       role="presentation"
     >
       <div
-        className="w-full max-w-md bg-dark-900 border border-white/10 rounded-xl overflow-hidden"
+        ref={panelRef}
+        tabIndex={-1}
+        className="w-full max-w-md bg-ps-surface-panel border border-ps-edge-hairline rounded-xl overflow-hidden"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
         aria-labelledby="fallback-url-edit-title"
       >
-        <div className="px-4 py-3 border-b border-white/10">
-          <h3 id="fallback-url-edit-title" className="text-sm font-semibold text-white">
-            Edit override Base URL: {entry.modelName}
+        <div className="px-4 py-3 border-b border-ps-edge-hairline">
+          <h3 id="fallback-url-edit-title" className="text-body font-semibold text-ps-text-primary">
+            Edit override base URL: {entry.modelName}
           </h3>
         </div>
         <div className="p-4">
-          <label className="block text-[10px] font-mono text-white/40 uppercase mb-1.5">
-            Override Base URL
+          <label htmlFor="fallback-url-edit-input" className="block text-micro font-mono text-ps-text-muted uppercase mb-1.5">
+            Override base URL
           </label>
           <input
+            id="fallback-url-edit-input"
             type="text"
             value={url}
             onChange={(e) => onUrlChange(e.target.value)}
             placeholder="https://api.openai.com/v1"
-            className="w-full bg-dark-800 border border-white/10 rounded-lg px-3 py-2 text-sm text-white font-mono outline-none focus:border-neon-purple/50 transition-colors"
+            className="w-full bg-ps-surface-inset border border-ps-edge rounded-lg px-3 py-2 text-body text-ps-text-primary font-mono outline-none focus:border-neon-purple/50 transition-colors"
             autoFocus
           />
-          <p className="text-[10px] text-white/30 font-mono mt-1.5">
+          <p className="text-micro text-ps-text-muted font-mono mt-1.5">
             Leave empty to use the model&apos;s default base URL
           </p>
         </div>
-        <div className="flex items-center justify-end gap-2 px-4 py-3 border-t border-white/10">
+        <div className="flex items-center justify-end gap-2 px-4 py-3 border-t border-ps-edge-hairline">
           <button
             type="button"
             onClick={onClose}
-            className="px-3 py-1.5 text-xs font-mono text-white/50 hover:text-white rounded-lg hover:bg-white/5 transition-colors"
+            className="px-3 py-1.5 text-micro font-mono text-ps-text-muted hover:text-ps-text-primary rounded-lg hover:bg-ps-surface-raised transition-colors"
           >
             Cancel
           </button>
@@ -67,7 +74,7 @@ export default function FallbackUrlEditModal({
             type="button"
             onClick={() => void onSave()}
             disabled={saving}
-            className="px-3 py-1.5 text-xs font-mono bg-neon-purple/20 text-neon-purple rounded-lg hover:bg-neon-purple/30 transition-colors disabled:opacity-50"
+            className="px-3 py-1.5 text-micro font-mono bg-neon-purple/20 text-neon-purple rounded-lg hover:bg-neon-purple/30 transition-colors disabled:opacity-50"
           >
             {saving ? "Saving..." : "Save"}
           </button>

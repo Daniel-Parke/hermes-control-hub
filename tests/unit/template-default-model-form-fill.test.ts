@@ -1,5 +1,5 @@
-/* eslint-disable @typescript-eslint/no-require-imports */
 /** @jest-environment node */
+/* eslint-disable @typescript-eslint/no-require-imports */
 
 /**
  * PR 7 — built-in mission templates surface model defaults via /api/templates
@@ -38,7 +38,7 @@ jest.mock("fs", () => ({
 
 jest.mock("@/lib/paths", () => ({
   PATHS: { templates: "/tmp/ch/templates" },
-  CH_DATA_DIR: "/tmp/ch",
+  PS_DATA_DIR: "/tmp/ch",
 }));
 
 jest.mock("@/lib/db", () => ({

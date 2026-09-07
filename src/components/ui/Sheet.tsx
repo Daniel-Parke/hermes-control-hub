@@ -1,8 +1,11 @@
 "use client";
 
+import { sectionHeadingClasses } from "@/lib/theme";
 import { useEffect, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { X } from "lucide-react";
+
+import { useDialogA11y } from "@/hooks/useDialogA11y";
 
 export interface SheetProps {
   open: boolean;
@@ -26,19 +29,11 @@ export default function Sheet({
 }: SheetProps) {
   const [isMobile, setIsMobile] = useState(false);
 
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    document.addEventListener("keydown", onKey);
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.removeEventListener("keydown", onKey);
-      document.body.style.overflow = prev;
-    };
-  }, [open, onClose]);
+  // Escape, the body scroll lock and, new with T-0036, the focus trap and
+  // focus restoration. This used to be an inline effect here; Modal needed
+  // the same behaviour, so it moved to a hook both components call rather
+  // than being written a second time. Sheet's props are unchanged.
+  const panelRef = useDialogA11y({ open, onClose });
 
   useEffect(() => {
     const mq = window.matchMedia("(max-width: 767px)");
@@ -54,8 +49,8 @@ export default function Sheet({
 
   const panelClass =
     effectiveSide === "bottom"
-      ? "fixed inset-x-0 bottom-0 z-[61] max-h-[92vh] rounded-t-xl border-t border-white/10"
-      : "fixed top-0 right-0 bottom-0 z-[61] w-full border-l border-white/10 sm:max-w-2xl lg:max-w-3xl xl:max-w-4xl max-w-[min(90vw,56rem)]";
+      ? "fixed inset-x-0 bottom-0 z-[61] max-h-[92vh] rounded-t-xl border-t border-ps-edge-hairline"
+      : "fixed top-0 right-0 bottom-0 z-[61] w-full border-l border-ps-edge-hairline sm:max-w-2xl lg:max-w-3xl xl:max-w-4xl max-w-[min(90vw,56rem)]";
 
   return createPortal(
     <>
@@ -66,19 +61,22 @@ export default function Sheet({
         onClick={onClose}
       />
       <div
-        className={`${panelClass} flex flex-col bg-dark-950 shadow-2xl`}
+        ref={panelRef}
+        // design-lint-disable-next-line no-bare-outline-none -- the sheet panel takes programmatic focus on open so its title is announced; a ring around the whole panel is noise
+        className={`${panelClass} flex flex-col bg-ps-surface-ground shadow-2xl outline-none`}
         role="dialog"
         aria-modal="true"
         aria-label={title ?? "Panel"}
+        tabIndex={-1}
       >
         {title && (
-          <div className="flex items-start justify-between gap-3 px-6 py-4 border-b border-white/10 shrink-0">
+          <div className="flex items-start justify-between gap-3 px-6 py-4 border-b border-ps-edge-hairline shrink-0">
             <div className="min-w-0">
-              <h2 className="text-sm font-mono text-neon-cyan uppercase tracking-widest">
+              <h2 className={sectionHeadingClasses}>
                 {title}
               </h2>
               {subtitle && (
-                <p className="text-xs text-white/40 font-mono mt-1 leading-relaxed">
+                <p className="text-micro text-ps-text-muted font-mono mt-1 leading-relaxed">
                   {subtitle}
                 </p>
               )}
@@ -86,7 +84,7 @@ export default function Sheet({
             <button
               type="button"
               onClick={onClose}
-              className="p-1 rounded text-white/40 hover:text-white/80 shrink-0"
+              className="p-1 rounded text-ps-text-muted hover:text-ps-text-primary shrink-0"
               aria-label="Close panel"
             >
               <X className="w-4 h-4" />
@@ -95,7 +93,7 @@ export default function Sheet({
         )}
         <div className="flex-1 overflow-y-auto min-h-0">{children}</div>
         {footer && (
-          <div className="shrink-0 border-t border-white/10 px-6 py-4 bg-dark-950">
+          <div className="shrink-0 border-t border-ps-edge-hairline px-6 py-4 bg-ps-surface-ground">
             {footer}
           </div>
         )}

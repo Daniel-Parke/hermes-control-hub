@@ -1,5 +1,5 @@
-/* eslint-disable @typescript-eslint/no-require-imports */
 /** @jest-environment node */
+/* eslint-disable @typescript-eslint/no-require-imports */
 
 jest.mock("@/lib/api-auth", () => ({ requireAuth: jest.fn(() => null) }));
 jest.mock("@/lib/api-logger", () => ({ logApiError: jest.fn() }));
@@ -14,7 +14,7 @@ jest.mock("@/lib/models-repository", () => ({
 
 const mockReadHermesConfigModels = jest.fn();
 
-jest.mock("@/lib/hermes-config-sync", () => ({
+jest.mock("@/modules/hermes/lib/hermes-config-read", () => ({
   readHermesConfigModels: () => mockReadHermesConfigModels(),
 }));
 

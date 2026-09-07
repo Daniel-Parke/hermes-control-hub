@@ -1,16 +1,34 @@
 // ═══════════════════════════════════════════════════════════════
-// Page Header Component
+// Page Header — the header's CONTENT, not the bar it sits in
 // ═══════════════════════════════════════════════════════════════
+//
+// This used to render its own <header>: sticky, full-width, with its own
+// padding. That made the header a CHILD of the page, and a child cannot be both
+// full-bleed and contained. The bar therefore either stopped short of the
+// viewport (on /results/artifacts its bottom rule ended 180px from both edges,
+// pointing at nothing) or the words inside it sat at a different x from the
+// content beneath. AppPageShell now renders the bar and puts this content in the
+// SAME container as the body, so the two edges cannot disagree.
+
+"use client";
 
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
-import type { AccentColor } from "@/types/hermes";
-import { shellHeaderBarClasses, iconColorMap } from "@/lib/theme";
+import type { AccentColor } from "@/types/console";
+import { iconColorMap } from "@/lib/theme";
 import { StatusDot } from "@/components/ui/Card";
+import PageTitle, { useRegistryTitle } from "@/components/layout/PageTitle";
+import HelpLink from "@/components/help/HelpLink";
 
 interface PageHeaderProps {
   icon: React.ComponentType<{ className?: string }>;
-  title: string;
+  /**
+   * The page's name. Omit it and the header reads the registry's label for
+   * the current path, which is what keeps the rail entry, the h1 and the tab
+   * title one word (T-0097, D55). Pass one only when the header names a thing
+   * rather than a place.
+   */
+  title?: string;
   subtitle?: string;
   color?: AccentColor;
   backHref?: string;
@@ -32,46 +50,70 @@ export default function PageHeader({
   status,
   actions,
 }: PageHeaderProps) {
+  const resolved = useRegistryTitle(title);
   return (
-    <header
-      className={`${shellHeaderBarClasses} sticky top-0 z-30 justify-between gap-4 w-full`}
-    >
-      <div className="flex items-center gap-4 min-w-0">
+    // flex-wrap, because on a phone the actions alone can be wider than the
+    // bar: Logs measures 388px of pickers and buttons inside 390px. With
+    // nothing to share, the title group was rendering 0px wide. Wrapping puts
+    // the actions on a second row instead of erasing the page's own name.
+    <div className="flex w-full flex-wrap items-center justify-between gap-4 py-3">
+      <PageTitle title={resolved} />
+      {/* flex-1, not just min-w-0: min-w-0 lets this group shrink past its
+          content, and with the actions marked shrink-0 there was nothing to
+          stop it reaching zero. On a phone the busiest headers rendered
+          their h1 0px wide. Growing claims the leftover space instead, and
+          the truncate on the h1 handles what is left. */}
+      <div className="flex min-w-0 flex-1 flex-col">
         {backHref && (
-          <>
-            <Link
-              href={backHref}
-              className={`flex items-center text-white/40 hover:text-white transition-colors shrink-0 ${
-                backIconOnly ? "" : "gap-2"
-              }`}
-              aria-label={backIconOnly ? backLabel : undefined}
-            >
-              <ArrowLeft className="w-4 h-4" />
-              {!backIconOnly && (
-                <span className="text-sm font-mono">{backLabel}</span>
-              )}
-            </Link>
-            {!backIconOnly && <div className="w-px h-6 bg-white/20 shrink-0" />}
-          </>
-        )}
-        <div className="flex items-center gap-3 min-w-0">
-          <Icon className={`w-5 h-5 shrink-0 ${iconColorMap[color]}`} />
-          <div className="min-w-0">
-            <h1 className="text-xl font-bold text-white tracking-tight flex items-center gap-2 truncate">
-              {title}
-              {status && <StatusDot status={status} pulse />}
-            </h1>
-            {subtitle && (
-              <p className="text-xs text-white/40 font-mono truncate">
-                {subtitle}
-              </p>
+          // Its own row ABOVE the title, not a column beside it. Beside it, the
+          // back link and its divider push the h1 to the right of the content
+          // column underneath — which is the offset this batch exists to
+          // remove. A fixed-width slot would only make that offset the same on
+          // every page rather than zero, and the gate measures zero.
+          <Link
+            href={backHref}
+            className="mb-1 flex w-fit items-center gap-1.5 text-ps-text-muted transition-colors hover:text-ps-text-primary"
+            // Always named, because the label is hidden below sm and a link
+            // whose text disappears at a breakpoint would otherwise be an
+            // unnamed arrow on a phone.
+            aria-label={backLabel}
+          >
+            <ArrowLeft className="h-3.5 w-3.5 shrink-0" />
+            {/* Hidden below sm, not removed: on a 390px screen the page's own
+                name is worth more than the word for where you came from, and
+                the arrow still says it. */}
+            {!backIconOnly && (
+              <span className="hidden font-mono text-micro sm:inline">{backLabel}</span>
             )}
-          </div>
-        </div>
+          </Link>
+        )}
+        {/* The icon is INSIDE the h1. Beside it, the h1's box started one icon
+            and one gap to the right of every block below it, so every screen
+            with a header disagreed with itself by 32px before anything else
+            went wrong. In here, the heading's left edge IS the container's. */}
+        <h1 className="flex items-center gap-3 text-title font-bold tracking-tight text-ps-text-primary">
+          <Icon className={`h-5 w-5 shrink-0 ${iconColorMap[color]}`} />
+          <span className="truncate">{resolved}</span>
+          {status && <StatusDot status={status} pulse />}
+        </h1>
+        {subtitle && (
+          // ml-8 is not a guess: the icon is h-5 (1.25rem) and the gap is
+          // gap-3 (0.75rem), so 2rem is exactly the title text's own indent.
+          // The subtitle reads as belonging to the title rather than to the
+          // icon.
+          <p className="ml-8 truncate font-mono text-micro text-ps-text-muted">{subtitle}</p>
+        )}
       </div>
-      {actions && (
-        <div className="flex items-center gap-3 flex-shrink-0">{actions}</div>
-      )}
-    </header>
+      {/*
+        The ? is here rather than on each page, and the wrapper is always
+        rendered rather than conditional on `actions`, so a page that passes no
+        actions is not also a page with no way into its guide. There is no prop
+        to opt out with: an opt-out is how a screen quietly loses its guide.
+      */}
+      <div className="flex flex-shrink-0 items-center gap-3">
+        <HelpLink />
+        {actions}
+      </div>
+    </div>
   );
 }

@@ -10,7 +10,7 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 import { ChevronDown, FolderOpen, Loader2, Plus } from "lucide-react";
-import { CATEGORY_COLOR_CLASSES } from "@/lib/mission-categories";
+import { CATEGORY_COLOR_CLASSES } from "@/lib/missions/mission-categories";
 
 export interface CategoryOption {
   id: string;
@@ -152,15 +152,15 @@ export default function CategoryCombobox({
           <div
             ref={menuRef}
             data-testid="category-combobox-menu"
-            className="fixed z-[9999] rounded-lg border border-white/10 bg-dark-900 shadow-2xl overflow-hidden"
+            className="fixed z-[9999] rounded-lg border border-ps-edge-hairline bg-ps-surface-panel shadow-2xl overflow-hidden"
             style={{
               top: menuPos.top,
               left: menuPos.left,
               width: menuPos.width,
             }}
           >
-            <div className="p-2 border-b border-white/10">
-              <input
+            <div className="p-2 border-b border-ps-edge-hairline">
+              <input aria-label="Search categories"
                 ref={inputRef}
                 type="text"
                 value={query}
@@ -172,14 +172,14 @@ export default function CategoryCombobox({
                   }
                 }}
                 placeholder={searchPlaceholder}
-                className="w-full px-2 py-1.5 text-xs font-mono bg-dark-950 border border-white/10 rounded text-white/80 outline-none focus:border-neon-cyan/40"
+                className="w-full px-2 py-1.5 text-micro font-mono bg-ps-surface-ground border border-ps-edge rounded text-ps-text-primary outline-none focus:border-neon-cyan/40"
               />
             </div>
             <ul className="max-h-48 overflow-y-auto py-1">
               <li>
                 <button
                   type="button"
-                  className="w-full px-3 py-2 text-left text-xs font-mono text-white/50 hover:bg-white/5"
+                  className="w-full px-3 py-2 text-left text-micro font-mono text-ps-text-muted hover:bg-ps-surface-raised"
                   onClick={() => {
                     onChange(null);
                     setOpen(false);
@@ -192,7 +192,7 @@ export default function CategoryCombobox({
                 <li key={c.id}>
                   <button
                     type="button"
-                    className="w-full px-3 py-2 text-left text-xs font-mono text-white/80 hover:bg-white/5 flex items-center gap-2"
+                    className="w-full px-3 py-2 text-left text-micro font-mono text-ps-text-primary hover:bg-ps-surface-raised flex items-center gap-2"
                     onClick={() => {
                       onChange(c.id);
                       setOpen(false);
@@ -206,14 +206,14 @@ export default function CategoryCombobox({
               ))}
             </ul>
             {(canCreate || onManageCategories) && (
-              <div className="border-t border-white/10">
+              <div className="border-t border-ps-edge-hairline">
                 {canCreate && (
                   <button
                     type="button"
                     data-testid="category-combobox-create"
                     disabled={creating}
                     onClick={() => void handleCreate()}
-                    className="w-full flex items-center gap-2 px-3 py-2.5 text-xs font-mono text-neon-cyan hover:bg-neon-cyan/10 disabled:opacity-50"
+                    className="w-full flex items-center gap-2 px-3 py-2.5 text-micro font-mono text-neon-cyan hover:bg-neon-cyan/10 disabled:opacity-50"
                   >
                     {creating ? (
                       <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -230,7 +230,7 @@ export default function CategoryCombobox({
                       setOpen(false);
                       onManageCategories();
                     }}
-                    className="w-full flex items-center gap-2 px-3 py-2.5 text-xs font-mono text-white/40 hover:bg-white/5 border-t border-white/5"
+                    className="w-full flex items-center gap-2 px-3 py-2.5 text-micro font-mono text-ps-text-muted hover:bg-ps-surface-raised border-t border-ps-edge"
                   >
                     <FolderOpen className="w-3.5 h-3.5" />
                     Manage all categories…
@@ -245,7 +245,7 @@ export default function CategoryCombobox({
 
   return (
     <div className="relative">
-      <label className="text-xs text-white/40 font-mono block mb-1.5">
+      <label className="text-micro text-ps-text-muted font-mono block mb-1.5">
         {label}
       </label>
       <button
@@ -254,7 +254,7 @@ export default function CategoryCombobox({
         disabled={disabled}
         data-testid="category-combobox-trigger"
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center justify-between gap-2 px-3 py-2 h-9 rounded-lg border border-white/10 bg-dark-900/80 text-left text-sm font-mono hover:border-white/20 disabled:opacity-50"
+        className="w-full flex items-center justify-between gap-2 px-3 py-2 h-9 rounded-lg border border-ps-edge bg-ps-surface-panel text-left text-body font-mono hover:border-ps-edge-emphasis disabled:opacity-50"
       >
         <span className="flex items-center gap-2 min-w-0">
           <span
@@ -262,11 +262,11 @@ export default function CategoryCombobox({
               selected ? dotClass(selected.color) : "bg-white/20"
             }`}
           />
-          <span className="truncate text-white/80">
+          <span className="truncate text-ps-text-primary">
             {selected?.name ?? "Uncategorized"}
           </span>
         </span>
-        <ChevronDown className="w-4 h-4 text-white/30 shrink-0" />
+        <ChevronDown className="w-4 h-4 text-ps-text-muted shrink-0" />
       </button>
       {menu}
     </div>

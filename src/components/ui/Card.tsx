@@ -2,7 +2,7 @@
 // Card Component
 // ═══════════════════════════════════════════════════════════════
 
-import type { AccentColor } from "@/types/hermes";
+import type { AccentColor } from "@/types/console";
 import GlowSurface from "@/components/ui/GlowSurface";
 
 interface CardProps {
@@ -33,11 +33,11 @@ export default function Card({
   padding = "md",
 }: CardProps) {
   const hoverClass = hover
-    ? "hover:border-white/30 transition-colors cursor-pointer"
+    ? "hover:border-ps-edge-emphasis transition-colors cursor-pointer"
     : "";
   const padClass = paddingMap[padding];
 
-  const innerClasses = `rounded-xl border border-white/10 bg-dark-900/50 min-w-0 ${padClass} ${hoverClass} ${className}`;
+  const innerClasses = `rounded-xl border border-ps-edge-hairline bg-ps-surface-panel min-w-0 ${padClass} ${hoverClass} ${className}`;
 
   return (
     <GlowSurface
@@ -45,6 +45,12 @@ export default function Card({
       intensity={glowIntensity}
       animated={glowAnimated}
       className={innerClasses}
+      // Bloom tier (WG-WEB-011 C). The card is one of the containers
+      // WG-WEB-003 names, so it answers the pointer. The paint rule lives in
+      // globals.css and the listener in src/kit/BloomField.tsx; this attribute
+      // is the only thing a container needs. Full radius, not "tight": a card
+      // is a large surface and the 200px field is sized for one.
+      data-bloom=""
     >
       {children}
     </GlowSurface>
@@ -73,26 +79,3 @@ export function StatusDot({
   );
 }
 
-// ── Stat Card (dashboard style) ────────────────────────────────
-export function StatCard({
-  icon: Icon,
-  label,
-  value,
-  status = "online",
-}: {
-  icon: React.ComponentType<{ className?: string }>;
-  label: string;
-  value: string;
-  status?: "online" | "warning" | "error" | "idle";
-}) {
-  return (
-    <Card hover>
-      <div className="flex items-center justify-between mb-2">
-        <Icon className="w-4 h-4 text-white/40" />
-        <StatusDot status={status} pulse />
-      </div>
-      <div className="text-2xl font-bold font-mono text-white">{value}</div>
-      <div className="text-xs text-white/40 mt-1">{label}</div>
-    </Card>
-  );
-}

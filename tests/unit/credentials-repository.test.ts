@@ -1,5 +1,5 @@
-/* eslint-disable @typescript-eslint/no-require-imports */
 /** @jest-environment node */
+/* eslint-disable @typescript-eslint/no-require-imports */
 
 import { execBaselineSchema } from "../helpers/baseline-db";
 
@@ -9,16 +9,7 @@ function loadRealBetterSqlite3(): typeof import("better-sqlite3") {
   return require("better-sqlite3/lib/index.js") as typeof import("better-sqlite3");
 }
 
-jest.mock("@/lib/db", () => {
-  const actualCrypto = jest.requireActual("crypto") as typeof import("crypto");
-  return {
-    db: () => testDb!,
-    inTransaction: <T,>(fn: () => T) => testDb!.transaction(fn)(),
-    uuid: () => actualCrypto.randomUUID(),
-    now: () => new Date().toISOString(),
-    ensureDb: () => undefined,
-  };
-});
+jest.mock("@/lib/db", () => require("../helpers/baseline-db").dbSingletonMock(() => testDb));
 
 beforeEach(() => {
   const Database = loadRealBetterSqlite3();
@@ -124,12 +115,17 @@ describe("credentials-repository — CRUD", () => {
     }
   });
 
-  it("upsertCredential returns null for OAuth-only providers (e.g. nous)", () => {
-    const { upsertCredential } =
+  it("stores a credential for any provider string, because the column is plain TEXT", () => {
+    // The OAuth-only skip used to live here, inferring "no API key" from whether
+    // Hermes had an env-var name for the provider. That is a vendor question and
+    // it moved to the composition point that asks it (POST /api/models/import);
+    // see tests/unit/models-import-oauth-skip.test.ts. This repository now
+    // matches its own column: `provider TEXT NOT NULL`, no CHECK.
+    const { upsertCredential, listCredentials } =
       require("@/lib/credentials-repository") as typeof import("@/lib/credentials-repository");
-    // Should skip silently — no credential row should be created.
     const result = upsertCredential({ provider: "nous", apiKey: "no-key-needed" });
-    expect(result).toBeNull();
+    expect(result).not.toBeNull();
+    expect(listCredentials().some((c) => c.provider === "nous")).toBe(true);
   });
 
   it("upsertCredential works normally for API-key providers", () => {

@@ -1,5 +1,5 @@
-/* eslint-disable @typescript-eslint/no-require-imports */
 /** @jest-environment node */
+/* eslint-disable @typescript-eslint/no-require-imports */
 
 /**
  * PR 7 — callLLM resolves an `opts.modelId` against the registry:
@@ -8,7 +8,7 @@
  *   - gateway fallback when modelId is unknown
  */
 
-jest.mock("@/lib/hermes-agent-runtime", () => ({
+jest.mock("@/modules/hermes/lib/agent-runtime", () => ({
   getAgentLlmEndpoints: jest.fn(() => ({
     apiUrl: "http://gateway/v1/chat/completions",
     gatewayBase: "http://gateway",

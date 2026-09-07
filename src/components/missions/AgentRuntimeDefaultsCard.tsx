@@ -5,6 +5,7 @@
 
 "use client";
 
+import { sectionHeadingClasses } from "@/lib/theme";
 import ProfileSelector from "@/components/ui/ProfileSelector";
 import MissionTimeSelector from "@/components/ui/MissionTimeSelector";
 import TimeoutSelector from "@/components/ui/TimeoutSelector";
@@ -54,15 +55,15 @@ export default function AgentRuntimeDefaultsCard({
       className={
         embedded
           ? "space-y-4"
-          : "rounded-xl border border-white/10 bg-dark-800/30 p-3 sm:p-4 space-y-4"
+          : "rounded-xl border border-ps-edge-hairline bg-ps-surface-raised p-3 sm:p-4 space-y-4"
       }
     >
       {!embedded && (
         <div className="space-y-1">
-          <h3 className="text-[11px] font-mono text-white/50 uppercase tracking-wider">
+          <h3 className={sectionHeadingClasses}>
             Agent & runtime defaults
           </h3>
-          <p className="text-[10px] text-white/25 font-mono leading-relaxed">
+          <p className="text-micro text-ps-text-faint font-mono leading-relaxed">
             These fields feed the mission prompt and dispatch configuration.
           </p>
         </div>
@@ -70,7 +71,7 @@ export default function AgentRuntimeDefaultsCard({
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="space-y-1.5">
-          <label className="text-xs text-white/40 font-mono block mb-1.5">
+          <label className="text-micro text-ps-text-muted font-mono block mb-1.5">
             Model
           </label>
           <ModelPicker
@@ -82,7 +83,7 @@ export default function AgentRuntimeDefaultsCard({
           />
         </div>
         <div className="space-y-1.5">
-          <label className="text-xs text-white/40 font-mono block mb-1.5">
+          <label className="text-micro text-ps-text-muted font-mono block mb-1.5">
             Agent profile
           </label>
           <ProfileSelector
@@ -95,7 +96,7 @@ export default function AgentRuntimeDefaultsCard({
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-stretch">
         <div className="flex flex-col gap-1.5 min-h-[3.25rem]">
-          <label className="text-xs text-white/40 font-mono block mb-1.5">
+          <label className="text-micro text-ps-text-muted font-mono block mb-1.5">
             Mission scope
           </label>
           <div className="flex-1 flex flex-col justify-center">
@@ -106,9 +107,9 @@ export default function AgentRuntimeDefaultsCard({
           </div>
         </div>
         <div className="flex flex-col gap-1.5 min-h-[3.25rem]">
-          <label className="text-xs text-white/40 font-mono block mb-1.5">
+          <label className="text-micro text-ps-text-muted font-mono block mb-1.5">
             {timeoutHeading}{" "}
-            <span className="text-white/25 font-normal normal-case">
+            <span className="text-ps-text-faint font-normal normal-case">
               — Inactivity kill switch
             </span>
           </label>
@@ -124,9 +125,9 @@ export default function AgentRuntimeDefaultsCard({
 
       {showSkills && (
         <div className="space-y-1.5">
-          <label className="text-xs text-white/40 font-mono block mb-1.5">
+          <label className="text-micro text-ps-text-muted font-mono block mb-1.5">
             Attached Skills{" "}
-            <span className="text-white/20">(optional, max 10)</span>
+            <span className="text-ps-text-faint">(optional, max 10)</span>
           </label>
           <SkillSelector
             value={skills}
@@ -138,7 +139,7 @@ export default function AgentRuntimeDefaultsCard({
       )}
 
       {embedded && (
-        <p className="text-xs text-white/25 font-mono leading-relaxed">
+        <p className="text-micro text-ps-text-faint font-mono leading-relaxed">
           Profile defines agent role via SOUL/AGENTS under your Hermes home.
         </p>
       )}

@@ -9,8 +9,8 @@
 import "@testing-library/jest-dom";
 import { render, screen, waitFor } from "@testing-library/react";
 
-import ModelsPage from "@/app/config/models/page";
-import { TASK_TYPES } from "@/lib/hermes-providers";
+import ModelsPage from "@/app/agent/models/page";
+import { TASK_TYPES } from "@/lib/models/task-types";
 
 interface FetchResponseInit {
   body: unknown;
@@ -42,13 +42,13 @@ function setFetch(map: Record<string, FetchResponseInit>) {
       if (url.startsWith(k)) return jsonResponse(map[k] as FetchResponseInit) as unknown as Response;
     }
     if (url.includes("/api/models/sync/drift")) {
-      return jsonResponse({ data: null }) as unknown as Response;
+      return jsonResponse({ body: { data: null } }) as unknown as Response;
     }
     if (url.includes("/api/models/fallbacks")) {
-      return jsonResponse({ data: { chain: [], config: null } }) as unknown as Response;
+      return jsonResponse({ body: { data: { chain: [], config: null } } }) as unknown as Response;
     }
     if (url.includes("/api/models/import")) {
-      return jsonResponse({ data: { modelsImported: 0 } }) as unknown as Response;
+      return jsonResponse({ body: { data: { modelsImported: 0 } } }) as unknown as Response;
     }
     throw new Error(`Unmatched fetch: ${url}`);
   }) as typeof global.fetch;
@@ -56,9 +56,9 @@ function setFetch(map: Record<string, FetchResponseInit>) {
 
 function defaultFallbacks() {
   return {
-    "/api/models/sync/drift": { data: null },
-    "/api/models/fallbacks": { data: { chain: [], config: { restorePrimaryOnFallback: true, fallbackNotification: false, apiMaxRetries: 2 } } },
-    "/api/models/fallbacks/config": { data: { config: { restorePrimaryOnFallback: true, fallbackNotification: false, apiMaxRetries: 2 } } },
+    "/api/models/sync/drift": { body: { data: null } },
+    "/api/models/fallbacks": { body: { data: { chain: [], config: { restorePrimaryOnFallback: true, fallbackNotification: false, apiMaxRetries: 2 } } } },
+    "/api/models/fallbacks/config": { body: { data: { config: { restorePrimaryOnFallback: true, fallbackNotification: false, apiMaxRetries: 2 } } } },
   } as Record<string, FetchResponseInit>;
 }
 
@@ -139,6 +139,19 @@ describe("ModelsPage UI improvements", () => {
               acc[t] = t === "agent" ? minimax.id : null;
               return acc;
             }, {}),
+            // Amended in the real-agent round. The slot alone used to draw
+            // Active, so a model chosen here and never sent to the agent was
+            // stamped Active on a machine the agent had never run it on. The
+            // endpoint answers the one readiness verdict now, and Active
+            // follows that. This fixture is the install where the model really
+            // did reach the agent, which is the case the test is about.
+            modelReadiness: {
+              state: "ready",
+              ready: true,
+              label: "MiniMax/MiniMax-M2.1 · minimax",
+              modelName: "MiniMax/MiniMax-M2.1",
+              detail: "",
+            },
           },
         },
       },

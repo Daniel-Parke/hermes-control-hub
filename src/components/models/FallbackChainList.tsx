@@ -4,11 +4,12 @@
 
 "use client";
 
-import { useState } from "react";
-import { ChevronUp, ChevronDown, Plus, Edit3, Trash2 } from "lucide-react";
-import type { FallbackChainEntry } from "@/types/hermes";
+import { useCallback, useState } from "react";
+import { ChevronUp, ChevronDown, Plus, Edit3 } from "lucide-react";
+import type { FallbackChainEntry } from "@/types/console";
 import GlowSurface from "@/components/ui/GlowSurface";
 import { InlineToggle } from "@/components/ui/Input";
+import PerRowDeleteButton from "@/components/models/PerRowDeleteButton";
 
 interface FallbackChainListProps {
   chain: FallbackChainEntry[];
@@ -20,6 +21,108 @@ interface FallbackChainListProps {
   onAddFromRegistry: (modelId: string) => void;
   onAddCustom: (modelId: string, provider: string, modelIdString: string, baseUrl?: string) => void;
   disabled?: boolean;
+}
+
+interface FallbackRowProps {
+  entry: FallbackChainEntry;
+  position: number;
+  total: number;
+  disabled: boolean;
+  onReorder: (entryId: string, direction: "up" | "down") => void;
+  onToggle: (entryId: string, enabled: boolean) => void;
+  onDelete: (entryId: string) => void;
+  onEdit: (entry: FallbackChainEntry) => void;
+}
+
+/**
+ * One row in the fallback chain. The delete button is delegated to
+ * `PerRowDeleteButton` (a shared, per-row arm-confirm component that
+ * also serves `ModelRow` in `ModelsTableSection`) so the armed-state
+ * styling + aria-label shape stays in lockstep across the two
+ * list-style tables. The per-row `useTwoStepConfirm` instance lives
+ * inside the button, so each row owns its own armed state — a stale
+ * arm on one row cannot fire on another.
+ */
+function FallbackRow({
+  entry,
+  position,
+  total,
+  disabled,
+  onReorder,
+  onToggle,
+  onDelete,
+  onEdit,
+}: FallbackRowProps) {
+  return (
+    <tr
+      key={entry.id}
+      className="border-b border-ps-edge-hairline last:border-0 hover:bg-ps-surface-raised transition-colors"
+    >
+      <td className="px-3 py-2">
+        <span className="inline-flex items-center justify-center w-5 h-5 text-micro font-mono bg-ps-surface-raised text-ps-text-muted rounded">
+          {position + 1}
+        </span>
+      </td>
+      <td className="px-3 py-2">
+        <div className="font-mono text-ps-text-primary truncate max-w-[200px]">
+          {entry.modelName}
+        </div>
+        <div className="text-micro font-mono text-ps-text-muted truncate max-w-[200px]">
+          {entry.provider} / {entry.modelIdString}
+        </div>
+      </td>
+      <td className="px-3 py-2 text-center">
+        <InlineToggle
+          value={entry.enabled}
+          onChange={(enabled) => onToggle(entry.id, enabled)}
+          disabled={disabled}
+          color="purple"
+          label={`Enable ${entry.provider} / ${entry.modelIdString} in the fallback chain`}
+        />
+      </td>
+      <td className="px-3 py-2">
+        <div className="flex items-center justify-end gap-1">
+          {/* Reorder buttons */}
+          <button
+            type="button"
+            onClick={() => onReorder(entry.id, "up")}
+            disabled={disabled || position === 0}
+            title="Move up"
+            className="p-1 rounded text-ps-text-muted hover:text-ps-text-primary hover:bg-ps-surface-raised transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+          >
+            <ChevronUp className="w-3.5 h-3.5" />
+          </button>
+          <button
+            type="button"
+            onClick={() => onReorder(entry.id, "down")}
+            disabled={disabled || position === total - 1}
+            title="Move down"
+            className="p-1 rounded text-ps-text-muted hover:text-ps-text-primary hover:bg-ps-surface-raised transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+          >
+            <ChevronDown className="w-3.5 h-3.5" />
+          </button>
+          {/* Edit */}
+          <button
+            type="button"
+            onClick={() => onEdit(entry)}
+            disabled={disabled}
+            title="Edit"
+            className="p-1 rounded text-ps-text-muted hover:text-neon-purple hover:bg-neon-purple/10 transition-colors disabled:opacity-50"
+          >
+            <Edit3 className="w-3.5 h-3.5" />
+          </button>
+          {/* Delete — armed state mirrors the per-row delete pattern
+              in ModelsTableSection (now shared via PerRowDeleteButton) */}
+          <PerRowDeleteButton
+            rowId={entry.id}
+            rowName={entry.modelName}
+            onDelete={() => onDelete(entry.id)}
+            disabled={disabled}
+          />
+        </div>
+      </td>
+    </tr>
+  );
 }
 
 interface AddCustomFormProps {
@@ -43,72 +146,72 @@ function AddCustomForm({ onConfirm, onCancel }: AddCustomFormProps) {
   return (
     <form
       onSubmit={(e) => void handleSubmit(e)}
-      className="p-3 bg-white/5 rounded-lg space-y-2"
+      className="p-3 bg-ps-surface-raised rounded-lg space-y-2"
     >
       <div className="grid grid-cols-2 gap-2">
         <div>
-          <label className="block text-[10px] font-mono text-white/40 uppercase mb-0.5">
+          <label className="block text-micro font-mono text-ps-text-muted uppercase mb-0.5">
             Name
           </label>
           <input
             type="text"
             value={modelId}
             onChange={(e) => setModelId(e.target.value)}
-            placeholder="My Custom Model"
-            className="w-full h-8 bg-dark-800 border border-white/10 rounded px-2 text-xs text-white font-mono outline-none focus:border-neon-purple/50"
+            placeholder="My Custom Model" aria-label="Model name"
+            className="w-full h-8 bg-ps-surface-inset border border-ps-edge rounded px-2 text-micro text-ps-text-primary font-mono outline-none focus:border-neon-purple/50"
             required
           />
         </div>
         <div>
-          <label className="block text-[10px] font-mono text-white/40 uppercase mb-0.5">
+          <label className="block text-micro font-mono text-ps-text-muted uppercase mb-0.5">
             Provider
           </label>
           <input
             type="text"
             value={provider}
             onChange={(e) => setProvider(e.target.value)}
-            placeholder="openai"
-            className="w-full h-8 bg-dark-800 border border-white/10 rounded px-2 text-xs text-white font-mono outline-none focus:border-neon-purple/50"
+            placeholder="openai" aria-label="Provider"
+            className="w-full h-8 bg-ps-surface-inset border border-ps-edge rounded px-2 text-micro text-ps-text-primary font-mono outline-none focus:border-neon-purple/50"
             required
           />
         </div>
       </div>
       <div>
-        <label className="block text-[10px] font-mono text-white/40 uppercase mb-0.5">
+        <label className="block text-micro font-mono text-ps-text-muted uppercase mb-0.5">
           Model ID
         </label>
         <input
           type="text"
           value={modelIdString}
           onChange={(e) => setModelIdString(e.target.value)}
-          placeholder="gpt-4o"
-          className="w-full h-8 bg-dark-800 border border-white/10 rounded px-2 text-xs text-white font-mono outline-none focus:border-neon-purple/50"
+          placeholder="gpt-4o" aria-label="Model ID"
+          className="w-full h-8 bg-ps-surface-inset border border-ps-edge rounded px-2 text-micro text-ps-text-primary font-mono outline-none focus:border-neon-purple/50"
           required
         />
       </div>
       <div>
-        <label className="block text-[10px] font-mono text-white/40 uppercase mb-0.5">
+        <label className="block text-micro font-mono text-ps-text-muted uppercase mb-0.5">
           Base URL (optional)
         </label>
         <input
           type="text"
           value={baseUrl}
           onChange={(e) => setBaseUrl(e.target.value)}
-          placeholder="https://api.openai.com/v1"
-          className="w-full h-8 bg-dark-800 border border-white/10 rounded px-2 text-xs text-white font-mono outline-none focus:border-neon-purple/50"
+          placeholder="https://api.openai.com/v1" aria-label="Base URL"
+          className="w-full h-8 bg-ps-surface-inset border border-ps-edge rounded px-2 text-micro text-ps-text-primary font-mono outline-none focus:border-neon-purple/50"
         />
       </div>
       <div className="flex items-center justify-end gap-2 pt-1">
         <button
           type="button"
           onClick={onCancel}
-          className="px-3 py-1 text-xs font-mono text-white/50 hover:text-white rounded-lg hover:bg-white/5 transition-colors"
+          className="px-3 py-1 text-micro font-mono text-ps-text-muted hover:text-ps-text-primary rounded-lg hover:bg-ps-surface-raised transition-colors"
         >
           Cancel
         </button>
         <button
           type="submit"
-          className="px-3 py-1 text-xs font-mono bg-neon-purple/20 text-neon-purple rounded-lg hover:bg-neon-purple/30 transition-colors"
+          className="px-3 py-1 text-micro font-mono bg-neon-purple/20 text-neon-purple rounded-lg hover:bg-neon-purple/30 transition-colors"
         >
           Add
         </button>
@@ -131,10 +234,17 @@ export default function FallbackChainList({
   const [showRegistryDropdown, setShowRegistryDropdown] = useState(false);
   const [showAddCustom, setShowAddCustom] = useState(false);
 
-  const handleDeleteClick = (id: string) => {
-    if (!confirm("Remove this fallback model?")) return;
-    onDelete(id);
-  };
+  // closeAddCustom — single-setter close-callback for the inline
+  // AddCustomForm. Sister to the close-callbacks extracted in
+  // /config/models/page.tsx + ModelSyncButtons.tsx (session 196) —
+  // same useState-setter stability rationale. The 2 call sites
+  // today are the Cancel button onClick and the post-onConfirm
+  // `setShowAddCustom(false)` bare statement. Extracting keeps
+  // them in lockstep if a future "reset the form fields on close"
+  // or "fire an analytics event" extension lands. The
+  // `setShowRegistryDropdown((v) => !v)` toggle is a different
+  // shape (toggle, not close) and stays inline.
+  const closeAddCustom = useCallback(() => setShowAddCustom(false), []);
 
   const handleAddFromRegistry = (modelId: string) => {
     onAddFromRegistry(modelId);
@@ -147,15 +257,15 @@ export default function FallbackChainList({
     <div className="space-y-2">
       {sortedChain.length === 0 && !showAddCustom ? (
         <GlowSurface accent="purple">
-          <div className="text-center py-6 rounded-xl border border-white/10 bg-dark-900/50 text-xs text-white/30 font-mono">
+          <div className="text-center py-6 rounded-xl border border-ps-edge-hairline bg-ps-surface-panel text-micro text-ps-text-muted font-mono">
             No fallback models configured
           </div>
         </GlowSurface>
       ) : (
         <GlowSurface accent="purple">
-          <table className="w-full text-sm">
+          <table className="w-full text-body">
             <thead>
-              <tr className="text-left text-[10px] font-mono uppercase tracking-widest text-white/40 border-b border-white/5">
+              <tr className="text-left text-micro font-mono uppercase tracking-widest text-ps-text-muted border-b border-ps-edge-hairline">
                 <th className="px-3 py-2 w-10">#</th>
                 <th className="px-3 py-2">Model</th>
                 <th className="px-3 py-2 w-16 text-center">Enabled</th>
@@ -164,75 +274,17 @@ export default function FallbackChainList({
             </thead>
             <tbody>
               {sortedChain.map((entry, index) => (
-                <tr
+                <FallbackRow
                   key={entry.id}
-                  className="border-b border-white/5 last:border-0 hover:bg-white/5 transition-colors"
-                >
-                  <td className="px-3 py-2">
-                    <span className="inline-flex items-center justify-center w-5 h-5 text-[10px] font-mono bg-white/10 text-white/50 rounded">
-                      {index + 1}
-                    </span>
-                  </td>
-                  <td className="px-3 py-2">
-                    <div className="font-mono text-white truncate max-w-[200px]">
-                      {entry.modelName}
-                    </div>
-                    <div className="text-[10px] font-mono text-white/30 truncate max-w-[200px]">
-                      {entry.provider} / {entry.modelIdString}
-                    </div>
-                  </td>
-                  <td className="px-3 py-2 text-center">
-                    <InlineToggle
-                      value={entry.enabled}
-                      onChange={(enabled) => onToggle(entry.id, enabled)}
-                      disabled={disabled}
-                      color="purple"
-                    />
-                  </td>
-                  <td className="px-3 py-2">
-                    <div className="flex items-center justify-end gap-1">
-                      {/* Reorder buttons */}
-                      <button
-                        type="button"
-                        onClick={() => onReorder(entry.id, "up")}
-                        disabled={disabled || index === 0}
-                        title="Move up"
-                        className="p-1 rounded text-white/30 hover:text-white hover:bg-white/5 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-                      >
-                        <ChevronUp className="w-3.5 h-3.5" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => onReorder(entry.id, "down")}
-                        disabled={disabled || index === sortedChain.length - 1}
-                        title="Move down"
-                        className="p-1 rounded text-white/30 hover:text-white hover:bg-white/5 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-                      >
-                        <ChevronDown className="w-3.5 h-3.5" />
-                      </button>
-                      {/* Edit */}
-                      <button
-                        type="button"
-                        onClick={() => onEdit(entry)}
-                        disabled={disabled}
-                        title="Edit"
-                        className="p-1 rounded text-white/30 hover:text-neon-purple hover:bg-neon-purple/10 transition-colors disabled:opacity-50"
-                      >
-                        <Edit3 className="w-3.5 h-3.5" />
-                      </button>
-                      {/* Delete */}
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteClick(entry.id)}
-                        disabled={disabled}
-                        title="Delete"
-                        className="p-1 rounded text-white/30 hover:text-red-400 hover:bg-red-500/10 transition-colors disabled:opacity-50"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
+                  entry={entry}
+                  position={index}
+                  total={sortedChain.length}
+                  disabled={disabled}
+                  onReorder={onReorder}
+                  onToggle={onToggle}
+                  onDelete={onDelete}
+                  onEdit={onEdit}
+                />
               ))}
             </tbody>
           </table>
@@ -244,9 +296,9 @@ export default function FallbackChainList({
         <AddCustomForm
           onConfirm={(name, provider, modelIdString, baseUrl) => {
             void onAddCustom(name, provider, modelIdString, baseUrl);
-            setShowAddCustom(false);
+            closeAddCustom();
           }}
-          onCancel={() => setShowAddCustom(false)}
+          onCancel={closeAddCustom}
         />
       )}
 
@@ -258,25 +310,25 @@ export default function FallbackChainList({
             type="button"
             onClick={() => setShowRegistryDropdown((v) => !v)}
             disabled={disabled || models.length === 0}
-            className="flex items-center gap-1.5 px-3 h-8 text-xs font-mono text-white/50 hover:text-white bg-white/5 hover:bg-white/10 rounded-lg border border-white/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center gap-1.5 px-3 h-8 text-micro font-mono text-ps-text-muted hover:text-ps-text-primary bg-ps-surface-raised hover:bg-ps-surface-raised rounded-lg border border-ps-edge transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Plus className="w-3.5 h-3.5" />
             Add from Registry
             <ChevronDown className="w-3 h-3" />
           </button>
           {showRegistryDropdown && (
-            <div className="absolute top-full left-0 mt-1 z-10 w-56 bg-dark-800 border border-white/10 rounded-lg shadow-xl overflow-hidden">
+            <div className="absolute top-full left-0 mt-1 z-10 w-56 bg-ps-surface-raised border border-ps-edge-hairline rounded-lg shadow-xl overflow-hidden">
               {models.map((m) => (
                 <button
                   key={m.id}
                   type="button"
                   onClick={() => void handleAddFromRegistry(m.id)}
-                  className="w-full px-3 py-2 text-left hover:bg-white/5 transition-colors"
+                  className="w-full px-3 py-2 text-left hover:bg-ps-surface-raised transition-colors"
                 >
-                  <div className="text-xs font-mono text-white truncate">
+                  <div className="text-micro font-mono text-ps-text-primary truncate">
                     {m.name}
                   </div>
-                  <div className="text-[10px] font-mono text-white/30 truncate">
+                  <div className="text-micro font-mono text-ps-text-muted truncate">
                     {m.provider} / {m.modelId}
                   </div>
                 </button>
@@ -290,7 +342,7 @@ export default function FallbackChainList({
           type="button"
           onClick={() => setShowAddCustom(true)}
           disabled={disabled}
-          className="flex items-center gap-1.5 px-3 h-8 text-xs font-mono text-white/50 hover:text-white bg-white/5 hover:bg-white/10 rounded-lg border border-white/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex items-center gap-1.5 px-3 h-8 text-micro font-mono text-ps-text-muted hover:text-ps-text-primary bg-ps-surface-raised hover:bg-ps-surface-raised rounded-lg border border-ps-edge transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <Plus className="w-3.5 h-3.5" />
           Add Custom
