@@ -301,6 +301,28 @@ describe("summarise", () => {
     expect(counts.distinctZLayers).toBe(0);
   });
 
+  /**
+   * The collector zeroes w/h for a control that is inline in a sentence, the
+   * WCAG 2.5.8 exemption. Its box is the LINE, not the control, so it is no
+   * more a button height than it is a hit target. Measured: /help's prose
+   * column widened by one batch, one link in a sentence rewrapped, and the
+   * button-height count rose for a 40.8px line box that is not a button.
+   */
+  it("does not count a link that is inline in a sentence as a button size", () => {
+    const counts = summarise([
+      page({
+        boxes: [
+          { route: "/", what: "btn", chrome: "8px|a|b", radius: "8px", height: 30, shadow: "none", zIndex: "auto", control: true, w: 80, h: 30 },
+          { route: "/help", what: "a:the quest ledger", chrome: "0px|none|c", radius: "", height: 40.8, shadow: "none", zIndex: "auto", control: true, w: 0, h: 0 },
+        ],
+      }),
+    ]);
+    expect(counts.distinctButtonHeights).toBe(1);
+    expect(counts.distinctButtonChromes).toBe(1);
+    // Still exempt from the hit-target floor, which is where the rule started.
+    expect(counts.hitTargetsBelowTwentyFour).toBe(0);
+  });
+
   it("counts a heading as misaligned past one pixel, and keeps the worst offset", () => {
     const counts = summarise([
       page({ geometry: { route: "/a", headingLeft: 100, contentLeft: 100.5, contentLeftWhat: null, contentWidth: 800, overflowX: 0 } }),

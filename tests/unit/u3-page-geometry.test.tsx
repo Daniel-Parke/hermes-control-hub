@@ -24,6 +24,7 @@ import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 
 import AppPageShell, { PAGE_MEASURE } from "@/components/layout/AppPageShell";
+import { violationsIn } from "../../scripts/tooling/design-lint.mjs";
 
 const ROOT = join(__dirname, "..", "..");
 
@@ -218,5 +219,40 @@ describe("and no page owns a measure of its own", () => {
       "utf-8",
     );
     expect(codeLines(source).some((l) => /<header[\s>]/.test(l))).toBe(false);
+  });
+});
+
+/**
+ * The gate that keeps this true after the batch. U2 registered
+ * one-container-per-page as "any max-w- on a page"; that also banned holding a
+ * paragraph to a reading measure, which the programme asks for, and centring a
+ * 12px icon in an empty state, which is not a layout decision. It names the
+ * page's own scale now, so the cases that matter most are the ones it must
+ * LEAVE ALONE: a rule that fires on the replacement as well as the original is
+ * a rule nobody can satisfy.
+ */
+describe("the rule that holds this names a container, not every cap", () => {
+  const trips = (line: string): string[] =>
+    [...violationsIn("src/app/work/missions/page.tsx", [line]).keys()].map(
+      (k) => k.split("::")[0],
+    );
+  const fires = (line: string) => trips(line).includes("one-container-per-page");
+
+  it.each([
+    ['className="max-w-7xl mx-auto px-6 py-6"', "the dashboard's own column"],
+    ['className="max-w-screen-xl mx-auto w-full px-6"', "missions' own column"],
+    ['className="max-w-4xl mx-auto px-6 py-8 flex-1 w-full"', "the rec room's"],
+    ['className="mx-auto w-full max-w-ps-page px-6"', "the shell's measure, on a page"],
+  ])("refuses %s", (line) => {
+    expect(fires(line as string)).toBe(true);
+  });
+
+  it.each([
+    ['<p className="prose max-w-3xl text-sm">', "a paragraph at a reading measure"],
+    ['<div className="relative max-w-md">', "a search field"],
+    ['<div className="max-w-ps-prose">', "the house prose measure, which is the answer"],
+    ['<img className="max-w-full" />', "an image told not to overflow its box"],
+  ])("allows %s", (line) => {
+    expect(fires(line as string)).toBe(false);
   });
 });
