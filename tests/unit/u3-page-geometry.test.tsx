@@ -92,6 +92,11 @@ describe("the shell owns the measure", () => {
     // viewport edge, which is what /results/artifacts does today.
     expect(bar!.hasAttribute("data-ps-container")).toBe(false);
     expect(bar!.className).not.toContain("max-w-");
+    // And no gutter of its own. The container inside it already pads; a bar
+    // that pads as well indents the header's words past the body's by a whole
+    // gutter on every screen, which is this batch's defect at a smaller size.
+    // It carried px-6 until T-0117 for exactly that reason.
+    expect(bar!.className).not.toMatch(/(?:^|[\s:])p[xl]-/);
   });
 
   it("renders no header bar at all when a page has no header", () => {
