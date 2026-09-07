@@ -31,5 +31,5 @@ Nothing waits on the operator.
 ## Machine facts
 
 ```facts
-commit: b86b6e5a3b282ea1117ad703a4c0eeddb982f691
+commit: bba77d0b1c1480974f69b32381887d855d43bd61
 ```
