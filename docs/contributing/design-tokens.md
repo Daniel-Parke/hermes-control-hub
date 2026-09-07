@@ -110,6 +110,41 @@ them. Never spell hierarchy as a raw white opacity.
 `measureClasses`, and `tests/unit/lockbook-tokens.test.ts` reads `globals.css`
 and fails if either map names a token the CSS does not declare.
 
+## Type: five steps and two registers
+
+Declared in `@theme` as `--text-*` with their line heights, so a step carries
+its own leading and nobody sets both.
+
+| Utility | Size / leading | Is |
+|---------|----------------|----|
+| `text-micro` | 12 / 16 | a machine word: an ID, a path, a timestamp, a count, a status, a micro-caps section label |
+| `text-body` | 14 / 21 | the default. Body copy, list rows, form values, button labels |
+| `text-lead` | 16 / 24 | prose meant to be read: Help, descriptions, empty states |
+| `text-title` | 20 / 28 | an h1, a dialog's title, a panel's title |
+| `text-display` | 28 / 34 | the one number a screen exists to show |
+
+**The register is the decision, not the size.** Mono keeps machine words,
+because a fixed-width column of values is what makes a console readable. Inter
+takes prose. The two questions are therefore the same question: if the thing is
+a value, it is mono and it is `micro`; if it is a sentence, it is Inter and it
+is at least `body`.
+
+Prose at `micro` is the defect this replaced: 291 sites set descriptions and
+empty states two steps below the body size, and 70% of every character rendered
+came out at 12px.
+
+**A section heading is `sectionHeadingClasses` in `src/lib/theme.ts`**, not a
+size you choose. Thirty h2 elements wore ten treatments between them and a
+section heading was indistinguishable from a slightly emphatic list item; the
+one treatment is micro-caps mono on the secondary tier with a hairline under it,
+so it reads as a heading by register and rule rather than by being bigger. It
+owns the typography only: where the heading sits, and what sits beside it, stays
+at the call site.
+
+`type-scale-only` refuses Tailwind's default scale in `.tsx`, and
+`no-raw-text-alpha` refuses a hierarchy spelled as a white opacity. Both are at
+zero.
+
 ### Layer B3, viz chrome
 
 The furniture a chart is drawn **on**, as opposed to the data drawn **in** it.

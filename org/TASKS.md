@@ -131,3 +131,4 @@ The records under org/tasks/ are canonical.
 | T-0116 | standard | R1 | done | t0116-u2-token-layer-2026-09-07 |
 | T-0117 | standard | R1 | done | t0117-u3-page-geometry-2026-09-07 |
 | T-0118 | standard | R1 | done | t0118-u4-surfaces-and-edges-2026-09-07 |
+| T-0119 | standard | R1 | done | t0119-u5-the-type-scale-2026-09-07 |
