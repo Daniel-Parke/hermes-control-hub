@@ -106,16 +106,56 @@ describe("the rail is a surface with one edge", () => {
   const sidebar = () => read("src/components/layout/Sidebar.tsx");
   const layout = () => read("src/app/layout.tsx");
 
-  it("paints itself on the panel rung, at both breakpoints", () => {
+  /**
+   * The <aside>'s OWN opening tag. Asking the whole file whether it contains
+   * "bg-ps-surface-panel" is answered by the logo mark, which paints on the
+   * same rung — so the rail could go back to the page's ground and the
+   * assertion would still pass.
+   */
+  const railTag = () => {
     const source = sidebar();
-    expect(source).toContain("bg-ps-surface-panel");
+    // The ELEMENT, not the file's own comment about it ("One <aside>. On a
+    // desktop it is the rail…"), and not the first `>` after it either: the
+    // tag carries `React.RefObject<HTMLElement | null>` and a template literal
+    // with braces in it. Depth-aware, like every other tag scan in this repo.
+    const at = source.search(/<aside\s*\n/);
+    expect(at).toBeGreaterThan(-1);
+    let depth = 0;
+    let inStr: string | null = null;
+    for (let i = at; i < source.length; i++) {
+      const c = source[i];
+      if (inStr) {
+        if (c === inStr && source[i - 1] !== "\\") inStr = null;
+      } else if (c === '"' || c === "'" || c === "`") inStr = c;
+      else if (c === "{" || c === "<") depth += 1;
+      else if (c === "}") depth -= 1;
+      else if (c === ">") {
+        depth -= 1;
+        if (depth === 0) return source.slice(at, i + 1);
+      }
+    }
+    throw new Error("the rail's opening tag does not close");
+  };
+
+  /** A whole class, not a prefix: `border-ps-edge-hairline` contains `border-ps-edge`. */
+  const wears = (tag: string, cls: string) =>
+    new RegExp(`(?:^|[\\s\`"'{])${cls}(?![\\w-])`).test(tag);
+
+  it("paints itself on the panel rung, at both breakpoints", () => {
+    expect(wears(railTag(), "bg-ps-surface-panel")).toBe(true);
     // Not one surface on a phone and another on a desktop: it measured
     // 1.02:1 against the page at one breakpoint and 1.10:1 at the other.
-    expect(source).not.toMatch(/lg:bg-/);
+    expect(sidebar()).not.toMatch(/lg:bg-/);
   });
 
   it("draws exactly one divider, and it is the shell seam", () => {
-    expect(sidebar()).toContain("border-r border-ps-edge");
+    const tag = railTag();
+    expect(wears(tag, "border-r")).toBe(true);
+    // `edge`, not `hairline`. A shell seam is a boundary between two regions,
+    // which is what WCAG 1.4.11's 3:1 is about; the hairline is a card outline
+    // at 1.63:1 and reads as nothing across a whole screen height.
+    expect(wears(tag, "border-ps-edge")).toBe(true);
+    expect(tag).not.toContain("border-ps-edge-hairline");
     // The wrapper drew a second one at layout.tsx:107, so the seam was two
     // stacked 1px rules at 1.25:1 apiece pretending to be one.
     expect(layout()).not.toMatch(/border-r/);
@@ -212,5 +252,28 @@ describe("the linter can read a block comment", () => {
       (k) => k.split("::")[0],
     );
     expect(after).toContain("no-raw-colour-in-css");
+  });
+});
+
+/**
+ * The strings that decide what every control in the product looks like, none of
+ * which a tag-scoped pass or a class-per-element assertion can see. The live
+ * gate measures them on the screen; this is what a mutation sweep can reach,
+ * and the sweep is what proves an assertion can fail.
+ */
+describe("the shared control bases wear the control rung", () => {
+  it.each([
+    ["the text input base", "src/lib/theme.ts", "baseInputStyles"],
+    ["the field primitive's base", "src/components/ui/field/Input.tsx", "BASE"],
+    ["the secondary button", "src/components/ui/Button.tsx", "bg-ps-surface-raised"],
+  ])("%s carries edge, not hairline", (_what, path, near) => {
+    const source = read(path);
+    const at = source.indexOf(near);
+    expect(at).toBeGreaterThan(-1);
+    // The declaration and the two lines that follow it: these are one string
+    // each, wrapped, and the class always sits within them.
+    const window = source.slice(at, at + 600);
+    expect(window).toContain("border-ps-edge");
+    expect(window).not.toContain("border border-ps-edge-hairline");
   });
 });
