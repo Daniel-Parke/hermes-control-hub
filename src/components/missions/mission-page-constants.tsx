@@ -15,7 +15,7 @@ export interface StatusConfig {
 export const STATUS_CONFIG: Record<string, StatusConfig> = {
   draft: {
     dot: "idle",
-    bg: "bg-white/5",
+    bg: "bg-ps-surface-raised",
     text: "text-ps-text-muted",
     icon: <Clock className="w-3.5 h-3.5 text-ps-text-muted" />,
     columnDot: "bg-white/30",

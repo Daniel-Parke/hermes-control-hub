@@ -100,10 +100,10 @@ function SyncModal({
         aria-labelledby="model-sync-title"
         tabIndex={-1}
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-md mx-4 bg-dark-900 border border-white/10 rounded-xl shadow-2xl overflow-hidden"
+        className="w-full max-w-md mx-4 bg-ps-surface-panel border border-ps-edge-hairline rounded-xl shadow-2xl overflow-hidden"
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-white/5">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-ps-edge-hairline">
           <div className="flex items-center gap-2">
             {direction === "push" ? (
               <ArrowUpToLine className="w-4 h-4 text-neon-purple" />
@@ -116,7 +116,7 @@ function SyncModal({
             type="button"
             aria-label="Close sync panel"
             onClick={onCancel}
-            className="p-1 rounded text-ps-text-muted hover:text-white hover:bg-white/5 transition-colors"
+            className="p-1 rounded text-ps-text-muted hover:text-white hover:bg-ps-surface-raised transition-colors"
           >
             <X className="w-4 h-4" aria-hidden="true" />
           </button>
@@ -145,7 +145,7 @@ function SyncModal({
               {visibleChanges.map((diff) => (
                 <div
                   key={diff.id}
-                  className="flex items-start justify-between gap-2 px-3 py-2.5 bg-white/5 rounded-lg"
+                  className="flex items-start justify-between gap-2 px-3 py-2.5 bg-ps-surface-raised rounded-lg"
                 >
                   <div className="flex-1 min-w-0">
                     <div className="text-xs font-semibold text-ps-text-secondary">
@@ -172,11 +172,11 @@ function SyncModal({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-2 px-4 py-3 border-t border-white/5 bg-dark-950/50">
+        <div className="flex items-center justify-end gap-2 px-4 py-3 border-t border-ps-edge-hairline bg-ps-surface-ground/50">
           <button
             type="button"
             onClick={onCancel}
-            className="px-3 py-1.5 text-xs font-mono text-ps-text-muted hover:text-white hover:bg-white/5 rounded-lg transition-colors"
+            className="px-3 py-1.5 text-xs font-mono text-ps-text-muted hover:text-white hover:bg-ps-surface-raised rounded-lg transition-colors"
           >
             Cancel
           </button>

@@ -46,7 +46,7 @@ export function StatPill({
   const textColor = iconColorMap[color];
   // Derive border colour from the text colour pattern: replace "text-" with "border-"
   const borderClass = textColor.replace(/^text-/, "border-") + "/20";
-  const base = `rounded-lg border ${borderClass} bg-dark-900/50 px-4 py-3 flex items-center gap-3 min-w-0`;
+  const base = `rounded-lg border ${borderClass} bg-ps-surface-panel px-4 py-3 flex items-center gap-3 min-w-0`;
 
   const inner = (
     <>
@@ -80,7 +80,7 @@ export function StatPill({
   if (href) {
     const hoverBorder = textColor.replace(/^text-/, "hover:border-") + "/45";
     return (
-      <Link href={href} className={`${base} ${hoverBorder} hover:bg-dark-900/70 transition-colors`}>
+      <Link href={href} className={`${base} ${hoverBorder} hover:bg-ps-surface-panel transition-colors`}>
         {inner}
       </Link>
     );
@@ -94,11 +94,11 @@ export function StatPill({
  */
 export function StatPillSkeleton() {
   return (
-    <div className="rounded-lg border border-white/10 bg-dark-900/30 px-4 py-3 flex items-center gap-3 animate-pulse">
-      <div className="w-4 h-4 rounded bg-white/10 flex-shrink-0" />
+    <div className="rounded-lg border border-ps-edge-hairline bg-ps-surface-panel px-4 py-3 flex items-center gap-3 animate-pulse">
+      <div className="w-4 h-4 rounded bg-ps-surface-raised flex-shrink-0" />
       <div className="flex-1 space-y-2">
-        <div className="h-3 w-16 rounded bg-white/10" />
-        <div className="h-5 w-24 rounded bg-white/10" />
+        <div className="h-3 w-16 rounded bg-ps-surface-raised" />
+        <div className="h-5 w-24 rounded bg-ps-surface-raised" />
       </div>
     </div>
   );

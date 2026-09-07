@@ -45,7 +45,7 @@ export default function LogsHeaderActions({
         className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-mono transition-all duration-300 ${
           autoRefresh
             ? "bg-neon-cyan/20 text-neon-cyan border border-neon-cyan/50 shadow-[0_0_8px_rgb(var(--ps-rgb-neon-cyan)_/_0.3)]"
-            : "bg-dark-900/50 text-ps-text-muted border border-white/10 hover:text-ps-text-secondary"
+            : "bg-ps-surface-panel text-ps-text-muted border border-ps-edge hover:text-ps-text-secondary"
         } ${autoRefresh ? "animate-auto-refresh-tick" : ""}`}
         title={autoRefresh ? "Auto-refresh on (click to disable)" : "Auto-refresh off (click to enable)"}
       >
@@ -72,12 +72,12 @@ export default function LogsHeaderActions({
           const parsed = parseInt(e.target.value, 10);
           onLineCountChange(Number.isFinite(parsed) && parsed >= 1 ? Math.min(parsed, 1000) : 200);
         }}
-        className="bg-dark-900/50 border border-white/10 rounded-lg px-2 py-1.5 text-xs text-white font-mono appearance-none cursor-pointer outline-none focus:border-neon-cyan/50"
+        className="bg-ps-surface-panel border border-ps-edge rounded-lg px-2 py-1.5 text-xs text-white font-mono appearance-none cursor-pointer outline-none focus:border-neon-cyan/50"
       >
-        <option value={100} className="bg-dark-900">100 lines</option>
-        <option value={200} className="bg-dark-900">200 lines</option>
-        <option value={500} className="bg-dark-900">500 lines</option>
-        <option value={1000} className="bg-dark-900">1000 lines</option>
+        <option value={100} className="bg-ps-surface-panel">100 lines</option>
+        <option value={200} className="bg-ps-surface-panel">200 lines</option>
+        <option value={500} className="bg-ps-surface-panel">500 lines</option>
+        <option value={1000} className="bg-ps-surface-panel">1000 lines</option>
       </select>
       <Button
         variant="secondary"

@@ -48,11 +48,11 @@ export default function LogTerminal({
 }: LogTerminalProps) {
   return (
     // The shell was a hand-rolled copy of Panel down to the class list:
-    // rounded-xl, border-white/10, bg-dark-900/50, overflow-hidden. It is the
+    // rounded-xl, border-ps-edge-hairline, bg-ps-surface-panel, overflow-hidden. It is the
     // Panel now (T-0033). It takes no ref and no scroll handler: it is the box,
     // not the scroller.
     <Panel className="flex flex-col flex-1 min-h-0">
-      <div className="flex items-center gap-2 px-4 py-2 border-b border-white/10 bg-dark-800/50 shrink-0">
+      <div className="flex items-center gap-2 px-4 py-2 border-b border-ps-edge-hairline bg-ps-surface-raised shrink-0">
         <div className="flex gap-1.5">
           <div className="w-3 h-3 rounded-full bg-red-500/80" />
           <div className="w-3 h-3 rounded-full bg-yellow-500/80" />
@@ -66,7 +66,7 @@ export default function LogTerminal({
         </span>
       </div>
 
-      <div className="px-3 py-2 border-b border-white/5 bg-dark-950/30 shrink-0 hidden sm:grid sm:grid-cols-[minmax(0,9.5rem)_minmax(0,4.5rem)_1fr] gap-x-3 text-xs font-mono uppercase tracking-wide text-ps-text-muted">
+      <div className="px-3 py-2 border-b border-ps-edge-hairline bg-ps-surface-ground/30 shrink-0 hidden sm:grid sm:grid-cols-[minmax(0,9.5rem)_minmax(0,4.5rem)_1fr] gap-x-3 text-xs font-mono uppercase tracking-wide text-ps-text-muted">
         <span>Time</span>
         <span>Level</span>
         <span>Message</span>

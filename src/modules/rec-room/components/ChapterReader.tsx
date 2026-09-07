@@ -54,7 +54,7 @@ export default function ChapterReader({
             {/* Edit button on completed chapters */}
             {currentMeta?.status === "complete" && (
               <button onClick={() => onEditChapter(currentChapter)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-white/10 text-xs font-mono text-ps-text-muted hover:text-neon-purple hover:border-neon-purple/30 transition-colors flex-shrink-0"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-ps-edge text-xs font-mono text-ps-text-muted hover:text-neon-purple hover:border-neon-purple/30 transition-colors flex-shrink-0"
                 title="Edit this chapter">
                 <PenLine className="w-3 h-3" />
                 Edit

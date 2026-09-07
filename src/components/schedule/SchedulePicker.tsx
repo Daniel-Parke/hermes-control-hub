@@ -266,7 +266,7 @@ export default function SchedulePicker({
           <ChevronDown className={`w-4 h-4 text-ps-text-muted transition-transform ${dropdownOpen ? "rotate-180" : ""}`} />
         </button>
         {dropdownOpen && (
-          <div className="absolute z-50 mt-1 w-full bg-dark-900 border border-white/10 rounded-xl shadow-2xl overflow-hidden">
+          <div className="absolute z-50 mt-1 w-full bg-ps-surface-panel border border-ps-edge-hairline rounded-xl shadow-2xl overflow-hidden">
             <div className="max-h-72 overflow-y-auto py-1">
               {groups.map(({ group, items }) => (
                 <div key={group}>
@@ -281,7 +281,7 @@ export default function SchedulePicker({
                       className={`w-full text-left px-3 py-2 text-sm transition-colors ${
                         matchedPreset?.id === p.id
                           ? "bg-neon-orange/15 text-neon-orange"
-                          : "text-ps-text-secondary hover:bg-white/5 hover:text-white"
+                          : "text-ps-text-secondary hover:bg-ps-surface-raised hover:text-white"
                       }`}
                     >
                       {p.label}
@@ -325,11 +325,11 @@ export default function SchedulePicker({
         </button>
 
         {dropdownOpen && (
-          <div className="absolute z-50 mt-1 w-full bg-dark-900 border border-white/10 rounded-xl shadow-2xl overflow-hidden">
+          <div className="absolute z-50 mt-1 w-full bg-ps-surface-panel border border-ps-edge-hairline rounded-xl shadow-2xl overflow-hidden">
             <div className="max-h-72 overflow-y-auto py-1">
               {groups.map(({ group, items }) => (
                 <div key={group}>
-                  <div className="px-3 py-1.5 text-xs uppercase tracking-wider text-ps-text-muted font-mono sticky top-0 bg-dark-900">
+                  <div className="px-3 py-1.5 text-xs uppercase tracking-wider text-ps-text-muted font-mono sticky top-0 bg-ps-surface-panel">
                     {group}
                   </div>
                   {items.map((p) => (
@@ -340,7 +340,7 @@ export default function SchedulePicker({
                       className={`w-full text-left px-3 py-2 text-sm transition-colors ${
                         matchedPreset?.id === p.id
                           ? "bg-neon-orange/15 text-neon-orange"
-                          : "text-ps-text-secondary hover:bg-white/5 hover:text-white"
+                          : "text-ps-text-secondary hover:bg-ps-surface-raised hover:text-white"
                       }`}
                     >
                       {p.label}
@@ -349,11 +349,11 @@ export default function SchedulePicker({
                 </div>
               ))}
               {/* Custom option at the bottom */}
-              <div className="border-t border-white/5 mt-1 pt-1">
+              <div className="border-t border-ps-edge-hairline mt-1 pt-1">
                 <button
                   type="button"
                   onClick={() => { setShowCustom((v) => !v); setDropdownOpen(false); }}
-                  className="w-full text-left px-3 py-2 text-sm text-neon-cyan hover:bg-white/5 transition-colors flex items-center gap-2"
+                  className="w-full text-left px-3 py-2 text-sm text-neon-cyan hover:bg-ps-surface-raised transition-colors flex items-center gap-2"
                 >
                   <Calendar className="w-3.5 h-3.5" />
                   Custom…
@@ -380,7 +380,7 @@ export default function SchedulePicker({
 
       {/* Read-only canonical cron display + next-run preview */}
       {canonicalCron && (
-        <div className="rounded-lg bg-dark-800/50 border border-white/5 px-3 py-1.5 space-y-1">
+        <div className="rounded-lg bg-ps-surface-raised border border-ps-edge-hairline px-3 py-1.5 space-y-1">
           <div className="flex items-center gap-2">
             <span className="text-xs text-ps-text-muted font-mono shrink-0">Cron:</span>
             <code className="text-xs font-mono text-neon-orange truncate">{canonicalCron}</code>

@@ -37,7 +37,7 @@ export default function ToolsetReferenceTable({
     <div className="overflow-x-auto">
       <table className="w-full text-xs font-mono border-collapse">
         <thead>
-          <tr className="border-b border-white/10 text-left">
+          <tr className="border-b border-ps-edge-hairline text-left">
             <th
               scope="col"
               className="py-1.5 pr-4 font-mono font-normal uppercase tracking-widest text-ps-text-faint"
@@ -52,7 +52,7 @@ export default function ToolsetReferenceTable({
             </th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-white/5">
+        <tbody className="divide-y divide-ps-edge-hairline">
           {entries.map((entry) => (
             <tr key={entry.id}>
               <th

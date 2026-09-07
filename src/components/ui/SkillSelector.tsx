@@ -54,7 +54,7 @@ export default function SkillSelector({
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg bg-white/5 border border-white/10 text-sm hover:border-white/30 transition-colors text-left"
+        className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg bg-ps-surface-raised border border-ps-edge text-sm hover:border-ps-edge-emphasis transition-colors text-left"
       >
         <Cpu className="w-4 h-4 text-neon-purple flex-shrink-0" />
         {value.length === 0 ? (
@@ -99,8 +99,8 @@ export default function SkillSelector({
       )}
 
       {open && (
-        <div className="absolute top-full left-0 right-0 mt-1 z-50 bg-dark-900 border border-white/10 rounded-lg shadow-xl overflow-hidden">
-          <div className="p-2 border-b border-white/5">
+        <div className="absolute top-full left-0 right-0 mt-1 z-50 bg-ps-surface-panel border border-ps-edge-hairline rounded-lg shadow-xl overflow-hidden">
+          <div className="p-2 border-b border-ps-edge-hairline">
             <div className="relative">
               <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/20" />
               <input
@@ -108,7 +108,7 @@ export default function SkillSelector({
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search skills..." aria-label="Skill search"
                 autoFocus
-                className="w-full bg-dark-800/50 border border-white/10 rounded-lg pl-8 pr-3 py-1.5 text-xs text-white placeholder-white/20 outline-none focus:border-neon-purple/50 font-mono"
+                className="w-full bg-ps-surface-inset border border-ps-edge rounded-lg pl-8 pr-3 py-1.5 text-xs text-white placeholder-white/20 outline-none focus:border-neon-purple/50 font-mono"
               />
             </div>
           </div>
@@ -131,7 +131,7 @@ export default function SkillSelector({
                     setSearch("");
                   }}
                   disabled={value.length >= max}
-                  className={`w-full text-left px-3 py-2.5 text-xs hover:bg-white/5 border-b border-white/5 last:border-0 transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${
+                  className={`w-full text-left px-3 py-2.5 text-xs hover:bg-ps-surface-raised border-b border-ps-edge last:border-0 transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${
                     value.length >= max ? "cursor-not-allowed" : ""
                   }`}
                 >

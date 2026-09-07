@@ -203,7 +203,10 @@ describe("the three pages sit on AppPageShell like the other 23", () => {
     const { container } = mount();
     const root = container.firstElementChild as HTMLElement;
     expect(root.className).toContain("min-h-screen");
-    expect(root.className).toContain("bg-dark-950");
+    // The same colour under the name the contrast gate reads. bg-dark-950 is
+    // an appearance spelling for the page's ground; T-0118 moved 300 of them
+    // onto the three roles the ladder declares.
+    expect(root.className).toContain("bg-ps-surface-ground");
     expect(root.className).toContain("grid-bg");
   });
 });

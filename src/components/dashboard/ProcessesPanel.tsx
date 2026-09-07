@@ -39,7 +39,7 @@ export default function ProcessesPanel({ processes, onRefresh }: ProcessesPanelP
         />
       </div>
       {processes.length === 0 ? (
-        <div className="rounded-xl border border-neon-purple/20 bg-dark-900/50 p-6 text-center">
+        <div className="rounded-xl border border-neon-purple/20 bg-ps-surface-panel p-6 text-center">
           <Radio className="w-8 h-8 text-white/20 mx-auto mb-2" />
           <div className="text-xs text-ps-text-muted">No Active Processes Detected</div>
         </div>
@@ -51,7 +51,7 @@ export default function ProcessesPanel({ processes, onRefresh }: ProcessesPanelP
               // Card-shaped container, so the full 200px field rather than the
               // tight one the flat ledger rows take.
               data-bloom=""
-              className="rounded-xl border border-neon-purple/20 bg-dark-900/50 p-4"
+              className="rounded-xl border border-neon-purple/20 bg-ps-surface-panel p-4"
             >
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
@@ -59,7 +59,7 @@ export default function ProcessesPanel({ processes, onRefresh }: ProcessesPanelP
                   <span className="text-sm text-ps-text-primary font-medium truncate">{proc.name}</span>
                 </div>
                 <span className={`text-xs font-mono px-2 py-0.5 rounded-full ${
-                  proc.status === "running" ? "bg-neon-green/10 text-neon-green" : "bg-white/5 text-ps-text-muted"
+                  proc.status === "running" ? "bg-neon-green/10 text-neon-green" : "bg-ps-surface-raised text-ps-text-muted"
                 }`}>
                   {titleCase(proc.status)}
                 </span>

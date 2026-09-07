@@ -71,12 +71,12 @@ export default function HelpSearch({ entries }: { entries: HelpSearchEntry[] }) 
       </p>
 
       {results.length > 0 && (
-        <ul className="divide-y divide-white/10 rounded-lg border border-white/10 bg-dark-900/50">
+        <ul className="divide-y divide-ps-edge-hairline rounded-lg border border-ps-edge-hairline bg-ps-surface-panel">
           {results.map((entry) => (
             <li key={`${entry.slug}#${entry.anchor ?? ""}`}>
               <Link
                 href={href(entry)}
-                className="block px-3 py-2 transition-colors hover:bg-dark-800"
+                className="block px-3 py-2 transition-colors hover:bg-ps-surface-raised"
               >
                 <span className="block text-sm text-ps-text-primary">
                   {entry.heading ?? entry.title}

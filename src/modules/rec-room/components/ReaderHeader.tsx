@@ -67,10 +67,10 @@ export default function ReaderHeader({
   spend,
 }: ReaderHeaderProps) {
   return (
-    <div className="sticky top-0 lg:top-0 z-30 border-b border-white/10 bg-dark-950/95 backdrop-blur-xl flex-shrink-0">
+    <div className="sticky top-0 lg:top-0 z-30 border-b border-ps-edge-hairline bg-ps-surface-ground/95 backdrop-blur-xl flex-shrink-0">
       <div className="flex items-center justify-between px-3 md:px-6 min-h-[var(--ps-shell-header-min-height)]">
         <button onClick={onBack} aria-label="Back to the library"
-          className="p-2.5 rounded-lg text-ps-text-muted hover:text-ps-text-secondary hover:bg-white/5 transition-colors flex-shrink-0 min-w-[44px] min-h-[44px] flex items-center justify-center">
+          className="p-2.5 rounded-lg text-ps-text-muted hover:text-ps-text-secondary hover:bg-ps-surface-raised transition-colors flex-shrink-0 min-w-[44px] min-h-[44px] flex items-center justify-center">
           <ChevronLeft className="w-5 h-5" />
         </button>
         <div className="flex-1 min-w-0 mx-2 text-center">
@@ -148,7 +148,7 @@ export default function ReaderHeader({
             <span className="hidden md:inline">Bible</span>
           </button>
           <button onClick={onToggleSidebar}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-white/10 text-xs font-bold text-ps-text-secondary hover:text-white hover:bg-white/5 transition-colors min-w-[44px] min-h-[44px] justify-center"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-ps-edge text-xs font-bold text-ps-text-secondary hover:text-white hover:bg-ps-surface-raised transition-colors min-w-[44px] min-h-[44px] justify-center"
             title={sidebarOpen ? "Hide Chapters" : "Show Chapters"}>
             <BookOpen className="w-4 h-4" />
             <span className="hidden md:inline">Chapters</span>

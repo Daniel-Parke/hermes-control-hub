@@ -76,7 +76,7 @@ export default function StoryWeaverDashboard() {
             { label: "Chapters", value: totalChapters },
             { label: "Words", value: totalWords.toLocaleString() },
           ].map((stat) => (
-            <div key={stat.label} className="rounded-xl border border-white/5 bg-dark-900/30 p-4 text-center">
+            <div key={stat.label} className="rounded-xl border border-ps-edge-hairline bg-ps-surface-panel p-4 text-center">
               <div className="text-2xl font-bold text-ps-text-primary">{stat.value}</div>
               <div className="text-xs font-mono text-ps-text-faint uppercase tracking-wider mt-1">{stat.label}</div>
             </div>
@@ -90,15 +90,15 @@ export default function StoryWeaverDashboard() {
             <Plus className="w-4 h-4" /> Create
           </button>
           <button type="button" onClick={() => router.push("/recroom/story-weaver/library")}
-            className="flex items-center justify-center gap-2 px-6 py-4 rounded-xl border border-white/10 text-sm font-mono text-ps-text-muted hover:text-ps-text-secondary hover:bg-white/5 transition-all">
+            className="flex items-center justify-center gap-2 px-6 py-4 rounded-xl border border-ps-edge text-sm font-mono text-ps-text-muted hover:text-ps-text-secondary hover:bg-ps-surface-raised transition-all">
             <Library className="w-4 h-4" /> Library
           </button>
           <button type="button" onClick={() => router.push("/recroom/story-weaver/characters")}
-            className="flex items-center justify-center gap-2 px-6 py-4 rounded-xl border border-white/10 text-sm font-mono text-ps-text-muted hover:text-ps-text-secondary hover:bg-white/5 transition-all">
+            className="flex items-center justify-center gap-2 px-6 py-4 rounded-xl border border-ps-edge text-sm font-mono text-ps-text-muted hover:text-ps-text-secondary hover:bg-ps-surface-raised transition-all">
             <Users className="w-4 h-4" /> Characters
           </button>
           <button type="button" onClick={() => router.push("/recroom/story-weaver/themes")}
-            className="flex items-center justify-center gap-2 px-6 py-4 rounded-xl border border-white/10 text-sm font-mono text-ps-text-muted hover:text-ps-text-secondary hover:bg-white/5 transition-all">
+            className="flex items-center justify-center gap-2 px-6 py-4 rounded-xl border border-ps-edge text-sm font-mono text-ps-text-muted hover:text-ps-text-secondary hover:bg-ps-surface-raised transition-all">
             <FileText className="w-4 h-4" /> Themes
           </button>
         </div>

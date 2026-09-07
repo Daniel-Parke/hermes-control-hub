@@ -44,12 +44,12 @@ export default function CollapsibleSection({
   const [expanded, setExpanded] = useState(defaultExpanded);
 
   return (
-    <div className="rounded-xl border border-white/10 bg-dark-900/40 overflow-hidden">
+    <div className="rounded-xl border border-ps-edge-hairline bg-ps-surface-panel overflow-hidden">
       {/* Header — always visible */}
       <button
         type="button"
         onClick={() => setExpanded((v) => !v)}
-        className="w-full flex items-center justify-between px-5 py-3 text-left hover:bg-white/5 transition-colors"
+        className="w-full flex items-center justify-between px-5 py-3 text-left hover:bg-ps-surface-raised transition-colors"
         // A disclosure button that does not announce its state is a working
         // control that reads as an inert one, to a screen reader and to any
         // automated pass alike. The chevron below says "open" in pixels only.
@@ -81,7 +81,7 @@ export default function CollapsibleSection({
 
       {/* Body — conditionally rendered */}
       {expanded && (
-        <div className="px-5 pb-5 pt-1 border-t border-white/5 space-y-4">
+        <div className="px-5 pb-5 pt-1 border-t border-ps-edge-hairline space-y-4">
           {description && (
             <p className="text-xs text-ps-text-muted mt-0.5">{description}</p>
           )}

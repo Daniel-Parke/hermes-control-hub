@@ -128,7 +128,7 @@ export function ToastView({
           setVisible(false);
           setTimeout(onClose, 200);
         }}
-        className="ml-2 p-0.5 rounded hover:bg-white/10 transition-colors"
+        className="ml-2 p-0.5 rounded hover:bg-ps-surface-raised transition-colors"
       >
         <X className="w-3 h-3" aria-hidden="true" />
       </button>

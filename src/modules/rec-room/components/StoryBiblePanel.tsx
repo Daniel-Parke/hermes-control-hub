@@ -51,24 +51,24 @@ export default function StoryBiblePanel({
   const arc = safeArc(storyArc);
 
   return (
-    <div className="fixed inset-0 z-[55] flex justify-end bg-dark-950/70 backdrop-blur-sm" onClick={onClose} role="presentation">
+    <div className="fixed inset-0 z-[55] flex justify-end bg-ps-surface-ground/70 backdrop-blur-sm" onClick={onClose} role="presentation">
       <div
         ref={panelRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby="story-bible-title"
         tabIndex={-1}
-        className="h-full w-full max-w-md overflow-y-auto border-l border-neon-purple/20 bg-dark-900 p-5 space-y-5"
+        className="h-full w-full max-w-md overflow-y-auto border-l border-neon-purple/20 bg-ps-surface-panel p-5 space-y-5"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between border-b border-white/10 pb-3">
+        <div className="flex items-center justify-between border-b border-ps-edge-hairline pb-3">
           <div className="flex items-center gap-2">
             <BookMarked className="h-4 w-4 text-neon-purple" />
             <h3 id="story-bible-title" className="text-sm font-semibold text-white">Story bible</h3>
           </div>
           <button
             onClick={onClose}
-            className="rounded-lg p-1.5 text-ps-text-muted hover:bg-white/5 hover:text-ps-text-secondary"
+            className="rounded-lg p-1.5 text-ps-text-muted hover:bg-ps-surface-raised hover:text-ps-text-secondary"
             aria-label="Close story bible"
           >
             <X className="h-4 w-4" />
@@ -136,7 +136,7 @@ export default function StoryBiblePanel({
               <Section icon={ListOrdered} title="Chapter Outline">
                 <div className="space-y-2">
                   {arc.chapterOutlines.map((o, i) => (
-                    <div key={i} className="rounded-lg border border-white/5 bg-white/[0.02] px-3 py-2">
+                    <div key={i} className="rounded-lg border border-ps-edge-hairline bg-ps-surface-raised px-3 py-2">
                       <div className="font-medium text-ps-text-secondary">
                         {o.number}. {o.title}
                       </div>

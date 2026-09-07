@@ -365,7 +365,7 @@ export default function ToolsPage() {
             </p>
           </div>
         )}
-        <div className="mb-4 p-3 rounded-lg bg-dark-900/50 border border-white/5 flex items-start gap-2">
+        <div className="mb-4 p-3 rounded-lg bg-ps-surface-panel border border-ps-edge-hairline flex items-start gap-2">
           <Info className="w-4 h-4 text-ps-text-muted flex-shrink-0 mt-0.5" />
           <p className="text-xs text-ps-text-muted">
             Hermes stores <code className="text-ps-text-muted">platform_toolsets</code> per gateway key;
@@ -483,7 +483,7 @@ export default function ToolsPage() {
                       </p>
                     )}
                   </div>
-                  <div className="mt-4 border-t border-white/10 pt-3">
+                  <div className="mt-4 border-t border-ps-edge-hairline pt-3">
                     <Button
                       variant="ghost"
                       size="sm"
@@ -505,7 +505,7 @@ export default function ToolsPage() {
                           setToolsetsJson(event.target.value);
                           setJsonDirty(true);
                         }}
-                        className="mt-2 w-full min-h-32 rounded-lg bg-dark-950/80 border border-white/10 p-3 text-xs font-mono text-ps-text-primary outline-none focus:border-neon-orange/50"
+                        className="mt-2 w-full min-h-32 rounded-lg bg-ps-surface-ground/80 border border-ps-edge p-3 text-xs font-mono text-ps-text-primary outline-none focus:border-neon-orange/50"
                         spellCheck={false}
                       />
                     )}

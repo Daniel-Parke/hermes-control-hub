@@ -23,7 +23,7 @@ export default function AgentPerformanceStrip() {
   if (agents.length === 0) return null;
 
   return (
-    <div className="animate-float-in mb-5 rounded-2xl border border-white/10 bg-dark-900/40 p-4">
+    <div className="animate-float-in mb-5 rounded-2xl border border-ps-edge-hairline bg-ps-surface-panel p-4">
       <div className="mb-3 flex items-center gap-2 font-mono text-xs uppercase tracking-wider text-ps-text-muted">
         <Activity className="h-3.5 w-3.5 text-neon-cyan" /> Agent performance · from real activity
       </div>
@@ -68,7 +68,7 @@ export default function AgentPerformanceStrip() {
 
 function Metric({ label, value, color }: { label: string; value: string; color: NeonColor }) {
   return (
-    <div className="rounded-lg bg-white/[0.02] px-1 py-1.5">
+    <div className="rounded-lg bg-ps-surface-raised px-1 py-1.5">
       <div className="font-mono text-sm font-bold leading-none" style={{ color: neon(color) }}>
         {value}
       </div>

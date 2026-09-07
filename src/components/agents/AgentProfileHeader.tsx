@@ -28,7 +28,7 @@ export default function AgentProfileHeader({
 }) {
   return (
     <>
-      <div className="p-4 border-b border-white/10 flex flex-wrap items-center justify-between gap-3">
+      <div className="p-4 border-b border-ps-edge-hairline flex flex-wrap items-center justify-between gap-3">
         <div>
           <div className="flex items-center gap-2">
             <h2 className="font-semibold text-white">{profile.name}</h2>
@@ -64,11 +64,11 @@ export default function AgentProfileHeader({
       </div>
 
       {/* Growth: level + the accumulated signals behind it. */}
-      <div className="p-4 border-b border-white/10">
+      <div className="p-4 border-b border-ps-edge-hairline">
         <AgentGrowthPanel key={profile.id} profileId={profile.id} />
       </div>
 
-      <div className="p-4 border-b border-white/10">
+      <div className="p-4 border-b border-ps-edge-hairline">
         <p className="text-sm text-ps-text-muted">
           This agent&apos;s voice, habits and equipment are files it reads on every run. Open
           one below to change it.

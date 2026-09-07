@@ -29,7 +29,7 @@ export function SkillCard({
 }: SkillCardProps) {
   return (
     <Card
-      className={`relative overflow-hidden transition-all border-white/10 ${
+      className={`relative overflow-hidden transition-all border-ps-edge-hairline ${
         isPending ? "ring-1 ring-neon-green/30" : ""
       }`}
       glow={enabled ? "green" : undefined}
@@ -106,7 +106,7 @@ export function SkillCard({
             type="button"
             data-testid="skill-edit"
             onClick={onEdit}
-            className="flex items-center gap-1 text-xs px-2 py-1 rounded border border-white/10 text-ps-text-muted hover:border-neon-green/30 hover:text-neon-green transition-all"
+            className="flex items-center gap-1 text-xs px-2 py-1 rounded border border-ps-edge text-ps-text-muted hover:border-neon-green/30 hover:text-neon-green transition-all"
           >
             <Edit3 className="w-3 h-3" /> Edit
           </button>
@@ -116,8 +116,8 @@ export function SkillCard({
             onClick={onView}
             className={`flex items-center gap-1 text-xs px-2 py-1 rounded border transition-all ${
               isExpanded
-                ? "border-white/20 text-ps-text-muted bg-white/5"
-                : "border-white/10 text-ps-text-muted hover:border-white/20 hover:text-ps-text-secondary"
+                ? "border-ps-edge-emphasis text-ps-text-muted bg-ps-surface-raised"
+                : "border-ps-edge text-ps-text-muted hover:border-ps-edge-emphasis hover:text-ps-text-secondary"
             }`}
           >
             {isExpanded ? (
@@ -134,7 +134,7 @@ export function SkillCard({
 
         {/* Expanded content */}
         {isExpanded && (
-          <div className="mt-3 pt-3 border-t border-white/5">
+          <div className="mt-3 pt-3 border-t border-ps-edge-hairline">
             <pre className="text-xs text-ps-text-muted font-mono whitespace-pre-wrap max-h-48 overflow-auto leading-relaxed">
               {expandedContent ?? "// Loading..."}
             </pre>

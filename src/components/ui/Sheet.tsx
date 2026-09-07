@@ -48,8 +48,8 @@ export default function Sheet({
 
   const panelClass =
     effectiveSide === "bottom"
-      ? "fixed inset-x-0 bottom-0 z-[61] max-h-[92vh] rounded-t-xl border-t border-white/10"
-      : "fixed top-0 right-0 bottom-0 z-[61] w-full border-l border-white/10 sm:max-w-2xl lg:max-w-3xl xl:max-w-4xl max-w-[min(90vw,56rem)]";
+      ? "fixed inset-x-0 bottom-0 z-[61] max-h-[92vh] rounded-t-xl border-t border-ps-edge-hairline"
+      : "fixed top-0 right-0 bottom-0 z-[61] w-full border-l border-ps-edge-hairline sm:max-w-2xl lg:max-w-3xl xl:max-w-4xl max-w-[min(90vw,56rem)]";
 
   return createPortal(
     <>
@@ -62,14 +62,14 @@ export default function Sheet({
       <div
         ref={panelRef}
         // design-lint-disable-next-line no-bare-outline-none -- the sheet panel takes programmatic focus on open so its title is announced; a ring around the whole panel is noise
-        className={`${panelClass} flex flex-col bg-dark-950 shadow-2xl outline-none`}
+        className={`${panelClass} flex flex-col bg-ps-surface-ground shadow-2xl outline-none`}
         role="dialog"
         aria-modal="true"
         aria-label={title ?? "Panel"}
         tabIndex={-1}
       >
         {title && (
-          <div className="flex items-start justify-between gap-3 px-6 py-4 border-b border-white/10 shrink-0">
+          <div className="flex items-start justify-between gap-3 px-6 py-4 border-b border-ps-edge-hairline shrink-0">
             <div className="min-w-0">
               <h2 className="text-sm font-mono text-neon-cyan uppercase tracking-widest">
                 {title}
@@ -92,7 +92,7 @@ export default function Sheet({
         )}
         <div className="flex-1 overflow-y-auto min-h-0">{children}</div>
         {footer && (
-          <div className="shrink-0 border-t border-white/10 px-6 py-4 bg-dark-950">
+          <div className="shrink-0 border-t border-ps-edge-hairline px-6 py-4 bg-ps-surface-ground">
             {footer}
           </div>
         )}

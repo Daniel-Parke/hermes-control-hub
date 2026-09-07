@@ -20,7 +20,7 @@ interface HelpPrevNextProps {
 }
 
 const linkClasses =
-  "flex items-center gap-2 rounded-lg border border-white/10 bg-dark-900/50 px-3 py-2 text-sm text-ps-text-secondary transition-colors hover:border-neon-cyan/40 hover:text-white";
+  "flex items-center gap-2 rounded-lg border border-ps-edge bg-ps-surface-panel px-3 py-2 text-sm text-ps-text-secondary transition-colors hover:border-neon-cyan/40 hover:text-white";
 
 export default function HelpPrevNext({ prev, next }: HelpPrevNextProps) {
   if (!prev && !next) return null;

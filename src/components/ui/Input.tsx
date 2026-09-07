@@ -60,7 +60,7 @@ export function SearchInput({
         aria-label={ariaLabel ?? placeholder ?? "Search"}
         placeholder={placeholder}
         // design-lint-disable-next-line no-bare-outline-none -- the accent focus border comes from focusBorder on this same line; every entry is a focus:border-* class
-        className={`w-full bg-dark-900/50 border border-white/10 rounded-lg pl-10 pr-4 py-2.5 text-sm text-white placeholder-white/30 outline-none transition-colors font-mono ${focusBorder[accentColor] || focusBorder.cyan}`}
+        className={`w-full bg-ps-surface-panel border border-ps-edge rounded-lg pl-10 pr-4 py-2.5 text-sm text-white placeholder-white/30 outline-none transition-colors font-mono ${focusBorder[accentColor] || focusBorder.cyan}`}
       />
     </div>
   );
@@ -305,7 +305,7 @@ export function InlineToggle({
       onClick={() => onChange(!value)}
       disabled={disabled}
       className={`relative w-9 h-5 rounded-full transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
-        value ? colors.track : "bg-white/10 border border-white/20"
+        value ? colors.track : "bg-ps-surface-raised border border-ps-edge-emphasis"
       }`}
     >
       <span

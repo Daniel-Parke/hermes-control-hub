@@ -51,7 +51,7 @@ export default function ProgressLine({ stats, statsError, onRetryStats, topAgent
         />
       );
     }
-    return <div className="animate-shimmer h-16 rounded-xl border border-white/10 bg-dark-900/40" aria-hidden />;
+    return <div className="animate-shimmer h-16 rounded-xl border border-ps-edge-hairline bg-ps-surface-panel" aria-hidden />;
   }
 
   const unlocked = stats.achievements.filter((a) => a.unlocked).length;
@@ -60,10 +60,10 @@ export default function ProgressLine({ stats, statsError, onRetryStats, topAgent
   return (
     <section
       aria-label="Progress"
-      className="rounded-xl border border-white/10 bg-dark-900/40 px-4 py-3 flex flex-wrap items-center gap-x-6 gap-y-3"
+      className="rounded-xl border border-ps-edge-hairline bg-ps-surface-panel px-4 py-3 flex flex-wrap items-center gap-x-6 gap-y-3"
     >
       <StreakFlame current={stats.streak.current} longest={stats.streak.longest} />
-      <div className="hidden h-8 w-px bg-white/10 sm:block" />
+      <div className="hidden h-8 w-px bg-ps-surface-raised sm:block" />
       <Link href="/agent/profiles" className="transition hover:opacity-90" title="Agent level. Open Agents">
         <AgentLevelBadge
           experience={topAgent ? topAgent.experience.level : null}

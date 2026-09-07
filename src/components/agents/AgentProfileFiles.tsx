@@ -34,7 +34,7 @@ export default function AgentProfileFiles({
             className={`flex items-center justify-between py-2 px-3 rounded-lg border transition-colors ${
               openFileKey === file.key
                 ? "border-purple-500/40 bg-purple-500/5"
-                : "border-transparent hover:bg-white/5"
+                : "border-transparent hover:bg-ps-surface-raised"
             }`}
           >
             <div className="flex items-center gap-2 min-w-0">

@@ -9,7 +9,7 @@ import { Loader2 } from "lucide-react";
 
 export function ReaderLoading() {
   return (
-    <div className="min-h-screen bg-dark-950 flex items-center justify-center">
+    <div className="min-h-screen bg-ps-surface-ground flex items-center justify-center">
       <Loader2 className="w-8 h-8 text-neon-purple animate-spin" />
     </div>
   );
@@ -17,7 +17,7 @@ export function ReaderLoading() {
 
 export function ReaderNotFound({ onBack }: { onBack: () => void }) {
   return (
-    <div className="min-h-screen bg-dark-950 flex items-center justify-center">
+    <div className="min-h-screen bg-ps-surface-ground flex items-center justify-center">
       <div className="text-center">
         <p className="text-sm text-ps-text-muted mb-4">Story not found</p>
         <button onClick={onBack} className="text-xs text-neon-purple">← Back to Dashboard</button>

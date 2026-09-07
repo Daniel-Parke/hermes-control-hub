@@ -77,6 +77,15 @@ export function declaredColourTokens(css: string): Set<string>;
 /** The house colour tokens a line names that `declared` does not contain. */
 export function undeclaredColourClasses(line: string, declared: Set<string>): string[];
 
+/**
+ * Which lines sit inside a block comment, so a code-only rule can skip them.
+ *
+ * The per-line skip recognises a comment by its leading marker, which is the
+ * house style in .ts and .tsx and is not CSS: a block comment's interior lines
+ * carry none (T-0118).
+ */
+export function blockCommentLines(lines: readonly string[]): boolean[];
+
 /** Every violation in one file's lines, keyed `rule::path` (the unit scanTree walks). */
 export function violationsIn(path: string, lines: readonly string[]): Map<string, ViolationHit[]>;
 

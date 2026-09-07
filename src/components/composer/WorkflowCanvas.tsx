@@ -55,7 +55,7 @@ const KIND_OPTIONS = [
 ].map((k) => ({ value: k, label: k }));
 
 const PALETTE = [
-  { kind: "custom", label: "Task", color: "border-white/20 text-ps-text-secondary" },
+  { kind: "custom", label: "Task", color: "border-ps-edge-emphasis text-ps-text-secondary" },
   { kind: "research", label: "Research", color: "border-neon-cyan/40 text-neon-cyan" },
   { kind: "validate", label: "Validate", color: "border-neon-yellow/40 text-neon-yellow" },
   { kind: "test", label: "Test", color: "border-neon-green/40 text-neon-green" },
@@ -85,8 +85,8 @@ function WorkflowNode({ data, selected }: NodeProps<WfNode>) {
   const isGroup = data.kind === "group";
   return (
     <div
-      className={`min-w-[150px] rounded-lg border bg-dark-900/90 px-3 py-2 text-left shadow-lg backdrop-blur ${
-        selected ? "border-neon-cyan ring-1 ring-neon-cyan/50" : isGroup ? "border-neon-purple/50" : "border-white/15"
+      className={`min-w-[150px] rounded-lg border bg-ps-surface-panel px-3 py-2 text-left shadow-lg backdrop-blur ${
+        selected ? "border-neon-cyan ring-1 ring-neon-cyan/50" : isGroup ? "border-neon-purple/50" : "border-ps-edge-emphasis"
       }`}
     >
       <Handle type="target" position={Position.Top} className="!h-2 !w-2 !border-0 !bg-white/40" />
@@ -399,7 +399,7 @@ function CanvasInner({ workflows, onSaved }: { workflows: ComposerWorkflow[]; on
   return (
     <div className="space-y-3">
       {/* Toolbar */}
-      <div className="flex flex-wrap items-end gap-3 rounded-xl border border-white/10 bg-dark-900/40 p-3">
+      <div className="flex flex-wrap items-end gap-3 rounded-xl border border-ps-edge-hairline bg-ps-surface-panel p-3">
         <div className="w-52">
           <Field label="Edit workflow">
             <Select
@@ -556,7 +556,7 @@ function CanvasInner({ workflows, onSaved }: { workflows: ComposerWorkflow[]; on
           react-flow always gets a sized parent — a grid `1fr` cell collapses). */}
       <div
         ref={wrapRef}
-        className="relative h-[600px] w-full overflow-hidden rounded-xl border border-white/10 bg-dark-950/60"
+        className="relative h-[600px] w-full overflow-hidden rounded-xl border border-ps-edge-hairline bg-ps-surface-ground/60"
         onDrop={onDrop}
         onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; }}
       >
@@ -580,25 +580,25 @@ function CanvasInner({ workflows, onSaved }: { workflows: ComposerWorkflow[]; on
               which is what those rungs are FOR, and the shift is a couple of
               values per channel (T-0034). */}
           <Background color="var(--color-dark-700)" gap={18} />
-          <Controls className="!bg-dark-900 !border-white/10" />
+          <Controls className="!bg-ps-surface-panel !border-ps-edge-hairline" />
           <MiniMap
             pannable
             zoomable
-            className="!bg-dark-900"
+            className="!bg-ps-surface-panel"
             maskColor="var(--color-ps-viz-scrim)"
             nodeColor="var(--color-dark-600)"
           />
         </ReactFlow>
 
         {/* Palette (top-left overlay) */}
-        <div className="absolute left-3 top-3 z-10 w-36 space-y-1.5 rounded-lg border border-white/10 bg-dark-900/85 p-2 backdrop-blur">
+        <div className="absolute left-3 top-3 z-10 w-36 space-y-1.5 rounded-lg border border-ps-edge-hairline bg-ps-surface-panel p-2 backdrop-blur">
           <h3 className="text-xs font-mono uppercase tracking-widest text-ps-text-muted">Drag to add</h3>
           {PALETTE.map((p) => (
             <div
               key={p.kind}
               draggable
               onDragStart={(e) => { e.dataTransfer.setData(NODE_KIND_DRAG, p.kind); e.dataTransfer.effectAllowed = "move"; }}
-              className={`cursor-grab rounded-lg border bg-dark-900/60 px-2.5 py-1.5 text-xs ${p.color} active:cursor-grabbing`}
+              className={`cursor-grab rounded-lg border bg-ps-surface-panel px-2.5 py-1.5 text-xs ${p.color} active:cursor-grabbing`}
             >
               {p.label}
             </div>
@@ -608,7 +608,7 @@ function CanvasInner({ workflows, onSaved }: { workflows: ComposerWorkflow[]; on
 
         {/* Inspector (right overlay; only when something is selected) */}
         {node ? (
-          <div className="absolute right-3 top-3 z-10 w-72 space-y-3 rounded-lg border border-white/10 bg-dark-900/90 p-3 backdrop-blur">
+          <div className="absolute right-3 top-3 z-10 w-72 space-y-3 rounded-lg border border-ps-edge-hairline bg-ps-surface-panel p-3 backdrop-blur">
             <h3 className="text-xs font-mono uppercase tracking-widest text-ps-text-muted">Stage</h3>
             <Field label="Label"><Input value={node.data.label} onChange={(e) => patchNode(node.id, { label: e.target.value })} /></Field>
             <Field label="Kind"><Select value={node.data.kind} onChange={(v) => patchNode(node.id, { kind: v })} options={KIND_OPTIONS} /></Field>
@@ -628,7 +628,7 @@ function CanvasInner({ workflows, onSaved }: { workflows: ComposerWorkflow[]; on
                 const spec = (node.data.config?.inputSpec ?? {}) as { objectiveLabel?: string; objectiveHint?: string; examples?: string[] };
                 const setSpec = (patch: Partial<typeof spec>) => patchNodeConfig(node.id, "inputSpec", { ...spec, ...patch });
                 return (
-                  <div className="space-y-2 rounded-lg border border-neon-cyan/20 bg-dark-950/40 p-2">
+                  <div className="space-y-2 rounded-lg border border-neon-cyan/20 bg-ps-surface-ground/40 p-2">
                     <h4 className="text-xs font-mono uppercase tracking-widest text-neon-cyan/80">Workflow input (Run form)</h4>
                     <Field label="Objective label"><Input value={spec.objectiveLabel ?? ""} onChange={(e) => setSpec({ objectiveLabel: e.target.value })} placeholder="e.g. Research question" /></Field>
                     <Field label="Hint / placeholder"><Input value={spec.objectiveHint ?? ""} onChange={(e) => setSpec({ objectiveHint: e.target.value })} placeholder="shown inside the input box" /></Field>
@@ -648,7 +648,7 @@ function CanvasInner({ workflows, onSaved }: { workflows: ComposerWorkflow[]; on
             <Button variant="secondary" color="pink" size="sm" onClick={deleteSelected}><Trash2 className="h-3.5 w-3.5" /> Delete stage</Button>
           </div>
         ) : edge ? (
-          <div className="absolute right-3 top-3 z-10 w-72 space-y-3 rounded-lg border border-white/10 bg-dark-900/90 p-3 backdrop-blur">
+          <div className="absolute right-3 top-3 z-10 w-72 space-y-3 rounded-lg border border-ps-edge-hairline bg-ps-surface-panel p-3 backdrop-blur">
             <h3 className="text-xs font-mono uppercase tracking-widest text-ps-text-muted">Route</h3>
             <Field label="Condition"><Input value={edge.data?.condition ?? "always"} onChange={(e) => patchEdge(edge.id, { condition: e.target.value })} placeholder="always / on_pass…" /></Field>
             <p className="text-xs text-ps-text-muted">{CONDITION_HINT}</p>

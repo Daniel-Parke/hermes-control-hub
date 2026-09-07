@@ -40,7 +40,7 @@ export default function CategoryAccordion({
       {/* Header */}
       <button
         onClick={() => expandable && setOpen(!open)}
-        className={`w-full flex items-center justify-between px-1 py-1.5 ${expandable ? "hover:bg-white/[0.02] cursor-pointer" : "cursor-default"} transition-colors`}
+        className={`w-full flex items-center justify-between px-1 py-1.5 ${expandable ? "hover:bg-ps-surface-raised cursor-pointer" : "cursor-default"} transition-colors`}
       >
         <div className="flex items-center gap-2">
           <div className={`w-1.5 h-1.5 rounded-full ${dotColor}`} />

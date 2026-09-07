@@ -316,7 +316,7 @@ export default function SessionsPage() {
                 a ledger; the divider is what separates two records now, and
                 the Panel is what a future styling ruling edits. */}
             <Panel>
-              <div className="divide-y divide-white/5">
+              <div className="divide-y divide-ps-edge-hairline">
                 {entries.map((entry) =>
                   entry.kind === "mission" ? (
                     <MissionGroupCard key={entry.key} group={entry} />

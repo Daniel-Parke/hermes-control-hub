@@ -34,11 +34,11 @@ import ElapsedSince from "@/components/composer/ElapsedSince";
 // react-flow needs the DOM — load the canvases client-only.
 const WorkflowCanvas = dynamic(() => import("@/components/composer/WorkflowCanvas"), {
   ssr: false,
-  loading: () => <div className="h-[640px] animate-pulse rounded-xl border border-white/10 bg-dark-900/40" />,
+  loading: () => <div className="h-[640px] animate-pulse rounded-xl border border-ps-edge-hairline bg-ps-surface-panel" />,
 });
 const WorkflowRunCanvas = dynamic(() => import("@/components/composer/WorkflowRunCanvas"), {
   ssr: false,
-  loading: () => <div className="h-[560px] animate-pulse rounded-xl border border-white/10 bg-dark-900/40" />,
+  loading: () => <div className="h-[560px] animate-pulse rounded-xl border border-ps-edge-hairline bg-ps-surface-panel" />,
 });
 import { useComposerWorkflows, useComposerRuns, useComposerRun } from "@/hooks/useComposer";
 import { useProfiles } from "@/hooks/useProfiles";
@@ -238,7 +238,7 @@ export default function ComposerPage() {
       {liveError ? <LoadErrorBanner error={`Live updates: ${liveError}`} /> : null}
 
       {/* Run / Build tabs */}
-      <div className="flex gap-1 border-b border-white/10">
+      <div className="flex gap-1 border-b border-ps-edge-hairline">
         {(["run", "build"] as const).map((m) => (
           <button
             key={m}
@@ -317,7 +317,7 @@ export default function ComposerPage() {
                   <button
                     type="button"
                     onClick={() => selectRun(r.id)}
-                    className={`w-full rounded-lg px-2 py-2 text-left text-xs transition hover:bg-white/5 ${selectedId === r.id ? "bg-white/5" : ""}`}
+                    className={`w-full rounded-lg px-2 py-2 text-left text-xs transition hover:bg-ps-surface-raised ${selectedId === r.id ? "bg-ps-surface-raised" : ""}`}
                   >
                     <div className="truncate text-ps-text-primary">{runTitle(r.input)}</div>
                     {/* Which workflow this is a run OF. The rows were a list of
@@ -362,15 +362,15 @@ export default function ComposerPage() {
           ) : !run || !graph ? (
             // A run IS selected but its graph is still loading — show a skeleton,
             // never the "select a run" empty state (that read as "click did nothing").
-            <div className="flex h-[60vh] min-h-[420px] items-center justify-center rounded-xl border border-white/10 bg-dark-900/40">
+            <div className="flex h-[60vh] min-h-[420px] items-center justify-center rounded-xl border border-ps-edge-hairline bg-ps-surface-panel">
               <div className="flex flex-col items-center gap-2 text-center">
-                <div className="h-5 w-5 animate-spin rounded-full border-2 border-white/15 border-t-neon-cyan" />
+                <div className="h-5 w-5 animate-spin rounded-full border-2 border-ps-edge-emphasis border-t-neon-cyan" />
                 <p className="text-xs text-ps-text-muted">Loading run…</p>
               </div>
             </div>
           ) : (
             <div className="space-y-4">
-              <div className="flex items-start justify-between gap-3 rounded-lg border border-white/10 bg-dark-900/40 px-3 py-2.5">
+              <div className="flex items-start justify-between gap-3 rounded-lg border border-ps-edge-hairline bg-ps-surface-panel px-3 py-2.5">
                 <div className="min-w-0">
                   <div className="truncate text-sm text-ps-text-primary">{runTitle(run.input)}</div>
                   {run.error ? (
@@ -412,7 +412,7 @@ export default function ComposerPage() {
                       className={`mt-1.5 rounded-lg border px-2 py-1 text-xs font-mono transition-colors disabled:opacity-40 ${
                         cancelConfirm.isArmedFor(run.id)
                           ? "border-neon-orange/60 bg-neon-orange/20 text-neon-orange"
-                          : "border-white/15 text-ps-text-muted hover:border-neon-orange/50 hover:text-neon-orange"
+                          : "border-ps-edge-emphasis text-ps-text-muted hover:border-neon-orange/50 hover:text-neon-orange"
                       }`}
                     >
                       {cancelConfirm.isArmedFor(run.id) ? "Confirm cancel?" : "Cancel run"}

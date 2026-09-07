@@ -19,7 +19,7 @@ const DEFAULT_GENRES = ["Sci-Fi", "Mystery", "Fantasy", "Romance", "Crime", "Hor
 const DEFAULT_ERAS = ["Ancient", "Medieval", "Modern", "Near Future", "Far Future", "Timeless"];
 const DEFAULT_MOODS = ["Tense", "Wonder", "Humorous", "Dark", "Hopeful", "Melancholy", "Suspenseful", "Whimsical"];
 
-const FIELD = "w-full bg-dark-800/50 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/20 outline-none focus:border-green-500/40 font-mono";
+const FIELD = "w-full bg-ps-surface-inset border border-ps-edge rounded-lg px-3 py-2 text-sm text-white placeholder-white/20 outline-none focus:border-green-500/40 font-mono";
 const LABEL = "text-xs font-mono text-ps-text-muted uppercase tracking-wider block mb-1";
 
 export default function PromptsPage() {
@@ -123,7 +123,7 @@ export default function PromptsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-dark-950 flex items-center justify-center">
+      <div className="min-h-screen bg-ps-surface-ground flex items-center justify-center">
         <Loader2 className="w-8 h-8 text-neon-purple animate-spin" />
       </div>
     );
@@ -153,7 +153,7 @@ export default function PromptsPage() {
     >
       {/* Edit Modal */}
       {editing && (
-        <div className="fixed inset-0 z-[60] bg-dark-950/80 backdrop-blur-sm flex items-start justify-center p-4 pt-12 overflow-y-auto" onClick={closeEditor} role="presentation">
+        <div className="fixed inset-0 z-[60] bg-ps-surface-ground/80 backdrop-blur-sm flex items-start justify-center p-4 pt-12 overflow-y-auto" onClick={closeEditor} role="presentation">
           <div
             ref={panelRef}
             role="dialog"
@@ -161,7 +161,7 @@ export default function PromptsPage() {
             aria-labelledby="theme-editor-title"
             tabIndex={-1}
             onClick={(e) => e.stopPropagation()}
-            className="bg-dark-900 border border-green-500/20 rounded-xl w-full max-w-2xl p-6 space-y-4 mb-12"
+            className="bg-ps-surface-panel border border-green-500/20 rounded-xl w-full max-w-2xl p-6 space-y-4 mb-12"
           >
             <div className="flex items-center justify-between">
               <h3 id="theme-editor-title" className="text-sm font-semibold text-white">{isNew ? "New story theme" : "Edit story theme"}</h3>
@@ -189,7 +189,7 @@ export default function PromptsPage() {
                 {DEFAULT_GENRES.map(g => (
                   <button key={g} type="button" onClick={() => toggleTag("genre", g)} aria-pressed={editing.genre.includes(g)}
                     className={`px-2.5 py-1 rounded-md text-xs font-mono border transition-all ${
-                      editing.genre.includes(g) ? "border-green-500/40 bg-green-500/15 text-green-400" : "border-white/8 text-ps-text-muted hover:text-ps-text-muted"
+                      editing.genre.includes(g) ? "border-green-500/40 bg-green-500/15 text-green-400" : "border-ps-edge text-ps-text-muted hover:text-ps-text-muted"
                     }`}>{g}</button>
                 ))}
               </div>
@@ -201,7 +201,7 @@ export default function PromptsPage() {
                 {DEFAULT_ERAS.map(e => (
                   <button key={e} type="button" onClick={() => setEditing({ ...editing, era: editing.era === e ? "" : e })} aria-pressed={editing.era === e}
                     className={`px-2.5 py-1 rounded-md text-xs font-mono border transition-all ${
-                      editing.era === e ? "border-green-500/40 bg-green-500/15 text-green-400" : "border-white/8 text-ps-text-muted hover:text-ps-text-muted"
+                      editing.era === e ? "border-green-500/40 bg-green-500/15 text-green-400" : "border-ps-edge text-ps-text-muted hover:text-ps-text-muted"
                     }`}>{e}</button>
                 ))}
               </div>
@@ -213,7 +213,7 @@ export default function PromptsPage() {
                 {DEFAULT_MOODS.map(m => (
                   <button key={m} type="button" onClick={() => toggleTag("mood", m)} aria-pressed={editing.mood.includes(m)}
                     className={`px-2.5 py-1 rounded-md text-xs font-mono border transition-all ${
-                      editing.mood.includes(m) ? "border-green-500/40 bg-green-500/15 text-green-400" : "border-white/8 text-ps-text-muted hover:text-ps-text-muted"
+                      editing.mood.includes(m) ? "border-green-500/40 bg-green-500/15 text-green-400" : "border-ps-edge text-ps-text-muted hover:text-ps-text-muted"
                     }`}>{m}</button>
                 ))}
               </div>
@@ -234,7 +234,7 @@ export default function PromptsPage() {
 
             <div className="flex gap-2 justify-end pt-2">
               <button type="button" onClick={closeEditor}
-                className="px-4 py-2 text-xs text-ps-text-muted hover:text-ps-text-secondary rounded-lg border border-white/10 hover:bg-white/5">
+                className="px-4 py-2 text-xs text-ps-text-muted hover:text-ps-text-secondary rounded-lg border border-ps-edge hover:bg-ps-surface-raised">
                 Cancel
               </button>
               <button type="button" onClick={save} disabled={!editing.name.trim() || !editing.premise.trim() || saving}
@@ -262,7 +262,7 @@ export default function PromptsPage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {themes.map(theme => (
-              <div key={theme.id} className="rounded-xl border border-white/5 bg-dark-900/50 p-4 space-y-3 hover:border-white/10 transition-colors">
+              <div key={theme.id} className="rounded-xl border border-ps-edge-hairline bg-ps-surface-panel p-4 space-y-3 hover:border-ps-edge-hairline transition-colors">
                 <div className="flex items-start justify-between">
                   <div className="flex-1 min-w-0">
                     <h3 className="text-sm font-semibold text-ps-text-primary truncate">{theme.name}</h3>
@@ -276,10 +276,10 @@ export default function PromptsPage() {
                       <span key={g} className="px-1.5 py-0.5 rounded text-xs font-mono border border-green-500/20 bg-green-500/5 text-green-400/70">{g}</span>
                     ))}
                     {theme.era && (
-                      <span className="px-1.5 py-0.5 rounded text-xs font-mono border border-white/5 bg-white/[0.02] text-ps-text-muted">{theme.era}</span>
+                      <span className="px-1.5 py-0.5 rounded text-xs font-mono border border-ps-edge-hairline bg-ps-surface-raised text-ps-text-muted">{theme.era}</span>
                     )}
                     {theme.mood.slice(0, 2).map(m => (
-                      <span key={m} className="px-1.5 py-0.5 rounded text-xs font-mono border border-white/5 bg-white/[0.02] text-ps-text-muted">{m}</span>
+                      <span key={m} className="px-1.5 py-0.5 rounded text-xs font-mono border border-ps-edge-hairline bg-ps-surface-raised text-ps-text-muted">{m}</span>
                     ))}
                   </div>
                 )}

@@ -52,19 +52,19 @@ export default function TimeoutSelector({
       <span ref={ref} className="relative inline-flex">
         <button
           onClick={() => setOpen(!open)}
-          className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-white/5 border border-white/10 text-xs font-mono text-ps-text-muted hover:border-white/30 hover:text-ps-text-secondary transition-colors"
+          className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-ps-surface-raised border border-ps-edge text-xs font-mono text-ps-text-muted hover:border-ps-edge-emphasis hover:text-ps-text-secondary transition-colors"
           title={`Inactivity timeout: ${value === 0 ? "unlimited" : value + "m"}`}
         >
           <Timer className="w-3 h-3" />
           {value === 0 ? "∞" : `${value}m`}
         </button>
         {open && (
-          <div className="absolute top-full left-0 mt-1 z-50 w-44 bg-dark-900 border border-white/10 rounded-lg shadow-xl overflow-hidden">
+          <div className="absolute top-full left-0 mt-1 z-50 w-44 bg-ps-surface-panel border border-ps-edge-hairline rounded-lg shadow-xl overflow-hidden">
             {PRESETS.map((p) => (
               <button
                 key={p.minutes}
                 onClick={(e) => { e.stopPropagation(); onChange(p.minutes); setOpen(false); }}
-                className={`w-full text-left px-3 py-2 text-xs hover:bg-white/5 ${value === p.minutes ? "text-neon-cyan" : "text-ps-text-secondary"}`}
+                className={`w-full text-left px-3 py-2 text-xs hover:bg-ps-surface-raised ${value === p.minutes ? "text-neon-cyan" : "text-ps-text-secondary"}`}
               >
                 {p.label}
               </button>
@@ -79,7 +79,7 @@ export default function TimeoutSelector({
     <div ref={ref} className="relative">
       <button
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg bg-white/5 border border-white/10 text-sm text-white hover:border-white/30 transition-colors"
+        className="w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg bg-ps-surface-raised border border-ps-edge text-sm text-white hover:border-ps-edge-emphasis transition-colors"
       >
         <div className="flex items-center gap-2">
           <Timer className="w-4 h-4 text-ps-text-muted" />
@@ -93,12 +93,12 @@ export default function TimeoutSelector({
         <ChevronDown className={`w-4 h-4 text-ps-text-muted transition-transform ${open ? "rotate-180" : ""}`} />
       </button>
       {open && (
-        <div className="absolute top-full left-0 right-0 mt-1 z-50 bg-dark-900 border border-white/10 rounded-lg shadow-xl overflow-hidden">
+        <div className="absolute top-full left-0 right-0 mt-1 z-50 bg-ps-surface-panel border border-ps-edge-hairline rounded-lg shadow-xl overflow-hidden">
           {PRESETS.map((p) => (
             <button
               key={p.minutes}
               onClick={() => { onChange(p.minutes); setOpen(false); }}
-              className={`w-full text-left px-3 py-2 text-sm hover:bg-white/5 ${value === p.minutes ? "text-neon-cyan bg-neon-cyan/5" : "text-ps-text-secondary"}`}
+              className={`w-full text-left px-3 py-2 text-sm hover:bg-ps-surface-raised ${value === p.minutes ? "text-neon-cyan bg-neon-cyan/5" : "text-ps-text-secondary"}`}
             >
               {p.label}
             </button>

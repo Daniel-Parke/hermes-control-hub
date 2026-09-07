@@ -84,7 +84,7 @@ export default function SkillDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-dark-950 grid-bg flex items-center justify-center">
+      <div className="min-h-screen bg-ps-surface-ground grid-bg flex items-center justify-center">
         <LoadingSpinner text="Loading skill..." />
       </div>
     );
@@ -92,7 +92,7 @@ export default function SkillDetailPage() {
 
   if (error || !data) {
     return (
-      <div className="min-h-screen bg-dark-950 grid-bg flex items-center justify-center">
+      <div className="min-h-screen bg-ps-surface-ground grid-bg flex items-center justify-center">
         <div className="text-center">
           <h2 className="text-xl font-bold text-white mb-2">Skill Not Found</h2>
           <p className="text-ps-text-muted font-mono mb-4">{error}</p>
@@ -132,7 +132,7 @@ export default function SkillDetailPage() {
             <button
               type="button"
               onClick={() => setShowRaw(!showRaw)}
-              className="text-xs font-mono text-ps-text-muted hover:text-ps-text-secondary px-3 py-1.5 rounded-lg border border-white/10 hover:border-white/20 transition-colors"
+              className="text-xs font-mono text-ps-text-muted hover:text-ps-text-secondary px-3 py-1.5 rounded-lg border border-ps-edge hover:border-ps-edge-emphasis transition-colors"
             >
               {showRaw ? "Rendered" : "Raw"}
             </button>
@@ -144,7 +144,7 @@ export default function SkillDetailPage() {
         <div className="flex gap-6">
           {/* Main content */}
           <div className="flex-1 min-w-0">
-            <div className="rounded-xl border border-white/10 bg-dark-900/50 p-6">
+            <div className="rounded-xl border border-ps-edge-hairline bg-ps-surface-panel p-6">
               {showRaw ? (
                 <pre className="text-sm font-mono text-ps-text-secondary whitespace-pre-wrap break-words">
                   {data.rawContent ?? data.content}
@@ -159,7 +159,7 @@ export default function SkillDetailPage() {
           <div className="w-56 flex-shrink-0 hidden lg:block space-y-4">
             {/* Frontmatter */}
             {Object.keys(frontmatter).length > 0 && (
-              <div className="rounded-xl border border-white/10 bg-dark-900/50 p-4">
+              <div className="rounded-xl border border-ps-edge-hairline bg-ps-surface-panel p-4">
                 <h3 className="text-xs font-mono text-ps-text-muted uppercase tracking-widest mb-3">
                   Metadata
                 </h3>
@@ -180,7 +180,7 @@ export default function SkillDetailPage() {
 
             {/* Linked files */}
             {linkedFiles.length > 0 && (
-              <div className="rounded-xl border border-white/10 bg-dark-900/50 p-4">
+              <div className="rounded-xl border border-ps-edge-hairline bg-ps-surface-panel p-4">
                 <h3 className="text-xs font-mono text-ps-text-muted uppercase tracking-widest mb-3">
                   Linked Files
                 </h3>

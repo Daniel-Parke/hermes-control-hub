@@ -105,8 +105,8 @@ export default function ChatPage() {
       <div className="flex flex-col flex-1 min-h-0">
         <div className="flex flex-1 overflow-hidden">
           {/* Sidebar */}
-          <div className="w-60 shrink-0 border-r border-white/10 bg-white/[0.01] flex flex-col min-h-0">
-            <div className="px-3 py-2 border-b border-white/10 flex items-center justify-between">
+          <div className="w-60 shrink-0 border-r border-ps-edge-hairline bg-ps-surface-raised flex flex-col min-h-0">
+            <div className="px-3 py-2 border-b border-ps-edge flex items-center justify-between">
               <span className="text-xs font-mono text-ps-text-muted uppercase tracking-wider">
                 Conversations ({conversations.length})
               </span>
@@ -123,8 +123,8 @@ export default function ChatPage() {
                 // screen-reader user cannot reach them at all (T-0071).
                 <div
                   key={c.id}
-                  className={`w-full px-3 py-2 border-b border-white/5 transition-colors hover:bg-white/5 group relative ${
-                    c.id === activeId ? "bg-white/10 border-l-2 border-l-neon-cyan" : ""
+                  className={`w-full px-3 py-2 border-b border-ps-edge transition-colors hover:bg-ps-surface-raised group relative ${
+                    c.id === activeId ? "bg-ps-surface-raised border-l-2 border-l-neon-cyan" : ""
                   }`}
                 >
                   <div className="flex items-center justify-between gap-1">
@@ -154,7 +154,7 @@ export default function ChatPage() {
                         <div className="absolute right-0 top-full mt-0.5 hidden group-hover/download:block group-focus-within/download:block z-50">
                           <button
                             onClick={(e) => void handleDownloadConversation(c, "csv", e)}
-                            className="whitespace-nowrap text-xs font-mono px-2 py-1 rounded bg-dark-900 border border-white/10 text-ps-text-secondary hover:text-white hover:bg-white/5 transition-colors shadow-lg"
+                            className="whitespace-nowrap text-xs font-mono px-2 py-1 rounded bg-ps-surface-panel border border-ps-edge text-ps-text-secondary hover:text-white hover:bg-ps-surface-raised transition-colors shadow-lg"
                           >
                             as CSV
                           </button>
@@ -220,7 +220,7 @@ export default function ChatPage() {
                 />
               ) : messages.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full text-center py-24">
-                  <div className="w-16 h-16 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center mb-4">
+                  <div className="w-16 h-16 rounded-xl bg-ps-surface-raised border border-ps-edge-hairline flex items-center justify-center mb-4">
                     <MessageCircle className="w-8 h-8 text-ps-text-muted" />
                   </div>
                   {/* h2, not h3. PageHeader renders the page's only h1, and this
@@ -258,7 +258,7 @@ export default function ChatPage() {
             </div>
 
             {/* Composer */}
-            <div className="border-t border-white/10 px-6 py-4">
+            <div className="border-t border-ps-edge-hairline px-6 py-4">
               {pendingApproval && (
                 <ApprovalPrompt
                   toolName={pendingApproval.toolName}
@@ -278,7 +278,7 @@ export default function ChatPage() {
                       : "Type a message… (Enter to send, Shift+Enter for newline)"
                   }
                   rows={1}
-                  className="flex-1 bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white placeholder-white/30 outline-none focus:border-neon-cyan/50 transition-colors font-mono resize-none"
+                  className="flex-1 bg-ps-surface-raised border border-ps-edge rounded-lg px-4 py-2.5 text-sm text-white placeholder-white/30 outline-none focus:border-neon-cyan/50 transition-colors font-mono resize-none"
                   style={{ minHeight: "42px", maxHeight: "120px" }}
                   onInput={(e) => {
                     const ta = e.target as HTMLTextAreaElement;

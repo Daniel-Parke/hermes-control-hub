@@ -48,7 +48,7 @@ export default function TemplateCard({
     return (
       <button
         onClick={onSelect}
-        className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/5 border border-white/10 text-xs font-mono text-ps-text-secondary hover:border-white/30 hover:text-white hover:bg-white/[0.07] transition-colors min-w-0 max-w-full"
+        className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-ps-surface-raised border border-ps-edge text-xs font-mono text-ps-text-secondary hover:border-ps-edge-emphasis hover:text-white hover:bg-ps-surface-raised transition-colors min-w-0 max-w-full"
       >
         <IconComponent className={`w-3 h-3 flex-shrink-0 ${iconColorMap[color as AccentColor] || "text-neon-cyan"}`} />
         <span className="truncate min-w-0">{name}</span>
@@ -57,13 +57,13 @@ export default function TemplateCard({
   }
 
   return (
-    <div className="text-left rounded-xl border border-white/10 bg-dark-900/50 p-4 hover:border-white/30 transition-colors group relative">
+    <div className="text-left rounded-xl border border-ps-edge-hairline bg-ps-surface-panel p-4 hover:border-ps-edge-emphasis transition-colors group relative">
       <button onClick={onSelect} className="w-full h-full text-left">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
             <IconComponent className={`w-5 h-5 ${iconColorMap[color as AccentColor] || "text-neon-cyan"}`} />
             {isCustom && (
-              <span className="text-xs font-mono text-ps-text-faint bg-white/5 px-1.5 py-0.5 rounded">custom</span>
+              <span className="text-xs font-mono text-ps-text-faint bg-ps-surface-raised px-1.5 py-0.5 rounded">custom</span>
             )}
           </div>
         </div>

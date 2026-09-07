@@ -15,7 +15,7 @@ const ROLE_COLORS: Record<string, string> = {
   protagonist: "text-green-400 border-green-500/30 bg-green-500/10",
   ally: "text-blue-400 border-blue-500/30 bg-blue-500/10",
   antagonist: "text-red-400 border-red-500/30 bg-red-500/10",
-  supporting: "text-ps-text-muted border-white/10 bg-white/5",
+  supporting: "text-ps-text-muted border-ps-edge-hairline bg-ps-surface-raised",
   mystery: "text-neon-purple border-neon-purple/30 bg-neon-purple/10",
   mentor: "text-yellow-400 border-yellow-500/30 bg-yellow-500/10",
   trickster: "text-orange-400 border-orange-500/30 bg-orange-500/10",
@@ -28,7 +28,7 @@ const EMPTY_CHAR: Omit<CharacterSheet, "id" | "createdAt" | "updatedAt"> = {
   speechPatterns: "", relationships: "", tags: [],
 };
 
-const FIELD = "w-full bg-dark-800/50 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/20 outline-none focus:border-neon-purple/40 font-mono";
+const FIELD = "w-full bg-ps-surface-inset border border-ps-edge rounded-lg px-3 py-2 text-sm text-white placeholder-white/20 outline-none focus:border-neon-purple/40 font-mono";
 const LABEL = "text-xs font-mono text-ps-text-muted uppercase tracking-wider block mb-1";
 
 export default function CharactersPage() {
@@ -145,7 +145,7 @@ export default function CharactersPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-dark-950 flex items-center justify-center">
+      <div className="min-h-screen bg-ps-surface-ground flex items-center justify-center">
         <Loader2 className="w-8 h-8 text-neon-purple animate-spin" />
       </div>
     );
@@ -176,7 +176,7 @@ export default function CharactersPage() {
     >
       {/* Edit Modal */}
       {editing && (
-        <div className="fixed inset-0 z-[60] bg-dark-950/80 backdrop-blur-sm flex items-start justify-center p-4 pt-12 overflow-y-auto" onClick={closeEditor} role="presentation">
+        <div className="fixed inset-0 z-[60] bg-ps-surface-ground/80 backdrop-blur-sm flex items-start justify-center p-4 pt-12 overflow-y-auto" onClick={closeEditor} role="presentation">
           <div
             ref={panelRef}
             role="dialog"
@@ -184,7 +184,7 @@ export default function CharactersPage() {
             aria-labelledby="character-editor-title"
             tabIndex={-1}
             onClick={(e) => e.stopPropagation()}
-            className="bg-dark-900 border border-neon-purple/20 rounded-xl w-full max-w-2xl p-6 space-y-4 mb-12"
+            className="bg-ps-surface-panel border border-neon-purple/20 rounded-xl w-full max-w-2xl p-6 space-y-4 mb-12"
           >
             <div className="flex items-center justify-between">
               <h3 id="character-editor-title" className="text-sm font-semibold text-white">{isNew ? "New character" : "Edit character"}</h3>
@@ -257,7 +257,7 @@ export default function CharactersPage() {
               <div className="flex gap-1">
                 <input id="char-trait-input" value={personalityInput} onChange={(e) => setPersonalityInput(e.target.value)}
                   onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addPersonality(); } }}
-                  placeholder="e.g. stubborn" className="flex-1 bg-dark-800/50 border border-white/10 rounded px-2 py-1 text-xs text-white placeholder-white/20 outline-none focus:border-neon-purple/40 font-mono" />
+                  placeholder="e.g. stubborn" className="flex-1 bg-ps-surface-inset border border-ps-edge rounded px-2 py-1 text-xs text-white placeholder-white/20 outline-none focus:border-neon-purple/40 font-mono" />
                 <button type="button" aria-label="Add personality trait" onClick={addPersonality} className="px-2 py-1 text-xs text-neon-purple"><Plus className="w-3 h-3" aria-hidden="true" /></button>
               </div>
             </div>
@@ -267,7 +267,7 @@ export default function CharactersPage() {
               <label htmlFor="char-tag-input" className={LABEL}>Tags (genre associations)</label>
               <div className="flex flex-wrap gap-1.5 mb-2">
                 {editing.tags.map(t => (
-                  <span key={t} className="flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-mono border border-white/10 bg-white/5 text-ps-text-muted">
+                  <span key={t} className="flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-mono border border-ps-edge-hairline bg-ps-surface-raised text-ps-text-muted">
                     {t}
                     <button type="button" onClick={() => setEditing({ ...editing, tags: editing.tags.filter(p => p !== t) })} aria-label={`Remove tag ${t}`} className="text-ps-text-muted hover:text-red-400"><X className="w-2.5 h-2.5" /></button>
                   </span>
@@ -276,14 +276,14 @@ export default function CharactersPage() {
               <div className="flex gap-1">
                 <input id="char-tag-input" value={tagInput} onChange={(e) => setTagInput(e.target.value)}
                   onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addTag(); } }}
-                  placeholder="e.g. noir" className="flex-1 bg-dark-800/50 border border-white/10 rounded px-2 py-1 text-xs text-white placeholder-white/20 outline-none focus:border-neon-purple/40 font-mono" />
+                  placeholder="e.g. noir" className="flex-1 bg-ps-surface-inset border border-ps-edge rounded px-2 py-1 text-xs text-white placeholder-white/20 outline-none focus:border-neon-purple/40 font-mono" />
                 <button type="button" aria-label="Add tag" onClick={addTag} className="px-2 py-1 text-xs text-neon-purple"><Plus className="w-3 h-3" aria-hidden="true" /></button>
               </div>
             </div>
 
             <div className="flex gap-2 justify-end pt-2">
               <button type="button" onClick={closeEditor}
-                className="px-4 py-2 text-xs text-ps-text-muted hover:text-ps-text-secondary rounded-lg border border-white/10 hover:bg-white/5">
+                className="px-4 py-2 text-xs text-ps-text-muted hover:text-ps-text-secondary rounded-lg border border-ps-edge hover:bg-ps-surface-raised">
                 Cancel
               </button>
               <button type="button" onClick={save} disabled={!editing.name.trim() || saving}
@@ -313,13 +313,13 @@ export default function CharactersPage() {
             {characters.map(c => {
               const isExpanded = expanded[c.id];
               return (
-                <div key={c.id} className="rounded-xl border border-white/5 bg-dark-900/50 overflow-hidden">
+                <div key={c.id} className="rounded-xl border border-ps-edge-hairline bg-ps-surface-panel overflow-hidden">
                   {/* The expand toggle and the row actions are SIBLINGS. The
                       toggle used to wrap Edit and Delete, which is a button
                       inside a button: invalid HTML the browser recovers from by
                       hoisting the actions out of the toggle, so their click
                       target and focus order stop matching the source (T-0071). */}
-                  <div className="w-full p-4 flex items-start gap-3 hover:bg-white/[0.02] transition-colors">
+                  <div className="w-full p-4 flex items-start gap-3 hover:bg-ps-surface-raised transition-colors">
                     <button
                       type="button"
                       onClick={() => toggleExpand(c.id)}
@@ -336,7 +336,7 @@ export default function CharactersPage() {
                       {c.tags.length > 0 && (
                         <div className="flex flex-wrap gap-1 mt-2">
                           {c.tags.map(t => (
-                            <span key={t} className="px-1.5 py-0.5 rounded text-xs font-mono border border-white/5 bg-white/[0.02] text-ps-text-muted">{t}</span>
+                            <span key={t} className="px-1.5 py-0.5 rounded text-xs font-mono border border-ps-edge-hairline bg-ps-surface-raised text-ps-text-muted">{t}</span>
                           ))}
                         </div>
                       )}
@@ -359,7 +359,7 @@ export default function CharactersPage() {
                     </div>
                   </div>
                   {isExpanded && (
-                    <div className="px-4 pb-4 pt-0 border-t border-white/5 space-y-3">
+                    <div className="px-4 pb-4 pt-0 border-t border-ps-edge-hairline space-y-3">
                       {c.appearance && (
                         <div>
                           <span className="text-xs font-mono text-ps-text-faint uppercase">Appearance</span>

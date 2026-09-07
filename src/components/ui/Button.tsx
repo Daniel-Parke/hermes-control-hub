@@ -91,10 +91,10 @@ export default function Button({
     variant === "primary"
       ? `${c.bg} ${c.text} ${c.border} border ${c.hover}`
       : variant === "ghost"
-      ? "bg-transparent text-ps-text-secondary border border-transparent hover:bg-white/5 hover:text-white"
+      ? "bg-transparent text-ps-text-secondary border border-transparent hover:bg-ps-surface-raised hover:text-white"
       : variant === "danger"
       ? "bg-red-500/20 text-red-400 border border-red-500/30 hover:bg-red-500/30"
-      : "bg-white/5 text-ps-text-secondary border border-white/10 hover:border-white/30 hover:text-white";
+      : "bg-ps-surface-raised text-ps-text-secondary border border-ps-edge hover:border-ps-edge-emphasis hover:text-white";
 
   return (
     <button

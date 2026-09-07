@@ -110,7 +110,7 @@ export default function CredentialsPanel({
   };
 
   return (
-    <section className="mb-6 rounded-xl border border-white/10 bg-white/[0.02] p-4">
+    <section className="mb-6 rounded-xl border border-ps-edge-hairline bg-ps-surface-raised p-4">
       <div className="mb-3 flex items-center gap-2">
         <KeyRound className="h-4 w-4 text-ps-text-muted" />
         {/* "Credentials" is this screen's word for the thing the corpus calls
@@ -178,7 +178,7 @@ export default function CredentialsPanel({
               type="button"
               aria-label="Cancel adding a credential"
               onClick={closeAdd}
-              className="rounded-lg px-2.5 py-1.5 font-mono text-xs text-ps-text-muted transition-colors hover:bg-white/5 hover:text-white"
+              className="rounded-lg px-2.5 py-1.5 font-mono text-xs text-ps-text-muted transition-colors hover:bg-ps-surface-raised hover:text-white"
             >
               Cancel
             </button>
@@ -192,7 +192,7 @@ export default function CredentialsPanel({
           const busy = busyId === c.id;
           const rotating = rotatingId === c.id;
           return (
-            <li key={c.id} className="rounded-lg px-3 py-2 hover:bg-white/[0.03]">
+            <li key={c.id} className="rounded-lg px-3 py-2 hover:bg-ps-surface-raised">
               <div className="flex items-center gap-3">
                 <span className="min-w-0 flex-1 truncate text-sm text-ps-text-secondary">
                   {c.label}
@@ -205,7 +205,7 @@ export default function CredentialsPanel({
                   disabled={busy}
                   onClick={() => (rotating ? closeRotate() : setRotatingId(c.id))}
                   aria-label={`Rotate key for ${c.label}`}
-                  className="rounded-lg px-2 py-1 font-mono text-xs text-ps-text-muted transition-colors hover:bg-white/5 hover:text-white disabled:opacity-50"
+                  className="rounded-lg px-2 py-1 font-mono text-xs text-ps-text-muted transition-colors hover:bg-ps-surface-raised hover:text-white disabled:opacity-50"
                 >
                   Rotate key
                 </button>
@@ -258,7 +258,7 @@ export default function CredentialsPanel({
                     type="button"
                     aria-label={`Cancel rotating ${c.label}`}
                     onClick={closeRotate}
-                    className="shrink-0 rounded-lg px-2.5 py-1.5 font-mono text-xs text-ps-text-muted transition-colors hover:bg-white/5 hover:text-white"
+                    className="shrink-0 rounded-lg px-2.5 py-1.5 font-mono text-xs text-ps-text-muted transition-colors hover:bg-ps-surface-raised hover:text-white"
                   >
                     Cancel
                   </button>

@@ -32,7 +32,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
 import { MODULES, MODULE_ACCENTS } from "@/lib/modules/registry";
-import { measureClasses, surfaceClasses } from "@/lib/theme";
+import { edgeClasses, measureClasses, surfaceClasses } from "@/lib/theme";
 
 const CSS = readFileSync(join(process.cwd(), "src/app/globals.css"), "utf-8");
 
@@ -48,7 +48,9 @@ function declaredTokens(): Map<string, string> {
 /** `bg-ps-surface-panel` -> `--color-ps-surface-panel`, per Tailwind's namespaces. */
 function tokenForClass(cls: string): string {
   const utility = cls.replace(/^(bg|border|text)-/, "");
-  if (utility.startsWith("ps-surface-")) return `--color-${utility}`;
+  if (utility.startsWith("ps-surface-") || utility.startsWith("ps-edge")) {
+    return `--color-${utility}`;
+  }
   const measure = cls.replace(/^(max-w|space-y)-/, "");
   if (cls.startsWith("space-y-")) return `--spacing-${measure}`;
   return `--container-${measure}`;
@@ -83,6 +85,20 @@ describe("the surface ladder", () => {
   });
 
   /**
+   * The rules are a separate ladder from the fills, on a cooler and far less
+   * saturated ray, because on the surface ray a 3:1 stroke comes out a blue
+   * line rather than an edge (T-0116). Same rule, same reason: two homes with
+   * nothing holding them together is how a mirror goes stale.
+   */
+  it("and gives every edge role one too", () => {
+    const roles = Object.values(edgeClasses);
+    expect(roles).toHaveLength(3);
+    for (const cls of roles) {
+      expect(tokens.has(tokenForClass(cls))).toBe(true);
+    }
+  });
+
+  /**
    * Amended 2026-09-07 (T-0116), and the reason belongs here rather than in a
    * commit message.
    *
@@ -98,11 +114,20 @@ describe("the surface ladder", () => {
    * u2-the-token-layer.test.ts. Nothing here is loosened: there are more
    * assertions than before, not fewer.
    */
-  it("still aliases the primitives for the roles that are names", () => {
-    expect(tokens.get("--color-ps-surface-well")).toBe("var(--color-dark-800)");
-    // The hairline is the exception, and it is recorded rather than invented:
-    // the tree draws its rules as border-white/10, which matches no dark-* rung.
-    expect(tokens.get("--color-ps-surface-hairline")).toBe("rgb(255 255 255 / 0.10)");
+  /**
+   * `well` and `surface-hairline` were the last two rungs of the flat ladder,
+   * kept alive through U2 so that DECLARING the new one repainted nothing.
+   * U4 moved their call sites, so they are gone: `well` aliased dark-800,
+   * which is LIGHTER than the card it sat inside, so every input in the
+   * product read as a lift rather than a well; `surface-hairline` was white at
+   * 10%, which is the 1.25:1 rule this programme exists to remove.
+   */
+  it("no longer declares the two rungs of the flat ladder", () => {
+    expect(tokens.get("--color-ps-surface-well")).toBeUndefined();
+    expect(tokens.get("--color-ps-surface-hairline")).toBeUndefined();
+    // And what replaced them is declared, so this is a swap rather than a loss.
+    expect(tokens.get("--color-ps-surface-inset")).toBe("var(--color-ps-surface-ground)");
+    expect(tokens.get("--color-ps-edge-hairline")).toBe("#474f59");
   });
 
   it("and the roles that became values are hexes, not aliases of a flat ladder", () => {

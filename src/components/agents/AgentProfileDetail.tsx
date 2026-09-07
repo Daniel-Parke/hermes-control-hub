@@ -69,7 +69,7 @@ export default function AgentProfileDetail({
   onCloseEditor,
 }: AgentProfileDetailProps) {
   return (
-    <div className="flex-1 min-w-0 rounded-xl border border-white/10 bg-dark-900/40 flex flex-col">
+    <div className="flex-1 min-w-0 rounded-xl border border-ps-edge-hairline bg-ps-surface-panel flex flex-col">
       {!profile ? (
         <div className="flex-1 flex items-center justify-center text-sm text-ps-text-muted p-8">
           Select a profile
@@ -97,7 +97,7 @@ export default function AgentProfileDetail({
 
           {/* Personalities was a second page editing the same SOUL.md through a
               second route (decision 11, T-0103). It is this tab now. */}
-          <div className="px-4 pt-3 flex gap-1 border-b border-white/10" role="tablist" aria-label="Profile view">
+          <div className="px-4 pt-3 flex gap-1 border-b border-ps-edge-hairline" role="tablist" aria-label="Profile view">
             {(["identity", "files"] as const).map((id) => (
               <button
                 key={id}
@@ -123,7 +123,7 @@ export default function AgentProfileDetail({
               id="profile-panel-identity"
               role="tabpanel"
               aria-labelledby="profile-tab-identity"
-              className="p-4 border-b border-white/10"
+              className="p-4 border-b border-ps-edge-hairline"
             >
               <h3 className="text-xs font-semibold text-ps-text-muted uppercase tracking-wider mb-2">
                 Voice

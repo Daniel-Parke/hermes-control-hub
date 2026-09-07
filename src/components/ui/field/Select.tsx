@@ -94,7 +94,7 @@ export function Select({
         aria-label={ariaLabel}
         onClick={() => !disabled && setOpen((o) => !o)}
         onKeyDown={onKeyDown}
-        className="flex w-full items-center justify-between gap-2 rounded-lg border border-white/10 bg-dark-900/80 px-3 py-2 text-left text-sm text-ps-text-primary transition-colors hover:border-white/20 focus:border-neon-cyan/50 focus:outline-none focus:ring-1 focus:ring-neon-cyan/30 disabled:cursor-not-allowed disabled:opacity-40"
+        className="flex w-full items-center justify-between gap-2 rounded-lg border border-ps-edge bg-ps-surface-panel px-3 py-2 text-left text-sm text-ps-text-primary transition-colors hover:border-ps-edge-emphasis focus:border-neon-cyan/50 focus:outline-none focus:ring-1 focus:ring-neon-cyan/30 disabled:cursor-not-allowed disabled:opacity-40"
       >
         <span className={`truncate ${selected ? "" : "text-ps-text-muted"}`}>{selected?.label ?? placeholder}</span>
         <ChevronDown className={`h-4 w-4 shrink-0 text-ps-text-muted transition-transform ${open ? "rotate-180" : ""}`} />
@@ -103,7 +103,7 @@ export function Select({
         <ul
           id={listId}
           role="listbox"
-          className="absolute z-30 mt-1 max-h-60 w-full overflow-auto rounded-lg border border-white/10 bg-dark-950/95 p-1 shadow-xl backdrop-blur"
+          className="absolute z-30 mt-1 max-h-60 w-full overflow-auto rounded-lg border border-ps-edge-hairline bg-ps-surface-ground/95 p-1 shadow-xl backdrop-blur"
         >
           {options.map((o, i) => (
             <li
@@ -118,7 +118,7 @@ export function Select({
                   ? "cursor-not-allowed text-ps-text-faint"
                   : i === active
                     ? "bg-neon-cyan/10 text-neon-cyan"
-                    : "text-ps-text-primary hover:bg-white/5"
+                    : "text-ps-text-primary hover:bg-ps-surface-raised"
               }`}
             >
               <span className="truncate">

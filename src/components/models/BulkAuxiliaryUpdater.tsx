@@ -54,13 +54,13 @@ export default function BulkAuxiliaryUpdater({
   }, [applying, mode, selected, targetModelId, onChange]);
 
   return (
-    <div className="rounded-xl border border-white/10 bg-dark-900/50 overflow-hidden">
+    <div className="rounded-xl border border-ps-edge-hairline bg-ps-surface-panel overflow-hidden">
       {/* Collapsed header */}
       <button
         type="button"
         onClick={() => setExpanded((v) => !v)}
         disabled={disabled}
-        className="w-full flex items-center justify-between px-4 py-2.5 text-left hover:bg-white/5 transition-colors disabled:opacity-50"
+        className="w-full flex items-center justify-between px-4 py-2.5 text-left hover:bg-ps-surface-raised transition-colors disabled:opacity-50"
       >
         <div className="flex items-center gap-2">
           <span className="text-xs font-mono text-ps-text-secondary uppercase tracking-widest">
@@ -79,7 +79,7 @@ export default function BulkAuxiliaryUpdater({
 
       {/* Expanded panel */}
       {expanded && (
-        <div className="px-4 pb-4 pt-1 border-t border-white/5 space-y-3">
+        <div className="px-4 pb-4 pt-1 border-t border-ps-edge-hairline space-y-3">
           {/* Model selector — shared chrome with DefaultsGrid via ModelSelectDropdown */}
           <div>
             <label className="block text-xs font-mono text-ps-text-muted uppercase tracking-widest mb-1">
@@ -129,7 +129,7 @@ export default function BulkAuxiliaryUpdater({
               {AUXILIARY_TASK_TYPES.map((taskType) => (
                 <label
                   key={taskType}
-                  className="flex items-center gap-1.5 cursor-pointer hover:bg-white/5 px-2 py-1 rounded transition-colors"
+                  className="flex items-center gap-1.5 cursor-pointer hover:bg-ps-surface-raised px-2 py-1 rounded transition-colors"
                 >
                   <input
                     type="checkbox"

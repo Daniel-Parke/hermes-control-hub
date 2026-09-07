@@ -73,7 +73,7 @@ function ModelRow({
   return (
     <tr
       data-row-id={model.id}
-      className="border-b border-white/5 last:border-0 hover:bg-white/5 transition-colors"
+      className="border-b border-ps-edge-hairline last:border-0 hover:bg-ps-surface-raised transition-colors"
     >
       <td className="px-4 py-3 font-mono text-white">{model.name}</td>
       <td className="px-4 py-3 font-mono text-ps-text-secondary">{model.provider}</td>
@@ -127,7 +127,7 @@ function ModelRow({
           <button
             type="button"
             onClick={() => onEdit(toModelEditorRecord(model))}
-            className="p-1.5 rounded-lg text-ps-text-muted hover:text-white hover:bg-white/5 transition-colors"
+            className="p-1.5 rounded-lg text-ps-text-muted hover:text-white hover:bg-ps-surface-raised transition-colors"
             aria-label={`Edit ${model.name}`}
             title="Edit"
           >
@@ -220,10 +220,10 @@ export default function ModelsTableSection({
         />
       ) : (
         <GlowSurface accent="purple">
-          <div className="overflow-x-auto rounded-xl border border-white/10 bg-dark-900/40">
+          <div className="overflow-x-auto rounded-xl border border-ps-edge-hairline bg-ps-surface-panel">
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-left text-xs font-mono uppercase tracking-widest text-ps-text-muted border-b border-white/5">
+                <tr className="text-left text-xs font-mono uppercase tracking-widest text-ps-text-muted border-b border-ps-edge-hairline">
                   <th className="px-4 py-2">Name</th>
                   {/* The column an operator asks about first: who serves this
                       model, and what that costs them. */}

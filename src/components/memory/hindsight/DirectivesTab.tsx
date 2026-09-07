@@ -65,8 +65,8 @@ export default function DirectivesTab({
               key={d.id}
               className={`rounded-xl border p-4 transition-colors ${
                 d.is_active
-                  ? "border-white/10 bg-dark-900/50 hover:border-pink-500/20"
-                  : "border-white/5 bg-dark-900/20 opacity-60"
+                  ? "border-ps-edge-hairline bg-ps-surface-panel hover:border-pink-500/20"
+                  : "border-ps-edge-hairline bg-ps-surface-panel opacity-60"
               }`}
             >
               <div className="flex items-start justify-between gap-3">
@@ -91,7 +91,7 @@ export default function DirectivesTab({
                   <RowEditButton onClick={() => onEdit(d)} />
                   <button
                     onClick={() => onToggle(d)}
-                    className="p-1.5 rounded-lg hover:bg-white/5 text-ps-text-muted hover:text-ps-text-secondary transition-colors"
+                    className="p-1.5 rounded-lg hover:bg-ps-surface-raised text-ps-text-muted hover:text-ps-text-secondary transition-colors"
                     title={d.is_active ? "Deactivate" : "Activate"}
                   >
                     {d.is_active ? <ToggleRight className="w-4 h-4 text-green-400" /> : <ToggleLeft className="w-4 h-4" />}

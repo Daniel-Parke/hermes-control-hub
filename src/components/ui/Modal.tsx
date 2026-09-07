@@ -60,10 +60,10 @@ export default function Modal({
         aria-labelledby={titleId}
         tabIndex={-1}
         // design-lint-disable-next-line no-bare-outline-none -- the dialog panel takes programmatic focus on open so its title is announced; a ring around the whole panel is noise
-        className={`w-full ${sizeMap[size]} mx-4 rounded-xl border border-white/10 bg-dark-950 shadow-2xl max-h-[85vh] flex flex-col outline-none`}
+        className={`w-full ${sizeMap[size]} mx-4 rounded-xl border border-ps-edge-hairline bg-ps-surface-ground shadow-2xl max-h-[85vh] flex flex-col outline-none`}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-white/10 flex-shrink-0">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-ps-edge-hairline flex-shrink-0">
           <h2
             id={titleId}
             className="text-lg font-bold text-white flex items-center gap-2"
@@ -75,7 +75,7 @@ export default function Modal({
             type="button"
             onClick={onClose}
             aria-label="Close dialog"
-            className="p-1 rounded-lg text-ps-text-muted hover:bg-white/5 transition-colors"
+            className="p-1 rounded-lg text-ps-text-muted hover:bg-ps-surface-raised transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -86,7 +86,7 @@ export default function Modal({
 
         {/* Footer */}
         {footer && (
-          <div className="flex items-center justify-end gap-3 px-5 py-4 border-t border-white/10 flex-shrink-0">
+          <div className="flex items-center justify-end gap-3 px-5 py-4 border-t border-ps-edge-hairline flex-shrink-0">
             {footer}
           </div>
         )}

@@ -81,7 +81,7 @@ export default function FallbackConfigPanel({
   return (
     <div className="space-y-4">
       {/* Settings section */}
-      <div className="rounded-xl border border-white/10 bg-dark-900/50 p-4 space-y-4">
+      <div className="rounded-xl border border-ps-edge-hairline bg-ps-surface-panel p-4 space-y-4">
         {/* Retry threshold */}
         <div>
           <label className="block text-xs font-mono text-ps-text-muted uppercase tracking-widest mb-2">
@@ -93,7 +93,7 @@ export default function FallbackConfigPanel({
             max="10"
             value={config.apiMaxRetries}
             onChange={(e) => handleRetriesChange(e.target.value)}
-            className="w-24 h-9 min-h-9 bg-dark-800 border border-white/10 rounded-lg px-3 text-sm text-white font-mono outline-none focus:border-neon-purple/50 transition-colors"
+            className="w-24 h-9 min-h-9 bg-ps-surface-inset border border-ps-edge rounded-lg px-3 text-sm text-white font-mono outline-none focus:border-neon-purple/50 transition-colors"
           />
           <span className="ml-2 text-xs text-ps-text-muted font-mono">
             attempts before falling back
@@ -186,7 +186,7 @@ export default function FallbackConfigPanel({
           type="button"
           onClick={() => void onImportFromConfig()}
           disabled={importing}
-          className="flex items-center gap-2 px-4 h-9 bg-white/5 border border-white/10 text-ps-text-secondary text-xs font-mono rounded-lg hover:bg-white/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex items-center gap-2 px-4 h-9 bg-ps-surface-raised border border-ps-edge text-ps-text-secondary text-xs font-mono rounded-lg hover:bg-ps-surface-raised transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <Upload className={`w-3.5 h-3.5 ${importing ? "animate-bounce" : ""}`} />
           {importing ? "Importing…" : "Import from config"}

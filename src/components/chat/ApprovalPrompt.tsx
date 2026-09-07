@@ -26,7 +26,7 @@ export default function ApprovalPrompt({
       <div className="ml-auto flex items-center gap-2">
         <button
           onClick={onDeny}
-          className="rounded-md border border-white/15 px-3 py-1 text-xs font-mono text-ps-text-secondary hover:bg-white/5"
+          className="rounded-md border border-ps-edge-emphasis px-3 py-1 text-xs font-mono text-ps-text-secondary hover:bg-ps-surface-raised"
         >
           Deny
         </button>

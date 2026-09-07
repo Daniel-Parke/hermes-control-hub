@@ -37,7 +37,7 @@ function humanSize(bytes: number): string {
 
 function Card({ icon: Icon, title, children }: { icon: typeof Settings; title: string; children: React.ReactNode }) {
   return (
-    <section className="rounded-xl border border-white/10 bg-dark-900/50 p-5 space-y-4">
+    <section className="rounded-xl border border-ps-edge-hairline bg-ps-surface-panel p-5 space-y-4">
       <h2 className="flex items-center gap-2 text-sm font-semibold text-white">
         <Icon className="w-4 h-4 text-neon-orange" />
         {title}
@@ -49,7 +49,7 @@ function Card({ icon: Icon, title, children }: { icon: typeof Settings; title: s
 
 function Row({ label, value }: { label: string; value: string | number }) {
   return (
-    <div className="flex items-baseline justify-between gap-4 border-b border-white/5 py-1.5 last:border-0">
+    <div className="flex items-baseline justify-between gap-4 border-b border-ps-edge-hairline py-1.5 last:border-0">
       <dt className="text-xs font-mono text-ps-text-muted shrink-0">{label}</dt>
       <dd className="text-xs font-mono text-ps-text-primary text-right break-all">{value}</dd>
     </div>
@@ -143,7 +143,7 @@ export default function SystemPage() {
               <button
                 type="button"
                 onClick={() => void copy()}
-                className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-xs font-mono text-ps-text-secondary hover:bg-white/10 transition-colors"
+                className="flex items-center gap-2 px-3 py-2 rounded-lg bg-ps-surface-raised border border-ps-edge text-xs font-mono text-ps-text-secondary hover:bg-ps-surface-raised transition-colors"
               >
                 <Copy className="w-3.5 h-3.5" />
                 Copy for a bug report
@@ -182,7 +182,7 @@ export default function SystemPage() {
           ) : backups.data.backups.length === 0 ? (
             <p className="text-xs text-ps-text-muted">No backups yet.</p>
           ) : (
-            <ul className="divide-y divide-white/5">
+            <ul className="divide-y divide-ps-edge-hairline">
               {backups.data.backups.map((b) => (
                 <li key={b.path} className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 py-1.5">
                   <span className="font-mono text-xs text-ps-text-primary break-all">{b.name}</span>
@@ -200,13 +200,13 @@ export default function SystemPage() {
             </p>
             {backups.data?.restoreCommand && (
               <>
-                <pre className="max-h-40 overflow-auto rounded-lg bg-ps-surface-well px-3 py-2 text-xs font-mono text-ps-text-muted whitespace-pre-wrap break-words">
+                <pre className="max-h-40 overflow-auto rounded-lg bg-ps-surface-inset px-3 py-2 text-xs font-mono text-ps-text-muted whitespace-pre-wrap break-words">
                   {backups.data.restoreCommand}
                 </pre>
                 <button
                   type="button"
                   onClick={() => void copyRestore()}
-                  className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-xs font-mono text-ps-text-secondary hover:bg-white/10 transition-colors"
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg bg-ps-surface-raised border border-ps-edge text-xs font-mono text-ps-text-secondary hover:bg-ps-surface-raised transition-colors"
                 >
                   <Copy className="w-3.5 h-3.5" />
                   Copy the restore command

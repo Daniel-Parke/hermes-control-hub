@@ -382,7 +382,7 @@ export default function MissionCreateForm({
         </div>
       )}
       {editingId && isDraftEdit && (
-        <div className="rounded-lg bg-white/5 border border-white/10 p-3 text-xs text-ps-text-muted font-mono">
+        <div className="rounded-lg bg-ps-surface-raised border border-ps-edge-hairline p-3 text-xs text-ps-text-muted font-mono">
           This mission is a draft. Choose how to run it in Dispatch — save,
           queue for when the agent is idle, run now, or schedule.
         </div>
@@ -435,7 +435,7 @@ export default function MissionCreateForm({
           value={formState.newName}
           onChange={(e) => setFormField("newName", e.target.value)}
           placeholder="e.g., Research quantum computing trends" aria-label="Mission name"
-          className="w-full h-9 bg-dark-800/50 border border-white/10 rounded-lg px-3 text-sm text-white placeholder-white/20 outline-none focus:border-neon-cyan/50 font-mono"
+          className="w-full h-9 bg-ps-surface-inset border border-ps-edge rounded-lg px-3 text-sm text-white placeholder-white/20 outline-none focus:border-neon-cyan/50 font-mono"
         />
       </div>
 
@@ -483,7 +483,7 @@ export default function MissionCreateForm({
               className={`h-9 px-3 rounded-lg text-xs font-mono border transition-colors ${
                 formState.newDispatch === mode.id
                   ? "border-neon-cyan/50 bg-cyan-500/10 text-neon-cyan"
-                  : "border-white/10 text-ps-text-muted hover:text-ps-text-secondary"
+                  : "border-ps-edge text-ps-text-muted hover:text-ps-text-secondary"
               }`}
             >
               {mode.label}
@@ -526,7 +526,7 @@ export default function MissionCreateForm({
             {formState.newLocalDirs.map((dir, i) => (
               <div
                 key={`${dir.path}-${i}`}
-                className="rounded-lg border border-neon-cyan/15 bg-dark-800/30 px-2 py-2"
+                className="rounded-lg border border-neon-cyan/15 bg-ps-surface-raised px-2 py-2"
               >
                 <LocalDirRow
                   mode="saved"
@@ -557,7 +557,7 @@ export default function MissionCreateForm({
             {formState.newReferences.map((ref, i) => (
               <div
                 key={i}
-                className="flex items-center gap-2 bg-dark-800/50 border border-neon-pink/20 rounded-lg px-3 py-1.5 h-9"
+                className="flex items-center gap-2 bg-ps-surface-raised border border-neon-pink/20 rounded-lg px-3 py-1.5 h-9"
               >
                 <span className="text-xs font-mono text-neon-pink truncate flex-1">
                   {ref}
@@ -589,7 +589,7 @@ export default function MissionCreateForm({
                   }
                 }}
                 placeholder="URL, doc path..." aria-label="Reference to add"
-                className="flex-1 h-9 bg-dark-800/50 border border-white/10 rounded-lg px-3 text-xs text-white placeholder-white/20 outline-none focus:border-neon-pink/50 font-mono"
+                className="flex-1 h-9 bg-ps-surface-inset border border-ps-edge rounded-lg px-3 text-xs text-white placeholder-white/20 outline-none focus:border-neon-pink/50 font-mono"
               />
               <button
                 type="button"
@@ -725,7 +725,7 @@ export default function MissionCreateForm({
   }
 
   return (
-    <div className="rounded-xl border border-neon-cyan/20 bg-dark-900/50 p-4 mb-6">
+    <div className="rounded-xl border border-neon-cyan/20 bg-ps-surface-panel p-4 mb-6">
       <h3 className="text-sm font-mono text-neon-cyan uppercase tracking-widest mb-4">
         {editingId ? "Edit Mission" : "New Mission"}
       </h3>

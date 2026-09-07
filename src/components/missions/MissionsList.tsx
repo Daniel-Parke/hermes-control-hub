@@ -147,7 +147,7 @@ export default function MissionsList({ vm }: MissionsListProps) {
                   className={`px-3 py-1 rounded-full text-xs font-mono transition-colors ${
                     categoryFilter === "all"
                       ? FALLBACK_CATEGORY_ACTIVE
-                                            : "text-ps-text-muted border border-white/10 hover:text-ps-text-secondary hover:border-white/20"
+                                            : "text-ps-text-muted border border-ps-edge hover:text-ps-text-secondary hover:border-ps-edge-emphasis"
                   }`}
                 >
                   All
@@ -162,7 +162,7 @@ export default function MissionsList({ vm }: MissionsListProps) {
                       className={`px-3 py-1 rounded-full text-xs font-mono transition-colors ${
                         active
                           ? (CATEGORY_COLOR_CLASSES[pill.color] ?? FALLBACK_CATEGORY_ACTIVE)
-                          : "text-ps-text-muted border border-white/10 hover:text-ps-text-secondary hover:border-white/20"
+                          : "text-ps-text-muted border border-ps-edge hover:text-ps-text-secondary hover:border-ps-edge-emphasis"
                       }`}
                     >
                       {pill.name} ({pill.count})
@@ -210,7 +210,7 @@ export default function MissionsList({ vm }: MissionsListProps) {
               className={`px-3 py-1 rounded-full text-xs font-mono transition-colors ${
                 missionCategoryFilter === "all"
                   ? FALLBACK_CATEGORY_ACTIVE
-                                        : "text-ps-text-muted border border-white/10 hover:text-ps-text-secondary hover:border-white/20"
+                                        : "text-ps-text-muted border border-ps-edge hover:text-ps-text-secondary hover:border-ps-edge-emphasis"
               }`}
             >
               All missions
@@ -225,7 +225,7 @@ export default function MissionsList({ vm }: MissionsListProps) {
                   className={`px-3 py-1 rounded-full text-xs font-mono transition-colors ${
                     active
                       ? (CATEGORY_COLOR_CLASSES[pill.color] ?? FALLBACK_CATEGORY_ACTIVE)
-                      : "text-ps-text-muted border border-white/10 hover:text-ps-text-secondary hover:border-white/20"
+                      : "text-ps-text-muted border border-ps-edge hover:text-ps-text-secondary hover:border-ps-edge-emphasis"
                   }`}
                 >
                   {pill.name} ({pill.count})
@@ -235,7 +235,7 @@ export default function MissionsList({ vm }: MissionsListProps) {
           </div>
         )}
         <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-1 bg-dark-900/50 rounded-lg border border-white/10 p-1">
+          <div className="flex items-center gap-1 bg-ps-surface-panel rounded-lg border border-ps-edge-hairline p-1">
             {STATUS_FILTERS.map(
               (f) => (
                 <button
@@ -259,7 +259,7 @@ export default function MissionsList({ vm }: MissionsListProps) {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search missions..." aria-label="Mission search"
-              className="w-full bg-dark-900/50 border border-white/10 rounded-lg pl-9 pr-8 py-1.5 text-xs text-white placeholder-white/20 outline-none focus:border-neon-cyan/50 font-mono"
+              className="w-full bg-ps-surface-panel border border-ps-edge rounded-lg pl-9 pr-8 py-1.5 text-xs text-white placeholder-white/20 outline-none focus:border-neon-cyan/50 font-mono"
             />
             {search && (
               <button
@@ -353,7 +353,7 @@ export default function MissionsList({ vm }: MissionsListProps) {
                   </div>
                   <div className="space-y-2 flex-1">
                     {columnMissions.length === 0 ? (
-                      <div className="rounded-xl border border-dashed border-white/5 bg-dark-900/20 p-4 text-center text-xs font-mono text-ps-text-faint">
+                      <div className="rounded-xl border border-dashed border-ps-edge-hairline bg-ps-surface-panel p-4 text-center text-xs font-mono text-ps-text-faint">
                         No missions
                       </div>
                     ) : (
@@ -364,12 +364,12 @@ export default function MissionsList({ vm }: MissionsListProps) {
                             the column is the panel and the divider is what
                             separates two missions (T-0033). */}
                         <Panel>
-                          <div className="divide-y divide-white/5">
+                          <div className="divide-y divide-ps-edge-hairline">
                             {visibleMissions.map((mission: MissionRow) => {
                               const rowStatus =
                                 STATUS_CONFIG[mission.status] || {
                                   dot: "idle" as const,
-                                  bg: "bg-white/5",
+                                  bg: "bg-ps-surface-raised",
                                   text: "text-ps-text-muted",
                                 };
                               const isExpanded = expandedId === mission.id;
@@ -480,7 +480,7 @@ export default function MissionsList({ vm }: MissionsListProps) {
                             <button
                               type="button"
                               onClick={toggleCollapsedColumn}
-                              className="w-full text-xs font-mono text-neon-cyan/80 hover:text-neon-cyan py-2 text-center border border-dashed border-white/5 rounded-lg transition-colors mt-2"
+                              className="w-full text-xs font-mono text-neon-cyan/80 hover:text-neon-cyan py-2 text-center border border-dashed border-ps-edge rounded-lg transition-colors mt-2"
                             >
                               Show all {columnMissions.length} missions →
                             </button>

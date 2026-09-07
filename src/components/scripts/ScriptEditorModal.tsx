@@ -96,7 +96,7 @@ export default function ScriptEditorModal({
               onChange={(e) => onNameChange(e.target.value)}
               placeholder="my-script.mjs"
               spellCheck={false}
-              className="w-full rounded-lg border border-white/10 bg-dark-800 px-3 py-2 font-mono text-sm text-ps-text-primary outline-none focus:border-neon-cyan/50"
+              className="w-full rounded-lg border border-ps-edge bg-ps-surface-inset px-3 py-2 font-mono text-sm text-ps-text-primary outline-none focus:border-neon-cyan/50"
             />
           </div>
         )}
@@ -123,7 +123,7 @@ export default function ScriptEditorModal({
               }}
               spellCheck={false}
               rows={20}
-              className="block w-full resize-y rounded-lg border border-white/10 bg-dark-800 p-3 font-mono text-[13px] leading-relaxed text-ps-text-primary outline-none focus:border-neon-cyan/50"
+              className="block w-full resize-y rounded-lg border border-ps-edge bg-ps-surface-inset p-3 font-mono text-[13px] leading-relaxed text-ps-text-primary outline-none focus:border-neon-cyan/50"
               style={{ tabSize: 2 }}
             />
             <div className="flex items-center justify-between font-mono text-xs text-ps-text-muted">

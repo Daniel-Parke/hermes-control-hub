@@ -45,7 +45,7 @@ function compactNum(n: number): string {
 
 function Card({ children, className = "" }: { children: ReactNode; className?: string }) {
   return (
-    <div className={`rounded-2xl border border-white/10 bg-dark-900/60 p-4 ${className}`}>
+    <div className={`rounded-2xl border border-ps-edge-hairline bg-ps-surface-panel p-4 ${className}`}>
       {children}
     </div>
   );
@@ -71,7 +71,7 @@ function CardTitle({ icon: Icon, hint, children }: { icon: React.ComponentType<{
 // token figures on this page could not be told apart.
 function MetricTile({ label, value, color = "cyan", hint }: { label: string; value: string; color?: NeonColor; hint?: string }) {
   return (
-    <div className="rounded-xl border border-white/10 bg-dark-900/40 p-3" title={hint} style={{ boxShadow: `inset 0 0 18px ${neonAlpha(color, 5)}` }}>
+    <div className="rounded-xl border border-ps-edge-hairline bg-ps-surface-panel p-3" title={hint} style={{ boxShadow: `inset 0 0 18px ${neonAlpha(color, 5)}` }}>
       <div className="font-mono text-2xl font-bold text-white">{value}</div>
       <div className="mt-0.5 text-xs uppercase tracking-wider text-ps-text-muted">{label}</div>
     </div>
@@ -154,7 +154,7 @@ export default function InsightsPage() {
           subtitle="Interaction analytics & achievements"
           color="cyan"
           actions={
-            <div className="flex items-center gap-1 rounded-lg border border-white/10 bg-dark-900/60 p-0.5">
+            <div className="flex items-center gap-1 rounded-lg border border-ps-edge-hairline bg-ps-surface-panel p-0.5">
               {RANGES.map((r) => (
                 <button
                   key={r}
@@ -188,7 +188,7 @@ export default function InsightsPage() {
           <>
             {/* ── First-run nudge (analytics start empty) ── */}
             {!error && stats && totalEvents === 0 && (
-              <div className="rounded-2xl border border-neon-cyan/20 bg-dark-900/60 p-6 text-center" style={{ boxShadow: `0 0 24px ${neonAlpha("cyan", 6)}` }}>
+              <div className="rounded-2xl border border-neon-cyan/20 bg-ps-surface-panel p-6 text-center" style={{ boxShadow: `0 0 24px ${neonAlpha("cyan", 6)}` }}>
                 <Sparkles className="mx-auto h-6 w-6 text-neon-cyan" />
                 <h2 className="mt-2 text-sm font-semibold text-ps-text-primary">No activity yet</h2>
                 <p className="mx-auto mt-1 max-w-md text-xs leading-relaxed text-ps-text-muted">

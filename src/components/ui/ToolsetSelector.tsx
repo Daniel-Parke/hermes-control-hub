@@ -56,7 +56,7 @@ export default function ToolsetSelector({
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg bg-white/5 border border-white/10 text-sm hover:border-white/30 transition-colors text-left"
+        className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg bg-ps-surface-raised border border-ps-edge text-sm hover:border-ps-edge-emphasis transition-colors text-left"
       >
         <Wrench className="w-4 h-4 text-neon-orange/90 flex-shrink-0" />
         <span className="text-ps-text-muted flex-1">
@@ -89,8 +89,8 @@ export default function ToolsetSelector({
       )}
 
       {open && (
-        <div className="absolute z-50 mt-1 w-full rounded-lg border border-white/10 bg-dark-900 shadow-xl">
-          <div className="p-2 border-b border-white/10">
+        <div className="absolute z-50 mt-1 w-full rounded-lg border border-ps-edge-hairline bg-ps-surface-panel shadow-xl">
+          <div className="p-2 border-b border-ps-edge-hairline">
             <div className="relative">
               <Search className="absolute left-2.5 top-2.5 w-3.5 h-3.5 text-ps-text-muted" />
               <input
@@ -98,7 +98,7 @@ export default function ToolsetSelector({
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search toolsets…" aria-label="Toolset search"
-                className="w-full pl-8 pr-3 py-2 text-xs bg-dark-950 border border-white/10 rounded text-white focus:outline-none focus:border-neon-orange/40"
+                className="w-full pl-8 pr-3 py-2 text-xs bg-ps-surface-ground border border-ps-edge rounded text-white focus:outline-none focus:border-neon-orange/40"
               />
             </div>
             <p className="text-xs text-ps-text-muted mt-1.5 px-1">
@@ -125,7 +125,7 @@ export default function ToolsetSelector({
                     add(id);
                     setSearch("");
                   }}
-                  className="w-full text-left px-2 py-1.5 rounded text-xs font-mono text-ps-text-secondary hover:bg-white/5"
+                  className="w-full text-left px-2 py-1.5 rounded text-xs font-mono text-ps-text-secondary hover:bg-ps-surface-raised"
                 >
                   {toolsetLabel(id)}
                   <span className="text-ps-text-faint ml-1">({id})</span>

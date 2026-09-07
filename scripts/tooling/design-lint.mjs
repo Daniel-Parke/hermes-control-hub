@@ -387,8 +387,14 @@ export const RULES = [
     // Inside the declaration blocks a literal IS the token; everywhere else it
     // is a colour nobody can retheme. The line test is the cheap approximation:
     // a raw colour on a line that is not a custom-property declaration.
+    // A declaration's NAME may carry digits: --color-cherenkov-100 and
+    // --color-dark-950 both do, and `[a-z-]+` matched neither, so the rule
+    // reported its own token block as raw colour. Comments are skipped for the
+    // same reason: the paragraph explaining why an accent was brightened is
+    // prose about a hex, not a use of one.
     test: (line) =>
-      !/^\s*--[a-z-]+:/.test(line) &&
+      !/^\s*--[a-z0-9-]+:/.test(line) &&
+      !/^\s*(?:\/\*|\*|\/\/)/.test(line) &&
       /#[0-9a-fA-F]{3,8}\b|(?<![A-Za-z0-9.$])rgba?\(\s*\d/.test(line),
   },
   {
@@ -428,6 +434,41 @@ function walk(dir, out = []) {
  * @returns {{ found: Map<string, {line:number,text:string}[]>, counts: Record<string, number> }}
  */
 /**
+ * Which lines sit inside a block comment.
+ *
+ * The per-line skip below recognises a comment by its leading marker, which is
+ * the house style in .ts and .tsx and is not CSS: a `/* … *\/` block's interior
+ * lines carry no marker at all. globals.css documents the surface ladder as a
+ * table of hexes inside one, and every row of it read as a raw colour (T-0118).
+ *
+ * A line counts as comment when it STARTED inside one and contributed no code
+ * of its own, so `foo: red; /* note *\/` is still code and the closing line of
+ * a block is still comment.
+ */
+export function blockCommentLines(lines) {
+  const inside = new Array(lines.length).fill(false);
+  let open = false;
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const startedInside = open;
+    let code = false;
+    for (let j = 0; j < line.length; j++) {
+      if (!open && line.startsWith("/*", j)) {
+        open = true;
+        j += 1;
+      } else if (open && line.startsWith("*/", j)) {
+        open = false;
+        j += 1;
+      } else if (!open && !/\s/.test(line[j])) {
+        code = true;
+      }
+    }
+    inside[i] = startedInside && !code;
+  }
+  return inside;
+}
+
+/**
  * Every violation in one file's lines, keyed `rule::path`.
  *
  * Split out of scanTree so a test can plant a line and prove the scan SEES
@@ -439,6 +480,7 @@ function walk(dir, out = []) {
  */
 export function violationsIn(path, lines) {
   const found = new Map();
+  const commented = blockCommentLines(lines);
   for (const rule of RULES) {
     if (!rule.files(path)) continue;
     // A file-level rule answers once per file with the line to report, or
@@ -463,6 +505,8 @@ export function violationsIn(path, lines) {
       if (rule.codeOnly !== false) {
         const t = lines[i].trimStart();
         if (t.startsWith("//") || t.startsWith("*") || t.startsWith("/*") || t.startsWith("{/*")) continue;
+        // And the interior of a block comment, which carries no marker in CSS.
+        if (commented[i]) continue;
       }
       // A pragma line names the rule it excuses; it is never itself a hit.
       if (PRAGMA.test(lines[i])) continue;

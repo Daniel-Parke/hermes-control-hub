@@ -24,7 +24,7 @@ export function ChatModeToggle({
   disabled?: boolean;
 }) {
   return (
-    <div className="flex items-center rounded-lg border border-white/10 bg-white/[0.02] p-0.5">
+    <div className="flex items-center rounded-lg border border-ps-edge-hairline bg-ps-surface-raised p-0.5">
       {MODES.map((m) => {
         const active = m.value === mode;
         const Icon = m.Icon;

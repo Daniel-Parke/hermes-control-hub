@@ -17,7 +17,7 @@ import type { AccentColor } from "@/types/console";
  * (`--ps-shell-header-min-height` in globals.css).
  */
 export const shellHeaderBarClasses =
-  "border-b border-white/10 bg-dark-900/50 backdrop-blur-xl min-h-[var(--ps-shell-header-min-height)] flex items-center";
+  "border-b border-ps-edge-hairline bg-ps-surface-panel backdrop-blur-xl min-h-[var(--ps-shell-header-min-height)] flex items-center";
 
 // ═══════════════════════════════════════════════════════════════
 // The surface ladder and the measures — the code mirror of the tokens ruled at
@@ -28,7 +28,7 @@ export const shellHeaderBarClasses =
 // a mirror goes stale, so tests/unit/lockbook-tokens.test.ts reads the CSS and
 // fails if either map names a token globals.css does not declare.
 //
-// These are the semantic names. The appearance-named spellings (bg-dark-900,
+// These are the semantic names. The appearance-named spellings (bg-ps-surface-panel,
 // max-w-4xl) still paint the same pixels and are still everywhere; nothing is
 // repainted by declaring a name for what is already there.
 // ═══════════════════════════════════════════════════════════════
@@ -37,8 +37,26 @@ export const shellHeaderBarClasses =
 export const surfaceClasses = {
   ground: "bg-ps-surface-ground",
   panel: "bg-ps-surface-panel",
-  well: "bg-ps-surface-well",
-  hairline: "border-ps-surface-hairline",
+  raised: "bg-ps-surface-raised",
+  inset: "bg-ps-surface-inset",
+} as const;
+
+/**
+ * The three rules, which are a separate ladder from the three fills: on the
+ * surface ray a 3:1 stroke comes out a blue line rather than an edge, so the
+ * rules travel a cooler, far less saturated one (T-0116).
+ *
+ *   edge      a control's boundary and the shell's seams. 3:1, WCAG 1.4.11.
+ *   hairline  a subdivision inside one surface: a card outline, a row rule.
+ *             1.63:1, because a card whose fill already sits 1.47:1 off the
+ *             page does not also need a 3:1 stroke, and drawing one round
+ *             every tile reads as wireframe.
+ *   emphasis  selected, armed, focused. 4.52:1.
+ */
+export const edgeClasses = {
+  edge: "border-ps-edge",
+  hairline: "border-ps-edge-hairline",
+  emphasis: "border-ps-edge-emphasis",
 } as const;
 
 /** Column widths and the block rhythm. `block` is a `space-y-*`, not a width. */
@@ -156,8 +174,11 @@ export const badgeBgMap: Record<AccentColor, ColorEntry> = {
 
 // ── Base Input Styles ─────────────────────────────────────────
 export const baseInputStyles =
+  // `edge` rather than `hairline`: this is the base every text input in the
+  // product wears, and a control's boundary is the one WCAG 1.4.11 is about.
+  // On the hairline it measured 2.38:1 against the page (T-0118).
   // design-lint-disable-next-line no-bare-outline-none -- inputFieldClasses appends the accent focus border to this base; it is never used bare
-  "w-full bg-dark-900/50 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/20 outline-none transition-colors font-mono";
+  "w-full bg-ps-surface-panel border border-ps-edge rounded-lg px-3 py-2 text-sm text-white placeholder-white/20 outline-none transition-colors font-mono";
 
 /** Canonical text input / select classes with accent focus ring. */
 export function inputFieldClasses(accent: AccentColor = "cyan"): string {

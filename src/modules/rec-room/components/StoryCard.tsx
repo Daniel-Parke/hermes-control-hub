@@ -30,7 +30,7 @@ export default function StoryCard({ story, onRead, onDelete }: StoryCardProps) {
   return (
     <div
       onClick={() => onRead(story.id)}
-      className="rounded-xl border border-neon-purple/15 bg-dark-900/50 p-5 hover:border-neon-purple/30 hover:shadow-[0_0_15px_rgb(var(--ps-rgb-neon-purple)_/_0.06)] transition-all cursor-pointer group flex flex-col">
+      className="rounded-xl border border-neon-purple/15 bg-ps-surface-panel p-5 hover:border-neon-purple/30 hover:shadow-[0_0_15px_rgb(var(--ps-rgb-neon-purple)_/_0.06)] transition-all cursor-pointer group flex flex-col">
       <div className="flex items-start justify-between mb-3">
         <div className="min-w-0 flex-1">
           <h3 className="text-sm font-semibold text-ps-text-primary truncate">{story.title}</h3>
@@ -47,7 +47,7 @@ export default function StoryCard({ story, onRead, onDelete }: StoryCardProps) {
       {story.premise && (
         <p className="text-xs text-ps-text-muted leading-relaxed line-clamp-2 mb-3 flex-1">{story.premise}</p>
       )}
-      <div className="flex items-center justify-between mt-auto pt-3 border-t border-white/5">
+      <div className="flex items-center justify-between mt-auto pt-3 border-t border-ps-edge-hairline">
         <div className="flex items-center gap-3">
           <span className="text-xs font-mono text-ps-text-faint">{totalWords.toLocaleString()} words</span>
           <div className="flex items-center gap-1 text-xs font-mono text-ps-text-muted">

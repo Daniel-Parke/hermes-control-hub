@@ -57,7 +57,7 @@ export default function SpendPanel({ summary, onSave, saving = false }: SpendPan
     return (
       <div
         data-testid="spend-loading"
-        className="rounded-2xl border border-white/10 bg-dark-900/60 p-4 text-xs text-ps-text-muted"
+        className="rounded-2xl border border-ps-edge-hairline bg-ps-surface-panel p-4 text-xs text-ps-text-muted"
       >
         Loading provider spend…
       </div>
@@ -91,7 +91,7 @@ export default function SpendPanel({ summary, onSave, saving = false }: SpendPan
   const meterPct = verdict.fraction === null ? 0 : Math.min(100, Math.round(verdict.fraction * 100));
 
   return (
-    <div className="rounded-2xl border border-white/10 bg-dark-900/60 p-4">
+    <div className="rounded-2xl border border-ps-edge-hairline bg-ps-surface-panel p-4">
       <div className="mb-3 flex items-center gap-2">
         <Wallet className="h-4 w-4 text-neon-green" />
         <h2 className="text-xs font-mono uppercase tracking-widest text-ps-text-muted">
@@ -118,7 +118,7 @@ export default function SpendPanel({ summary, onSave, saving = false }: SpendPan
           <div
             key={p.period}
             data-testid={`spend-total-${p.period}`}
-            className="rounded-xl border border-white/10 bg-dark-900/40 p-3"
+            className="rounded-xl border border-ps-edge-hairline bg-ps-surface-panel p-3"
             style={{ boxShadow: `inset 0 0 18px ${neonAlpha("green", 5)}` }}
           >
             <div className="font-mono text-2xl font-bold text-ps-text-primary">
@@ -207,7 +207,7 @@ export default function SpendPanel({ summary, onSave, saving = false }: SpendPan
             </span>
             <span className="font-mono">{meterPct}%</span>
           </div>
-          <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-white/10">
+          <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-ps-surface-raised">
             <div
               className={`h-full rounded-full ${verdict.breached ? "bg-neon-pink" : "bg-neon-green"}`}
               style={{ width: `${meterPct}%` }}
@@ -238,7 +238,7 @@ export default function SpendPanel({ summary, onSave, saving = false }: SpendPan
       )}
 
       {/* ── The budget control. One line until it is asked for. ── */}
-      <div className="mt-4 border-t border-white/10 pt-3">
+      <div className="mt-4 border-t border-ps-edge-hairline pt-3">
         <button
           type="button"
           data-testid="spend-budget-toggle"

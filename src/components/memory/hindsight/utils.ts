@@ -34,7 +34,7 @@ export function stringOr(value: unknown, fallback?: string): string | undefined 
  * Tailwind className for the standard Hindsight modal text `<input>`.
  *
  * 6 sites in `Modals.tsx` rendered the byte-identical className
- * `w-full bg-dark-800 border border-white/10 rounded-lg px-3 py-2
+ * `w-full bg-ps-surface-inset border border-ps-edge rounded-lg px-3 py-2
  * text-sm text-ps-text-primary focus:border-pink-500/50 focus:outline-none`
  * (memory content tags, directive name, directive priority,
  * directive tags, model name, model tags). Extracted to a constant
@@ -49,13 +49,13 @@ export function stringOr(value: unknown, fallback?: string): string | undefined 
  * the same CSS and the same rendered `<input>`.
  */
 export const HINDSIGHT_TEXT_INPUT_CLASS =
-  "w-full bg-dark-800 border border-white/10 rounded-lg px-3 py-2 text-sm text-ps-text-primary focus:border-pink-500/50 focus:outline-none";
+  "w-full bg-ps-surface-inset border border-ps-edge rounded-lg px-3 py-2 text-sm text-ps-text-primary focus:border-pink-500/50 focus:outline-none";
 
 /**
  * Tailwind className for the standard Hindsight modal `<textarea>`.
  *
  * 3 sites in `Modals.tsx` rendered the byte-identical tail of the
- * className (the `bg-dark-800 border border-white/10 rounded-lg p-3
+ * className (the `bg-ps-surface-inset border border-ps-edge rounded-lg p-3
  * text-sm text-ps-text-primary resize-none focus:border-pink-500/50
  * focus:outline-none` portion) — used by the memory content
  * textarea (h-32), the directive content textarea (h-28), and the
@@ -74,7 +74,7 @@ export const HINDSIGHT_TEXT_INPUT_CLASS =
  * inline string.
  */
 export const HINDSIGHT_TEXTAREA_CLASS =
-  "bg-dark-800 border border-white/10 rounded-lg p-3 text-sm text-ps-text-primary resize-none focus:border-pink-500/50 focus:outline-none";
+  "bg-ps-surface-inset border border-ps-edge rounded-lg p-3 text-sm text-ps-text-primary resize-none focus:border-pink-500/50 focus:outline-none";
 
 /** Badge colour for Hindsight fact_type */
 export function hindsightFactTypeBadgeColor(t: string): "cyan" | "purple" | "orange" | "green" | "gray" {

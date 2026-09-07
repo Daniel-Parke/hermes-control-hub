@@ -34,7 +34,7 @@ export default function ChapterList({ chapters, currentChapter, onSelect }: {
           <button key={ch.number} onClick={() => canRead && onSelect(ch.number)}
             disabled={!canRead}
             className={`w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg text-left transition-all ${
-              isCurrent ? "bg-neon-purple/10 border border-neon-purple/20" : "hover:bg-white/[0.03] border border-transparent"
+              isCurrent ? "bg-neon-purple/10 border border-neon-purple/20" : "hover:bg-ps-surface-raised border border-transparent"
             } ${!canRead ? "opacity-50 cursor-default" : "cursor-pointer"}`}>
             {/* Left: dot + title */}
             <div className="flex items-center gap-2.5 min-w-0">

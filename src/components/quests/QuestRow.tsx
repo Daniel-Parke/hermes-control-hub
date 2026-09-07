@@ -83,7 +83,7 @@ export default function QuestRow({ quest, available, onSkip, onUnskip }: QuestRo
 
   return (
     <li
-      className={`rounded-xl border border-white/10 bg-dark-900/40 p-4 ${quest.skipped ? "opacity-60" : ""}`}
+      className={`rounded-xl border border-ps-edge-hairline bg-ps-surface-panel p-4 ${quest.skipped ? "opacity-60" : ""}`}
     >
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
         <span className={`font-mono text-xs uppercase tracking-wider ${markerTone}`}>{marker}</span>
@@ -118,7 +118,7 @@ export default function QuestRow({ quest, available, onSkip, onUnskip }: QuestRo
       )}
 
       {blocked ? (
-        <div className="mt-3 rounded-lg border border-white/10 bg-white/5 p-3">
+        <div className="mt-3 rounded-lg border border-ps-edge-hairline bg-ps-surface-raised p-3">
           <p className="font-mono text-xs uppercase tracking-wider text-ps-text-muted">
             Unavailable on this host
           </p>
@@ -143,7 +143,7 @@ export default function QuestRow({ quest, available, onSkip, onUnskip }: QuestRo
                 <button
                   type="button"
                   onClick={() => onUnskip(quest.id)}
-                  className="rounded-lg border border-white/10 px-2.5 py-1 font-mono text-xs text-ps-text-muted transition-colors hover:bg-white/5 hover:text-ps-text-primary"
+                  className="rounded-lg border border-ps-edge px-2.5 py-1 font-mono text-xs text-ps-text-muted transition-colors hover:bg-ps-surface-raised hover:text-ps-text-primary"
                 >
                   Unskip
                 </button>
@@ -152,7 +152,7 @@ export default function QuestRow({ quest, available, onSkip, onUnskip }: QuestRo
                 <button
                   type="button"
                   onClick={() => onSkip(quest.id)}
-                  className="rounded-lg border border-white/10 px-2.5 py-1 font-mono text-xs text-ps-text-muted transition-colors hover:bg-white/5 hover:text-ps-text-primary"
+                  className="rounded-lg border border-ps-edge px-2.5 py-1 font-mono text-xs text-ps-text-muted transition-colors hover:bg-ps-surface-raised hover:text-ps-text-primary"
                 >
                   Skip
                 </button>

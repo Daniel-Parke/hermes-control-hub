@@ -8,17 +8,17 @@ export default function MobileHeader() {
 
   /* Compact mobile chrome (3rem): sidebar overlay entrypoint — intentionally shorter than desktop `--ps-shell-header-min-height` (5rem). */
   return (
-    <div className="lg:hidden sticky top-0 z-50 flex items-center min-h-[var(--ps-mobile-header-min-height)] px-3 bg-dark-950/95 backdrop-blur-xl border-b border-white/10 flex-shrink-0 gap-3">
+    <div className="lg:hidden sticky top-0 z-50 flex items-center min-h-[var(--ps-mobile-header-min-height)] px-3 bg-ps-surface-ground/95 backdrop-blur-xl border-b border-ps-edge-hairline flex-shrink-0 gap-3">
       <button
         onClick={toggleMobile}
-        className="p-2 rounded-lg text-ps-text-secondary hover:text-ps-text-primary hover:bg-white/5 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+        className="p-2 rounded-lg text-ps-text-secondary hover:text-ps-text-primary hover:bg-ps-surface-raised transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
         aria-label="Open navigation"
       >
         <Menu className="w-5 h-5" />
       </button>
       <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
         <div className="w-7 h-7 rounded-lg animated-border p-[1.5px]">
-          <div className="w-full h-full bg-dark-900 rounded-[5px] flex items-center justify-center">
+          <div className="w-full h-full bg-ps-surface-panel rounded-[5px] flex items-center justify-center">
             <Terminal className="w-4 h-4 text-neon-cyan" />
           </div>
         </div>

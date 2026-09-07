@@ -48,7 +48,7 @@ export default function ActiveMissionsPanel({
           </Link>
         }
       />
-      <div className="divide-y divide-white/5">
+      <div className="divide-y divide-ps-edge-hairline">
         {missions.map((m) => (
           // Ledger row (WG-WEB-003): a parallel-fact list, so the row is the
           // container the pointer answers, not the panel around it. The row,

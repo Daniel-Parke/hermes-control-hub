@@ -62,10 +62,10 @@ export default function DispatchStrip({ templates, categories }: DispatchStripPr
   );
 
   return (
-    <div className="rounded-xl border border-neon-cyan/20 bg-dark-900/50 overflow-hidden">
+    <div className="rounded-xl border border-neon-cyan/20 bg-ps-surface-panel overflow-hidden">
       <button
         onClick={toggle}
-        className="w-full flex items-center justify-between px-4 py-2.5 hover:bg-white/[0.02] transition-colors"
+        className="w-full flex items-center justify-between px-4 py-2.5 hover:bg-ps-surface-raised transition-colors"
       >
         <div className="flex items-center gap-2">
           <Rocket className="w-4 h-4 text-neon-cyan" />

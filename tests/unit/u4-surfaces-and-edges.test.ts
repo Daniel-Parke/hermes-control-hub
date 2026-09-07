@@ -23,6 +23,8 @@
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 
+import { blockCommentLines, violationsIn } from "../../scripts/tooling/design-lint.mjs";
+
 const ROOT = join(__dirname, "..", "..");
 const SRC = join(ROOT, "src");
 
@@ -152,5 +154,63 @@ describe("the code mirror names the same rungs the CSS does", () => {
   it("and does not carry the two the ladder replaced", () => {
     expect(theme()).not.toMatch(/\bwell:/);
     expect(theme()).not.toMatch(/border-ps-surface-hairline/);
+  });
+});
+
+/**
+ * design-lint skips a comment by its leading marker, which is the house style
+ * in .ts and .tsx and is not CSS at all: a block comment's interior lines carry
+ * no marker. globals.css documents this very ladder as a table of hexes inside
+ * one, so nine rows of the derivation counted as raw colour and the rule that
+ * polices colour sprawl was reporting its own file's prose about it.
+ *
+ * Both sides are asserted. A mask that is too greedy blinds every code-only
+ * rule at once and looks exactly like a clean codebase.
+ */
+describe("the linter can read a block comment", () => {
+  it("calls the interior of one comment, marker or no marker", () => {
+    const lines = [
+      "  --color-ps-edge: #6c7887;",
+      "/* the ladder, derived:",
+      "   panel      #1e3042   ground   1.466",
+      "   edge       #6c7887   panel    3.003",
+      "*/",
+      "  box-shadow: 0 0 5px rgb(34 211 238 / 0.6);",
+    ];
+    // The OPENING line is not in this mask's job: it starts with `/*` and the
+    // runner's leading-marker check already skips it. What no marker check can
+    // see is lines 2 and 3, and the line that closes.
+    expect(blockCommentLines(lines)).toEqual([false, false, true, true, true, false]);
+  });
+
+  it("does not call code a comment because a comment shares its line", () => {
+    const lines = [
+      "  color: #fff; /* the brand white */",
+      "  background: rgb(1 2 3);",
+    ];
+    expect(blockCommentLines(lines)).toEqual([false, false]);
+  });
+
+  it("closes on the line that closes, not the one after", () => {
+    expect(blockCommentLines(["/* a */", "  color: #fff;"])).toEqual([false, false]);
+  });
+
+  /**
+   * The point of the whole thing, on the real file: the ladder's own table of
+   * hexes is documentation and the rule is silent about it, while a raw colour
+   * in a declaration is still caught.
+   */
+  it("so globals.css can document a hex without violating a rule about hexes", () => {
+    const css = readFileSync(join(ROOT, "src", "app", "globals.css"), "utf-8")
+      .replace(/\r\n/g, "\n")
+      .split("\n");
+    const ids = [...violationsIn("src/app/globals.css", css).keys()].map((k) => k.split("::")[0]);
+    expect(ids).not.toContain("no-raw-colour-in-css");
+
+    const planted = [...css, "  .thing { box-shadow: 0 0 5px rgb(34 211 238 / 0.6); }"];
+    const after = [...violationsIn("src/app/globals.css", planted).keys()].map(
+      (k) => k.split("::")[0],
+    );
+    expect(after).toContain("no-raw-colour-in-css");
   });
 });

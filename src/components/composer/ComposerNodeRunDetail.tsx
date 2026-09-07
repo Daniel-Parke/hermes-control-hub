@@ -134,7 +134,7 @@ export default function ComposerNodeRunDetail({
                 <Label>Gate decisions</Label>
                 <ul className="space-y-2">
                   {approvals.map((a) => (
-                    <li key={a.id} className="rounded-lg border border-white/10 bg-dark-900/40 px-3 py-2">
+                    <li key={a.id} className="rounded-lg border border-ps-edge-hairline bg-ps-surface-panel px-3 py-2">
                       <span
                         className={`font-mono text-xs ${a.action === "accept" ? "text-neon-green" : "text-neon-pink"}`}
                       >
@@ -166,12 +166,12 @@ export default function ComposerNodeRunDetail({
                     type="button"
                     onClick={() => void saveAsArtifact()}
                     disabled={saveState !== "idle"}
-                    className="inline-flex items-center gap-1 rounded border border-white/10 px-2 py-0.5 text-xs font-mono text-ps-text-muted transition hover:border-neon-orange/40 hover:text-neon-orange disabled:opacity-60"
+                    className="inline-flex items-center gap-1 rounded border border-ps-edge px-2 py-0.5 text-xs font-mono text-ps-text-muted transition hover:border-neon-orange/40 hover:text-neon-orange disabled:opacity-60"
                   >
                     {saveState === "saved" ? <><Check className="h-3 w-3" /> Saved</> : <><Save className="h-3 w-3" /> {saveState === "saving" ? "Saving…" : "Save as artifact"}</>}
                   </button>
                 </div>
-                <pre className="max-h-[50vh] overflow-auto whitespace-pre-wrap rounded-lg border border-white/10 bg-dark-900/60 px-3 py-2 text-xs leading-relaxed text-ps-text-secondary">
+                <pre className="max-h-[50vh] overflow-auto whitespace-pre-wrap rounded-lg border border-ps-edge-hairline bg-ps-surface-panel px-3 py-2 text-xs leading-relaxed text-ps-text-secondary">
                   {nodeRun.output}
                 </pre>
               </div>

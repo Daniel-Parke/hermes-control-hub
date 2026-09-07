@@ -64,7 +64,7 @@ export default function RootLayout({
       lang="en"
       className={`${inter.variable} ${jetbrainsMono.variable} h-full antialiased`}
     >
-      <body className="h-full bg-dark-950 text-white">
+      <body className="h-full bg-ps-surface-ground text-white">
         {/*
           The bloom tier: ONE delegated pointer listener for the whole console,
           vendored from PatterTech_Website (src/kit/PROVENANCE.md). It renders
@@ -82,7 +82,7 @@ export default function RootLayout({
         */}
         <a
           href="#main"
-          className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[90] focus:rounded-lg focus:border focus:border-neon-cyan/40 focus:bg-dark-900 focus:px-3 focus:py-2 focus:text-sm focus:font-mono focus:text-ps-text-primary"
+          className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[90] focus:rounded-lg focus:border focus:border-neon-cyan/40 focus:bg-ps-surface-panel focus:px-3 focus:py-2 focus:text-sm focus:font-mono focus:text-ps-text-primary"
         >
           Skip to main content
         </a>
@@ -104,7 +104,10 @@ export default function RootLayout({
         <HelpProvider screens={helpScreenIndex(loadHelpManifest())} concepts={loadHelpConcepts()}>
         <SidebarProvider>
           <div className="h-full flex flex-col lg:flex-row">
-            <div className="border-r border-white/10 flex-shrink-0">
+            {/* No border here. The rail draws its own seam; this wrapper
+                drew a second one right beside it, so what looked like one
+                divider was two 1px rules at 1.25:1 apiece. */}
+            <div className="flex-shrink-0">
               <Sidebar />
             </div>
             <div className="flex-1 flex flex-col min-h-screen min-w-0">

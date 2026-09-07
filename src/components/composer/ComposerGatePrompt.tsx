@@ -84,7 +84,7 @@ export default function ComposerGatePrompt({
       <div className="space-y-1">
         <Label>What this stage produced</Label>
         {body ? (
-          <pre className="max-h-44 overflow-auto whitespace-pre-wrap break-words rounded border border-white/10 bg-dark-950/60 px-2 py-1.5 text-xs leading-relaxed text-ps-text-secondary">
+          <pre className="max-h-44 overflow-auto whitespace-pre-wrap break-words rounded border border-ps-edge-hairline bg-ps-surface-ground/60 px-2 py-1.5 text-xs leading-relaxed text-ps-text-secondary">
             {body}
           </pre>
         ) : (
@@ -97,7 +97,7 @@ export default function ComposerGatePrompt({
         onChange={(e) => setNote(e.target.value)}
         rows={2}
         placeholder="Optional note (e.g. what to change on reject)…" aria-label="Gate note"
-        className="w-full rounded border border-white/10 bg-dark-950/60 px-2 py-1 text-xs text-ps-text-primary placeholder:text-ps-text-faint focus:border-neon-yellow/40 focus:outline-none"
+        className="w-full rounded border border-ps-edge bg-ps-surface-ground/60 px-2 py-1 text-xs text-ps-text-primary placeholder:text-ps-text-faint focus:border-neon-yellow/40 focus:outline-none"
       />
       <div className="flex items-center gap-2">
         <button

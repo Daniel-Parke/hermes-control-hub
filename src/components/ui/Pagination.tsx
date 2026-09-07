@@ -22,7 +22,7 @@ interface PaginationProps {
 }
 
 const BTN =
-  "text-xs font-mono px-3 py-1.5 rounded bg-white/5 text-ps-text-muted hover:text-white hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-colors";
+  "text-xs font-mono px-3 py-1.5 rounded bg-ps-surface-raised text-ps-text-muted hover:text-white hover:bg-ps-surface-raised disabled:opacity-30 disabled:cursor-not-allowed transition-colors";
 
 export default function Pagination({
   currentPage,
@@ -37,7 +37,7 @@ export default function Pagination({
   const atEnd = currentPage >= totalPages - 1;
 
   return (
-    <div className="flex flex-wrap items-center justify-center gap-3 mt-6 pt-4 border-t border-white/10">
+    <div className="flex flex-wrap items-center justify-center gap-3 mt-6 pt-4 border-t border-ps-edge-hairline">
       <button type="button" onClick={() => onPageChange(0)} disabled={atStart} className={BTN}>
         First
       </button>
@@ -73,7 +73,7 @@ export default function Pagination({
           aria-label="Rows per page"
           value={pageSize}
           onChange={(e) => onPageSizeChange(Number(e.target.value))}
-          className="text-xs font-mono px-2 py-1.5 rounded bg-dark-950 border border-white/10 text-ps-text-muted"
+          className="text-xs font-mono px-2 py-1.5 rounded bg-ps-surface-ground border border-ps-edge text-ps-text-muted"
         >
           {pageSizeOptions.map((n) => (
             <option key={n} value={n}>

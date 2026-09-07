@@ -26,7 +26,7 @@ import { graphToCanvas } from "@/lib/composer/canvas-graph";
 import type { ComposerNodeRun, ComposerWorkflowGraph } from "@/lib/composer/schema";
 
 const STATUS_BORDER: Record<string, string> = {
-  pending: "border-white/15",
+  pending: "border-ps-edge-emphasis",
   running: "border-neon-cyan",
   completed: "border-neon-green/70",
   failed: "border-neon-pink/70",
@@ -36,7 +36,7 @@ const STATUS_BORDER: Record<string, string> = {
   rejected: "border-neon-orange/70",
   // Same orange as rejected: both are the operator's decision, not a fault.
   cancelled: "border-neon-orange/70",
-  skipped: "border-white/10",
+  skipped: "border-ps-edge-hairline",
 };
 const STATUS_DOT: Record<string, string> = {
   pending: "bg-white/25",
@@ -64,14 +64,14 @@ function LiveNodeView({ data }: NodeProps<LiveNode>) {
   return (
     <div
       title={data.hasRun ? "Click for stage details" : undefined}
-      className={`min-w-[150px] rounded-lg border bg-dark-900/90 px-3 py-2 shadow-lg backdrop-blur transition-colors ${STATUS_BORDER[data.status] ?? "border-white/15"} ${data.isCurrent ? "ring-1 ring-neon-cyan/60 shadow-[0_0_12px_2px_rgb(var(--ps-rgb-neon-cyan)_/_0.4)]" : ""} ${data.hasRun ? "cursor-pointer hover:border-white/40" : "cursor-default"}`}
+      className={`min-w-[150px] rounded-lg border bg-ps-surface-panel px-3 py-2 shadow-lg backdrop-blur transition-colors ${STATUS_BORDER[data.status] ?? "border-ps-edge-emphasis"} ${data.isCurrent ? "ring-1 ring-neon-cyan/60 shadow-[0_0_12px_2px_rgb(var(--ps-rgb-neon-cyan)_/_0.4)]" : ""} ${data.hasRun ? "cursor-pointer hover:border-ps-edge-emphasis" : "cursor-default"}`}
     >
       <Handle type="target" position={Position.Top} className="!h-2 !w-2 !border-0 !bg-white/40" />
       <div className="flex items-center gap-1.5">
         <span className={`h-2 w-2 rounded-full ${STATUS_DOT[data.status] ?? "bg-white/25"} ${data.isCurrent ? "animate-pulse" : ""}`} />
         <span className="truncate text-sm text-ps-text-primary">{data.label}</span>
         {data.gate === "hil" ? <span className="rounded bg-neon-yellow/15 px-1 text-xs font-mono text-neon-yellow">HIL</span> : null}
-        {data.attempt > 1 ? <span className="ml-auto rounded bg-white/10 px-1 text-xs font-mono text-ps-text-muted">×{data.attempt}</span> : null}
+        {data.attempt > 1 ? <span className="ml-auto rounded bg-ps-surface-raised px-1 text-xs font-mono text-ps-text-muted">×{data.attempt}</span> : null}
       </div>
       <div className="mt-0.5 flex items-center gap-1.5 font-mono text-xs uppercase tracking-wider text-ps-text-muted">
         <span>{data.kind}</span>
@@ -147,7 +147,7 @@ function RunCanvasInner({
   }, [graph, latestNodeRun, currentNodeId]);
 
   return (
-    <div className="relative h-[68vh] min-h-[560px] w-full overflow-hidden rounded-xl border border-white/10 bg-dark-950/60">
+    <div className="relative h-[68vh] min-h-[560px] w-full overflow-hidden rounded-xl border border-ps-edge-hairline bg-ps-surface-ground/60">
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -165,7 +165,7 @@ function RunCanvasInner({
       </ReactFlow>
       {/* Wider and bounded since the gate carries the stage's output: the panel
           scrolls inside the board rather than growing past the bottom of it. */}
-      {gate ? <div className="absolute right-3 top-3 z-10 w-[22rem] max-w-[calc(100%-1.5rem)] max-h-[calc(100%-1.5rem)] overflow-y-auto rounded-lg border border-white/10 bg-dark-900/90 p-3 backdrop-blur">{gate}</div> : null}
+      {gate ? <div className="absolute right-3 top-3 z-10 w-[22rem] max-w-[calc(100%-1.5rem)] max-h-[calc(100%-1.5rem)] overflow-y-auto rounded-lg border border-ps-edge-hairline bg-ps-surface-panel p-3 backdrop-blur">{gate}</div> : null}
     </div>
   );
 }

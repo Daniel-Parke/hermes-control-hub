@@ -86,7 +86,7 @@ export default function AppPageShell({
   const fx = variant === "scanlines" ? "relative scanlines" : "";
   return (
     <div
-      className={`min-h-screen bg-dark-950 grid-bg flex flex-col ${fx} ${className}`.trim()}
+      className={`min-h-screen bg-ps-surface-ground grid-bg flex flex-col ${fx} ${className}`.trim()}
     >
       {header ? (
         // Sticky and full-bleed. The BAR is what spans the viewport; the

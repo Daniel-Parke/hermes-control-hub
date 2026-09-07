@@ -103,7 +103,7 @@ export default function DefaultsGrid({
             key={slot}
             data-task-slot={slot}
             accent={slot === "agent" ? "orange" : modelForSlot ? "purple" : undefined}
-            className="rounded-xl border border-white/10 bg-dark-900/50 p-4 space-y-2 min-h-[120px] relative overflow-hidden"
+            className="rounded-xl border border-ps-edge-hairline bg-ps-surface-panel p-4 space-y-2 min-h-[120px] relative overflow-hidden"
           >
             {/* Left accent bar — matches the glow accent */}
             {slot === "agent" && (
@@ -123,7 +123,7 @@ export default function DefaultsGrid({
                   {meta.description}
                 </p>
               </div>
-              <span className="text-xs font-mono text-ps-text-muted bg-white/5 px-1.5 py-0.5 rounded uppercase tracking-widest flex-shrink-0">
+              <span className="text-xs font-mono text-ps-text-muted bg-ps-surface-raised px-1.5 py-0.5 rounded uppercase tracking-widest flex-shrink-0">
                 {slot}
               </span>
             </div>

@@ -18,7 +18,7 @@ const colorMap: Record<string, { bg: string; text: string; border: string }> = {
   green: { bg: "bg-neon-green/10", text: "text-neon-green", border: "border-neon-green/20" },
   pink: { bg: "bg-neon-pink/10", text: "text-neon-pink", border: "border-neon-pink/20" },
   orange: { bg: "bg-neon-orange/10", text: "text-neon-orange", border: "border-neon-orange/20" },
-  gray: { bg: "bg-white/5", text: "text-ps-text-muted", border: "border-white/10" },
+  gray: { bg: "bg-ps-surface-raised", text: "text-ps-text-muted", border: "border-ps-edge-hairline" },
   red: { bg: "bg-red-500/10", text: "text-red-400", border: "border-red-500/20" },
 };
 

@@ -179,7 +179,7 @@ export default function HindsightBrowser({ onHealthChange, reloadToken = 0 }: Hi
       )}
 
       {/* Tabs */}
-      <div className="flex items-center gap-2 mb-4 border-b border-white/10 pb-2">
+      <div className="flex items-center gap-2 mb-4 border-b border-ps-edge-hairline pb-2">
         {tabs.map((tab) => (
           <button
             key={tab.id}

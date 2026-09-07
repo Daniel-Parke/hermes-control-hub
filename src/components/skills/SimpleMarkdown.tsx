@@ -113,7 +113,7 @@ function renderInlineNonLink(text: string, keyBase: number): React.ReactNode {
       return (
         <code
           key={`code-${keyBase}-${i}`}
-          className="bg-dark-800/80 text-neon-green px-1.5 py-0.5 rounded text-xs font-mono"
+          className="bg-ps-surface-inset text-neon-green px-1.5 py-0.5 rounded text-xs font-mono"
         >
           {part.slice(1, -1)}
         </code>
@@ -158,15 +158,15 @@ export function SimpleMarkdown({ content }: { content: string }) {
     elements.push(
       <div
         key={`table-${keyBase}`}
-        className="my-3 overflow-x-auto rounded-lg border border-white/10"
+        className="my-3 overflow-x-auto rounded-lg border border-ps-edge-hairline"
       >
         <table className="min-w-full text-sm">
-          <thead className="bg-dark-800/80">
+          <thead className="bg-ps-surface-raised">
             <tr>
               {header.map((cell, idx) => (
                 <th
                   key={idx}
-                  className="text-left text-ps-text-primary font-mono font-semibold px-3 py-2 border-b border-white/10"
+                  className="text-left text-ps-text-primary font-mono font-semibold px-3 py-2 border-b border-ps-edge-hairline"
                   style={{ textAlign: alignments[idx] || "left" }}
                 >
                   {renderInline(cell)}
@@ -176,7 +176,7 @@ export function SimpleMarkdown({ content }: { content: string }) {
           </thead>
           <tbody>
             {rows.map((row, rIdx) => (
-              <tr key={rIdx} className="border-b border-white/5 last:border-0">
+              <tr key={rIdx} className="border-b border-ps-edge-hairline last:border-0">
                 {row.map((cell, cIdx) => (
                   <td
                     key={cIdx}
@@ -213,10 +213,10 @@ export function SimpleMarkdown({ content }: { content: string }) {
         elements.push(
           <div
             key={`code-${i}`}
-            className="my-3 rounded-lg border border-white/10 bg-dark-800/80 overflow-hidden"
+            className="my-3 rounded-lg border border-ps-edge-hairline bg-ps-surface-inset overflow-hidden"
           >
             {codeBlockLang && (
-              <div className="px-3 py-1.5 border-b border-white/5 text-xs font-mono text-ps-text-muted uppercase">
+              <div className="px-3 py-1.5 border-b border-ps-edge-hairline text-xs font-mono text-ps-text-muted uppercase">
                 {codeBlockLang}
               </div>
             )}
@@ -278,7 +278,7 @@ export function SimpleMarkdown({ content }: { content: string }) {
       elements.push(
         <h1
           key={i}
-          className="text-xl font-bold text-white mt-6 mb-3 pb-2 border-b border-white/10"
+          className="text-xl font-bold text-white mt-6 mb-3 pb-2 border-b border-ps-edge-hairline"
         >
           {renderInline(trimmed.slice(2))}
         </h1>,
@@ -289,7 +289,7 @@ export function SimpleMarkdown({ content }: { content: string }) {
       elements.push(
         <h2
           key={i}
-          className="text-lg font-bold text-white mt-5 mb-2 pb-1 border-b border-white/5"
+          className="text-lg font-bold text-white mt-5 mb-2 pb-1 border-b border-ps-edge-hairline"
         >
           {renderInline(trimmed.slice(3))}
         </h2>,
@@ -307,7 +307,7 @@ export function SimpleMarkdown({ content }: { content: string }) {
 
     // Horizontal rule
     if (trimmed === "---" || trimmed === "***") {
-      elements.push(<hr key={i} className="my-4 border-white/10" />);
+      elements.push(<hr key={i} className="my-4 border-ps-edge-hairline" />);
       continue;
     }
 

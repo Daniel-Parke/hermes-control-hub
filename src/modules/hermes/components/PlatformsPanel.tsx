@@ -78,7 +78,7 @@ export default function PlatformsPanel({ monitor, syncNowBusy, onSyncNow }: Plat
           </div>
         )}
       </div>
-      <div className="px-4 py-2 border-t border-white/10 flex items-center justify-between gap-2">
+      <div className="px-4 py-2 border-t border-ps-edge-hairline flex items-center justify-between gap-2">
         <div className="text-xs text-ps-text-muted font-mono flex items-center gap-2 min-w-0">
           <RefreshCw className="w-3 h-3 shrink-0" />
           {monitor?.sync.lastRun ? (

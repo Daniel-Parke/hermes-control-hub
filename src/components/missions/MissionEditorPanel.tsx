@@ -75,7 +75,7 @@ export default function MissionEditorPanel({
   const runState = describeMissionRunState({ ...(detail?.mission ?? mission), run }, Date.now());
 
   return (
-    <div className="border-t border-white/10 px-3 py-3 bg-dark-800/30">
+    <div className="border-t border-ps-edge-hairline px-3 py-3 bg-ps-surface-raised">
       {detailLoading ? (
         <div className="flex items-center justify-center py-4">
           <Loader2 className="w-4 h-4 text-neon-cyan animate-spin" />
@@ -172,7 +172,7 @@ export default function MissionEditorPanel({
             <div
               className={`overflow-hidden transition-all duration-200 ${promptCollapsed ? "max-h-20" : "max-h-none"}`}
             >
-              <div className="text-xs text-ps-text-muted font-mono whitespace-pre-wrap bg-dark-900/50 rounded-lg p-2 border border-white/5">
+              <div className="text-xs text-ps-text-muted font-mono whitespace-pre-wrap bg-ps-surface-panel rounded-lg p-2 border border-ps-edge-hairline">
                 {detail.mission.prompt}
               </div>
             </div>
@@ -189,7 +189,7 @@ export default function MissionEditorPanel({
                   .map((goal, i) => (
                     <span
                       key={i}
-                      className="text-xs font-mono px-1.5 py-0.5 rounded bg-white/5 text-ps-text-muted border border-white/5"
+                      className="text-xs font-mono px-1.5 py-0.5 rounded bg-ps-surface-raised text-ps-text-muted border border-ps-edge-hairline"
                     >
                       {goal}
                     </span>
@@ -207,7 +207,7 @@ export default function MissionEditorPanel({
           )}
 
           {detail.schedule && (
-            <div className="rounded-lg border border-neon-orange/20 bg-dark-900/50 p-2">
+            <div className="rounded-lg border border-neon-orange/20 bg-ps-surface-panel p-2">
               <div className="flex items-center justify-between mb-1">
                 <div className="flex items-center gap-1">
                   <Zap className="w-3 h-3 text-neon-orange" />
@@ -261,7 +261,7 @@ export default function MissionEditorPanel({
               className={`rounded-lg border px-2 py-1.5 text-xs font-mono ${
                 runState.tone === "overdue"
                   ? "border-neon-orange/30 bg-neon-orange/5 text-neon-orange"
-                  : "border-white/5 bg-dark-900/50 text-ps-text-muted"
+                  : "border-ps-edge-hairline bg-ps-surface-panel text-ps-text-muted"
               }`}
             >
               {runState.note}
@@ -277,7 +277,7 @@ export default function MissionEditorPanel({
               <div className="text-xs font-mono text-ps-text-muted uppercase mb-1">
                 Result
               </div>
-              <div className="text-xs text-ps-text-secondary font-mono whitespace-pre-wrap bg-dark-900/50 rounded-lg p-2 border border-white/5 max-h-40 overflow-y-auto">
+              <div className="text-xs text-ps-text-secondary font-mono whitespace-pre-wrap bg-ps-surface-panel rounded-lg p-2 border border-ps-edge-hairline max-h-40 overflow-y-auto">
                 {detail.mission.result}
               </div>
             </div>
@@ -317,7 +317,7 @@ export default function MissionEditorPanel({
               <Link
                 href={`/results/sessions?missionId=${encodeURIComponent(mission.id)}`}
                 onClick={(e) => e.stopPropagation()}
-                className="inline-flex items-center gap-1 rounded-lg border border-white/10 px-2.5 py-1.5 text-xs font-mono text-ps-text-secondary hover:border-white/20 hover:text-white transition-colors"
+                className="inline-flex items-center gap-1 rounded-lg border border-ps-edge-hairline px-2.5 py-1.5 text-xs font-mono text-ps-text-secondary hover:border-ps-edge-emphasis hover:text-white transition-colors"
               >
                 View sessions
               </Link>

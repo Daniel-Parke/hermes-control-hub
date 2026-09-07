@@ -121,7 +121,7 @@ export function MessageBubble({
     >
       <button
         onClick={() => setExpanded(!expanded)}
-        className="w-full flex items-center justify-between px-4 py-2 border-b border-white/5 hover:bg-white/[0.02] transition-colors text-left"
+        className="w-full flex items-center justify-between px-4 py-2 border-b border-ps-edge hover:bg-ps-surface-raised transition-colors text-left"
       >
         <div className="flex items-center gap-2 min-w-0 flex-1">
           <span className={config.color}>{config.icon}</span>
@@ -129,7 +129,7 @@ export function MessageBubble({
             {config.label}
           </span>
           {msg.tool_call_id && (
-            <span className="text-xs font-mono text-ps-text-muted bg-white/5 px-1.5 py-0.5 rounded">
+            <span className="text-xs font-mono text-ps-text-muted bg-ps-surface-raised px-1.5 py-0.5 rounded">
               {msg.tool_call_id.slice(0, 12)}
             </span>
           )}
@@ -176,7 +176,7 @@ export function MessageBubble({
             {content || "(no content)"}
           </pre>
           {Array.isArray(msg.tool_calls) && msg.tool_calls.length > 0 && (
-            <div className="mt-3 pt-3 border-t border-white/5 space-y-2">
+            <div className="mt-3 pt-3 border-t border-ps-edge-hairline space-y-2">
               <div className="text-xs font-mono text-ps-text-muted uppercase tracking-widest">
                 Tool Calls ({msg.tool_calls.length})
               </div>
@@ -190,7 +190,7 @@ export function MessageBubble({
                 return (
                   <div
                     key={tcKey}
-                    className="bg-dark-900/50 rounded-lg p-3 text-xs font-mono"
+                    className="bg-ps-surface-panel rounded-lg p-3 text-xs font-mono"
                   >
                     <span className="text-neon-green">{fnName}</span>
                     <pre className="mt-1 text-ps-text-muted whitespace-pre-wrap">

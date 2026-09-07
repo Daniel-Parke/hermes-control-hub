@@ -75,7 +75,7 @@ export default function AchievementShowcase({
 
   return (
     <div
-      className={`rounded-2xl border border-white/10 bg-dark-900/40 p-4 ${className}`}
+      className={`rounded-2xl border border-ps-edge-hairline bg-ps-surface-panel p-4 ${className}`}
     >
       {/* Header */}
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
@@ -183,7 +183,7 @@ export default function AchievementShowcase({
       <button
         type="button"
         onClick={() => setExpanded((v) => !v)}
-        className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-lg border border-white/5 py-1.5 text-xs font-mono text-ps-text-muted transition-colors hover:border-white/15 hover:text-ps-text-secondary"
+        className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-lg border border-ps-edge py-1.5 text-xs font-mono text-ps-text-muted transition-colors hover:border-ps-edge-emphasis hover:text-ps-text-secondary"
       >
         {expanded ? "Show less" : `Show all ${summary.total}`}
         <ChevronDown

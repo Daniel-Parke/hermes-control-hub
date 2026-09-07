@@ -423,7 +423,7 @@ export default function Dashboard() {
         />
 
         {/* ═══ Handoff / continuation ═══ */}
-        <div className="rounded-xl border border-white/10 bg-dark-900/40 px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+        <div className="rounded-xl border border-ps-edge-hairline bg-ps-surface-panel px-4 py-3 flex flex-wrap items-center justify-between gap-3">
           <div>
             <div className="text-xs font-mono text-ps-text-muted uppercase tracking-wider">
               Continue work

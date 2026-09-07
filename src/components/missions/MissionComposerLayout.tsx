@@ -51,18 +51,18 @@ export function ComposerAccordion({
 
   return (
     <section
-      className={`pt-6 border-t border-white/10 overflow-visible border-l-2 pl-3 -ml-0.5 ${!open ? borderAccent : "border-l-white/10"}`}
+      className={`pt-6 border-t border-ps-edge-hairline overflow-visible border-l-2 pl-3 -ml-0.5 ${!open ? borderAccent : "border-l-white/10"}`}
     >
       <div className="flex items-start justify-between gap-3">
         <button
           type="button"
           onClick={toggle}
-          className="flex-1 flex items-start justify-between gap-3 py-3 text-left hover:bg-white/[0.02] rounded-lg -mx-1 px-1 transition-colors min-w-0"
+          className="flex-1 flex items-start justify-between gap-3 py-3 text-left hover:bg-ps-surface-raised rounded-lg -mx-1 px-1 transition-colors min-w-0"
           aria-expanded={open}
         >
           <span className="min-w-0 flex items-start gap-2">
             {step != null && (
-              <span className="shrink-0 w-5 h-5 rounded-full border border-white/20 text-xs font-mono text-ps-text-muted flex items-center justify-center mt-0.5">
+              <span className="shrink-0 w-5 h-5 rounded-full border border-ps-edge-emphasis text-xs font-mono text-ps-text-muted flex items-center justify-center mt-0.5">
                 {step}
               </span>
             )}

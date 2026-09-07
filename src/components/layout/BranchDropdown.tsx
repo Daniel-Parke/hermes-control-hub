@@ -41,10 +41,10 @@ export function BranchDropdown({
   return (
     <div
       ref={ref}
-      className="absolute bottom-full left-0 right-0 mb-1 rounded-lg border border-white/10 bg-dark-950 shadow-xl overflow-hidden z-50"
+      className="absolute bottom-full left-0 right-0 mb-1 rounded-lg border border-ps-edge-hairline bg-ps-surface-ground shadow-xl overflow-hidden z-50"
     >
       {/* Header */}
-      <div className="flex items-center justify-between px-3 py-2 border-b border-white/10">
+      <div className="flex items-center justify-between px-3 py-2 border-b border-ps-edge-hairline">
         <span className="text-xs font-mono text-ps-text-muted">Branch</span>
         <button
           type="button"
@@ -61,7 +61,7 @@ export function BranchDropdown({
         <select aria-label="Branch"
           value={selected}
           onChange={(e) => setSelected(e.target.value)}
-          className="w-full px-2 py-1.5 rounded-md bg-dark-900 border border-white/10 text-white text-xs focus:outline-none focus:border-neon-cyan/50"
+          className="w-full px-2 py-1.5 rounded-md bg-ps-surface-panel border border-ps-edge text-white text-xs focus:outline-none focus:border-neon-cyan/50"
         >
           {branches.map((b) => (
             <option key={b} value={b}>
@@ -77,7 +77,7 @@ export function BranchDropdown({
           value={customBranch}
           onChange={(e) => setCustomBranch(e.target.value)}
           placeholder="e.g. feature/my-branch" aria-label="Other branch name"
-          className="w-full mt-0.5 px-2 py-1.5 rounded-md bg-dark-900 border border-white/10 text-white text-xs placeholder:text-ps-text-faint focus:outline-none focus:border-neon-cyan/50"
+          className="w-full mt-0.5 px-2 py-1.5 rounded-md bg-ps-surface-panel border border-ps-edge text-white text-xs placeholder:text-ps-text-faint focus:outline-none focus:border-neon-cyan/50"
         />
       </div>
 

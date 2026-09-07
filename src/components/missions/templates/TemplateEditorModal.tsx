@@ -296,7 +296,7 @@ export function TemplateEditorModal({
             {newLocalDirs.map((dir, i) => (
               <div
                 key={`tmpl-${dir.path}-${i}`}
-                className="rounded-lg border border-neon-cyan/15 bg-dark-800/30 px-2 py-2"
+                className="rounded-lg border border-neon-cyan/15 bg-ps-surface-raised px-2 py-2"
               >
                 <LocalDirRow
                   mode="saved"
@@ -323,7 +323,7 @@ export function TemplateEditorModal({
             {newReferences.map((ref, i) => (
               <div
                 key={i}
-                className="flex items-center gap-2 bg-dark-800/50 border border-neon-pink/20 rounded-lg px-3 py-1.5"
+                className="flex items-center gap-2 bg-ps-surface-raised border border-neon-pink/20 rounded-lg px-3 py-1.5"
               >
                 <span className="text-xs font-mono text-neon-pink truncate flex-1">
                   {ref}
@@ -392,7 +392,7 @@ export function TemplateEditorModal({
                     className={`p-1.5 rounded border transition-colors ${
                       templateIcon === icon
                         ? "border-neon-cyan/50 bg-cyan-500/10"
-                        : "border-white/10 hover:border-white/20"
+                        : "border-ps-edge hover:border-ps-edge-emphasis"
                     }`}
                     title={icon}
                   >
@@ -415,7 +415,7 @@ export function TemplateEditorModal({
                   onClick={() => onTemplateColorChange(color)}
                   className={`w-8 h-8 rounded-lg border-2 transition-colors ${
                     templateColor === color
-                      ? "border-white"
+                      ? "border-ps-edge-emphasis"
                       : "border-transparent"
                   } ${
                     color === "cyan"

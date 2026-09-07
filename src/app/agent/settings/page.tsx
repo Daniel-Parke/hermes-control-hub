@@ -41,7 +41,7 @@ interface CardLinkProps {
 
 function CardLink({ href, icon: Icon, title, description, color, footer }: CardLinkProps) {
   return (
-    <Link href={href} className={`group rounded-xl border bg-dark-900/50 p-5 transition-all ${colorBorderMap[color]}`}>
+    <Link href={href} className={`group rounded-xl border bg-ps-surface-panel p-5 transition-all ${colorBorderMap[color]}`}>
       <div className="flex items-center justify-between mb-3">
         <Icon className={`w-5 h-5 ${iconColorMap[color]}`} />
         <ChevronRight className="w-4 h-4 text-white/20 group-hover:text-ps-text-secondary group-hover:translate-x-1 transition-all" />
@@ -98,12 +98,12 @@ function SectionCard({
       footer={
         <>
           {fieldCount > 0 && (
-            <span className="text-xs font-mono text-ps-text-faint bg-white/5 px-1.5 py-0.5 rounded">
+            <span className="text-xs font-mono text-ps-text-faint bg-ps-surface-raised px-1.5 py-0.5 rounded">
               {fieldCount} field{pluralise(fieldCount)}
             </span>
           )}
           {section.type === "file" && (
-            <span className="text-xs font-mono text-ps-text-faint bg-white/5 px-1.5 py-0.5 rounded">file</span>
+            <span className="text-xs font-mono text-ps-text-faint bg-ps-surface-raised px-1.5 py-0.5 rounded">file</span>
           )}
           {sectionData && (
             <span className="text-xs font-mono text-neon-green/70 bg-neon-green/5 px-1.5 py-0.5 rounded">configured</span>
@@ -169,7 +169,7 @@ export default function SettingsIndexPage() {
             onChange={(e) => setQuery(e.target.value)}
             aria-label="Search settings"
             placeholder="Find a setting by name, e.g. reasoning, timeout, voice…"
-            className="w-full bg-dark-900/50 border border-white/10 rounded-lg pl-10 pr-4 py-2.5 text-sm text-white placeholder-white/30 outline-none focus:border-neon-orange/50 transition-colors font-mono"
+            className="w-full bg-ps-surface-panel border border-ps-edge rounded-lg pl-10 pr-4 py-2.5 text-sm text-white placeholder-white/30 outline-none focus:border-neon-orange/50 transition-colors font-mono"
           />
         </div>
 

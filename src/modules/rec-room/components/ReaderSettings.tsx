@@ -121,7 +121,7 @@ export default function ReaderSettings({ settings, onChange }: {
     <>
       {/* Toggle Button */}
       <button type="button" onClick={() => setOpen(!open)}
-        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-white/10 text-xs font-mono text-ps-text-muted hover:text-ps-text-secondary hover:bg-white/5 transition-colors"
+        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-ps-edge text-xs font-mono text-ps-text-muted hover:text-ps-text-secondary hover:bg-ps-surface-raised transition-colors"
         aria-label="Reading settings (font, size, theme)"
         aria-expanded={open}
         title="Reading settings">
@@ -139,7 +139,7 @@ export default function ReaderSettings({ settings, onChange }: {
             aria-modal="true"
             aria-labelledby="reading-settings-title"
             tabIndex={-1}
-            className="fixed top-[52px] right-4 w-72 rounded-xl border border-white/10 bg-dark-900/95 backdrop-blur-xl p-5 z-[60] shadow-2xl max-h-[80vh] overflow-y-auto"
+            className="fixed top-[52px] right-4 w-72 rounded-xl border border-ps-edge-hairline bg-ps-surface-panel backdrop-blur-xl p-5 z-[60] shadow-2xl max-h-[80vh] overflow-y-auto"
           >
           <div className="flex items-center justify-between mb-4">
             <span id="reading-settings-title" className="text-xs font-mono text-ps-text-muted uppercase tracking-widest">Reading settings</span>
@@ -179,7 +179,7 @@ export default function ReaderSettings({ settings, onChange }: {
               {FONTS.map((f) => (
                 <button key={f.name} onClick={() => update({ fontFamily: f.name })}
                   className={`text-left px-3 py-1.5 rounded-lg text-xs transition-colors ${
-                    settings.fontFamily === f.name ? "bg-neon-purple/15 text-neon-purple border border-neon-purple/30" : "text-ps-text-muted hover:text-ps-text-secondary hover:bg-white/5 border border-transparent"
+                    settings.fontFamily === f.name ? "bg-neon-purple/15 text-neon-purple border border-neon-purple/30" : "text-ps-text-muted hover:text-ps-text-secondary hover:bg-ps-surface-raised border border-transparent"
                   }`}
                   style={{ fontFamily: f.family }}>
                   {f.label}
@@ -195,9 +195,9 @@ export default function ReaderSettings({ settings, onChange }: {
               {Object.entries(THEMES).map(([key, t]) => (
                 <button key={key} onClick={() => update({ pageTheme: key as ReadingSettings["pageTheme"] })}
                   className={`flex flex-col items-center gap-1 p-2 rounded-lg border transition-all ${
-                    settings.pageTheme === key ? "border-neon-purple/40" : "border-white/5 hover:border-white/15"
+                    settings.pageTheme === key ? "border-neon-purple/40" : "border-ps-edge hover:border-ps-edge-emphasis"
                   }`}>
-                  <div className="w-8 h-8 rounded-md border border-white/10" style={{ background: t.bg }} />
+                  <div className="w-8 h-8 rounded-md border border-ps-edge-hairline" style={{ background: t.bg }} />
                   <span className="text-xs font-mono text-ps-text-muted capitalize">{key}</span>
                 </button>
               ))}
@@ -206,7 +206,7 @@ export default function ReaderSettings({ settings, onChange }: {
 
           {/* Reset */}
           <button onClick={() => { onChange(DEFAULT_SETTINGS); saveSettings(DEFAULT_SETTINGS); }}
-            className="w-full text-center text-xs font-mono text-ps-text-faint hover:text-ps-text-muted py-1.5 rounded-lg hover:bg-white/5 transition-colors">
+            className="w-full text-center text-xs font-mono text-ps-text-faint hover:text-ps-text-muted py-1.5 rounded-lg hover:bg-ps-surface-raised transition-colors">
             Reset to Defaults
           </button>
           </div>

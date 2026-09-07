@@ -45,7 +45,7 @@ interface RowEditButtonProps {
  * ```tsx
  * <button
  *   onClick={onClick}
- *   className="p-1.5 rounded-lg hover:bg-white/5 text-ps-text-muted hover:text-ps-text-secondary transition-colors"
+ *   className="p-1.5 rounded-lg hover:bg-ps-surface-raised text-ps-text-muted hover:text-ps-text-secondary transition-colors"
  *   title="Edit"
  * >
  *   <Pencil className="w-4 h-4" />
@@ -60,7 +60,7 @@ export function RowEditButton({ onClick }: RowEditButtonProps) {
   return (
     <button
       onClick={onClick}
-      className="p-1.5 rounded-lg hover:bg-white/5 text-ps-text-muted hover:text-ps-text-secondary transition-colors"
+      className="p-1.5 rounded-lg hover:bg-ps-surface-raised text-ps-text-muted hover:text-ps-text-secondary transition-colors"
       title="Edit"
     >
       <Pencil className="w-4 h-4" />
@@ -90,7 +90,7 @@ interface RowDeleteButtonProps {
  * click hours later is a no-op rather than a deletion.
  *
  * Distinguishing styling from the Edit button: hover bg is `bg-red-500/10` (not
- * `bg-white/5`) and the hover text is `text-red-400`; armed reverses the pair so
+ * `bg-ps-surface-raised`) and the hover text is `text-red-400`; armed reverses the pair so
  * the second click is visibly the loaded one.
  */
 export function RowDeleteButton({ onClick, label }: RowDeleteButtonProps) {

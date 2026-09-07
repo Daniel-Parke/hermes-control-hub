@@ -112,7 +112,11 @@ export default function AchievementBadge({ achievement }: { achievement: Achieve
       style={
         unlocked
           ? { borderColor: neonAlpha(c, 30), background: neonAlpha(c, 8), boxShadow: `0 0 18px ${neonAlpha(c, 12)}` }
-          : { borderColor: "var(--color-ps-viz-track)" }
+          : // A locked tile's outline is a CARD's, not a chart's. It was drawn
+            // in ps-viz-track, the colour a progress ring's unfilled arc uses,
+            // which measured 1.20:1 against the panel behind it: the tile had
+            // an outline in the markup and none on the screen (T-0118).
+            { borderColor: "var(--color-ps-edge-hairline)" }
       }
     >
       <div
@@ -121,7 +125,7 @@ export default function AchievementBadge({ achievement }: { achievement: Achieve
       >
         <Icon className="h-5 w-5" style={{ color: unlocked ? neon(c) : "var(--color-ps-viz-glyph-idle)" }} />
         {!unlocked && (
-          <Lock className="absolute -bottom-1 -right-1 h-3.5 w-3.5 rounded-full bg-dark-800 p-[3px] text-ps-text-muted" />
+          <Lock className="absolute -bottom-1 -right-1 h-3.5 w-3.5 rounded-full bg-ps-surface-raised p-[3px] text-ps-text-muted" />
         )}
       </div>
       <span
@@ -130,7 +134,7 @@ export default function AchievementBadge({ achievement }: { achievement: Achieve
         {name}
       </span>
       {!unlocked && progress > 0 && (
-        <div className="h-1 w-full overflow-hidden rounded-full bg-white/5">
+        <div className="h-1 w-full overflow-hidden rounded-full bg-ps-surface-raised">
           <div
             className="h-full rounded-full transition-[width] duration-700"
             style={{ width: `${Math.round(progress * 100)}%`, background: neonAlpha(c, 70) }}

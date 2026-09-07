@@ -39,7 +39,7 @@ export function CustomScheduleBuilder({
   const [customFrequency, setCustomFrequency] = useState<string>("60");
 
   return (
-    <div className="rounded-lg border border-white/10 bg-dark-800/50 p-3 space-y-3">
+    <div className="rounded-lg border border-ps-edge-hairline bg-ps-surface-raised p-3 space-y-3">
       <div className="flex items-center justify-between">
         <span className="text-xs font-medium text-ps-text-secondary">Custom schedule</span>
         <button
@@ -109,7 +109,7 @@ export function CustomScheduleBuilder({
                 className={`px-2.5 py-1 rounded-md text-xs font-mono transition-colors ${
                   checked
                     ? "bg-neon-orange/20 text-neon-orange border border-neon-orange/40"
-                    : "bg-white/5 text-ps-text-muted border border-white/10 hover:text-ps-text-secondary"
+                    : "bg-ps-surface-raised text-ps-text-muted border border-ps-edge hover:text-ps-text-secondary"
                 } disabled:opacity-50 disabled:cursor-not-allowed`}
               >
                 {label}

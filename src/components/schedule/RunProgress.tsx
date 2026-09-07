@@ -20,7 +20,7 @@ export default function RunProgress({ runId }: { runId: string }) {
     );
 
   return (
-    <div className="rounded-xl border border-white/10 bg-dark-900/40 p-4">
+    <div className="rounded-xl border border-ps-edge-hairline bg-ps-surface-panel p-4">
       <div className="flex items-center gap-2 mb-2 text-xs font-mono text-ps-text-muted">
         {icon}
         <span>live run · {status}</span>

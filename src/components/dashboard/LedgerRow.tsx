@@ -48,7 +48,7 @@ const paddingMap: Record<LedgerRowPadding, string> = {
 };
 
 /** The one hover wash. Every row in the console lights the same amount. */
-const HOVER = "hover:bg-white/[0.02]";
+const HOVER = "hover:bg-ps-surface-raised";
 
 function rowClasses(
   padding: LedgerRowPadding,

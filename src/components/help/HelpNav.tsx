@@ -34,8 +34,8 @@ function NavLink({ page, current }: { page: HelpPageMeta; current: string }) {
         aria-current={active ? "page" : undefined}
         className={`block rounded px-2 py-1 text-sm transition-colors ${
           active
-            ? "bg-dark-800 text-neon-cyan"
-            : "text-ps-text-secondary hover:bg-dark-800 hover:text-white"
+            ? "bg-ps-surface-raised text-neon-cyan"
+            : "text-ps-text-secondary hover:bg-ps-surface-raised hover:text-white"
         }`}
       >
         {page.title}
@@ -65,7 +65,7 @@ export default function HelpNav({ sections, current }: HelpNavProps) {
                     <h3 className="px-2 text-xs font-mono uppercase tracking-wider text-ps-text-faint">
                       Tour
                     </h3>
-                    <ul className="mt-1 space-y-0.5 border-l border-white/10 pl-2">
+                    <ul className="mt-1 space-y-0.5 border-l border-ps-edge-hairline pl-2">
                       {tour.map((page) => (
                         <NavLink key={page.slug} page={page} current={current} />
                       ))}

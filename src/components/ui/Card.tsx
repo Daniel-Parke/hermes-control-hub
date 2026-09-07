@@ -33,11 +33,11 @@ export default function Card({
   padding = "md",
 }: CardProps) {
   const hoverClass = hover
-    ? "hover:border-white/30 transition-colors cursor-pointer"
+    ? "hover:border-ps-edge-emphasis transition-colors cursor-pointer"
     : "";
   const padClass = paddingMap[padding];
 
-  const innerClasses = `rounded-xl border border-white/10 bg-dark-900/50 min-w-0 ${padClass} ${hoverClass} ${className}`;
+  const innerClasses = `rounded-xl border border-ps-edge-hairline bg-ps-surface-panel min-w-0 ${padClass} ${hoverClass} ${className}`;
 
   return (
     <GlowSurface

@@ -11,10 +11,10 @@
 //       value={...}
 //       onChange={...}
 //       disabled={...}
-//       className="w-full h-9 min-h-9 bg-dark-XXX border border-white/10
+//       className="w-full h-9 min-h-9 bg-dark-XXX border border-ps-edge
 //                  rounded-lg px-3 pr-8 text-sm text-white
 //                  font-mono outline-none cursor-pointer
-//                  transition-colors hover:border-white/20
+//                  transition-colors hover:border-ps-edge-emphasis
 //                  focus:border-neon-purple/50 disabled:opacity-50
 //                  truncate appearance-none"
 //     >

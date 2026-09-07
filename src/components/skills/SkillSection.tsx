@@ -37,7 +37,7 @@ export function SkillSection({
       <button
         type="button"
         onClick={onToggleCollapse}
-        className="w-full flex items-center justify-between mb-3 px-4 py-2.5 rounded-xl border border-white/10 bg-dark-900/40 hover:bg-dark-900/80 hover:border-white/20 transition-all cursor-pointer group"
+        className="w-full flex items-center justify-between mb-3 px-4 py-2.5 rounded-xl border border-ps-edge bg-ps-surface-panel hover:bg-ps-surface-panel hover:border-ps-edge-emphasis transition-all cursor-pointer group"
       >
         <div className="flex items-center gap-2.5">
           <Icon className={`w-4 h-4 ${iconColor}`} />

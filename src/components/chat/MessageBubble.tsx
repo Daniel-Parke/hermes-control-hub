@@ -60,7 +60,7 @@ export default function MessageBubble({ msg }: { msg: ChatMessage }) {
         className={`max-w-[70%] rounded-xl px-4 py-3 ${
           isUser
             ? "bg-neon-cyan/10 border border-neon-cyan/20 text-white"
-            : "bg-white/5 border border-white/10 text-ps-text-primary"
+            : "bg-ps-surface-raised border border-ps-edge-hairline text-ps-text-primary"
         }`}
       >
         {isUser ? (

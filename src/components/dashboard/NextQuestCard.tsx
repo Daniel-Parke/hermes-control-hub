@@ -51,9 +51,9 @@ export default function NextQuestCard({ quests, host, hidden = false, onHide }: 
   return (
     <section
       aria-label="Start here"
-      className="rounded-xl border border-neon-cyan/25 bg-dark-900/50 overflow-hidden"
+      className="rounded-xl border border-neon-cyan/25 bg-ps-surface-panel overflow-hidden"
     >
-      <div className="flex items-center gap-2 border-b border-white/10 bg-dark-800/50 px-4 py-2">
+      <div className="flex items-center gap-2 border-b border-ps-edge-hairline bg-ps-surface-raised px-4 py-2">
         <Compass className="h-3.5 w-3.5 text-neon-cyan" />
         <span className="text-xs font-mono uppercase tracking-wider text-ps-text-secondary">
           Start here

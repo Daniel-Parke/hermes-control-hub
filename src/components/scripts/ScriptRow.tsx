@@ -76,7 +76,7 @@ export default function ScriptRow({
 }: ScriptRowProps) {
   const lastRun = lastRunNote(s);
   return (
-    <div className="flex flex-wrap items-center gap-3 rounded-xl border border-white/10 bg-dark-900/30 px-4 py-3">
+    <div className="flex flex-wrap items-center gap-3 rounded-xl border border-ps-edge-hairline bg-ps-surface-panel px-4 py-3">
       <Terminal className="h-4 w-4 shrink-0 text-neon-cyan" />
       <div className="min-w-0 flex-1">
         <div className="truncate font-mono text-sm text-ps-text-primary">{s.name}</div>
@@ -112,14 +112,14 @@ export default function ScriptRow({
       <button
         type="button"
         onClick={() => onEdit(s)}
-        className="flex items-center gap-1 rounded-lg border border-white/10 px-2.5 py-1 font-mono text-xs text-ps-text-secondary hover:bg-white/5"
+        className="flex items-center gap-1 rounded-lg border border-ps-edge px-2.5 py-1 font-mono text-xs text-ps-text-secondary hover:bg-ps-surface-raised"
       >
         <FileCode className="h-3 w-3" /> Edit
       </button>
       <button
         type="button"
         onClick={() => onLogs(s)}
-        className="flex items-center gap-1 rounded-lg border border-white/10 px-2.5 py-1 font-mono text-xs text-ps-text-secondary hover:bg-white/5"
+        className="flex items-center gap-1 rounded-lg border border-ps-edge px-2.5 py-1 font-mono text-xs text-ps-text-secondary hover:bg-ps-surface-raised"
       >
         <ScrollText className="h-3 w-3" /> Logs
       </button>
@@ -127,7 +127,7 @@ export default function ScriptRow({
         <button
           type="button"
           onClick={() => onUnschedule(s)}
-          className="flex items-center gap-1 rounded-lg border border-white/10 px-2.5 py-1 font-mono text-xs text-ps-text-muted hover:bg-white/5"
+          className="flex items-center gap-1 rounded-lg border border-ps-edge px-2.5 py-1 font-mono text-xs text-ps-text-muted hover:bg-ps-surface-raised"
         >
           <X className="h-3 w-3" /> Unschedule
         </button>

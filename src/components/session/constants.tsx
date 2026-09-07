@@ -48,8 +48,8 @@ export const ROLE_META: Record<
   system: {
     icon: <Cpu className="w-3.5 h-3.5" />,
     color: "text-ps-text-muted",
-    bg: "border-white/10 bg-white/5",
-    bgSolid: "bg-white/5",
+    bg: "border-ps-edge-hairline bg-ps-surface-raised",
+    bgSolid: "bg-ps-surface-raised",
     text: "text-ps-text-muted",
     label: "SYSTEM",
   },
@@ -96,7 +96,7 @@ const SOURCE_META: Record<KnownSessionSource, SourceMeta> = {
   },
   tui: {
     label: "TUI",
-    colorClass: "bg-white/5 text-ps-text-secondary",
+    colorClass: "bg-ps-surface-raised text-ps-text-secondary",
     icon: <Terminal className="w-3 h-3" />,
   },
 };
@@ -114,7 +114,7 @@ export function sourceMeta(source: string): SourceMeta {
   if (known) return known;
   return {
     label: source,
-    colorClass: "bg-white/5 text-ps-text-muted",
+    colorClass: "bg-ps-surface-raised text-ps-text-muted",
     icon: <HelpCircle className="w-3 h-3" />,
   };
 }

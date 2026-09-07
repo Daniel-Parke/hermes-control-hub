@@ -54,7 +54,7 @@ function TemplateRow({
   };
   return (
     <div
-      className="flex items-center justify-between p-2.5 rounded-lg border border-white/5 bg-dark-800/30 hover:border-white/10 transition-colors group"
+      className="flex items-center justify-between p-2.5 rounded-lg border border-ps-edge-hairline bg-ps-surface-raised hover:border-ps-edge-hairline transition-colors group"
     >
       <div className="flex items-center gap-2.5 min-w-0 flex-1">
         <div className="text-sm text-ps-text-primary truncate">{template.name}</div>

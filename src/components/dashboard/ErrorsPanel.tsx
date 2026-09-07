@@ -62,7 +62,7 @@ export default function ErrorsPanel({ errors, severity, onSelectSeverity }: Erro
           <LedgerRow
             key={`${err.source}-${err.message}`}
             padding="none"
-            className="px-4 py-2 border-b border-white/5 last:border-0"
+            className="px-4 py-2 border-b border-ps-edge-hairline last:border-0"
           >
             {/* Truncated to one line with no way to read the rest: these
                 messages are frequently a whole JSON tool result, and the part

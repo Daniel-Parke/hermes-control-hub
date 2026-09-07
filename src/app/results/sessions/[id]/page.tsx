@@ -211,14 +211,14 @@ export default function SessionDetailPage() {
               <button
                 type="button"
                 onClick={() => setExpandAll((v) => (v === true ? false : true))}
-                className="text-xs font-mono px-2 py-1 rounded bg-white/5 text-ps-text-muted hover:text-white transition-colors"
+                className="text-xs font-mono px-2 py-1 rounded bg-ps-surface-raised text-ps-text-muted hover:text-white transition-colors"
               >
                 {expandAll === true ? "Collapse all" : "Expand all"}
               </button>
               <button
                 type="button"
                 onClick={() => void copy(transcriptText)}
-                className="text-xs font-mono px-2 py-1 rounded bg-white/5 text-ps-text-muted hover:text-white transition-colors"
+                className="text-xs font-mono px-2 py-1 rounded bg-ps-surface-raised text-ps-text-muted hover:text-white transition-colors"
                 title="Copy the messages currently shown"
               >
                 {copied ? "Copied" : "Copy transcript"}
@@ -245,7 +245,7 @@ export default function SessionDetailPage() {
                     title={`Click to filter · Double-click to jump to next ${role}`}
                     className={`text-xs font-mono px-2 py-1 rounded transition-colors cursor-pointer ${
                       isActive
-                        ? `${m.bgSolid} ${m.text} ring-1 ring-white/20`
+                        ? `${m.bgSolid} ${m.text} ring-1 ring-ps-edge-emphasis`
                         : `${m.bgSolid} ${m.text} opacity-60 hover:opacity-100`
                     }`}
                   >
@@ -257,7 +257,7 @@ export default function SessionDetailPage() {
                 <button
                   type="button"
                   onClick={clearRoleFilter}
-                  className="text-xs font-mono text-ps-text-muted hover:text-ps-text-secondary px-1.5 py-1 rounded bg-white/5"
+                  className="text-xs font-mono text-ps-text-muted hover:text-ps-text-secondary px-1.5 py-1 rounded bg-ps-surface-raised"
                 >
                   clear
                 </button>

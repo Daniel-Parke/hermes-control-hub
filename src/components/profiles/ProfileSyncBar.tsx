@@ -57,7 +57,7 @@ export default function ProfileSyncBar({
           disabled={busy}
           onClick={() => void onImportDiscovered()}
           title="Import profile directories on disk that are not yet in SQLite"
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono rounded-lg border border-white/15 text-ps-text-muted hover:bg-white/5 disabled:opacity-50"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono rounded-lg border border-ps-edge-emphasis text-ps-text-muted hover:bg-ps-surface-raised disabled:opacity-50"
         >
           Import discovered
         </button>

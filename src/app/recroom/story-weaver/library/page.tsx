@@ -102,7 +102,7 @@ export default function LibraryPage() {
             { label: "Completed", value: completedCount, icon: CheckCircle2 },
             { label: "Words", value: totalWords.toLocaleString(), icon: Sparkles },
           ].map((stat) => (
-            <div key={stat.label} className="rounded-xl border border-white/5 bg-dark-900/30 p-4 text-center">
+            <div key={stat.label} className="rounded-xl border border-ps-edge-hairline bg-ps-surface-panel p-4 text-center">
               <stat.icon className="w-4 h-4 text-neon-purple mx-auto mb-2" />
               <div className="text-2xl font-bold text-ps-text-primary">{stat.value}</div>
               <div className="text-xs font-mono text-ps-text-faint uppercase tracking-wider mt-1">{stat.label}</div>
@@ -117,7 +117,7 @@ export default function LibraryPage() {
               className={`px-3 py-1.5 rounded-lg text-xs font-mono border transition-all ${
                 filter === f.id
                   ? "border-neon-purple/40 bg-neon-purple/15 text-neon-purple"
-                  : "border-white/8 text-ps-text-muted hover:text-ps-text-muted"
+                  : "border-ps-edge text-ps-text-muted hover:text-ps-text-muted"
               }`}>
               {f.label}
             </button>
@@ -161,7 +161,7 @@ export default function LibraryPage() {
                 <div
                   key={story.id}
                   onClick={() => router.push("/recroom/story-weaver/" + story.id)}
-                  className="rounded-xl border border-white/8 bg-dark-900/40 p-5 hover:border-neon-purple/25 hover:bg-dark-900/60 transition-all cursor-pointer group"
+                  className="rounded-xl border border-ps-edge-hairline bg-ps-surface-panel p-5 hover:border-neon-purple/25 hover:bg-ps-surface-panel transition-all cursor-pointer group"
                 >
                   <div className="flex items-start gap-4">
                     {/* Book spine indicator */}
@@ -223,7 +223,7 @@ export default function LibraryPage() {
                       {/* Chapter progress bar */}
                       {!complete && chapters.length > 0 && (
                         <div className="mt-3">
-                          <div className="w-full h-1 rounded-full bg-white/5 overflow-hidden">
+                          <div className="w-full h-1 rounded-full bg-ps-surface-raised overflow-hidden">
                             <div
                               className="h-full rounded-full bg-gradient-to-r from-neon-purple to-neon-pink transition-all"
                               style={{ width: `${(completeChapters / chapters.length) * 100}%` }}

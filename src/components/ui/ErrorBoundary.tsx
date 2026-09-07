@@ -49,7 +49,7 @@ export class ErrorBoundary extends Component<Props, State> {
           </div>
           <button
             onClick={this.handleReload}
-            className="ml-auto flex items-center gap-1.5 text-xs text-ps-text-muted hover:text-white transition-colors px-2 py-1 rounded border border-white/10 hover:border-white/20"
+            className="ml-auto flex items-center gap-1.5 text-xs text-ps-text-muted hover:text-white transition-colors px-2 py-1 rounded border border-ps-edge hover:border-ps-edge-emphasis"
           >
             <RefreshCw className="w-3 h-3" />
             Retry

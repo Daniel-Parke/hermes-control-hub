@@ -50,7 +50,7 @@ interface Draft {
 
 export default function CreateStoryPageWrapper() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-dark-950 flex items-center justify-center"><Sparkles className="w-8 h-8 text-neon-purple animate-spin" /></div>}>
+    <Suspense fallback={<div className="min-h-screen bg-ps-surface-ground flex items-center justify-center"><Sparkles className="w-8 h-8 text-neon-purple animate-spin" /></div>}>
       <CreateStoryPage />
     </Suspense>
   );
@@ -391,7 +391,7 @@ function CreateStoryPage() {
 
       {/* Character Picker Modal */}
       {showCharPicker && (
-        <div className="fixed inset-0 z-[60] bg-dark-950/80 backdrop-blur-sm flex items-center justify-center p-4" onClick={closeCharPicker} role="presentation">
+        <div className="fixed inset-0 z-[60] bg-ps-surface-ground/80 backdrop-blur-sm flex items-center justify-center p-4" onClick={closeCharPicker} role="presentation">
           <div
             ref={charPickerRef}
             role="dialog"
@@ -399,7 +399,7 @@ function CreateStoryPage() {
             aria-labelledby="char-picker-title"
             tabIndex={-1}
             onClick={(e) => e.stopPropagation()}
-            className="bg-dark-900 border border-neon-purple/20 rounded-xl w-full max-w-lg p-6 space-y-4 max-h-[80vh] overflow-y-auto"
+            className="bg-ps-surface-panel border border-neon-purple/20 rounded-xl w-full max-w-lg p-6 space-y-4 max-h-[80vh] overflow-y-auto"
           >
             <div className="flex items-center justify-between">
               <h3 id="char-picker-title" className="text-sm font-semibold text-white">Import character</h3>
@@ -412,12 +412,12 @@ function CreateStoryPage() {
                 {savedCharacters.map(cs => (
                   <button key={cs.id} onClick={() => importCharacter(cs)}
                     disabled={characters.some(c => c.name === cs.name)}
-                    className="w-full text-left p-3 rounded-lg border border-white/5 hover:border-neon-purple/20 bg-white/[0.02] hover:bg-neon-purple/5 transition-all disabled:opacity-30">
+                    className="w-full text-left p-3 rounded-lg border border-ps-edge hover:border-neon-purple/20 bg-ps-surface-raised hover:bg-neon-purple/5 transition-all disabled:opacity-30">
                     <div className="text-xs font-semibold text-ps-text-primary">{cs.name}</div>
                     <div className="text-xs text-ps-text-muted font-mono">{cs.role} — {cs.description?.slice(0, 80)}</div>
                     {cs.personality?.length > 0 && (
                       <div className="flex flex-wrap gap-1 mt-1">
-                        {cs.personality.slice(0, 3).map(p => <span key={p} className="px-1.5 py-0.5 rounded text-xs font-mono border border-white/5 bg-white/[0.02] text-ps-text-faint">{p}</span>)}
+                        {cs.personality.slice(0, 3).map(p => <span key={p} className="px-1.5 py-0.5 rounded text-xs font-mono border border-ps-edge-hairline bg-ps-surface-raised text-ps-text-faint">{p}</span>)}
                       </div>
                     )}
                   </button>
@@ -430,7 +430,7 @@ function CreateStoryPage() {
 
       {/* Save as Theme Modal */}
       {showSaveTheme && (
-        <div className="fixed inset-0 z-[60] bg-dark-950/80 backdrop-blur-sm flex items-center justify-center p-4" onClick={closeSaveTheme} role="presentation">
+        <div className="fixed inset-0 z-[60] bg-ps-surface-ground/80 backdrop-blur-sm flex items-center justify-center p-4" onClick={closeSaveTheme} role="presentation">
           <div
             ref={saveThemeRef}
             role="dialog"
@@ -438,15 +438,15 @@ function CreateStoryPage() {
             aria-labelledby="save-theme-title"
             tabIndex={-1}
             onClick={(e) => e.stopPropagation()}
-            className="bg-dark-900 border border-green-500/20 rounded-xl w-full max-w-md p-6 space-y-4"
+            className="bg-ps-surface-panel border border-green-500/20 rounded-xl w-full max-w-md p-6 space-y-4"
           >
             <h3 id="save-theme-title" className="text-sm font-semibold text-white">Save as theme</h3>
             <p className="text-xs text-ps-text-muted">Save your current story concept as a reusable theme.</p>
             <input value={newThemeName} onChange={(e) => setNewThemeName(e.target.value)}
               placeholder="e.g. Salt and starlight" aria-label="Theme name" autoFocus
-              className="w-full bg-dark-800/50 border border-white/10 rounded-lg px-4 py-3 text-sm text-white placeholder-white/20 outline-none focus:border-green-500/40 font-mono" />
+              className="w-full bg-ps-surface-inset border border-ps-edge rounded-lg px-4 py-3 text-sm text-white placeholder-white/20 outline-none focus:border-green-500/40 font-mono" />
             <div className="flex gap-2 justify-end">
-              <button type="button" onClick={closeSaveTheme} className="px-4 py-2 text-xs text-ps-text-muted hover:text-ps-text-secondary rounded-lg border border-white/10">Cancel</button>
+              <button type="button" onClick={closeSaveTheme} className="px-4 py-2 text-xs text-ps-text-muted hover:text-ps-text-secondary rounded-lg border border-ps-edge">Cancel</button>
               <button type="button" onClick={saveAsTheme} disabled={!newThemeName.trim() || !premise.trim()}
                 className="px-4 py-2 text-xs text-green-400 rounded-lg border border-green-500/30 bg-green-500/10 hover:bg-green-500/20 disabled:opacity-30 flex items-center gap-2">
                 <Save className="w-3 h-3" /> Save theme
@@ -459,7 +459,7 @@ function CreateStoryPage() {
       <div className="space-y-6">
 
         {/* ═══ SECTION A: Templates + Clear ═══ */}
-        <div className="rounded-xl border border-neon-purple/15 bg-dark-900/50 p-5">
+        <div className="rounded-xl border border-neon-purple/15 bg-ps-surface-panel p-5">
           <div className="flex items-center justify-between mb-3">
             <label className="text-xs font-mono text-ps-text-muted uppercase tracking-widest">Quick Start — Templates</label>
             <button onClick={clearAllInputs}
@@ -471,7 +471,7 @@ function CreateStoryPage() {
             {STORY_TEMPLATES.map((t) => (
               <button key={t.id} onClick={() => applyTemplate(t.id)}
                 className={`text-left p-3 rounded-lg border transition-all ${
-                  selectedTheme === t.id ? "border-neon-purple/40 bg-neon-purple/10" : "border-white/5 bg-white/[0.02] hover:border-white/15"
+                  selectedTheme === t.id ? "border-neon-purple/40 bg-neon-purple/10" : "border-ps-edge bg-ps-surface-raised hover:border-ps-edge-emphasis"
                 }`}>
                 <div className="text-xs font-semibold text-ps-text-primary mb-0.5">{t.name}</div>
                 <div className="text-xs font-mono text-ps-text-muted">{t.genre.join(", ")}</div>
@@ -481,14 +481,14 @@ function CreateStoryPage() {
         </div>
 
         {/* ═══ SECTION B: Title ═══ */}
-        <div className="rounded-xl border border-neon-purple/20 bg-dark-900/50 p-5">
+        <div className="rounded-xl border border-neon-purple/20 bg-ps-surface-panel p-5">
           <label className="text-xs font-mono text-ps-text-muted uppercase tracking-widest block mb-2">Story Title</label>
           <input value={title} onChange={(e) => { setTitle(e.target.value); setTitleManuallyEdited(true); }} placeholder="Give your story a name..." aria-label="Story title"
-            className="w-full bg-dark-800/50 border border-white/10 rounded-lg px-4 py-3 text-lg text-white placeholder-white/20 outline-none focus:border-neon-purple/30 font-serif font-semibold" />
+            className="w-full bg-ps-surface-inset border border-ps-edge rounded-lg px-4 py-3 text-lg text-white placeholder-white/20 outline-none focus:border-neon-purple/30 font-serif font-semibold" />
         </div>
 
         {/* ═══ SECTION C: Theme (Premise + Tags + Saved Themes) ═══ */}
-        <div className="rounded-xl border border-white/8 bg-dark-900/50 p-5 mt-2">
+        <div className="rounded-xl border border-ps-edge-hairline bg-ps-surface-panel p-5 mt-2">
           <div className="flex items-center justify-between mb-3">
             <label className="text-xs font-mono text-ps-text-muted uppercase tracking-widest">Theme</label>
             <button onClick={() => setShowSaveTheme(true)} disabled={!premise.trim()}
@@ -498,7 +498,7 @@ function CreateStoryPage() {
           </div>
           <label className="text-xs font-mono text-ps-text-faint uppercase tracking-wider block mb-2">What&apos;s your story about?</label>
           <textarea value={premise} onChange={(e) => setPremise(e.target.value)} rows={4}
-            className="w-full bg-dark-800/50 border border-white/10 rounded-lg px-4 py-3 text-sm text-white placeholder-white/20 outline-none focus:border-green-500/30 font-mono resize-none leading-relaxed mb-4" placeholder="Describe your story concept..." aria-label="Premise" />
+            className="w-full bg-ps-surface-inset border border-ps-edge rounded-lg px-4 py-3 text-sm text-white placeholder-white/20 outline-none focus:border-green-500/30 font-mono resize-none leading-relaxed mb-4" placeholder="Describe your story concept..." aria-label="Premise" />
           <div className="space-y-3">
             <Tags label="Genre" options={genreOpts} selected={genres} onToggle={(t) => toggle(genres, setGenres, t)} onAdd={(t) => addOpt(genreOpts, setGenreOpts, t)} />
             <Tags label="Era" options={eraOpts} selected={[era]} onToggle={(t) => setEra(t === era ? "" : t)} onAdd={(t) => addOpt(eraOpts, setEraOpts, t)} />
@@ -507,12 +507,12 @@ function CreateStoryPage() {
           </div>
           {/* Saved themes — prominent at top of Theme section */}
           {savedThemes.length > 0 && (
-            <div className="mb-4 pb-4 border-b border-white/5">
+            <div className="mb-4 pb-4 border-b border-ps-edge-hairline">
               <label className="text-xs font-mono text-ps-text-faint uppercase tracking-wider block mb-2">Saved Themes — click to load</label>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                 {savedThemes.map((t) => (
                   <div key={t.id} className={`relative group p-3 rounded-lg border transition-all cursor-pointer ${
-                    selectedTheme === t.id ? "border-white/15 bg-white/[0.04]" : "border-white/8 bg-white/[0.02] hover:border-white/15 hover:bg-white/[0.04]"
+                    selectedTheme === t.id ? "border-ps-edge-emphasis bg-ps-surface-raised" : "border-ps-edge-hairline bg-ps-surface-raised hover:border-ps-edge-emphasis hover:bg-ps-surface-raised"
                   }`} onClick={() => applyTheme(t)}>
                     <div className="text-xs font-semibold text-ps-text-secondary mb-0.5">{t.name}</div>
                     <div className="text-xs font-mono text-ps-text-faint truncate">{t.genre?.join(", ") || "Custom"} — {t.era || "Any era"}</div>
@@ -528,7 +528,7 @@ function CreateStoryPage() {
         </div>
 
         {/* ═══ SECTION D: Characters ═══ */}
-        <div className="rounded-xl border border-white/8 bg-dark-900/50 p-5">
+        <div className="rounded-xl border border-ps-edge-hairline bg-ps-surface-panel p-5">
           <div className="flex items-center justify-between mb-3">
             <label className="text-xs font-mono text-ps-text-muted uppercase tracking-widest flex items-center gap-2">
               <Users className="w-3.5 h-3.5" /> Characters ({characters.length})
@@ -571,13 +571,13 @@ function CreateStoryPage() {
         </div>
 
         {/* ═══ SECTION E: Story Parameters ═══ */}
-        <div className="rounded-xl border border-white/8 bg-dark-900/50 p-5 space-y-4">
+        <div className="rounded-xl border border-ps-edge-hairline bg-ps-surface-panel p-5 space-y-4">
           <label className="text-xs font-mono text-ps-text-muted uppercase tracking-widest block">Story Parameters</label>
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="text-xs font-mono text-ps-text-muted uppercase tracking-wider block mb-2">Point of View</label>
               <select aria-label="Point of view" value={pov} onChange={(e) => setPov(e.target.value)}
-                className="w-full bg-dark-800/50 border border-white/10 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-neon-purple/40 font-mono">
+                className="w-full bg-ps-surface-inset border border-ps-edge rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-neon-purple/40 font-mono">
                 <option value="first">First Person</option>
                 <option value="third-limited">Third Person Limited</option>
                 <option value="third-omniscient">Third Person Omniscient</option>
@@ -586,7 +586,7 @@ function CreateStoryPage() {
             <div>
               <label className="text-xs font-mono text-ps-text-muted uppercase tracking-wider block mb-2">Length</label>
               <select aria-label="Length" value={length} onChange={(e) => setLength(e.target.value)}
-                className="w-full bg-dark-800/50 border border-white/10 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-neon-purple/40 font-mono">
+                className="w-full bg-ps-surface-inset border border-ps-edge rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-neon-purple/40 font-mono">
                 <option value="short">Short (3-4 chapters)</option>
                 <option value="medium">Medium (5-7 chapters)</option>
                 <option value="long">Long (8-12 chapters)</option>
@@ -597,7 +597,7 @@ function CreateStoryPage() {
             <label className="text-xs font-mono text-ps-text-muted uppercase tracking-wider block mb-2">Writing Model</label>
             <select aria-label="Writing model" value={modelId}
               onChange={(e) => { setTouchedModel(true); setModelId(e.target.value); }}
-              className="w-full bg-dark-800/50 border border-white/10 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-neon-purple/40 font-mono">
+              className="w-full bg-ps-surface-inset border border-ps-edge rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-neon-purple/40 font-mono">
               <option value="">Agent default model</option>
               {(models ?? []).map((m) => (
                 <option key={m.id} value={m.id}>{m.name} · {m.provider}</option>
@@ -610,7 +610,7 @@ function CreateStoryPage() {
               {WORD_COUNT_OPTIONS.map((opt) => (
                 <button key={opt.id} onClick={() => setWordCountRange(opt.id)}
                   className={`px-3 py-1.5 rounded-lg text-xs font-mono border transition-all ${
-                    wordCountRange === opt.id ? "border-neon-purple/40 bg-neon-purple/15 text-neon-purple" : "border-white/8 text-ps-text-muted hover:text-ps-text-muted"
+                    wordCountRange === opt.id ? "border-neon-purple/40 bg-neon-purple/15 text-neon-purple" : "border-ps-edge text-ps-text-muted hover:text-ps-text-muted"
                   }`}>{opt.label}</button>
               ))}
             </div>

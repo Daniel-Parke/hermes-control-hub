@@ -34,13 +34,13 @@ export default function FallbackUrlEditModal({
       <div
         ref={panelRef}
         tabIndex={-1}
-        className="w-full max-w-md bg-dark-900 border border-white/10 rounded-xl overflow-hidden"
+        className="w-full max-w-md bg-ps-surface-panel border border-ps-edge-hairline rounded-xl overflow-hidden"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
         aria-labelledby="fallback-url-edit-title"
       >
-        <div className="px-4 py-3 border-b border-white/10">
+        <div className="px-4 py-3 border-b border-ps-edge-hairline">
           <h3 id="fallback-url-edit-title" className="text-sm font-semibold text-white">
             Edit override base URL: {entry.modelName}
           </h3>
@@ -55,18 +55,18 @@ export default function FallbackUrlEditModal({
             value={url}
             onChange={(e) => onUrlChange(e.target.value)}
             placeholder="https://api.openai.com/v1"
-            className="w-full bg-dark-800 border border-white/10 rounded-lg px-3 py-2 text-sm text-white font-mono outline-none focus:border-neon-purple/50 transition-colors"
+            className="w-full bg-ps-surface-inset border border-ps-edge rounded-lg px-3 py-2 text-sm text-white font-mono outline-none focus:border-neon-purple/50 transition-colors"
             autoFocus
           />
           <p className="text-xs text-ps-text-muted font-mono mt-1.5">
             Leave empty to use the model&apos;s default base URL
           </p>
         </div>
-        <div className="flex items-center justify-end gap-2 px-4 py-3 border-t border-white/10">
+        <div className="flex items-center justify-end gap-2 px-4 py-3 border-t border-ps-edge-hairline">
           <button
             type="button"
             onClick={onClose}
-            className="px-3 py-1.5 text-xs font-mono text-ps-text-muted hover:text-white rounded-lg hover:bg-white/5 transition-colors"
+            className="px-3 py-1.5 text-xs font-mono text-ps-text-muted hover:text-white rounded-lg hover:bg-ps-surface-raised transition-colors"
           >
             Cancel
           </button>

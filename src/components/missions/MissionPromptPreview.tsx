@@ -77,13 +77,13 @@ export default function MissionPromptPreview(props: MissionPromptPreviewProps) {
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="inline-flex rounded-lg border border-white/10 p-0.5 bg-dark-950/80">
+        <div className="inline-flex rounded-lg border border-ps-edge-hairline p-0.5 bg-ps-surface-ground/80">
           <button
             type="button"
             onClick={() => setMode("human")}
             className={`px-3 py-1.5 text-xs font-mono rounded-md transition-colors ${
               mode === "human"
-                ? "bg-white/10 text-white"
+                ? "bg-ps-surface-raised text-white"
                 : "text-ps-text-muted hover:text-ps-text-secondary"
             }`}
           >
@@ -94,7 +94,7 @@ export default function MissionPromptPreview(props: MissionPromptPreviewProps) {
             onClick={() => setMode("ai")}
             className={`px-3 py-1.5 text-xs font-mono rounded-md transition-colors ${
               mode === "ai"
-                ? "bg-white/10 text-white"
+                ? "bg-ps-surface-raised text-white"
                 : "text-ps-text-muted hover:text-ps-text-secondary"
             }`}
           >
@@ -120,7 +120,7 @@ export default function MissionPromptPreview(props: MissionPromptPreviewProps) {
           ? "Human view mirrors your form fields."
           : "AI view is the XML prompt stored and sent to the agent."}
       </p>
-      <pre className="rounded-lg border border-white/10 bg-dark-950/50 px-3 py-3 text-xs font-mono text-ps-text-secondary whitespace-pre-wrap max-h-72 overflow-y-auto">
+      <pre className="rounded-lg border border-ps-edge-hairline bg-ps-surface-ground/50 px-3 py-3 text-xs font-mono text-ps-text-secondary whitespace-pre-wrap max-h-72 overflow-y-auto">
         {activePreview || "(empty)"}
       </pre>
     </div>

@@ -66,7 +66,7 @@ function UnknownConfigSection({ slug }: { slug: string }) {
               <Link
                 key={id}
                 href={`/agent/settings/${id}`}
-                className={`flex items-center gap-3 rounded-xl border bg-dark-900/50 px-4 py-3 transition-all ${colorBorderMap[section.color]}`}
+                className={`flex items-center gap-3 rounded-xl border bg-ps-surface-panel px-4 py-3 transition-all ${colorBorderMap[section.color]}`}
               >
                 <SectionIcon
                   className={`w-4 h-4 shrink-0 ${iconColorMap[section.color]}`}
@@ -302,7 +302,7 @@ export default function ConfigSectionPage() {
     // While a replace is in flight, show nothing that invites a second click.
     if (redirectTarget) {
       return (
-        <div className="min-h-screen bg-dark-950 grid-bg flex items-center justify-center">
+        <div className="min-h-screen bg-ps-surface-ground grid-bg flex items-center justify-center">
           <p className="text-ps-text-muted font-mono">Redirecting…</p>
         </div>
       );
@@ -312,7 +312,7 @@ export default function ConfigSectionPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-dark-950 grid-bg flex items-center justify-center">
+      <div className="min-h-screen bg-ps-surface-ground grid-bg flex items-center justify-center">
         <LoadingSpinner text={`Loading ${sectionDef.label}...`} />
       </div>
     );
@@ -423,7 +423,7 @@ export default function ConfigSectionPage() {
 
         {/* File editor for file-type sections */}
         {isFileSection && (
-          <div className="rounded-xl border border-white/10 bg-dark-900/50 p-6 mb-6">
+          <div className="rounded-xl border border-ps-edge-hairline bg-ps-surface-panel p-6 mb-6">
             <p className="text-xs text-ps-text-muted font-mono uppercase tracking-widest mb-4">
               {sectionDef.sensitive ? "Sensitive File — .env" : "File Content"}
             </p>
@@ -450,7 +450,7 @@ export default function ConfigSectionPage() {
               <textarea aria-label="File content"
                 value={fileContent}
                 onChange={(e) => setFileContent(e.target.value)}
-                className="w-full h-96 bg-dark-800 border border-white/10 rounded-lg p-4 text-sm text-ps-text-primary font-mono resize-none focus:border-cyan-500/50 focus:outline-none"
+                className="w-full h-96 bg-ps-surface-inset border border-ps-edge rounded-lg p-4 text-sm text-ps-text-primary font-mono resize-none focus:border-cyan-500/50 focus:outline-none"
                 spellCheck={false}
               />
             )}
@@ -459,7 +459,7 @@ export default function ConfigSectionPage() {
 
         {/* Editable fields for YAML sections */}
         {sectionDef.fields.length > 0 && (
-          <div className="rounded-xl border border-white/10 bg-dark-900/50 p-6 space-y-5 mb-6">
+          <div className="rounded-xl border border-ps-edge-hairline bg-ps-surface-panel p-6 space-y-5 mb-6">
             {sectionDef.fields.map((field) => (
               <ConfigField
                 key={field.key}
@@ -474,7 +474,7 @@ export default function ConfigSectionPage() {
 
         {/* Complex / nested fields (read-only preview) */}
         {sectionDef.complexKeys && sectionDef.complexKeys.length > 0 && (
-          <div className="rounded-xl border border-white/10 bg-dark-900/50 p-6">
+          <div className="rounded-xl border border-ps-edge-hairline bg-ps-surface-panel p-6">
             {showActions && (
               <p className="text-xs text-ps-text-muted font-mono uppercase tracking-widest mb-4">
                 Complex Fields
@@ -496,12 +496,12 @@ export default function ConfigSectionPage() {
                     <div className="flex items-center gap-2 mb-1.5">
                       <span className="text-sm text-ps-text-secondary font-mono">{key}</span>
                       {isEmpty && (
-                        <span className="text-xs font-mono text-ps-text-faint bg-white/5 px-1.5 py-0.5 rounded">
+                        <span className="text-xs font-mono text-ps-text-faint bg-ps-surface-raised px-1.5 py-0.5 rounded">
                           empty
                         </span>
                       )}
                     </div>
-                    <div className="text-xs text-ps-text-muted bg-dark-800/50 rounded-lg p-3 font-mono max-h-60 overflow-y-auto whitespace-pre-wrap">
+                    <div className="text-xs text-ps-text-muted bg-ps-surface-inset rounded-lg p-3 font-mono max-h-60 overflow-y-auto whitespace-pre-wrap">
                       {isEmpty
                         ? "(not configured)"
                         : isObj
@@ -512,7 +512,7 @@ export default function ConfigSectionPage() {
                 );
               })}
             </div>
-            <p className="text-xs text-ps-text-faint mt-4 pt-4 border-t border-white/5">
+            <p className="text-xs text-ps-text-faint mt-4 pt-4 border-t border-ps-edge-hairline">
               {isPlatformToolsetsPreview ? (
                 <>
                   Edit Bob (root) toolsets on{" "}

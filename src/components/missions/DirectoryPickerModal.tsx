@@ -111,11 +111,11 @@ export default function DirectoryPickerModal({
             {error}
           </div>
         )}
-        <div className="max-h-72 overflow-y-auto rounded-lg border border-white/10 bg-dark-900/50">
+        <div className="max-h-72 overflow-y-auto rounded-lg border border-ps-edge-hairline bg-ps-surface-panel">
           {loading ? (
             <div className="p-6 text-center text-xs text-ps-text-muted font-mono">Loading…</div>
           ) : (
-            <ul className="divide-y divide-white/5">
+            <ul className="divide-y divide-ps-edge-hairline">
               {entries.map((e) => (
                 <li key={e.name}>
                   <button
@@ -130,7 +130,7 @@ export default function DirectoryPickerModal({
                     }}
                     className={`w-full flex items-center gap-2 px-3 py-2 text-left text-xs font-mono transition-colors ${
                       e.isDir
-                        ? "hover:bg-white/5 text-ps-text-primary"
+                        ? "hover:bg-ps-surface-raised text-ps-text-primary"
                         : "text-ps-text-faint cursor-not-allowed"
                     }`}
                   >

@@ -43,9 +43,9 @@ export default function QuestChapter({
   return (
     <details
       open={chapter.number === 1 && !finished}
-      className="group rounded-xl border border-white/10 bg-dark-900/40"
+      className="group rounded-xl border border-ps-edge-hairline bg-ps-surface-panel"
     >
-      <summary className="flex cursor-pointer list-none flex-wrap items-center gap-x-3 gap-y-1 px-4 py-3 transition-colors hover:bg-white/5">
+      <summary className="flex cursor-pointer list-none flex-wrap items-center gap-x-3 gap-y-1 px-4 py-3 transition-colors hover:bg-ps-surface-raised">
         <ChevronRight
           className="h-4 w-4 shrink-0 text-ps-text-muted transition-transform group-open:rotate-90"
           aria-hidden="true"
@@ -57,7 +57,7 @@ export default function QuestChapter({
         </span>
       </summary>
 
-      <div className="space-y-3 border-t border-white/5 px-4 py-3">
+      <div className="space-y-3 border-t border-ps-edge-hairline px-4 py-3">
         <ul className="space-y-2">
           {quests.map((quest) => (
             <QuestRow

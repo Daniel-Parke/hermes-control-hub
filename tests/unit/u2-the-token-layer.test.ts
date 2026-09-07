@@ -137,13 +137,15 @@ describe("globals.css declares the ladder the script derived", () => {
   });
 
   /**
-   * Nothing repaints in this batch, and this is what that means: the three
-   * surface names the tree actually uses today keep the values they had, and
-   * are retired by the codemod that replaces their call sites, not here.
+   * U2 repainted nothing, which meant keeping `well` and `surface-hairline`
+   * exactly where they were until their call sites moved. U4 (T-0118) moved
+   * them, so the assertion is now that they are gone and the ladder is what
+   * remains. The dark-* primitives stay: contrast-check reads them, and the
+   * roles are still allowed to alias the ramp.
    */
-  it("leaves the spellings the tree still uses exactly where they were", () => {
-    expect(token("color-ps-surface-well")).toBe("var(--color-dark-800)");
-    expect(token("color-ps-surface-hairline")).toBe("rgb(255 255 255 / 0.10)");
+  it("has retired the two spellings the flat ladder used", () => {
+    expect(token("color-ps-surface-well")).toBeNull();
+    expect(token("color-ps-surface-hairline")).toBeNull();
     expect(token("color-dark-950")).toBe("#040b12");
     expect(token("color-dark-900")).toBe("#0c1520");
   });

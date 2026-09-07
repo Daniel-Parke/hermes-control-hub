@@ -45,7 +45,7 @@ export default function ProfileSelector({
       <span ref={ref} className="relative inline-flex">
         <button
           onClick={() => setOpen(!open)}
-          className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-white/5 border border-white/10 text-xs font-mono text-ps-text-secondary hover:border-neon-purple/50 hover:text-neon-purple transition-colors"
+          className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-ps-surface-raised border border-ps-edge text-xs font-mono text-ps-text-secondary hover:border-neon-purple/50 hover:text-neon-purple transition-colors"
           title={selected?.name ?? "Select profile"}
         >
           {loading ? (
@@ -57,7 +57,7 @@ export default function ProfileSelector({
         </button>
         {open && (
           <div
-            className="absolute top-full left-0 mt-1 z-50 w-56 bg-dark-900 border border-white/10 rounded-lg shadow-xl overflow-hidden max-h-80 overflow-y-auto"
+            className="absolute top-full left-0 mt-1 z-50 w-56 bg-ps-surface-panel border border-ps-edge-hairline rounded-lg shadow-xl overflow-hidden max-h-80 overflow-y-auto"
           >
             {profiles.length === 0 && !loading ? (
               <div className="px-3 py-3 text-xs text-ps-text-muted text-center">
@@ -72,7 +72,7 @@ export default function ProfileSelector({
                     onChange(p.id);
                     setOpen(false);
                   }}
-                  className={`w-full text-left px-3 py-2 text-xs hover:bg-white/5 ${
+                  className={`w-full text-left px-3 py-2 text-xs hover:bg-ps-surface-raised ${
                     value === p.id ? "text-neon-purple" : "text-ps-text-secondary"
                   }`}
                 >
@@ -104,7 +104,7 @@ export default function ProfileSelector({
         type="button"
         onClick={() => setOpen(!open)}
         title={triggerTitle}
-        className="w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg bg-white/5 border border-white/10 text-sm text-white hover:border-white/30 transition-colors"
+        className="w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg bg-ps-surface-raised border border-ps-edge text-sm text-white hover:border-ps-edge-emphasis transition-colors"
       >
         <div className="flex items-center gap-2 min-w-0">
           {loading ? (
@@ -137,7 +137,7 @@ export default function ProfileSelector({
       </button>
 
       {open && (
-        <div className="absolute top-full left-0 right-0 mt-1 z-50 bg-dark-900 border border-white/10 rounded-lg shadow-xl overflow-hidden max-h-80 overflow-y-auto">
+        <div className="absolute top-full left-0 right-0 mt-1 z-50 bg-ps-surface-panel border border-ps-edge-hairline rounded-lg shadow-xl overflow-hidden max-h-80 overflow-y-auto">
           {profiles.length === 0 && !loading ? (
             <div className="px-3 py-4 text-xs text-ps-text-muted text-center">
               No profiles found
@@ -150,7 +150,7 @@ export default function ProfileSelector({
                   onChange(p.id);
                   setOpen(false);
                 }}
-                className={`w-full text-left px-3 py-2.5 text-sm hover:bg-white/5 ${
+                className={`w-full text-left px-3 py-2.5 text-sm hover:bg-ps-surface-raised ${
                   value === p.id
                     ? "text-neon-purple bg-neon-purple/5"
                     : "text-ps-text-secondary"

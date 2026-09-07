@@ -36,7 +36,7 @@ export default function AgentProfileList({
                 ? profile.isDefault
                   ? "border-cyan-500/50 bg-cyan-500/10"
                   : "border-purple-500/50 bg-purple-500/10"
-                : "border-white/10 bg-dark-900/50 hover:border-white/20"
+                : "border-ps-edge bg-ps-surface-panel hover:border-ps-edge-emphasis"
             }`}
           >
             <div className="flex items-center gap-2 mb-1">

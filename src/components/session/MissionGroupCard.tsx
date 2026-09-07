@@ -83,7 +83,7 @@ export default function MissionGroupCard({ group }: { group: MissionGroup }) {
       </Link>
       </div>
       {expanded && (
-        <div className="border-t border-white/5 bg-dark-900/30 divide-y divide-white/5">
+        <div className="border-t border-ps-edge-hairline bg-ps-surface-panel divide-y divide-ps-edge-hairline">
           {group.sessions.map((s) => (
             <SessionCard key={s.id} session={s} />
           ))}

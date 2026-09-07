@@ -45,7 +45,7 @@ export function LogRow({
     // the pointer with, come from the shared one (T-0033).
     <LedgerRow
       padding="none"
-      className={`grid grid-cols-1 sm:grid-cols-[minmax(0,9.5rem)_minmax(0,4.5rem)_1fr] gap-x-3 gap-y-0.5 items-baseline text-xs font-mono py-1.5 border-b border-white/[0.06] ${
+      className={`grid grid-cols-1 sm:grid-cols-[minmax(0,9.5rem)_minmax(0,4.5rem)_1fr] gap-x-3 gap-y-0.5 items-baseline text-xs font-mono py-1.5 border-b border-ps-edge-hairline ${
         isMatch ? "bg-neon-cyan/5 -mx-2 px-2 rounded" : ""
       }`}
     >

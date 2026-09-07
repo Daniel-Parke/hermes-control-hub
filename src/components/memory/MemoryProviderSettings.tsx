@@ -212,7 +212,7 @@ export default function MemoryProviderSettings({
               first place the word appears, in either of its two states. */}
           <ConceptHint id="memory">{storeUnreachable ? "Set up memory" : "Memory provider"}</ConceptHint>
         </h2>
-        <span className="rounded bg-white/5 px-1.5 py-0.5 text-xs font-mono uppercase tracking-wider text-ps-text-muted">
+        <span className="rounded bg-ps-surface-raised px-1.5 py-0.5 text-xs font-mono uppercase tracking-wider text-ps-text-muted">
           {row?.label ?? "Memory"}
         </span>
       </div>

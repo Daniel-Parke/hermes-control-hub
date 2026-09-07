@@ -40,19 +40,19 @@ export default function MissionTimeSelector({ value, onChange, compact = false }
       <span ref={ref} className="relative inline-flex">
         <button
           onClick={() => setOpen(!open)}
-          className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-white/5 border border-white/10 text-xs font-mono text-ps-text-secondary hover:border-neon-cyan/50 hover:text-neon-cyan transition-colors"
+          className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-ps-surface-raised border border-ps-edge text-xs font-mono text-ps-text-secondary hover:border-neon-cyan/50 hover:text-neon-cyan transition-colors"
           title={`Mission time: ${selected.label} (${selected.minutes}m ≈ ${selected.devHours} dev work)`}
         >
           <Clock className="w-3 h-3" />
           {selected.minutes}m
         </button>
         {open && (
-          <div className="absolute top-full left-0 mt-1 z-50 w-48 bg-dark-900 border border-white/10 rounded-lg shadow-xl overflow-hidden">
+          <div className="absolute top-full left-0 mt-1 z-50 w-48 bg-ps-surface-panel border border-ps-edge-hairline rounded-lg shadow-xl overflow-hidden">
             {PRESETS.map((p) => (
               <button
                 key={p.minutes}
                 onClick={(e) => { e.stopPropagation(); onChange(p.minutes); setOpen(false); }}
-                className={`w-full text-left px-3 py-2 text-xs hover:bg-white/5 flex items-center justify-between ${value === p.minutes ? "text-neon-cyan" : "text-ps-text-secondary"}`}
+                className={`w-full text-left px-3 py-2 text-xs hover:bg-ps-surface-raised flex items-center justify-between ${value === p.minutes ? "text-neon-cyan" : "text-ps-text-secondary"}`}
               >
                 <span>{p.label} ({p.minutes}m)</span>
                 <span className="text-xs text-ps-text-muted">≈ {p.devHours}</span>
@@ -68,7 +68,7 @@ export default function MissionTimeSelector({ value, onChange, compact = false }
     <div ref={ref} className="relative">
       <button
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg bg-white/5 border border-white/10 text-sm text-white hover:border-white/30 transition-colors"
+        className="w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg bg-ps-surface-raised border border-ps-edge text-sm text-white hover:border-ps-edge-emphasis transition-colors"
       >
         <div className="flex items-center gap-2">
           <Clock className="w-4 h-4 text-neon-cyan" />
@@ -78,12 +78,12 @@ export default function MissionTimeSelector({ value, onChange, compact = false }
         <ChevronDown className={`w-4 h-4 text-ps-text-muted transition-transform ${open ? "rotate-180" : ""}`} />
       </button>
       {open && (
-        <div className="absolute top-full left-0 right-0 mt-1 z-50 bg-dark-900 border border-white/10 rounded-lg shadow-xl overflow-hidden">
+        <div className="absolute top-full left-0 right-0 mt-1 z-50 bg-ps-surface-panel border border-ps-edge-hairline rounded-lg shadow-xl overflow-hidden">
           {PRESETS.map((p) => (
             <button
               key={p.minutes}
               onClick={() => { onChange(p.minutes); setOpen(false); }}
-              className={`w-full text-left px-3 py-2.5 text-sm hover:bg-white/5 flex items-center justify-between ${value === p.minutes ? "text-neon-cyan bg-neon-cyan/5" : "text-ps-text-secondary"}`}
+              className={`w-full text-left px-3 py-2.5 text-sm hover:bg-ps-surface-raised flex items-center justify-between ${value === p.minutes ? "text-neon-cyan bg-neon-cyan/5" : "text-ps-text-secondary"}`}
             >
               <div className="flex items-center gap-2">
                 <div className={`w-2 h-2 rounded-full ${value === p.minutes ? "bg-neon-cyan" : "bg-white/20"}`} />

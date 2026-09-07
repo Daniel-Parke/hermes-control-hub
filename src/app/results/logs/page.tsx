@@ -280,7 +280,7 @@ export default function LogsPage() {
           // (T-0087). Same reason, calm tone, still a live region.
           <div
             role="status"
-            className="mb-4 rounded-xl border border-white/10 bg-dark-900/50 px-4 py-3 text-sm text-ps-text-secondary"
+            className="mb-4 rounded-xl border border-ps-edge-hairline bg-ps-surface-panel px-4 py-3 text-sm text-ps-text-secondary"
           >
             {loadError}
           </div>
@@ -291,7 +291,7 @@ export default function LogsPage() {
           />
         ) : null}
         {actionMessage && (
-          <div className="mb-4 flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-dark-900/50 px-4 py-2 text-xs font-mono text-ps-text-secondary">
+          <div className="mb-4 flex items-center justify-between gap-3 rounded-xl border border-ps-edge-hairline bg-ps-surface-panel px-4 py-2 text-xs font-mono text-ps-text-secondary">
             <span>{actionMessage}</span>
             <button
               type="button"
@@ -326,7 +326,7 @@ export default function LogsPage() {
                       onChange={(e) => setSearch(e.target.value)}
                       placeholder="Filter log lines…" aria-label="Log line filter"
                       autoFocus
-                      className="w-full bg-dark-900/50 border border-white/10 rounded-lg pl-10 pr-4 py-2 text-sm text-white placeholder-white/30 outline-none focus:border-neon-cyan/50 transition-colors font-mono"
+                      className="w-full bg-ps-surface-panel border border-ps-edge rounded-lg pl-10 pr-4 py-2 text-sm text-white placeholder-white/30 outline-none focus:border-neon-cyan/50 transition-colors font-mono"
                     />
                   </div>
                   {search && (
@@ -338,7 +338,7 @@ export default function LogsPage() {
                     type="button"
                     aria-label="Close log search"
                     onClick={closeSearchInput}
-                    className="p-1.5 rounded-lg text-ps-text-muted hover:text-ps-text-secondary hover:bg-white/5 shrink-0"
+                    className="p-1.5 rounded-lg text-ps-text-muted hover:text-ps-text-secondary hover:bg-ps-surface-raised shrink-0"
                   >
                     <X className="w-4 h-4" aria-hidden="true" />
                   </button>
@@ -347,7 +347,7 @@ export default function LogsPage() {
                 <button
                   type="button"
                   onClick={openSearchInput}
-                  className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs text-ps-text-muted hover:text-ps-text-secondary hover:bg-white/5 font-mono"
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs text-ps-text-muted hover:text-ps-text-secondary hover:bg-ps-surface-raised font-mono"
                 >
                   <Search className="w-3 h-3" />
                   Filter lines

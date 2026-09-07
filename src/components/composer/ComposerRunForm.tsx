@@ -78,7 +78,7 @@ export default function ComposerRunForm({
     <Card padding="md" glow="cyan">
       {/* Orientation: what this workflow is + the stages it runs */}
       {workflow ? (
-        <div className="mb-3 rounded-lg border border-white/10 bg-dark-900/40 px-3 py-2.5">
+        <div className="mb-3 rounded-lg border border-ps-edge-hairline bg-ps-surface-panel px-3 py-2.5">
           {/* Named the way the review below names it, so the word an operator
               is about to launch one of is defined where they first read it. */}
           <p className="text-xs font-mono uppercase tracking-widest text-ps-text-muted">
@@ -99,7 +99,7 @@ export default function ComposerRunForm({
                 <span key={n.id} className="flex items-center gap-1">
                   {i > 0 ? <span className="text-ps-text-faint">→</span> : null}
                   <span
-                    className={`rounded px-1.5 py-0.5 text-xs font-mono ${n.gate === "hil" ? "bg-neon-yellow/10 text-neon-yellow/90" : "bg-white/5 text-ps-text-muted"}`}
+                    className={`rounded px-1.5 py-0.5 text-xs font-mono ${n.gate === "hil" ? "bg-neon-yellow/10 text-neon-yellow/90" : "bg-ps-surface-raised text-ps-text-muted"}`}
                     title={n.gate === "hil" ? "human-in-the-loop gate" : n.kind}
                   >
                     {n.label}
@@ -129,7 +129,7 @@ export default function ComposerRunForm({
               key={ex}
               type="button"
               onClick={() => onInputChange(ex)}
-              className="max-w-full truncate rounded-full border border-white/10 px-2 py-0.5 text-xs text-ps-text-muted transition hover:border-neon-cyan/40 hover:text-neon-cyan"
+              className="max-w-full truncate rounded-full border border-ps-edge px-2 py-0.5 text-xs text-ps-text-muted transition hover:border-neon-cyan/40 hover:text-neon-cyan"
               title={ex}
             >
               {ex}
@@ -197,7 +197,7 @@ export default function ComposerRunForm({
 
         <div>
           <p className="text-xs font-mono uppercase tracking-widest text-ps-text-muted">{objectiveLabel}</p>
-          <p className="mt-0.5 whitespace-pre-wrap rounded-lg border border-white/10 bg-dark-900/50 px-3 py-2 text-xs text-ps-text-secondary">{input.trim()}</p>
+          <p className="mt-0.5 whitespace-pre-wrap rounded-lg border border-ps-edge-hairline bg-ps-surface-panel px-3 py-2 text-xs text-ps-text-secondary">{input.trim()}</p>
         </div>
 
         <div>
@@ -208,7 +208,7 @@ export default function ComposerRunForm({
               return (
                 <span
                   key={n.id}
-                  className={`rounded-full border px-2 py-0.5 text-xs ${writes ? "border-neon-orange/40 bg-neon-orange/10 text-neon-orange" : "border-white/10 text-ps-text-muted"}`}
+                  className={`rounded-full border px-2 py-0.5 text-xs ${writes ? "border-neon-orange/40 bg-neon-orange/10 text-neon-orange" : "border-ps-edge-hairline text-ps-text-muted"}`}
                   title={writes ? "This stage can modify your repository" : n.kind}
                 >
                   {n.label}

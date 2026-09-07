@@ -113,7 +113,7 @@ export function DeployControls({ state }: { state: VersionFooterState }) {
       {message && <p className="text-xs font-mono text-ps-text-muted">{message}</p>}
       {/* The deploy log's last lines after a failure (D108) */}
       {deployLogTail.length > 0 && (
-        <pre className="max-h-40 overflow-auto rounded-lg bg-ps-surface-well px-3 py-2 text-xs font-mono text-ps-text-muted whitespace-pre-wrap break-words">
+        <pre className="max-h-40 overflow-auto rounded-lg bg-ps-surface-inset px-3 py-2 text-xs font-mono text-ps-text-muted whitespace-pre-wrap break-words">
           {deployLogTail.join("\n")}
         </pre>
       )}

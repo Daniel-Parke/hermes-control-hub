@@ -92,7 +92,7 @@ export default function CategoryManagerModal({
 
   return (
     <Modal open={open} onClose={onClose} title="Manage categories" size="lg">
-      <div className="mb-4 p-3 rounded-lg border border-white/10 bg-dark-900/50 space-y-2">
+      <div className="mb-4 p-3 rounded-lg border border-ps-edge-hairline bg-ps-surface-panel space-y-2">
         <label className="text-xs text-ps-text-muted font-mono block">
           New category
         </label>
@@ -107,12 +107,12 @@ export default function CategoryManagerModal({
               }
             }}
             placeholder="Category name" aria-label="New category name"
-            className="flex-1 min-w-[140px] h-9 px-3 text-sm font-mono bg-dark-950 border border-white/10 rounded-lg text-ps-text-primary"
+            className="flex-1 min-w-[140px] h-9 px-3 text-sm font-mono bg-ps-surface-ground border border-ps-edge rounded-lg text-ps-text-primary"
           />
           <select aria-label="Category colour"
             value={newColor}
             onChange={(e) => setNewColor(e.target.value)}
-            className="h-9 px-2 text-xs font-mono bg-dark-950 border border-white/10 rounded-lg"
+            className="h-9 px-2 text-xs font-mono bg-ps-surface-ground border border-ps-edge rounded-lg"
           >
             {COLORS.map((col) => (
               <option key={col} value={col}>
@@ -156,19 +156,19 @@ export default function CategoryManagerModal({
         {categories.map((c) => (
           <div
             key={c.id}
-            className="flex items-center gap-2 p-2 rounded-lg border border-white/10 bg-dark-900/50"
+            className="flex items-center gap-2 p-2 rounded-lg border border-ps-edge-hairline bg-ps-surface-panel"
           >
             {editingId === c.id ? (
               <div className="flex-1 flex flex-wrap gap-2 items-center">
                 <input aria-label="Category name"
                   value={editName}
                   onChange={(e) => setEditName(e.target.value)}
-                  className="flex-1 min-w-[120px] px-2 py-1 text-xs font-mono bg-dark-950 border border-white/10 rounded"
+                  className="flex-1 min-w-[120px] px-2 py-1 text-xs font-mono bg-ps-surface-ground border border-ps-edge rounded"
                 />
                 <select aria-label="Category colour"
                   value={editColor}
                   onChange={(e) => setEditColor(e.target.value)}
-                  className="px-2 py-1 text-xs font-mono bg-dark-950 border border-white/10 rounded"
+                  className="px-2 py-1 text-xs font-mono bg-ps-surface-ground border border-ps-edge rounded"
                 >
                   {COLORS.map((col) => (
                     <option key={col} value={col}>
@@ -245,7 +245,7 @@ export default function CategoryManagerModal({
             onChange={(e) =>
               setReassignId(e.target.value === "" ? null : e.target.value)
             }
-            className="w-full mb-2 px-2 py-1.5 text-xs font-mono bg-dark-950 border border-white/10 rounded"
+            className="w-full mb-2 px-2 py-1.5 text-xs font-mono bg-ps-surface-ground border border-ps-edge rounded"
           >
             <option value="">Uncategorized</option>
             {categories

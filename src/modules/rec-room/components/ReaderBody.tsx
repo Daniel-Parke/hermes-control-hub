@@ -115,7 +115,7 @@ export default function ReaderBody({
       <div className="flex-1 flex" style={{ height: "calc(100vh - 72px)" }}>
         {/* Chapter Sidebar */}
         {sidebarOpen && (
-          <div className="w-56 flex-shrink-0 border-r border-white/5 sticky top-16 overflow-y-auto hidden md:block" style={{ background: theme.panel, maxHeight: "calc(100vh - 64px)" }}>
+          <div className="w-56 flex-shrink-0 border-r border-ps-edge-hairline sticky top-16 overflow-y-auto hidden md:block" style={{ background: theme.panel, maxHeight: "calc(100vh - 64px)" }}>
             <div className="p-4">
               <ChapterList chapters={chapters} currentChapter={currentChapter} onSelect={onSelectChapter} />
             </div>

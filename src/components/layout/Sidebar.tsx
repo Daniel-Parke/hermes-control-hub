@@ -96,7 +96,7 @@ export default function Sidebar() {
             title={iconsOnly ? link.label : undefined}
             aria-current={active ? "page" : undefined}
             className={`flex items-center gap-2.5 px-3 py-[3px] rounded-md text-sm transition-colors ${
-              active ? "bg-white/10 text-white" : "text-ps-text-muted hover:bg-white/5 hover:text-ps-text-primary"
+              active ? "bg-ps-surface-raised text-white" : "text-ps-text-muted hover:bg-ps-surface-raised hover:text-ps-text-primary"
             }`}
             onClick={closeMobile}
           >
@@ -106,7 +106,7 @@ export default function Sidebar() {
             {!iconsOnly && <span>{link.label}</span>}
           </Link>
           {showSubs && (
-            <div className="ml-7 mt-1 space-y-0.5 border-l border-white/5 pl-3">
+            <div className="ml-7 mt-1 space-y-0.5 border-l border-ps-edge-hairline pl-3">
               {link.subLinks!.map((sub) => (
                 <Link
                   key={sub.href}
@@ -148,15 +148,22 @@ export default function Sidebar() {
         tabIndex={drawerOpen ? -1 : undefined}
         inert={isMobile && !mobileOpen}
         aria-hidden={isMobile && !mobileOpen ? true : undefined}
-        className={`flex flex-col h-screen border-r border-white/10 backdrop-blur-xl transition-all duration-200 fixed inset-y-0 left-0 z-[60] w-56 bg-dark-950 transform ${
+        // One surface and one seam. It used to paint the ground on a phone
+        // and dark-900 at 80% on a desktop, measuring 1.02:1 and 1.10:1
+        // against the page beside it: two answers to the same question, and
+        // neither of them an answer. The panel rung is 1.47:1 and the seam is
+        // 3:1, which is what WCAG 1.4.11 asks of a boundary that identifies a
+        // region. No backdrop blur: there is nothing behind an opaque surface
+        // to blur, and the filter cost a compositing layer on every scroll.
+        className={`flex flex-col h-screen border-r border-ps-edge transition-all duration-200 fixed inset-y-0 left-0 z-[60] w-56 bg-ps-surface-panel transform ${
           mobileOpen ? "translate-x-0" : "-translate-x-full"
-        } lg:static lg:z-auto lg:translate-x-0 lg:bg-dark-900/80 ${iconsOnly ? "lg:w-16" : "lg:w-56"}`}
+        } lg:static lg:z-auto lg:translate-x-0 ${iconsOnly ? "lg:w-16" : "lg:w-56"}`}
       >
         {/* Logo — min-height matches main app chrome (see --ps-shell-header-min-height) */}
-        <div className="px-4 min-h-[var(--ps-shell-header-min-height)] flex items-center border-b border-white/10">
+        <div className="px-4 min-h-[var(--ps-shell-header-min-height)] flex items-center border-b border-ps-edge-hairline">
           <Link href="/" aria-label="PatterStage home" className="flex items-center gap-2" onClick={closeMobile}>
             <div className="w-8 h-8 rounded-lg animated-border p-[1.5px]">
-              <div className="w-full h-full bg-dark-900 rounded-[5px] flex items-center justify-center">
+              <div className="w-full h-full bg-ps-surface-panel rounded-[5px] flex items-center justify-center">
                 <Terminal className="w-4 h-4 text-neon-cyan" />
               </div>
             </div>
@@ -186,7 +193,7 @@ export default function Sidebar() {
                   {section.label}
                 </div>
               )}
-              {section.label !== "Home" && iconsOnly && <div className="my-1.5 border-t border-white/10" />}
+              {section.label !== "Home" && iconsOnly && <div className="my-1.5 border-t border-ps-edge-hairline" />}
               {section.links
                 .filter(linkVisible)
                 .filter((link) => section.label !== "Home" || link.href === "/")
@@ -200,7 +207,7 @@ export default function Sidebar() {
             splitting the row in half: Quests carries a count beside its label
             and half a 200px row is not enough for icon, word and "12/32"
             together, so equal halves would push the row past the rail's width. */}
-        <div className="px-3 py-2 border-t border-white/10 space-y-1 flex-shrink-0">
+        <div className="px-3 py-2 border-t border-ps-edge-hairline space-y-1 flex-shrink-0">
           <div className={`flex ${iconsOnly ? "flex-col items-center gap-1" : "gap-1"}`}>
             {utilityLinks.map((link) => (
               <Link
@@ -211,7 +218,7 @@ export default function Sidebar() {
                 aria-current={isActive(pathname, link.href) ? "page" : undefined}
                 onClick={closeMobile}
                 className={`flex items-center justify-center gap-1.5 rounded-md text-xs font-mono transition-colors ${
-                  isActive(pathname, link.href) ? "bg-white/10 text-white" : "text-ps-text-muted hover:bg-white/5 hover:text-ps-text-primary"
+                  isActive(pathname, link.href) ? "bg-ps-surface-raised text-white" : "text-ps-text-muted hover:bg-ps-surface-raised hover:text-ps-text-primary"
                 } ${iconsOnly ? "p-1.5" : "flex-auto px-2 py-1"}`}
               >
                 <link.icon className="w-3.5 h-3.5 flex-shrink-0" />
@@ -229,7 +236,7 @@ export default function Sidebar() {
               aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
               aria-expanded={!collapsed}
               onClick={toggleCollapsed}
-              className="hidden lg:flex items-center gap-1.5 px-2 py-1 rounded-md text-xs text-ps-text-muted hover:text-ps-text-secondary hover:bg-white/5 transition-colors font-mono"
+              className="hidden lg:flex items-center gap-1.5 px-2 py-1 rounded-md text-xs text-ps-text-muted hover:text-ps-text-secondary hover:bg-ps-surface-raised transition-colors font-mono"
             >
               {collapsed ? (
                 <ChevronRight className="w-4 h-4" />

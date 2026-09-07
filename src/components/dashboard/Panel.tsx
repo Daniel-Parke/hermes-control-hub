@@ -15,15 +15,15 @@
 //   6. Rec Room         (line ~894)       — accent=purple,(no right slot)
 //
 // (That's 6 sites, not 5 — the source-pattern test pins the
-// `border-*-500/20 bg-dark-900/50 overflow-hidden` outer + the
-// `border-b border-white/10 bg-dark-800/50` header bar + the icon
+// `border-*-500/20 bg-ps-surface-panel overflow-hidden` outer + the
+// `border-b border-ps-edge-hairline bg-ps-surface-raised` header bar + the icon
 // + label inner. The 6 sites all render the same outer shell with
 // only the accent colour + optional right-slot content varying.)
 //
 // The 5 identical lines per site that this extraction collapses:
 //
-//   <div className="rounded-xl border border-{accent}-500/20 bg-dark-900/50 overflow-hidden">
-//     <div className="flex items-center justify-between px-4 py-2 border-b border-white/10 bg-dark-800/50">
+//   <div className="rounded-xl border border-{accent}-500/20 bg-ps-surface-panel overflow-hidden">
+//     <div className="flex items-center justify-between px-4 py-2 border-b border-ps-edge-hairline bg-ps-surface-raised">
 //       <div className="flex items-center gap-2">
 //         <Icon className="w-3.5 h-3.5 text-{accent}" />
 //         <span className="text-xs font-mono text-ps-text-secondary">{label}</span>
@@ -72,7 +72,7 @@ import { iconColorMap } from "@/lib/theme";
 // `accent` is optional as of T-0033. A record surface is usually not accented
 // at all — the sessions ledger, the log pane, the log file picker and the
 // toolset reference are all plain surfaces — and before this they each spelled
-// `border border-white/10 bg-dark-900/50` for themselves, which is exactly the
+// `border border-ps-edge-hairline bg-ps-surface-panel` for themselves, which is exactly the
 // raw box WG-WEB-003 rules against. Omitting the accent now gives them the
 // panel they were imitating.
 function panelBorderClass(accent?: AccentColor): string {
@@ -94,13 +94,13 @@ function panelBorderClass(accent?: AccentColor): string {
     case "orange":
       return "border-neon-orange/20";
     default:
-      return "border-white/10";
+      return "border-ps-edge-hairline";
   }
 }
 
 /**
  * Optional accent wash over the panel interior, replacing the neutral
- * `bg-dark-900/50`. Two surfaces had hand-rolled one: the sessions page's
+ * `bg-ps-surface-panel`. Two surfaces had hand-rolled one: the sessions page's
  * mission group (`bg-neon-green/[0.03]`) and the Hermes toolsets card
  * (`bg-neon-orange/5`). One ruled intensity now serves both, because two
  * near-identical washes is a difference nobody chose.
@@ -126,13 +126,13 @@ function panelTintClass(tint?: AccentColor): string {
     case "orange":
       return "bg-neon-orange/5";
     default:
-      return "bg-dark-900/50";
+      return "bg-ps-surface-panel";
   }
 }
 
 /**
  * Outer panel shell: rounded card with the static accent border +
- * the `bg-dark-900/50` interior + `overflow-hidden` (so list rows
+ * the `bg-ps-surface-panel` interior + `overflow-hidden` (so list rows
  * with their own borders don't escape the rounded corners).
  *
  * `children` is the panel body (typically a list of rows under the
@@ -142,9 +142,9 @@ function panelTintClass(tint?: AccentColor): string {
  * split is cheap and keeps the props simple).
  */
 export interface PanelProps extends React.ComponentPropsWithRef<"div"> {
-  /** Static accent border. Omit for the neutral `border-white/10` surface. */
+  /** Static accent border. Omit for the neutral `border-ps-edge-hairline` surface. */
   accent?: AccentColor;
-  /** Optional accent wash over the interior, replacing `bg-dark-900/50`. */
+  /** Optional accent wash over the interior, replacing `bg-ps-surface-panel`. */
   tint?: AccentColor;
   children: ReactNode;
 }
@@ -180,7 +180,7 @@ export function Panel({
 /**
  * The 4-div header bar that sits at the top of every dashboard panel:
  *
- *   <div className="flex items-center justify-between px-4 py-2 border-b border-white/10 bg-dark-800/50">
+ *   <div className="flex items-center justify-between px-4 py-2 border-b border-ps-edge-hairline bg-ps-surface-raised">
  *     <div className="flex items-center gap-2">
  *       <Icon className="w-3.5 h-3.5 text-{accent}" />
  *       <span className="text-xs font-mono text-ps-text-secondary">{label}</span>
@@ -225,7 +225,7 @@ export function PanelHeader({
   rightSlot?: ReactNode;
 }) {
   return (
-    <div className="flex items-center justify-between px-4 py-2 border-b border-white/10 bg-dark-800/50">
+    <div className="flex items-center justify-between px-4 py-2 border-b border-ps-edge-hairline bg-ps-surface-raised">
       <div className="flex items-center gap-2">
         <Icon className={`w-3.5 h-3.5 ${iconColorMap[accent]}`} />
         <span className="text-xs font-mono text-ps-text-secondary">{label}</span>
