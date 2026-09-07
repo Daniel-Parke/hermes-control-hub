@@ -35,7 +35,7 @@ export function ConfigYamlErrorAlert({
       className="flex items-start gap-3 rounded-xl border border-neon-orange/40 bg-neon-orange/10 px-4 py-3"
     >
       <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-neon-orange" />
-      <div className="min-w-0 text-xs">
+      <div className="min-w-0 text-body">
         <p className="font-semibold text-neon-orange">Hermes config.yaml cannot be parsed</p>
         <p className="mt-0.5 break-words font-mono text-neon-orange/90">{message}</p>
         <p className="mt-1 text-ps-text-muted">

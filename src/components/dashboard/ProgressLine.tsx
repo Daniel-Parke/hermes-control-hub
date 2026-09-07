@@ -72,7 +72,7 @@ export default function ProgressLine({ stats, statsError, onRetryStats, topAgent
       </Link>
       <Link
         href="/results/insights"
-        className="flex items-center gap-2 text-xs text-ps-text-muted hover:text-ps-text-primary transition-colors"
+        className="flex items-center gap-2 text-body text-ps-text-muted hover:text-ps-text-primary transition-colors"
         title="Achievements unlocked. Open Insights"
       >
         <Trophy className="h-3.5 w-3.5 text-neon-yellow" />
@@ -81,7 +81,7 @@ export default function ProgressLine({ stats, statsError, onRetryStats, topAgent
           {unlocked}/{stats.achievements.length}
         </span>
       </Link>
-      <div className="flex items-center gap-2 text-xs">
+      <div className="flex items-center gap-2 text-body">
         <CalendarClock className="h-3.5 w-3.5 text-neon-cyan" />
         {next ? (
           <>
@@ -100,7 +100,7 @@ export default function ProgressLine({ stats, statsError, onRetryStats, topAgent
       </div>
       <Link
         href="/quests"
-        className="ml-auto inline-flex items-center gap-1 text-xs font-mono text-neon-purple hover:underline"
+        className="ml-auto inline-flex items-center gap-1 text-micro font-mono text-neon-purple hover:underline"
       >
         <Compass className="h-3.5 w-3.5" />
         Quests

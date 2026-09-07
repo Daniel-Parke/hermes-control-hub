@@ -6,7 +6,7 @@ import ConceptHint from "@/components/help/ConceptHint";
 
 export default function SkillsDenylistNote() {
   return (
-    <p className="text-xs text-ps-text-muted font-mono mb-4 max-w-3xl">
+    <p className="text-micro text-ps-text-muted font-mono mb-4 max-w-3xl">
       Hermes uses a <strong className="text-ps-text-secondary">denylist</strong> (
       <code className="text-ps-text-muted">skills.disabled</code> in config.yaml). Short names in YAML
       are matched to catalog paths (e.g. <code className="text-ps-text-muted">apple-notes</code> →{" "}

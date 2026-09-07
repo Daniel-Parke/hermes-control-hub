@@ -95,8 +95,8 @@ export default function Sidebar() {
             aria-label={link.label}
             title={iconsOnly ? link.label : undefined}
             aria-current={active ? "page" : undefined}
-            className={`flex items-center gap-2.5 px-3 py-[3px] rounded-md text-sm transition-colors ${
-              active ? "bg-ps-surface-raised text-white" : "text-ps-text-muted hover:bg-ps-surface-raised hover:text-ps-text-primary"
+            className={`flex items-center gap-2.5 px-3 py-[3px] rounded-md text-body transition-colors ${
+              active ? "bg-ps-surface-raised text-ps-text-primary" : "text-ps-text-muted hover:bg-ps-surface-raised hover:text-ps-text-primary"
             }`}
             onClick={closeMobile}
           >
@@ -111,7 +111,7 @@ export default function Sidebar() {
                 <Link
                   key={sub.href}
                   href={sub.href}
-                  className={`block py-1 text-xs transition-colors ${
+                  className={`block py-1 text-body transition-colors ${
                     pathname === sub.href ? "text-ps-text-primary" : "text-ps-text-muted hover:text-ps-text-secondary"
                   }`}
                   onClick={closeMobile}
@@ -169,10 +169,10 @@ export default function Sidebar() {
             </div>
             {!iconsOnly && (
               <div className="leading-tight">
-                <div className="text-sm font-bold tracking-tight text-white">
+                <div className="text-body font-bold tracking-tight text-ps-text-primary">
                   PatterStage
                 </div>
-                <div className="text-xs text-ps-text-muted mt-0.5">
+                <div className="text-body text-ps-text-muted mt-0.5">
                   The Stage is{" "}
                   <span className="font-bold text-neon-cyan text-glow-cyan">Yours</span>
                 </div>
@@ -189,7 +189,7 @@ export default function Sidebar() {
           {mainSections.map((section) => (
             <div key={section.label}>
               {section.label !== "Home" && !iconsOnly && (
-                <div className="text-xs leading-4 font-mono text-ps-text-muted uppercase tracking-widest px-3 mb-0.5 mt-1.5">
+                <div className="text-micro leading-4 font-mono text-ps-text-muted uppercase tracking-widest px-3 mb-0.5 mt-1.5">
                   {section.label}
                 </div>
               )}
@@ -217,8 +217,8 @@ export default function Sidebar() {
                 title={iconsOnly ? link.label : undefined}
                 aria-current={isActive(pathname, link.href) ? "page" : undefined}
                 onClick={closeMobile}
-                className={`flex items-center justify-center gap-1.5 rounded-md text-xs font-mono transition-colors ${
-                  isActive(pathname, link.href) ? "bg-ps-surface-raised text-white" : "text-ps-text-muted hover:bg-ps-surface-raised hover:text-ps-text-primary"
+                className={`flex items-center justify-center gap-1.5 rounded-md text-micro font-mono transition-colors ${
+                  isActive(pathname, link.href) ? "bg-ps-surface-raised text-ps-text-primary" : "text-ps-text-muted hover:bg-ps-surface-raised hover:text-ps-text-primary"
                 } ${iconsOnly ? "p-1.5" : "flex-auto px-2 py-1"}`}
               >
                 <link.icon className="w-3.5 h-3.5 flex-shrink-0" />
@@ -236,7 +236,7 @@ export default function Sidebar() {
               aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
               aria-expanded={!collapsed}
               onClick={toggleCollapsed}
-              className="hidden lg:flex items-center gap-1.5 px-2 py-1 rounded-md text-xs text-ps-text-muted hover:text-ps-text-secondary hover:bg-ps-surface-raised transition-colors font-mono"
+              className="hidden lg:flex items-center gap-1.5 px-2 py-1 rounded-md text-micro text-ps-text-muted hover:text-ps-text-secondary hover:bg-ps-surface-raised transition-colors font-mono"
             >
               {collapsed ? (
                 <ChevronRight className="w-4 h-4" />

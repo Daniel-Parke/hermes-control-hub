@@ -68,9 +68,9 @@ const colorMap: Record<AccentColor, { bg: string; border: string; text: string; 
 };
 
 const sizeMap = {
-  sm: "px-2.5 py-1.5 text-xs gap-1.5",
-  md: "px-3.5 py-2 text-sm gap-2",
-  lg: "px-5 py-2.5 text-base gap-2.5",
+  sm: "px-2.5 py-1.5 text-body gap-1.5",
+  md: "px-3.5 py-2 text-body gap-2",
+  lg: "px-5 py-2.5 text-lead gap-2.5",
 };
 
 export default function Button({
@@ -91,10 +91,10 @@ export default function Button({
     variant === "primary"
       ? `${c.bg} ${c.text} ${c.border} border ${c.hover}`
       : variant === "ghost"
-      ? "bg-transparent text-ps-text-secondary border border-transparent hover:bg-ps-surface-raised hover:text-white"
+      ? "bg-transparent text-ps-text-secondary border border-transparent hover:bg-ps-surface-raised hover:text-ps-text-primary"
       : variant === "danger"
       ? "bg-red-500/20 text-red-400 border border-red-500/30 hover:bg-red-500/30"
-      : "bg-ps-surface-raised text-ps-text-secondary border border-ps-edge hover:border-ps-edge-emphasis hover:text-white";
+      : "bg-ps-surface-raised text-ps-text-secondary border border-ps-edge hover:border-ps-edge-emphasis hover:text-ps-text-primary";
 
   return (
     <button

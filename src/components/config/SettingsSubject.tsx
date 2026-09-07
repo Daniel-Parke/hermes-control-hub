@@ -37,7 +37,7 @@ export default function SettingsSubject({ subject }: { subject: string }) {
   return (
     <div className="flex items-start gap-3 rounded-xl border border-ps-edge-hairline bg-ps-surface-panel px-4 py-3">
       <UserCog className="mt-0.5 h-4 w-4 shrink-0 text-neon-orange" />
-      <div className="min-w-0 text-xs">
+      <div className="min-w-0 text-body">
         <p className="text-ps-text-secondary">These settings belong to {nameOf(subject)}.</p>
         {elsewhere && (
           <>

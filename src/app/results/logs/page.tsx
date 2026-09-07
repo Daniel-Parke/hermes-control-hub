@@ -280,7 +280,7 @@ export default function LogsPage() {
           // (T-0087). Same reason, calm tone, still a live region.
           <div
             role="status"
-            className="mb-4 rounded-xl border border-ps-edge-hairline bg-ps-surface-panel px-4 py-3 text-sm text-ps-text-secondary"
+            className="mb-4 rounded-xl border border-ps-edge-hairline bg-ps-surface-panel px-4 py-3 text-body text-ps-text-secondary"
           >
             {loadError}
           </div>
@@ -291,7 +291,7 @@ export default function LogsPage() {
           />
         ) : null}
         {actionMessage && (
-          <div className="mb-4 flex items-center justify-between gap-3 rounded-xl border border-ps-edge-hairline bg-ps-surface-panel px-4 py-2 text-xs font-mono text-ps-text-secondary">
+          <div className="mb-4 flex items-center justify-between gap-3 rounded-xl border border-ps-edge-hairline bg-ps-surface-panel px-4 py-2 text-micro font-mono text-ps-text-secondary">
             <span>{actionMessage}</span>
             <button
               type="button"
@@ -326,11 +326,11 @@ export default function LogsPage() {
                       onChange={(e) => setSearch(e.target.value)}
                       placeholder="Filter log lines…" aria-label="Log line filter"
                       autoFocus
-                      className="w-full bg-ps-surface-panel border border-ps-edge rounded-lg pl-10 pr-4 py-2 text-sm text-white placeholder-white/30 outline-none focus:border-neon-cyan/50 transition-colors font-mono"
+                      className="w-full bg-ps-surface-panel border border-ps-edge rounded-lg pl-10 pr-4 py-2 text-body text-ps-text-primary placeholder-ps-text-muted outline-none focus:border-neon-cyan/50 transition-colors font-mono"
                     />
                   </div>
                   {search && (
-                    <span className="text-xs font-mono text-neon-cyan shrink-0">
+                    <span className="text-micro font-mono text-neon-cyan shrink-0">
                       {searchMatches} matches
                     </span>
                   )}
@@ -347,7 +347,7 @@ export default function LogsPage() {
                 <button
                   type="button"
                   onClick={openSearchInput}
-                  className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs text-ps-text-muted hover:text-ps-text-secondary hover:bg-ps-surface-raised font-mono"
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-micro text-ps-text-muted hover:text-ps-text-secondary hover:bg-ps-surface-raised font-mono"
                 >
                   <Search className="w-3 h-3" />
                   Filter lines
@@ -385,7 +385,7 @@ export default function LogsPage() {
                 <button
                   type="button"
                   onClick={jumpToLatestLines}
-                  className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs text-neon-cyan bg-neon-cyan/10 font-mono"
+                  className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-micro text-neon-cyan bg-neon-cyan/10 font-mono"
                 >
                   <ChevronDown className="w-3 h-3 rotate-180" />
                   Latest lines

@@ -26,7 +26,7 @@ interface ModelsDriftBannerProps {
 }
 
 const BUTTON_CLASS =
-  "px-2.5 py-1 text-xs font-mono rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed";
+  "px-2.5 py-1 text-micro font-mono rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed";
 
 export default function ModelsDriftBanner({
   drift,
@@ -43,7 +43,7 @@ export default function ModelsDriftBanner({
     <div className="px-4 py-3 rounded-xl border border-neon-orange/20 bg-neon-orange/5">
       <div className="flex items-center gap-3">
         <AlertTriangle className="w-4 h-4 text-neon-orange/90 flex-shrink-0" aria-hidden="true" />
-        <span className="text-xs font-mono text-neon-orange/90">
+        <span className="text-micro font-mono text-neon-orange/90">
           Model config drift — database and Hermes disk differ
         </span>
       </div>
@@ -66,14 +66,14 @@ export default function ModelsDriftBanner({
 
             return (
               <li key={key} className="flex items-center justify-between gap-3">
-                <span className="min-w-0 flex-1 text-xs font-mono text-ps-text-muted">{line.text}</span>
+                <span className="min-w-0 flex-1 text-micro font-mono text-ps-text-muted">{line.text}</span>
                 <div className="flex flex-shrink-0 items-center gap-1.5">
                   {!canPull && !canPush && (
                     // A line with no safe remedy is not a line with no
                     // explanation: a push writes config.model, which is the
                     // agent default and nothing else, so this row is waiting on
                     // a decision the operator takes on the table above.
-                    <span className="text-xs font-mono text-ps-text-faint">
+                    <span className="text-micro font-mono text-ps-text-faint">
                       Make it the agent default to push it
                     </span>
                   )}
@@ -108,7 +108,7 @@ export default function ModelsDriftBanner({
         drift.driftDetails.length > 0 && (
           // A body from before this shape shipped: the sentences still read,
           // they just carry no controls.
-          <div className="mt-1 text-xs font-mono text-ps-text-muted">{drift.driftDetails.join(" · ")}</div>
+          <div className="mt-1 text-micro font-mono text-ps-text-muted">{drift.driftDetails.join(" · ")}</div>
         )
       )}
     </div>

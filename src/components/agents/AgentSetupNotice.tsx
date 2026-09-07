@@ -48,7 +48,7 @@ export default function AgentSetupNotice({ what }: { what: string }) {
   return (
     <div className="mx-6 mt-4 flex items-start gap-3 rounded-xl border border-neon-orange/40 bg-neon-orange/10 px-4 py-3">
       <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-neon-orange" />
-      <div className="min-w-0 text-xs">
+      <div className="min-w-0 text-body">
         <p className="font-semibold text-neon-orange">{data.name} is not installed</p>
         <p className="mt-0.5 text-ps-text-secondary">
           {what} needs an agent on this machine. You can configure PatterStage now, but nothing will

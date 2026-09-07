@@ -52,7 +52,7 @@ export default function AgentFileEditor({
     <div className="border-t border-ps-edge-hairline p-4 flex flex-col gap-3 max-h-[50vh]">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <span className="font-mono text-sm text-white">{editor.fileName}</span>
+          <span className="font-mono text-body text-ps-text-primary">{editor.fileName}</span>
           {hasChanges && <Badge color="orange" size="sm">Unsaved</Badge>}
         </div>
         <div className="flex items-center gap-2 flex-wrap">
@@ -95,14 +95,14 @@ export default function AgentFileEditor({
         </div>
       </div>
       {previewMode ? (
-        <pre className="whitespace-pre-wrap text-sm text-ps-text-primary font-mono bg-ps-surface-inset rounded-lg p-4 overflow-auto max-h-64">
+        <pre className="whitespace-pre-wrap text-body text-ps-text-primary font-mono bg-ps-surface-inset rounded-lg p-4 overflow-auto max-h-64">
           {editor.content}
         </pre>
       ) : (
         <textarea aria-label="File content"
           value={editor.content}
           onChange={(e) => onContentChange(e.target.value)}
-          className="w-full min-h-[200px] max-h-64 bg-ps-surface-inset border border-ps-edge rounded-lg p-4 text-sm text-ps-text-primary font-mono resize-y focus:border-purple-500/50 focus:outline-none"
+          className="w-full min-h-[200px] max-h-64 bg-ps-surface-inset border border-ps-edge rounded-lg p-4 text-body text-ps-text-primary font-mono resize-y focus:border-purple-500/50 focus:outline-none"
           spellCheck={false}
         />
       )}

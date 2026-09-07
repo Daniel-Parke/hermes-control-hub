@@ -296,17 +296,17 @@ export default function Dashboard() {
             agentConfigured ? (
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 rounded-full bg-neon-green pulse-glow" />
-                <span className="text-xs text-ps-text-secondary font-mono">ONLINE</span>
+                <span className="text-micro text-ps-text-secondary font-mono">ONLINE</span>
               </div>
             ) : gatewaySettledReachable ? (
               <div className="flex items-center gap-2" title={`${agentName} runs through the gateway at ${gatewaySettledUrl}`}>
                 <div className="w-2 h-2 rounded-full bg-neon-cyan" />
-                <span className="text-xs text-neon-cyan font-mono">REMOTE</span>
+                <span className="text-micro text-neon-cyan font-mono">REMOTE</span>
               </div>
             ) : (
               <div className="flex items-center gap-2" title={`${agentName} is not installed on this machine`}>
                 <div className="w-2 h-2 rounded-full bg-neon-orange" />
-                <span className="text-xs text-neon-orange font-mono">NOT INSTALLED</span>
+                <span className="text-micro text-neon-orange font-mono">NOT INSTALLED</span>
               </div>
             )
           }
@@ -425,16 +425,16 @@ export default function Dashboard() {
         {/* ═══ Handoff / continuation ═══ */}
         <div className="rounded-xl border border-ps-edge-hairline bg-ps-surface-panel px-4 py-3 flex flex-wrap items-center justify-between gap-3">
           <div>
-            <div className="text-xs font-mono text-ps-text-muted uppercase tracking-wider">
+            <div className="text-micro font-mono text-ps-text-muted uppercase tracking-wider">
               Continue work
             </div>
-            <div className="text-sm text-ps-text-primary mt-1">
+            <div className="text-body text-ps-text-primary mt-1">
               {monitor?.sessions?.recent?.[0] ? (
                 <>
                   Latest session {timeAgo(monitor.sessions.recent[0].modified)}{" "}
                   <Link
                     href={"/results/sessions/" + monitor.sessions.recent[0].id}
-                    className="text-neon-cyan hover:underline font-mono text-xs"
+                    className="text-neon-cyan hover:underline font-mono text-micro"
                   >
                     open transcript
                   </Link>
@@ -446,7 +446,7 @@ export default function Dashboard() {
           </div>
           <Link
             href="/results/sessions"
-            className="text-xs font-mono text-neon-purple hover:underline inline-flex items-center gap-1"
+            className="text-micro font-mono text-neon-purple hover:underline inline-flex items-center gap-1"
           >
             Session browser <ChevronRight className="w-3 h-3" />
           </Link>

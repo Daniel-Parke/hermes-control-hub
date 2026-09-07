@@ -25,7 +25,7 @@ import { useState } from "react";
 import { Wallet, AlertTriangle, ShieldAlert, Info } from "lucide-react";
 
 import { neonAlpha } from "@/components/viz/colors";
-import { inputFieldClasses } from "@/lib/theme";
+import { inputFieldClasses, sectionHeadingClasses } from "@/lib/theme";
 import {
   SPEND_PERIODS,
   formatUsd,
@@ -57,7 +57,7 @@ export default function SpendPanel({ summary, onSave, saving = false }: SpendPan
     return (
       <div
         data-testid="spend-loading"
-        className="rounded-2xl border border-ps-edge-hairline bg-ps-surface-panel p-4 text-xs text-ps-text-muted"
+        className="rounded-2xl border border-ps-edge-hairline bg-ps-surface-panel p-4 text-body text-ps-text-muted"
       >
         Loading provider spend…
       </div>
@@ -94,7 +94,7 @@ export default function SpendPanel({ summary, onSave, saving = false }: SpendPan
     <div className="rounded-2xl border border-ps-edge-hairline bg-ps-surface-panel p-4">
       <div className="mb-3 flex items-center gap-2">
         <Wallet className="h-4 w-4 text-neon-green" />
-        <h2 className="text-xs font-mono uppercase tracking-widest text-ps-text-muted">
+        <h2 className={sectionHeadingClasses}>
           Provider spend
         </h2>
         {/* The old wording here said "prices are the published per-model rates".
@@ -121,10 +121,10 @@ export default function SpendPanel({ summary, onSave, saving = false }: SpendPan
             className="rounded-xl border border-ps-edge-hairline bg-ps-surface-panel p-3"
             style={{ boxShadow: `inset 0 0 18px ${neonAlpha("green", 5)}` }}
           >
-            <div className="font-mono text-2xl font-bold text-ps-text-primary">
+            <div className="font-mono text-display font-bold text-ps-text-primary">
               {formatUsd(p.totalUsd)}
             </div>
-            <div className="mt-0.5 text-xs uppercase tracking-wider text-ps-text-muted">{p.label}</div>
+            <div className="mt-0.5 text-micro uppercase tracking-wider text-ps-text-muted">{p.label}</div>
             {/* Driven by the row's OWN note, not by its basis.
                 The mark used to key off `basis.estimatedUsd > 0` and point at a
                 sentence built from the budget period alone, which broke twice:
@@ -139,7 +139,7 @@ export default function SpendPanel({ summary, onSave, saving = false }: SpendPan
               <div
                 data-testid={`spend-estimated-${p.period}`}
                 title={p.estimateNote}
-                className="mt-1 text-xs text-ps-text-faint"
+                className="mt-1 text-body text-ps-text-faint"
               >
                 {p.basis.knownUsd > 0 ? "Part estimated" : "Estimated"}
               </div>
@@ -154,7 +154,7 @@ export default function SpendPanel({ summary, onSave, saving = false }: SpendPan
           figures read as belonging to whichever tile the eye landed on last. */}
       <div
         data-testid="spend-sources-period"
-        className="mt-3 text-xs uppercase tracking-wider text-ps-text-faint"
+        className="mt-3 text-micro uppercase tracking-wider text-ps-text-faint"
       >
         {periodLabel(summary.budgetPeriod)}, by source
       </div>
@@ -163,7 +163,7 @@ export default function SpendPanel({ summary, onSave, saving = false }: SpendPan
           <li
             key={s.source}
             data-testid={`spend-source-${s.source}`}
-            className="flex items-center justify-between gap-2 text-xs"
+            className="flex items-center justify-between gap-2 text-body"
           >
             <span className="text-ps-text-secondary">{s.label}</span>
             <span className="font-mono text-ps-text-muted">
@@ -187,13 +187,13 @@ export default function SpendPanel({ summary, onSave, saving = false }: SpendPan
       </ul>
 
       {summary.estimateNote && (
-        <p data-testid="spend-rate-basis" className="mt-2 text-xs leading-relaxed text-ps-text-faint">
+        <p data-testid="spend-rate-basis" className="mt-2 text-body leading-relaxed text-ps-text-faint">
           {summary.estimateNote}
         </p>
       )}
 
       {summary.unmeasured.length > 0 && (
-        <p data-testid="spend-unmeasured" className="mt-2 text-xs leading-relaxed text-ps-text-faint">
+        <p data-testid="spend-unmeasured" className="mt-2 text-body leading-relaxed text-ps-text-faint">
           {summary.unmeasured.join(" ")}
         </p>
       )}
@@ -201,7 +201,7 @@ export default function SpendPanel({ summary, onSave, saving = false }: SpendPan
       {/* ── The meter exists only when a figure does. ── */}
       {policy.limitUsd !== null && (
         <div data-testid="spend-meter" className="mt-4">
-          <div className="flex items-center justify-between text-xs text-ps-text-muted">
+          <div className="flex items-center justify-between text-body text-ps-text-muted">
             <span>
               {periodLabel(policy.period)} against {formatUsd(policy.limitUsd)}
             </span>
@@ -220,7 +220,7 @@ export default function SpendPanel({ summary, onSave, saving = false }: SpendPan
       {verdict.state === "over" && !verdict.blocksUnattended && (
         <p
           data-testid="spend-warning"
-          className="mt-3 flex items-start gap-2 rounded-lg border border-neon-orange/30 bg-neon-orange/5 p-2.5 text-xs leading-relaxed text-ps-text-secondary"
+          className="mt-3 flex items-start gap-2 rounded-lg border border-neon-orange/30 bg-neon-orange/5 p-2.5 text-body leading-relaxed text-ps-text-secondary"
         >
           <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-neon-orange" />
           <span>{verdict.message}</span>
@@ -230,7 +230,7 @@ export default function SpendPanel({ summary, onSave, saving = false }: SpendPan
       {verdict.blocksUnattended && (
         <p
           data-testid="spend-stopped"
-          className="mt-3 flex items-start gap-2 rounded-lg border border-neon-pink/30 bg-neon-pink/5 p-2.5 text-xs leading-relaxed text-ps-text-secondary"
+          className="mt-3 flex items-start gap-2 rounded-lg border border-neon-pink/30 bg-neon-pink/5 p-2.5 text-body leading-relaxed text-ps-text-secondary"
         >
           <ShieldAlert className="mt-0.5 h-3.5 w-3.5 shrink-0 text-neon-pink" />
           <span>{verdict.message}</span>
@@ -243,7 +243,7 @@ export default function SpendPanel({ summary, onSave, saving = false }: SpendPan
           type="button"
           data-testid="spend-budget-toggle"
           onClick={() => setOpen((v) => !v)}
-          className="text-xs text-ps-text-muted transition-colors hover:text-ps-text-secondary"
+          className="text-body text-ps-text-muted transition-colors hover:text-ps-text-secondary"
         >
           {policy.limitUsd === null
             ? "Set a budget (optional)"
@@ -253,7 +253,7 @@ export default function SpendPanel({ summary, onSave, saving = false }: SpendPan
         {open && (
           <div className="mt-3 space-y-3">
             <div className="flex flex-wrap items-center gap-2">
-              <label className="text-xs text-ps-text-muted" htmlFor="spend-limit">
+              <label className="text-body text-ps-text-muted" htmlFor="spend-limit">
                 USD per
               </label>
               <select aria-label="Spend limit period"
@@ -281,7 +281,7 @@ export default function SpendPanel({ summary, onSave, saving = false }: SpendPan
               />
             </div>
 
-            <label className="flex items-start gap-2 text-xs leading-relaxed text-ps-text-secondary">
+            <label className="flex items-start gap-2 text-body leading-relaxed text-ps-text-secondary">
               <input
                 type="checkbox"
                 data-testid="spend-hard-stop"
@@ -297,7 +297,7 @@ export default function SpendPanel({ summary, onSave, saving = false }: SpendPan
             </label>
 
             {formError && (
-              <p data-testid="spend-form-error" className="text-xs text-neon-pink">
+              <p data-testid="spend-form-error" className="text-body text-neon-pink">
                 {formError}
               </p>
             )}
@@ -307,7 +307,7 @@ export default function SpendPanel({ summary, onSave, saving = false }: SpendPan
               data-testid="spend-save"
               disabled={saving}
               onClick={save}
-              className="rounded-lg border border-neon-green/40 px-3 py-1.5 text-xs font-mono text-neon-green transition-colors hover:bg-neon-green/10 disabled:opacity-50"
+              className="rounded-lg border border-neon-green/40 px-3 py-1.5 text-micro font-mono text-neon-green transition-colors hover:bg-neon-green/10 disabled:opacity-50"
             >
               {saving ? "Saving…" : "Save budget"}
             </button>

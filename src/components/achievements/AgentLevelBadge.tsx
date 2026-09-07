@@ -42,15 +42,15 @@ export default function AgentLevelBadge({
         color={color}
         size={64}
         thickness={6}
-        label={<span className="text-lg font-bold">{experience ? experience.level : "—"}</span>}
+        label={<span className="text-title font-bold">{experience ? experience.level : "—"}</span>}
         sublabel="LEVEL"
       />
       <div className="min-w-0">
-        <div className="truncate font-mono text-sm font-semibold text-white">{label ?? "Agent"}</div>
+        <div className="truncate font-mono text-body font-semibold text-ps-text-primary">{label ?? "Agent"}</div>
         {experience ? (
-          <div className="text-xs text-neon-purple">{experience.title}</div>
+          <div className="text-body text-neon-purple">{experience.title}</div>
         ) : (
-          <div className="text-xs text-ps-text-muted">Run a mission to start growing this agent</div>
+          <div className="text-body text-ps-text-muted">Run a mission to start growing this agent</div>
         )}
       </div>
     </div>

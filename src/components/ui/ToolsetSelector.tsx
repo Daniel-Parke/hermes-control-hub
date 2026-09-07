@@ -56,7 +56,7 @@ export default function ToolsetSelector({
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg bg-ps-surface-raised border border-ps-edge text-sm hover:border-ps-edge-emphasis transition-colors text-left"
+        className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg bg-ps-surface-raised border border-ps-edge text-body hover:border-ps-edge-emphasis transition-colors text-left"
       >
         <Wrench className="w-4 h-4 text-neon-orange/90 flex-shrink-0" />
         <span className="text-ps-text-muted flex-1">
@@ -72,14 +72,14 @@ export default function ToolsetSelector({
           {value.map((id) => (
             <span
               key={id}
-              className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-neon-orange/10 border border-neon-orange/20 text-xs font-mono text-neon-orange/90"
+              className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-neon-orange/10 border border-neon-orange/20 text-micro font-mono text-neon-orange/90"
             >
               {toolsetLabel(id)}
               <button
                 type="button"
                 aria-label={`Remove toolset ${toolsetLabel(id)}`}
                 onClick={() => remove(id)}
-                className="hover:text-white"
+                className="hover:text-ps-text-primary"
               >
                 <X className="w-3 h-3" />
               </button>
@@ -98,10 +98,10 @@ export default function ToolsetSelector({
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search toolsets…" aria-label="Toolset search"
-                className="w-full pl-8 pr-3 py-2 text-xs bg-ps-surface-ground border border-ps-edge rounded text-white focus:outline-none focus:border-neon-orange/40"
+                className="w-full pl-8 pr-3 py-2 text-body bg-ps-surface-ground border border-ps-edge rounded text-ps-text-primary focus:outline-none focus:border-neon-orange/40"
               />
             </div>
-            <p className="text-xs text-ps-text-muted mt-1.5 px-1">
+            <p className="text-body text-ps-text-muted mt-1.5 px-1">
               Prompt hints only — runtime tools come from the profile config.
             </p>
           </div>
@@ -111,11 +111,11 @@ export default function ToolsetSelector({
                 <Loader2 className="w-4 h-4 animate-spin" />
               </div>
             ) : available.length === 0 ? (
-              <p className="text-xs text-ps-text-muted px-2 py-3">
+              <p className="text-body text-ps-text-muted px-2 py-3">
                 No toolsets on this profile. Configure on Agent → Tools.
               </p>
             ) : filtered.length === 0 ? (
-              <p className="text-xs text-ps-text-muted px-2 py-3">No matches</p>
+              <p className="text-body text-ps-text-muted px-2 py-3">No matches</p>
             ) : (
               filtered.map((id) => (
                 <button
@@ -125,7 +125,7 @@ export default function ToolsetSelector({
                     add(id);
                     setSearch("");
                   }}
-                  className="w-full text-left px-2 py-1.5 rounded text-xs font-mono text-ps-text-secondary hover:bg-ps-surface-raised"
+                  className="w-full text-left px-2 py-1.5 rounded text-micro font-mono text-ps-text-secondary hover:bg-ps-surface-raised"
                 >
                   {toolsetLabel(id)}
                   <span className="text-ps-text-faint ml-1">({id})</span>

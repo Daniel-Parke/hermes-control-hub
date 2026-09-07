@@ -10,6 +10,7 @@
 
 "use client";
 
+import { sectionHeadingClasses } from "@/lib/theme";
 import { useState } from "react";
 import { Check, Copy, Download, ExternalLink, Loader2 } from "lucide-react";
 
@@ -52,13 +53,13 @@ const STEP_DOT: Record<string, string> = {
 // reader (src/modules/rec-room/components/ChapterReader.tsx). The lock-book's
 // "Measures" slot is still "set at first build", so the code is the convention.
 const PROSE =
-  "max-w-3xl text-sm leading-relaxed text-ps-text-primary " +
-  "[&_h1]:mt-6 [&_h1]:mb-2 [&_h1]:text-lg [&_h1]:font-bold [&_h1]:text-white " +
-  "[&_h2]:mt-6 [&_h2]:mb-2 [&_h2]:scroll-mt-20 [&_h2]:border-b [&_h2]:border-ps-edge-hairline [&_h2]:pb-1 [&_h2]:text-base [&_h2]:font-semibold [&_h2]:text-white " +
+  "max-w-3xl text-body leading-relaxed text-ps-text-primary " +
+  "[&_h1]:mt-6 [&_h1]:mb-2 [&_h1]:text-title [&_h1]:font-bold [&_h1]:text-ps-text-primary " +
+  "[&_h2]:mt-6 [&_h2]:mb-2 [&_h2]:scroll-mt-20 [&_h2]:border-b [&_h2]:border-ps-edge-hairline [&_h2]:pb-1 [&_h2]:text-lead [&_h2]:font-semibold [&_h2]:text-ps-text-primary " +
   "[&_h3]:mt-4 [&_h3]:mb-1 [&_h3]:font-semibold [&_h3]:text-ps-text-primary " +
   "[&_p]:my-2 [&_ul]:my-2 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:my-2 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:my-1 " +
   "[&_a]:text-neon-cyan hover:[&_a]:underline " +
-  "[&_code]:rounded [&_code]:bg-ps-surface-inset [&_code]:px-1 [&_code]:text-[0.85em] [&_code]:text-neon-green " +
+  "[&_code]:rounded [&_code]:bg-ps-surface-inset [&_code]:px-1 [&_code]:text-micro [&_code]:text-neon-green " +
   "[&_pre.dr-code]:my-3 [&_pre.dr-code]:overflow-x-auto [&_pre.dr-code]:rounded-lg [&_pre.dr-code]:border [&_pre.dr-code]:border-ps-edge-hairline [&_pre.dr-code]:bg-ps-surface-ground [&_pre.dr-code]:p-3 " +
   "[&_pre.dr-code_code]:bg-transparent [&_pre.dr-code_code]:p-0 [&_pre.dr-code_code]:text-ps-text-secondary " +
   "[&_blockquote]:my-2 [&_blockquote]:border-l-2 [&_blockquote]:border-neon-cyan/50 [&_blockquote]:pl-3 [&_blockquote]:text-ps-text-secondary " +
@@ -70,20 +71,20 @@ const PROSE =
 //
 // Both bands hold the existing type scale on purpose. A navigator is exactly the
 // place a designer reaches for 11px to buy back vertical space, and the
-// no-sub-12px-type baseline shrinks only, so the labels are text-xs (12px) and
-// the links are text-sm. Fewer sections listed, not smaller ones.
+// no-sub-12px-type baseline shrinks only, so the labels are text-body (12px) and
+// the links are text-body. Fewer sections listed, not smaller ones.
 const BRIEF =
   "rounded-xl border border-neon-cyan/25 bg-neon-cyan/5 px-4 py-3 " +
-  "[&_.dr-brief-lbl]:mb-2 [&_.dr-brief-lbl]:font-mono [&_.dr-brief-lbl]:text-xs [&_.dr-brief-lbl]:uppercase [&_.dr-brief-lbl]:tracking-widest [&_.dr-brief-lbl]:text-neon-cyan " +
+  "[&_.dr-brief-lbl]:mb-2 [&_.dr-brief-lbl]:font-mono [&_.dr-brief-lbl]:text-micro [&_.dr-brief-lbl]:uppercase [&_.dr-brief-lbl]:tracking-widest [&_.dr-brief-lbl]:text-neon-cyan " +
   "[&_ul]:list-disc [&_ul]:space-y-1.5 [&_ul]:pl-5 " +
-  "[&_li]:text-sm [&_li]:leading-relaxed [&_li]:text-ps-text-primary " +
+  "[&_li]:text-body [&_li]:leading-relaxed [&_li]:text-ps-text-primary " +
   "[&_a]:text-neon-cyan hover:[&_a]:underline";
 
 const NAV =
   "rounded-xl border border-ps-edge-hairline bg-ps-surface-panel px-4 py-3 " +
-  "[&_.dr-nav-lbl]:mb-2 [&_.dr-nav-lbl]:font-mono [&_.dr-nav-lbl]:text-xs [&_.dr-nav-lbl]:uppercase [&_.dr-nav-lbl]:tracking-widest [&_.dr-nav-lbl]:text-ps-text-muted " +
+  "[&_.dr-nav-lbl]:mb-2 [&_.dr-nav-lbl]:font-mono [&_.dr-nav-lbl]:text-micro [&_.dr-nav-lbl]:uppercase [&_.dr-nav-lbl]:tracking-widest [&_.dr-nav-lbl]:text-ps-text-muted " +
   "[&_ol]:flex [&_ol]:list-none [&_ol]:flex-wrap [&_ol]:gap-x-5 [&_ol]:gap-y-1 [&_ol]:p-0 " +
-  "[&_li]:text-sm [&_a]:text-ps-text-secondary hover:[&_a]:text-neon-cyan hover:[&_a]:underline";
+  "[&_li]:text-body [&_a]:text-ps-text-secondary hover:[&_a]:text-neon-cyan hover:[&_a]:underline";
 
 const SOURCES =
   "[&_ol.dr-sources]:list-none [&_ol.dr-sources]:space-y-2 [&_ol.dr-sources]:pl-0 " +
@@ -91,7 +92,7 @@ const SOURCES =
   "[&_.n]:font-semibold [&_.n]:text-neon-cyan [&_a]:text-ps-text-primary hover:[&_a]:text-neon-cyan "
   // `.h` is a source whose URL is not http(s), so renderSourcesHtml refuses
   // to make it a link. It still reads as the host it claims to be.
-  + "[&_.h]:text-ps-text-secondary [&_.u]:mt-0.5 [&_.u]:break-all [&_.u]:text-xs [&_.u]:text-ps-text-muted";
+  + "[&_.h]:text-ps-text-secondary [&_.u]:mt-0.5 [&_.u]:break-all [&_.u]:text-body [&_.u]:text-ps-text-muted";
 
 export default function ResearchReport({ run, steps }: { run: ResearchRun; steps: ResearchStep[] }) {
   const [copied, setCopied] = useState(false);
@@ -147,7 +148,7 @@ export default function ResearchReport({ run, steps }: { run: ResearchRun; steps
         /* design-lint-disable-next-line no-unsanitised-html -- report.html comes from renderReport() in deep-research/markdown.ts, which escapes the model's Markdown before emitting a fixed tag set and linkifies only http(s) URLs; it is the same renderer as the two pragmas above. */
         <div className={PROSE} dangerouslySetInnerHTML={{ __html: report.html }} />
       ) : run.status === "running" || run.status === "pending" ? (
-        <div className="flex items-center gap-2 text-sm text-ps-text-muted">
+        <div className="flex items-center gap-2 text-body text-ps-text-muted">
           <Loader2 className="h-4 w-4 animate-spin" /> Researching…
         </div>
       ) : null}
@@ -155,7 +156,7 @@ export default function ResearchReport({ run, steps }: { run: ResearchRun; steps
       {/* Sources */}
       {sources.length ? (
         <div>
-          <h3 className="mb-2 text-xs font-mono uppercase tracking-widest text-ps-text-muted">
+          <h3 className={sectionHeadingClasses}>
             Sources ({sources.length})
           </h3>
           {/* design-lint-disable-next-line no-unsanitised-html -- renderSourcesHtml escapes the host and the URL as text AND refuses an href whose scheme is not http(s); escaping alone was not enough here, because a javascript: URL is well-formed and still runs. */}
@@ -167,7 +168,7 @@ export default function ResearchReport({ run, steps }: { run: ResearchRun; steps
           While the run is live the rail "electrifies" and a working head pulses. */}
       {steps.length ? (
         <div>
-          <h3 className="mb-2 text-xs font-mono uppercase tracking-widest text-ps-text-muted">
+          <h3 className={sectionHeadingClasses}>
             Research timeline
           </h3>
           <ol className="relative space-y-2">
@@ -189,14 +190,14 @@ export default function ResearchReport({ run, steps }: { run: ResearchRun; steps
                     aria-hidden
                   />
                   <details open={active} className="rounded-lg border border-ps-edge-hairline bg-ps-surface-panel">
-                    <summary className="cursor-pointer list-none px-3 py-2 text-xs">
+                    <summary className="cursor-pointer list-none px-3 py-2 text-body">
                       <span className={`font-mono uppercase tracking-wider ${STEP_COLOR[s.kind] ?? "text-ps-text-secondary"}`}>
                         {STEP_LABEL[s.kind] ?? s.kind}
                       </span>
                       {s.input ? <span className="ml-2 text-ps-text-muted">{s.input.slice(0, 70)}</span> : null}
                     </summary>
                     {s.output ? (
-                      <pre className="max-h-60 overflow-y-auto whitespace-pre-wrap px-3 pb-3 text-xs text-ps-text-muted">
+                      <pre className="max-h-60 overflow-y-auto whitespace-pre-wrap px-3 pb-3 text-body text-ps-text-muted">
                         {s.output}
                       </pre>
                     ) : null}
@@ -207,7 +208,7 @@ export default function ResearchReport({ run, steps }: { run: ResearchRun; steps
             {run.status === "running" ? (
               <li className="relative pl-7">
                 <span className="absolute left-1 top-1.5 h-3.5 w-3.5 animate-pulse rounded-full bg-neon-cyan/60 ring-2 ring-dark-900" aria-hidden />
-                <span className="inline-flex items-center gap-2 text-xs text-ps-text-muted">
+                <span className="inline-flex items-center gap-2 text-body text-ps-text-muted">
                   <Loader2 className="h-3.5 w-3.5 animate-spin" /> working…
                 </span>
               </li>

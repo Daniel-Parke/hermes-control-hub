@@ -7,19 +7,19 @@
   "counts": {
     "routes": 23,
     "distinctFontSizes": 7,
-    "twelvePxShare": 0.7,
+    "twelvePxShare": 0.56,
     "monoShare": 0.63,
     "textBelowFloor": 0,
     "distinctBorderColours": 34,
-    "distinctCardChromes": 88,
-    "distinctButtonHeights": 22,
-    "distinctButtonChromes": 85,
+    "distinctCardChromes": 90,
+    "distinctButtonHeights": 29,
+    "distinctButtonChromes": 86,
     "distinctRadii": 7,
     "distinctBoxShadows": 16,
     "distinctZLayers": 1,
     "controlBordersBelowThree": 156,
-    "decorativeBordersBelowThree": 572,
-    "hitTargetsBelowTwentyFour": 85,
+    "decorativeBordersBelowThree": 609,
+    "hitTargetsBelowTwentyFour": 84,
     "routesWithMisalignedHeading": 0,
     "worstHeadingOffset": 0,
     "distinctContentWidths": 1,
@@ -27,5 +27,17 @@
     "routesOverflowingX": 0,
     "railVsPageContrast": 1.47,
     "railDividerContrast": 4.4
-  }
+  },
+  "allowed": [
+    {
+      "when": "2026-09-07",
+      "reason": "T-0119. All four follow from one intended change and all four are U8's to take back. (1) decorativeBordersBelowThree +37: the 32 section headings gained the hairline rule that makes a heading read as one. The hairline is 1.63:1 BY CONSTRUCTION and clears the 1.55 floor the live gate holds; this metric's floor is 3:1, which the ladder deliberately does not meet for a card outline, so the number punishes doing the right thing and should be re-cut in U16. (2) distinctButtonHeights +7, and the two chrome counts with it, because a chrome key carries its height: button labels rose from 12px to 14px, which is the register decision, and this product has no button height scale at all - every height is whatever its label makes it. The Button primitive's three fixed heights are U8.",
+      "rose": [
+        "distinctCardChromes rose from 88 to 90",
+        "distinctButtonHeights rose from 22 to 29",
+        "distinctButtonChromes rose from 85 to 86",
+        "decorativeBordersBelowThree rose from 572 to 609"
+      ]
+    }
+  ]
 }

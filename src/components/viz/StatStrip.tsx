@@ -46,11 +46,11 @@ function Tile({ icon: Icon, label, value, color, suffix, compact, hint }: StatTi
     >
       <div className="flex items-center gap-1.5">
         <Icon className="h-3 w-3" style={{ color: neon(color) }} />
-        <span className="text-xs uppercase tracking-wider text-ps-text-muted">{label}</span>
+        <span className="text-micro uppercase tracking-wider text-ps-text-muted">{label}</span>
       </div>
-      <div className="mt-0.5 font-mono text-xl font-bold leading-none text-white">
+      <div className="mt-0.5 font-mono text-title font-bold leading-none text-ps-text-primary">
         {compact ? compactNum(n) : Math.round(n).toLocaleString()}
-        {suffix && <span className="ml-0.5 text-xs font-normal text-ps-text-muted">{suffix}</span>}
+        {suffix && <span className="ml-0.5 text-body font-normal text-ps-text-muted">{suffix}</span>}
       </div>
     </div>
   );

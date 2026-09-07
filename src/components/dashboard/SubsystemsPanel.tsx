@@ -50,18 +50,18 @@ export default function SubsystemsPanel({
         accent={worst === "ok" ? "green" : worst === "degraded" ? "orange" : "pink"}
         rightSlot={
           checkedAt ? (
-            <span className="text-xs font-mono text-ps-text-muted">
+            <span className="text-micro font-mono text-ps-text-muted">
               checked {new Date(checkedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
             </span>
           ) : null
         }
       />
       {!subsystems ? (
-        <p className="px-4 pb-4 text-xs text-ps-text-muted">Checking the gateway, memory, sync, config.yaml and the gateway gate…</p>
+        <p className="px-4 pb-4 text-body text-ps-text-muted">Checking the gateway, memory, sync, config.yaml and the gateway gate…</p>
       ) : (
         <ul role="list" className="px-4 pb-4 space-y-2">
           {subsystems.map((row) => (
-            <li key={row.id} role="listitem" data-state={row.state} className="flex items-start gap-3 text-xs">
+            <li key={row.id} role="listitem" data-state={row.state} className="flex items-start gap-3 text-body">
               <span aria-hidden className={`mt-1 h-2 w-2 shrink-0 rounded-full ${DOT[row.state]}`} />
               <span className="w-24 shrink-0 font-mono text-ps-text-secondary">{row.label}</span>
               <span className={`w-24 shrink-0 font-mono ${WORD_COLOR[row.state]}`}>{WORD[row.state]}</span>

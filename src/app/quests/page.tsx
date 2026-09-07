@@ -121,11 +121,11 @@ export default function QuestsPage() {
                 sublabel="quests"
               />
               <div className="min-w-0 flex-1 space-y-1">
-                <p className="text-sm text-ps-text-secondary">
+                <p className="text-body text-ps-text-secondary">
                   Every one of these is something to actually do in PatterStage. Each ticks itself when
                   the product records you doing it, so there is nothing here to mark off by hand.
                 </p>
-                <p className="font-mono text-xs text-ps-text-muted">
+                <p className="font-mono text-micro text-ps-text-muted">
                   {progress.chapters.length} chapters, first to last.
                 </p>
               </div>

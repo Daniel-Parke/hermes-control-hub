@@ -95,7 +95,7 @@ export default function EditProfileModal({
           />
         </Field>
         {profile?.isDefault && (
-          <p className="text-xs text-ps-text-muted">
+          <p className="text-body text-ps-text-muted">
             This is the name PatterStage shows. Nothing is written into the agent&apos;s own
             files, so renaming it here is safe and can be undone by renaming it back.
           </p>

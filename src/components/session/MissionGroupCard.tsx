@@ -48,17 +48,17 @@ export default function MissionGroupCard({ group }: { group: MissionGroup }) {
           <div className="flex items-center gap-2 mb-1">
             {hasActive && <LiveDot />}
             <Layers className="w-4 h-4 text-neon-green flex-shrink-0" />
-            <h3 className="font-semibold text-white truncate">{title}</h3>
-            <span className="text-xs font-mono px-1.5 py-0.5 rounded bg-neon-green/10 text-neon-green">
+            <h3 className="font-semibold text-ps-text-primary truncate">{title}</h3>
+            <span className="text-micro font-mono px-1.5 py-0.5 rounded bg-neon-green/10 text-neon-green">
               {group.sessions.length} on this page
             </span>
             {hasActive && (
-              <span className="text-xs font-mono px-1.5 py-0.5 rounded bg-neon-green/20 text-neon-green">
+              <span className="text-micro font-mono px-1.5 py-0.5 rounded bg-neon-green/20 text-neon-green">
                 {group.activeCount} active
               </span>
             )}
           </div>
-          <div className="flex items-center gap-3 text-xs text-ps-text-muted font-mono flex-wrap">
+          <div className="flex items-center gap-3 text-micro text-ps-text-muted font-mono flex-wrap">
             <span className="flex items-center gap-1">
               <Clock className="w-3 h-3" />
               {timeAgo(group.firstStartedAt)} → {timeAgo(group.lastStartedAt)}
@@ -76,7 +76,7 @@ export default function MissionGroupCard({ group }: { group: MissionGroup }) {
       </LedgerRowButton>
       <Link
         href={`${MISSIONS_PATH}?mission=${group.missionId}`}
-        className="mr-4 text-xs font-mono px-2 py-1 rounded bg-neon-green/10 text-neon-green hover:bg-neon-green/20 transition-colors shrink-0"
+        className="mr-4 text-micro font-mono px-2 py-1 rounded bg-neon-green/10 text-neon-green hover:bg-neon-green/20 transition-colors shrink-0"
         title="Open the parent mission"
       >
         ↗ Mission
@@ -88,7 +88,7 @@ export default function MissionGroupCard({ group }: { group: MissionGroup }) {
             <SessionCard key={s.id} session={s} />
           ))}
           {oldest && oldest.id !== latest.id && (
-            <p className="text-xs font-mono text-ps-text-faint px-4 py-2">
+            <p className="text-micro font-mono text-ps-text-faint px-4 py-2">
               {group.sessions.length} on this page · oldest: {timeAgo(oldest.startedAt)}
             </p>
           )}

@@ -52,7 +52,7 @@ export default function TimeoutSelector({
       <span ref={ref} className="relative inline-flex">
         <button
           onClick={() => setOpen(!open)}
-          className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-ps-surface-raised border border-ps-edge text-xs font-mono text-ps-text-muted hover:border-ps-edge-emphasis hover:text-ps-text-secondary transition-colors"
+          className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-ps-surface-raised border border-ps-edge text-micro font-mono text-ps-text-muted hover:border-ps-edge-emphasis hover:text-ps-text-secondary transition-colors"
           title={`Inactivity timeout: ${value === 0 ? "unlimited" : value + "m"}`}
         >
           <Timer className="w-3 h-3" />
@@ -64,7 +64,7 @@ export default function TimeoutSelector({
               <button
                 key={p.minutes}
                 onClick={(e) => { e.stopPropagation(); onChange(p.minutes); setOpen(false); }}
-                className={`w-full text-left px-3 py-2 text-xs hover:bg-ps-surface-raised ${value === p.minutes ? "text-neon-cyan" : "text-ps-text-secondary"}`}
+                className={`w-full text-left px-3 py-2 text-body hover:bg-ps-surface-raised ${value === p.minutes ? "text-neon-cyan" : "text-ps-text-secondary"}`}
               >
                 {p.label}
               </button>
@@ -79,14 +79,14 @@ export default function TimeoutSelector({
     <div ref={ref} className="relative">
       <button
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg bg-ps-surface-raised border border-ps-edge text-sm text-white hover:border-ps-edge-emphasis transition-colors"
+        className="w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg bg-ps-surface-raised border border-ps-edge text-body text-ps-text-primary hover:border-ps-edge-emphasis transition-colors"
       >
         <div className="flex items-center gap-2">
           <Timer className="w-4 h-4 text-ps-text-muted" />
           <div className="text-left">
-            <div className="font-medium text-sm">{selected.label}</div>
+            <div className="font-medium text-body">{selected.label}</div>
             {showSubtitle && (
-              <div className="text-xs text-ps-text-muted">Inactivity kill switch</div>
+              <div className="text-body text-ps-text-muted">Inactivity kill switch</div>
             )}
           </div>
         </div>
@@ -98,7 +98,7 @@ export default function TimeoutSelector({
             <button
               key={p.minutes}
               onClick={() => { onChange(p.minutes); setOpen(false); }}
-              className={`w-full text-left px-3 py-2 text-sm hover:bg-ps-surface-raised ${value === p.minutes ? "text-neon-cyan bg-neon-cyan/5" : "text-ps-text-secondary"}`}
+              className={`w-full text-left px-3 py-2 text-body hover:bg-ps-surface-raised ${value === p.minutes ? "text-neon-cyan bg-neon-cyan/5" : "text-ps-text-secondary"}`}
             >
               {p.label}
             </button>

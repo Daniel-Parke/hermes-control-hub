@@ -38,7 +38,7 @@ function humanSize(bytes: number): string {
 function Card({ icon: Icon, title, children }: { icon: typeof Settings; title: string; children: React.ReactNode }) {
   return (
     <section className="rounded-xl border border-ps-edge-hairline bg-ps-surface-panel p-5 space-y-4">
-      <h2 className="flex items-center gap-2 text-sm font-semibold text-white">
+      <h2 className="flex items-center gap-2 text-body font-semibold text-ps-text-primary">
         <Icon className="w-4 h-4 text-neon-orange" />
         {title}
       </h2>
@@ -50,8 +50,8 @@ function Card({ icon: Icon, title, children }: { icon: typeof Settings; title: s
 function Row({ label, value }: { label: string; value: string | number }) {
   return (
     <div className="flex items-baseline justify-between gap-4 border-b border-ps-edge-hairline py-1.5 last:border-0">
-      <dt className="text-xs font-mono text-ps-text-muted shrink-0">{label}</dt>
-      <dd className="text-xs font-mono text-ps-text-primary text-right break-all">{value}</dd>
+      <dt className="text-micro font-mono text-ps-text-muted shrink-0">{label}</dt>
+      <dd className="text-micro font-mono text-ps-text-primary text-right break-all">{value}</dd>
     </div>
   );
 }
@@ -143,7 +143,7 @@ export default function SystemPage() {
               <button
                 type="button"
                 onClick={() => void copy()}
-                className="flex items-center gap-2 px-3 py-2 rounded-lg bg-ps-surface-raised border border-ps-edge text-xs font-mono text-ps-text-secondary hover:bg-ps-surface-raised transition-colors"
+                className="flex items-center gap-2 px-3 py-2 rounded-lg bg-ps-surface-raised border border-ps-edge text-micro font-mono text-ps-text-secondary hover:bg-ps-surface-raised transition-colors"
               >
                 <Copy className="w-3.5 h-3.5" />
                 Copy for a bug report
@@ -162,13 +162,13 @@ export default function SystemPage() {
               type="button"
               onClick={() => void backUpNow()}
               disabled={backingUp || readOnly}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg bg-neon-orange/10 border border-neon-orange/20 text-xs font-mono text-neon-orange hover:bg-neon-orange/20 transition-colors disabled:opacity-50"
+              className="flex items-center gap-2 px-3 py-2 rounded-lg bg-neon-orange/10 border border-neon-orange/20 text-micro font-mono text-neon-orange hover:bg-neon-orange/20 transition-colors disabled:opacity-50"
             >
               <Archive className={`w-3.5 h-3.5 ${backingUp ? "animate-pulse" : ""}`} />
               {backingUp ? "Backing up…" : "Back up now"}
             </button>
             {readOnly && (
-              <p className="text-xs font-mono text-semantic-warning">
+              <p className="text-micro font-mono text-semantic-warning">
                 Read-only is on, so a backup cannot be taken from here.
               </p>
             )}
@@ -180,13 +180,13 @@ export default function SystemPage() {
           ) : !backups.data ? (
             <LoadingSpinner text="Reading the backups…" />
           ) : backups.data.backups.length === 0 ? (
-            <p className="text-xs text-ps-text-muted">No backups yet.</p>
+            <p className="text-body text-ps-text-muted">No backups yet.</p>
           ) : (
             <ul className="divide-y divide-ps-edge-hairline">
               {backups.data.backups.map((b) => (
                 <li key={b.path} className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 py-1.5">
-                  <span className="font-mono text-xs text-ps-text-primary break-all">{b.name}</span>
-                  <span className="font-mono text-xs text-ps-text-muted">
+                  <span className="font-mono text-micro text-ps-text-primary break-all">{b.name}</span>
+                  <span className="font-mono text-micro text-ps-text-muted">
                     {humanSize(b.bytes)} · {new Date(b.takenAt).toLocaleString()}
                   </span>
                 </li>
@@ -195,18 +195,18 @@ export default function SystemPage() {
           )}
 
           <div className="space-y-2">
-            <p className="text-xs text-ps-text-muted">
+            <p className="text-body text-ps-text-muted">
               Restoring is a shell step: stop the server, copy the backup over the database, then start it again.
             </p>
             {backups.data?.restoreCommand && (
               <>
-                <pre className="max-h-40 overflow-auto rounded-lg bg-ps-surface-inset px-3 py-2 text-xs font-mono text-ps-text-muted whitespace-pre-wrap break-words">
+                <pre className="max-h-40 overflow-auto rounded-lg bg-ps-surface-inset px-3 py-2 text-micro font-mono text-ps-text-muted whitespace-pre-wrap break-words">
                   {backups.data.restoreCommand}
                 </pre>
                 <button
                   type="button"
                   onClick={() => void copyRestore()}
-                  className="flex items-center gap-2 px-3 py-2 rounded-lg bg-ps-surface-raised border border-ps-edge text-xs font-mono text-ps-text-secondary hover:bg-ps-surface-raised transition-colors"
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg bg-ps-surface-raised border border-ps-edge text-micro font-mono text-ps-text-secondary hover:bg-ps-surface-raised transition-colors"
                 >
                   <Copy className="w-3.5 h-3.5" />
                   Copy the restore command

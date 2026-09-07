@@ -45,12 +45,12 @@ export function LogRow({
     // the pointer with, come from the shared one (T-0033).
     <LedgerRow
       padding="none"
-      className={`grid grid-cols-1 sm:grid-cols-[minmax(0,9.5rem)_minmax(0,4.5rem)_1fr] gap-x-3 gap-y-0.5 items-baseline text-xs font-mono py-1.5 border-b border-ps-edge-hairline ${
+      className={`grid grid-cols-1 sm:grid-cols-[minmax(0,9.5rem)_minmax(0,4.5rem)_1fr] gap-x-3 gap-y-0.5 items-baseline text-micro font-mono py-1.5 border-b border-ps-edge-hairline ${
         isMatch ? "bg-neon-cyan/5 -mx-2 px-2 rounded" : ""
       }`}
     >
       <span className="text-neon-cyan/80 truncate tabular-nums">{p.timestamp ?? "—"}</span>
-      <span className={`uppercase tracking-wide text-xs ${LEVEL_TEXT_CLASS[p.level] ?? LEVEL_TEXT_CLASS.unknown}`}>
+      <span className={`uppercase tracking-wide text-micro ${LEVEL_TEXT_CLASS[p.level] ?? LEVEL_TEXT_CLASS.unknown}`}>
         {p.level}
       </span>
       <span className={`min-w-0 break-words ${LEVEL_TEXT_CLASS[p.level] ?? LEVEL_TEXT_CLASS.unknown}`}>

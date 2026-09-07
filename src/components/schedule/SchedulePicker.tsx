@@ -270,7 +270,7 @@ export default function SchedulePicker({
             <div className="max-h-72 overflow-y-auto py-1">
               {groups.map(({ group, items }) => (
                 <div key={group}>
-                  <div className="px-3 py-1.5 text-xs uppercase tracking-wider text-ps-text-muted font-mono">
+                  <div className="px-3 py-1.5 text-micro uppercase tracking-wider text-ps-text-muted font-mono">
                     {group}
                   </div>
                   {items.map((p) => (
@@ -278,10 +278,10 @@ export default function SchedulePicker({
                       key={p.id}
                       type="button"
                       onClick={() => handlePresetSelect(p)}
-                      className={`w-full text-left px-3 py-2 text-sm transition-colors ${
+                      className={`w-full text-left px-3 py-2 text-body transition-colors ${
                         matchedPreset?.id === p.id
                           ? "bg-neon-orange/15 text-neon-orange"
-                          : "text-ps-text-secondary hover:bg-ps-surface-raised hover:text-white"
+                          : "text-ps-text-secondary hover:bg-ps-surface-raised hover:text-ps-text-primary"
                       }`}
                     >
                       {p.label}
@@ -293,7 +293,7 @@ export default function SchedulePicker({
           </div>
         )}
         {error && (
-          <div className="flex items-center gap-2 text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2 mt-1.5">
+          <div className="flex items-center gap-2 text-body text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2 mt-1.5">
             <AlertCircle className="w-4 h-4 flex-shrink-0" />
             {error}
           </div>
@@ -304,7 +304,7 @@ export default function SchedulePicker({
 
   return (
     <div className="space-y-1.5">
-      <label className="text-sm font-medium text-ps-text-secondary">
+      <label className="text-body font-medium text-ps-text-secondary">
         Schedule
       </label>
 
@@ -329,7 +329,7 @@ export default function SchedulePicker({
             <div className="max-h-72 overflow-y-auto py-1">
               {groups.map(({ group, items }) => (
                 <div key={group}>
-                  <div className="px-3 py-1.5 text-xs uppercase tracking-wider text-ps-text-muted font-mono sticky top-0 bg-ps-surface-panel">
+                  <div className="px-3 py-1.5 text-micro uppercase tracking-wider text-ps-text-muted font-mono sticky top-0 bg-ps-surface-panel">
                     {group}
                   </div>
                   {items.map((p) => (
@@ -337,10 +337,10 @@ export default function SchedulePicker({
                       key={p.id}
                       type="button"
                       onClick={() => handlePresetSelect(p)}
-                      className={`w-full text-left px-3 py-2 text-sm transition-colors ${
+                      className={`w-full text-left px-3 py-2 text-body transition-colors ${
                         matchedPreset?.id === p.id
                           ? "bg-neon-orange/15 text-neon-orange"
-                          : "text-ps-text-secondary hover:bg-ps-surface-raised hover:text-white"
+                          : "text-ps-text-secondary hover:bg-ps-surface-raised hover:text-ps-text-primary"
                       }`}
                     >
                       {p.label}
@@ -353,7 +353,7 @@ export default function SchedulePicker({
                 <button
                   type="button"
                   onClick={() => { setShowCustom((v) => !v); setDropdownOpen(false); }}
-                  className="w-full text-left px-3 py-2 text-sm text-neon-cyan hover:bg-ps-surface-raised transition-colors flex items-center gap-2"
+                  className="w-full text-left px-3 py-2 text-body text-neon-cyan hover:bg-ps-surface-raised transition-colors flex items-center gap-2"
                 >
                   <Calendar className="w-3.5 h-3.5" />
                   Custom…
@@ -382,15 +382,15 @@ export default function SchedulePicker({
       {canonicalCron && (
         <div className="rounded-lg bg-ps-surface-raised border border-ps-edge-hairline px-3 py-1.5 space-y-1">
           <div className="flex items-center gap-2">
-            <span className="text-xs text-ps-text-muted font-mono shrink-0">Cron:</span>
-            <code className="text-xs font-mono text-neon-orange truncate">{canonicalCron}</code>
+            <span className="text-micro text-ps-text-muted font-mono shrink-0">Cron:</span>
+            <code className="text-micro font-mono text-neon-orange truncate">{canonicalCron}</code>
           </div>
           {nextRuns.length > 0 && (
             <div className="flex items-start gap-2">
-              <span className="text-xs text-ps-text-muted font-mono shrink-0 mt-px">Next:</span>
+              <span className="text-micro text-ps-text-muted font-mono shrink-0 mt-px">Next:</span>
               <div className="flex flex-wrap gap-x-3 gap-y-0.5">
                 {nextRuns.map((d, i) => (
-                  <span key={i} className="text-xs font-mono text-ps-text-muted">
+                  <span key={i} className="text-micro font-mono text-ps-text-muted">
                     {d.toLocaleString("en-US", {
                       weekday: "short",
                       month: "short",
@@ -411,7 +411,7 @@ export default function SchedulePicker({
       <button
         type="button"
         onClick={() => setShowAdvanced((v) => !v)}
-        className="text-xs text-ps-text-muted hover:text-ps-text-secondary font-mono underline"
+        className="text-micro text-ps-text-muted hover:text-ps-text-secondary font-mono underline"
         disabled={disabled}
       >
         {showAdvanced ? "Hide" : "Show"} advanced (raw cron)
@@ -452,7 +452,7 @@ export default function SchedulePicker({
       {/* Error. `draftError` is the picker's own: the composer never passes
           `error`, so before T-0051 this block could not fire at all. */}
       {(error || draftError) && (
-        <div className="flex items-center gap-2 text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">
+        <div className="flex items-center gap-2 text-body text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">
           <AlertCircle className="w-4 h-4 flex-shrink-0" aria-hidden="true" />
           {error ?? draftError}
         </div>

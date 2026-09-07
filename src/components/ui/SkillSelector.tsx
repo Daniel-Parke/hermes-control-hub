@@ -54,15 +54,15 @@ export default function SkillSelector({
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg bg-ps-surface-raised border border-ps-edge text-sm hover:border-ps-edge-emphasis transition-colors text-left"
+        className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg bg-ps-surface-raised border border-ps-edge text-body hover:border-ps-edge-emphasis transition-colors text-left"
       >
         <Cpu className="w-4 h-4 text-neon-purple flex-shrink-0" />
         {value.length === 0 ? (
-          <span className="text-ps-text-muted text-xs font-mono">
+          <span className="text-ps-text-muted text-micro font-mono">
             Attach skills (enabled for profile, max {max})...
           </span>
         ) : (
-          <span className="text-xs font-mono text-neon-purple">
+          <span className="text-micro font-mono text-neon-purple">
             {value.length} skill{pluralise(value.length)} attached
           </span>
         )}
@@ -73,7 +73,7 @@ export default function SkillSelector({
         />
       </button>
 
-      <p className="text-xs text-ps-text-faint font-mono mt-1 px-0.5">
+      <p className="text-micro text-ps-text-faint font-mono mt-1 px-0.5">
         Showing only skills enabled for this profile.
       </p>
 
@@ -82,7 +82,7 @@ export default function SkillSelector({
           {value.map((name) => (
             <span
               key={name}
-              className="flex items-center gap-1 pl-2 pr-1.5 py-0.5 rounded-full bg-neon-purple/10 border border-neon-purple/30 text-xs text-neon-purple font-mono"
+              className="flex items-center gap-1 pl-2 pr-1.5 py-0.5 rounded-full bg-neon-purple/10 border border-neon-purple/30 text-micro text-neon-purple font-mono"
             >
               {name}
               <button
@@ -102,13 +102,13 @@ export default function SkillSelector({
         <div className="absolute top-full left-0 right-0 mt-1 z-50 bg-ps-surface-panel border border-ps-edge-hairline rounded-lg shadow-xl overflow-hidden">
           <div className="p-2 border-b border-ps-edge-hairline">
             <div className="relative">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/20" />
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-ps-viz-glyph-idle" />
               <input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search skills..." aria-label="Skill search"
                 autoFocus
-                className="w-full bg-ps-surface-inset border border-ps-edge rounded-lg pl-8 pr-3 py-1.5 text-xs text-white placeholder-white/20 outline-none focus:border-neon-purple/50 font-mono"
+                className="w-full bg-ps-surface-inset border border-ps-edge rounded-lg pl-8 pr-3 py-1.5 text-micro text-ps-text-primary placeholder-ps-text-muted outline-none focus:border-neon-purple/50 font-mono"
               />
             </div>
           </div>
@@ -118,7 +118,7 @@ export default function SkillSelector({
                 <Loader2 className="w-4 h-4 animate-spin text-neon-purple" />
               </div>
             ) : filtered.length === 0 ? (
-              <div className="text-xs text-ps-text-muted text-center py-4">
+              <div className="text-body text-ps-text-muted text-center py-4">
                 {search ? "No skills match your search" : "No skills available"}
               </div>
             ) : (
@@ -131,17 +131,17 @@ export default function SkillSelector({
                     setSearch("");
                   }}
                   disabled={value.length >= max}
-                  className={`w-full text-left px-3 py-2.5 text-xs hover:bg-ps-surface-raised border-b border-ps-edge last:border-0 transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${
+                  className={`w-full text-left px-3 py-2.5 text-body hover:bg-ps-surface-raised border-b border-ps-edge last:border-0 transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${
                     value.length >= max ? "cursor-not-allowed" : ""
                   }`}
                 >
                   <div className="flex items-center justify-between">
                     <span className="font-medium text-ps-text-primary">{skill.name}</span>
-                    <span className="text-xs font-mono text-ps-text-faint">
+                    <span className="text-micro font-mono text-ps-text-faint">
                       {skill.category}
                     </span>
                   </div>
-                  <div className="text-ps-text-muted text-xs mt-0.5 line-clamp-1">
+                  <div className="text-ps-text-muted text-body mt-0.5 line-clamp-1">
                     {skill.description || "No description"}
                   </div>
                 </button>

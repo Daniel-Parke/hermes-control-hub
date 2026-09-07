@@ -31,7 +31,7 @@ export default function ElapsedSince({ since, className }: { since: string; clas
   const start = Date.parse(since);
   if (!Number.isFinite(start)) return null;
   return (
-    <time dateTime={since} className={className ?? "font-mono text-xs text-neon-cyan tabular-nums"}>
+    <time dateTime={since} className={className ?? "font-mono text-micro text-neon-cyan tabular-nums"}>
       {format(now - start)}
     </time>
   );

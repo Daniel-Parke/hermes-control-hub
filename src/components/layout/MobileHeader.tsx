@@ -22,10 +22,10 @@ export default function MobileHeader() {
             <Terminal className="w-4 h-4 text-neon-cyan" />
           </div>
         </div>
-        <span className="text-sm font-bold tracking-tight">
+        <span className="text-body font-bold tracking-tight">
           <span className="text-neon-cyan">PT</span>
           <span className="text-ps-text-muted mx-0.5">/</span>
-          <span className="text-white">Hermes</span>
+          <span className="text-ps-text-primary">Hermes</span>
         </span>
       </Link>
     </div>

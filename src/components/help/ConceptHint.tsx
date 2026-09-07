@@ -103,11 +103,11 @@ export default function ConceptHint({ id, children, className }: ConceptHintProp
           {/* Styled as a heading, not tagged as one. A real <h3> here would
               push an extra level into the outline of every screen that carries
               a hint, and it would come and go with the panel. */}
-          <span className="block text-sm font-semibold text-white">{entry.term}</span>
-          <span className="mt-1 block text-xs text-ps-text-secondary">{entry.short}</span>
+          <span className="block text-body font-semibold text-ps-text-primary">{entry.term}</span>
+          <span className="mt-1 block text-body text-ps-text-secondary">{entry.short}</span>
           <Link
             href={`/help/${entry.slug}`}
-            className="mt-2 inline-block text-xs text-neon-cyan hover:underline"
+            className="mt-2 inline-block text-body text-neon-cyan hover:underline"
           >
             Read more about {entry.term}
           </Link>

@@ -40,17 +40,17 @@ export default function ChapterList({ chapters, currentChapter, onSelect }: {
             <div className="flex items-center gap-2.5 min-w-0">
               {getStatusDot(ch)}
               <div className="min-w-0">
-                <div className={`text-xs truncate ${isCurrent ? "text-white" : "text-ps-text-secondary"}`}>
+                <div className={`text-body truncate ${isCurrent ? "text-ps-text-primary" : "text-ps-text-secondary"}`}>
                   {ch.title}
                 </div>
-                <div className="text-xs font-mono text-ps-text-faint">
+                <div className="text-micro font-mono text-ps-text-faint">
                   {ch.status === "complete" ? `${ch.wordCount} words` : ch.status}
                 </div>
               </div>
             </div>
             {/* Right: tick */}
             {ch.readStatus === "read" && (
-              <span className="text-neon-green flex-shrink-0 text-xs">✓</span>
+              <span className="text-neon-green flex-shrink-0 text-body">✓</span>
             )}
           </button>
         );

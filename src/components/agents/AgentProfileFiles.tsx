@@ -9,6 +9,7 @@
 
 "use client";
 
+import { sectionHeadingClasses } from "@/lib/theme";
 import { FileText } from "lucide-react";
 import Button from "@/components/ui/Button";
 import type { ProfileFile } from "@/types/console";
@@ -24,7 +25,7 @@ export default function AgentProfileFiles({
 }) {
   return (
     <div className="p-4 flex-1 overflow-auto">
-      <h3 className="text-xs font-semibold text-ps-text-muted uppercase tracking-wider mb-3">
+      <h3 className={sectionHeadingClasses}>
         Behaviour files
       </h3>
       <div className="space-y-1">
@@ -39,13 +40,13 @@ export default function AgentProfileFiles({
           >
             <div className="flex items-center gap-2 min-w-0">
               <FileText className="w-4 h-4 text-ps-text-muted shrink-0" />
-              <span className="text-sm text-ps-text-secondary font-mono truncate">{file.name}</span>
+              <span className="text-body text-ps-text-secondary font-mono truncate">{file.name}</span>
               {file.exists ? (
-                <span className="text-xs text-ps-text-faint shrink-0">
+                <span className="text-body text-ps-text-faint shrink-0">
                   {(file.size / 1024).toFixed(1)}KB
                 </span>
               ) : (
-                <span className="text-xs text-ps-text-faint shrink-0">missing</span>
+                <span className="text-body text-ps-text-faint shrink-0">missing</span>
               )}
             </div>
             <Button

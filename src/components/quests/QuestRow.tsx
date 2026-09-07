@@ -86,20 +86,20 @@ export default function QuestRow({ quest, available, onSkip, onUnskip }: QuestRo
       className={`rounded-xl border border-ps-edge-hairline bg-ps-surface-panel p-4 ${quest.skipped ? "opacity-60" : ""}`}
     >
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-        <span className={`font-mono text-xs uppercase tracking-wider ${markerTone}`}>{marker}</span>
-        <h3 className="text-sm font-semibold text-ps-text-primary">{quest.title}</h3>
+        <span className={`font-mono text-micro uppercase tracking-wider ${markerTone}`}>{marker}</span>
+        <h3 className="text-body font-semibold text-ps-text-primary">{quest.title}</h3>
         {day && (
-          <span className="font-mono text-xs text-ps-text-faint" title="The day this was first seen done">
+          <span className="font-mono text-micro text-ps-text-faint" title="The day this was first seen done">
             {day}
           </span>
         )}
       </div>
 
-      <p className="mt-1 text-sm text-ps-text-secondary">{quest.action}</p>
+      <p className="mt-1 text-body text-ps-text-secondary">{quest.action}</p>
 
       {quest.teaches.length > 0 && (
         <div className="mt-2 flex flex-wrap items-center gap-1.5">
-          <span className="font-mono text-xs uppercase tracking-wider text-ps-text-muted">Teaches</span>
+          <span className="font-mono text-micro uppercase tracking-wider text-ps-text-muted">Teaches</span>
           {quest.teaches.map((concept) => (
             <Badge key={concept} color="gray">
               {CONCEPT_LABELS[concept] ?? concept}
@@ -110,7 +110,7 @@ export default function QuestRow({ quest, available, onSkip, onUnskip }: QuestRo
 
       {badge && (
         <div className="mt-2 flex items-center gap-2">
-          <span className="font-mono text-xs uppercase tracking-wider text-ps-text-muted">Earns</span>
+          <span className="font-mono text-micro uppercase tracking-wider text-ps-text-muted">Earns</span>
           <div className="w-28">
             <AchievementBadge achievement={badge} />
           </div>
@@ -119,16 +119,16 @@ export default function QuestRow({ quest, available, onSkip, onUnskip }: QuestRo
 
       {blocked ? (
         <div className="mt-3 rounded-lg border border-ps-edge-hairline bg-ps-surface-raised p-3">
-          <p className="font-mono text-xs uppercase tracking-wider text-ps-text-muted">
+          <p className="font-mono text-micro uppercase tracking-wider text-ps-text-muted">
             Unavailable on this host
           </p>
-          <p className="mt-1 text-xs text-ps-text-secondary">{blocked}</p>
+          <p className="mt-1 text-body text-ps-text-secondary">{blocked}</p>
         </div>
       ) : (
         <div className="mt-3 flex flex-wrap items-center gap-2">
           <Link
             href={quest.screen}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-neon-orange/30 px-2.5 py-1 font-mono text-xs text-neon-orange transition-colors hover:bg-neon-orange/10"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-neon-orange/30 px-2.5 py-1 font-mono text-micro text-neon-orange transition-colors hover:bg-neon-orange/10"
           >
             Go
             <ArrowRight className="h-3 w-3" aria-hidden="true" />
@@ -143,7 +143,7 @@ export default function QuestRow({ quest, available, onSkip, onUnskip }: QuestRo
                 <button
                   type="button"
                   onClick={() => onUnskip(quest.id)}
-                  className="rounded-lg border border-ps-edge px-2.5 py-1 font-mono text-xs text-ps-text-muted transition-colors hover:bg-ps-surface-raised hover:text-ps-text-primary"
+                  className="rounded-lg border border-ps-edge px-2.5 py-1 font-mono text-micro text-ps-text-muted transition-colors hover:bg-ps-surface-raised hover:text-ps-text-primary"
                 >
                   Unskip
                 </button>
@@ -152,7 +152,7 @@ export default function QuestRow({ quest, available, onSkip, onUnskip }: QuestRo
                 <button
                   type="button"
                   onClick={() => onSkip(quest.id)}
-                  className="rounded-lg border border-ps-edge px-2.5 py-1 font-mono text-xs text-ps-text-muted transition-colors hover:bg-ps-surface-raised hover:text-ps-text-primary"
+                  className="rounded-lg border border-ps-edge px-2.5 py-1 font-mono text-micro text-ps-text-muted transition-colors hover:bg-ps-surface-raised hover:text-ps-text-primary"
                 >
                   Skip
                 </button>

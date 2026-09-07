@@ -57,7 +57,7 @@ export default function StorySpendNote({ spend }: StorySpendNoteProps) {
     <span
       data-testid="story-spend-note"
       title={HOW_ESTIMATED}
-      className="text-xs leading-none text-ps-text-faint"
+      className="text-body leading-none text-ps-text-faint"
     >
       {text}
     </span>

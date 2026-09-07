@@ -23,7 +23,7 @@ export function ReaderErrorBanner({
   return (
     <div className="fixed top-0 left-0 right-0 z-[70] bg-red-500/10 border-b border-red-500/20 px-4 py-2 flex items-center gap-2">
       <AlertTriangle className="w-4 h-4 text-red-400 flex-shrink-0" />
-      <span className="text-xs text-red-300 flex-1">
+      <span className="text-body text-red-300 flex-1">
         {error}
         {autoPaused && (
           <>
@@ -51,11 +51,11 @@ export function StoryFailureBanner({
     <div className="fixed top-0 left-0 right-0 z-[65] bg-red-500/10 border-b border-red-500/20 px-4 py-3 flex items-center gap-3">
       <AlertTriangle className="w-5 h-5 text-red-400 flex-shrink-0" />
       <div className="flex-1">
-        <p className="text-xs text-red-300 font-semibold">Story generation failed</p>
-        <p className="text-xs text-red-300/60">{generationError}</p>
+        <p className="text-body text-red-300 font-semibold">Story generation failed</p>
+        <p className="text-body text-red-300/60">{generationError}</p>
       </div>
       <button onClick={onRetryFromCreate}
-        className="px-3 py-1.5 text-xs text-red-300 rounded-lg border border-red-500/30 bg-red-500/10 hover:bg-red-500/20">
+        className="px-3 py-1.5 text-body text-red-300 rounded-lg border border-red-500/30 bg-red-500/10 hover:bg-red-500/20">
         Retry from Create
       </button>
     </div>

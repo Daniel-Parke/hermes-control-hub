@@ -34,7 +34,7 @@ export default function MentalModelsTab({
   return (
     <>
       <div className="flex justify-between items-center mb-4">
-        <div className="text-xs text-ps-text-muted">
+        <div className="text-body text-ps-text-muted">
           {models.length} mental model{pluralise(models.length)} — cached reflect results with auto-refresh
         </div>
         <div className="flex gap-2">
@@ -70,15 +70,15 @@ export default function MentalModelsTab({
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="text-sm font-medium text-ps-text-primary">{m.name}</span>
+                    <span className="text-body font-medium text-ps-text-primary">{m.name}</span>
                     {m.content && <Badge color="green" size="sm">Ready</Badge>}
                     {!m.content && <Badge color="orange" size="sm">Generating</Badge>}
                   </div>
-                  <p className="text-xs text-ps-text-muted mb-2 font-mono">Query: {m.source_query}</p>
+                  <p className="text-micro text-ps-text-muted mb-2 font-mono">Query: {m.source_query}</p>
                   {m.content && (
-                    <p className="text-sm text-ps-text-secondary leading-relaxed line-clamp-3">{m.content}</p>
+                    <p className="text-body text-ps-text-secondary leading-relaxed line-clamp-3">{m.content}</p>
                   )}
-                  <div className="flex items-center gap-3 mt-2 text-xs text-ps-text-muted">
+                  <div className="flex items-center gap-3 mt-2 text-body text-ps-text-muted">
                     {m.last_refreshed_at && (
                       <span className="flex items-center gap-1">
                         <Clock className="w-3 h-3" />

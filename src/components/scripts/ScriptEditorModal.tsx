@@ -72,7 +72,7 @@ export default function ScriptEditorModal({
             </ConfirmButton>
           )}
           {!isNew && scheduled && (
-            <span className="ml-2 font-mono text-xs text-semantic-warning">
+            <span className="ml-2 font-mono text-micro text-semantic-warning">
               Deleting the file also removes its schedule.
             </span>
           )}
@@ -89,14 +89,14 @@ export default function ScriptEditorModal({
       <div className="space-y-3">
         {isNew && (
           <div>
-            <label htmlFor="script-filename" className="mb-1 block font-mono text-xs text-ps-text-muted">Filename</label>
+            <label htmlFor="script-filename" className="mb-1 block font-mono text-micro text-ps-text-muted">Filename</label>
             <input
               id="script-filename"
               value={name}
               onChange={(e) => onNameChange(e.target.value)}
               placeholder="my-script.mjs"
               spellCheck={false}
-              className="w-full rounded-lg border border-ps-edge bg-ps-surface-inset px-3 py-2 font-mono text-sm text-ps-text-primary outline-none focus:border-neon-cyan/50"
+              className="w-full rounded-lg border border-ps-edge bg-ps-surface-inset px-3 py-2 font-mono text-body text-ps-text-primary outline-none focus:border-neon-cyan/50"
             />
           </div>
         )}
@@ -123,10 +123,10 @@ export default function ScriptEditorModal({
               }}
               spellCheck={false}
               rows={20}
-              className="block w-full resize-y rounded-lg border border-ps-edge bg-ps-surface-inset p-3 font-mono text-[13px] leading-relaxed text-ps-text-primary outline-none focus:border-neon-cyan/50"
+              className="block w-full resize-y rounded-lg border border-ps-edge bg-ps-surface-inset p-3 font-mono text-body leading-relaxed text-ps-text-primary outline-none focus:border-neon-cyan/50"
               style={{ tabSize: 2 }}
             />
-            <div className="flex items-center justify-between font-mono text-xs text-ps-text-muted">
+            <div className="flex items-center justify-between font-mono text-micro text-ps-text-muted">
               <span>{content.split("\n").length} lines · {new Blob([content]).size} bytes</span>
               <span>Tab = 2 spaces · ⌘/Ctrl+S to save · runs server-side via /bin/bash</span>
             </div>

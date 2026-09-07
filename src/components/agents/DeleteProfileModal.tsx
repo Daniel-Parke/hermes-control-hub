@@ -45,7 +45,7 @@ export default function DeleteProfileModal({
         </>
       }
     >
-      <p className="text-sm text-ps-text-secondary">
+      <p className="text-body text-ps-text-secondary">
         This will permanently delete the profile and all its files. This action cannot be undone.
       </p>
     </Modal>

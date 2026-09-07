@@ -53,11 +53,11 @@ export function ChatModelSelector({
         onChange={onChange}
         options={mergedModels.map((m) => ({ value: m, label: displayModelName(m) }))}
         accentColor="purple"
-        className="w-[220px] text-xs"
+        className="w-[220px] text-body"
         disabled={modelsLoading}
       />
       {modelsError && (
-        <span className="text-xs text-neon-orange/90 font-mono" title={modelsError}>
+        <span className="text-micro text-neon-orange/90 font-mono" title={modelsError}>
           !
         </span>
       )}

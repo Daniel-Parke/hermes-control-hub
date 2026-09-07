@@ -84,7 +84,7 @@ export default function SessionInsights({ totals }: { totals?: SessionTotals }) 
       ring={{
         value: totals.active / totals.total,
         color: "green",
-        label: <span className="text-sm">{totals.active}</span>,
+        label: <span className="text-body">{totals.active}</span>,
         sublabel: "active",
         hint: `${totals.active} of ${totals.total} matching sessions are still running`,
       }}

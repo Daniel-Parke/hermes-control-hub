@@ -41,7 +41,7 @@ export function CustomScheduleBuilder({
   return (
     <div className="rounded-lg border border-ps-edge-hairline bg-ps-surface-raised p-3 space-y-3">
       <div className="flex items-center justify-between">
-        <span className="text-xs font-medium text-ps-text-secondary">Custom schedule</span>
+        <span className="text-body font-medium text-ps-text-secondary">Custom schedule</span>
         <button
           type="button"
           onClick={onClose}
@@ -54,7 +54,7 @@ export function CustomScheduleBuilder({
 
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="text-xs text-ps-text-muted font-mono block mb-1">
+          <label className="text-micro text-ps-text-muted font-mono block mb-1">
             Frequency
           </label>
           <select aria-label="Frequency"
@@ -78,7 +78,7 @@ export function CustomScheduleBuilder({
           </select>
         </div>
         <div>
-          <label className="text-xs text-ps-text-muted font-mono block mb-1">
+          <label className="text-micro text-ps-text-muted font-mono block mb-1">
             Time of day
           </label>
           <input aria-label="Time of day"
@@ -92,7 +92,7 @@ export function CustomScheduleBuilder({
       </div>
 
       <div>
-        <label className="text-xs text-ps-text-muted font-mono block mb-1.5">
+        <label className="text-micro text-ps-text-muted font-mono block mb-1.5">
           Days of week
         </label>
         <div className="flex gap-1.5 flex-wrap">
@@ -106,7 +106,7 @@ export function CustomScheduleBuilder({
                 disabled={disabled}
                 onClick={() => toggleDay(d)}
                 aria-pressed={checked}
-                className={`px-2.5 py-1 rounded-md text-xs font-mono transition-colors ${
+                className={`px-2.5 py-1 rounded-md text-micro font-mono transition-colors ${
                   checked
                     ? "bg-neon-orange/20 text-neon-orange border border-neon-orange/40"
                     : "bg-ps-surface-raised text-ps-text-muted border border-ps-edge hover:text-ps-text-secondary"
@@ -122,7 +122,7 @@ export function CustomScheduleBuilder({
             type="button"
             onClick={() => setCustomDays(allDays())}
             disabled={disabled}
-            className="text-xs text-ps-text-muted hover:text-ps-text-secondary font-mono"
+            className="text-micro text-ps-text-muted hover:text-ps-text-secondary font-mono"
           >
             All days
           </button>
@@ -130,7 +130,7 @@ export function CustomScheduleBuilder({
             type="button"
             onClick={() => setCustomDays(new Set([1, 2, 3, 4, 5]))}
             disabled={disabled}
-            className="text-xs text-ps-text-muted hover:text-ps-text-secondary font-mono"
+            className="text-micro text-ps-text-muted hover:text-ps-text-secondary font-mono"
           >
             Weekdays
           </button>
@@ -138,7 +138,7 @@ export function CustomScheduleBuilder({
             type="button"
             onClick={() => setCustomDays(new Set())}
             disabled={disabled}
-            className="text-xs text-ps-text-muted hover:text-ps-text-secondary font-mono"
+            className="text-micro text-ps-text-muted hover:text-ps-text-secondary font-mono"
           >
             Clear
           </button>
@@ -146,14 +146,14 @@ export function CustomScheduleBuilder({
       </div>
 
       <div className="flex items-center justify-between gap-2 pt-1">
-        <div className="text-xs text-ps-text-muted font-mono">
+        <div className="text-micro text-ps-text-muted font-mono">
           Preview: <code className="text-neon-orange">{previewCron(customTime, customDays)}</code>
         </div>
         <button
           type="button"
           onClick={onApply}
           disabled={disabled}
-          className="px-3 py-1.5 rounded-md bg-neon-orange/20 text-neon-orange border border-neon-orange/40 text-xs font-mono hover:bg-neon-orange/30 disabled:opacity-50"
+          className="px-3 py-1.5 rounded-md bg-neon-orange/20 text-neon-orange border border-neon-orange/40 text-micro font-mono hover:bg-neon-orange/30 disabled:opacity-50"
         >
           Apply
         </button>

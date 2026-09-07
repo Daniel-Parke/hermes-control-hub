@@ -110,35 +110,35 @@ function SyncModal({
             ) : (
               <ArrowDownToLine className="w-4 h-4 text-neon-cyan" />
             )}
-            <span id="model-sync-title" className="text-sm font-semibold text-white">{title}</span>
+            <span id="model-sync-title" className="text-body font-semibold text-ps-text-primary">{title}</span>
           </div>
           <button
             type="button"
             aria-label="Close sync panel"
             onClick={onCancel}
-            className="p-1 rounded text-ps-text-muted hover:text-white hover:bg-ps-surface-raised transition-colors"
+            className="p-1 rounded text-ps-text-muted hover:text-ps-text-primary hover:bg-ps-surface-raised transition-colors"
           >
             <X className="w-4 h-4" aria-hidden="true" />
           </button>
         </div>
-        <p className="px-4 py-2 text-xs font-mono text-ps-text-muted">{subtitle}</p>
+        <p className="px-4 py-2 text-micro font-mono text-ps-text-muted">{subtitle}</p>
 
         {/* Diffs list. With no rows at all the route's own sentence stands in
             their place: in sync, no matching section, or an unparseable file. */}
         <div className="px-4 py-3 max-h-72 overflow-y-auto">
           {diffs.length === 0 ? (
-            <p className="text-xs text-ps-text-muted font-mono text-center py-4">
+            <p className="text-micro text-ps-text-muted font-mono text-center py-4">
               {note ?? "Nothing to sync."}
             </p>
           ) : visibleChanges.length === 0 ? (
-            <p className="text-xs text-ps-text-muted font-mono text-center py-4">
+            <p className="text-micro text-ps-text-muted font-mono text-center py-4">
               All changes removed — nothing will be synced
             </p>
           ) : (
             <div className="space-y-1.5">
               {/* Summary */}
               {visibleCount < totalCount && (
-                <div className="text-xs font-mono text-neon-orange/90 mb-2">
+                <div className="text-micro font-mono text-neon-orange/90 mb-2">
                   {totalCount - visibleCount} of {totalCount} changes excluded
                 </div>
               )}
@@ -148,10 +148,10 @@ function SyncModal({
                   className="flex items-start justify-between gap-2 px-3 py-2.5 bg-ps-surface-raised rounded-lg"
                 >
                   <div className="flex-1 min-w-0">
-                    <div className="text-xs font-semibold text-ps-text-secondary">
+                    <div className="text-body font-semibold text-ps-text-secondary">
                       {diff.label}
                     </div>
-                    <div className="text-xs text-ps-text-muted font-mono truncate mt-0.5">
+                    <div className="text-micro text-ps-text-muted font-mono truncate mt-0.5">
                       {diff.detail}
                     </div>
                   </div>
@@ -176,7 +176,7 @@ function SyncModal({
           <button
             type="button"
             onClick={onCancel}
-            className="px-3 py-1.5 text-xs font-mono text-ps-text-muted hover:text-white hover:bg-ps-surface-raised rounded-lg transition-colors"
+            className="px-3 py-1.5 text-micro font-mono text-ps-text-muted hover:text-ps-text-primary hover:bg-ps-surface-raised rounded-lg transition-colors"
           >
             Cancel
           </button>
@@ -188,7 +188,7 @@ function SyncModal({
             // the values already on disk. The credential then has to be written
             // from the Credentials panel instead, which is where a key belongs.
             disabled={confirming || visibleChanges.length === 0 || inSync}
-            className={`px-3 py-1.5 text-xs font-mono rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+            className={`px-3 py-1.5 text-micro font-mono rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
               direction === "push"
                 ? "bg-neon-purple/20 text-neon-purple hover:bg-neon-purple/30"
                 : "bg-neon-cyan/20 text-neon-cyan hover:bg-neon-cyan/30"

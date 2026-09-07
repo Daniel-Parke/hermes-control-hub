@@ -35,7 +35,7 @@ export default function ToolsetReferenceTable({
     // floor, so the table scrolls inside its own box rather than pushing the
     // page sideways.
     <div className="overflow-x-auto">
-      <table className="w-full text-xs font-mono border-collapse">
+      <table className="w-full text-micro font-mono border-collapse">
         <thead>
           <tr className="border-b border-ps-edge-hairline text-left">
             <th

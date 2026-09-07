@@ -7,13 +7,17 @@
 // ModelsTaskDefaultsSection) all open with the same chrome:
 //
 //   <section data-section="..." className="space-y-4">
-//     <h2 className="text-sm font-bold text-ps-text-secondary uppercase
-//                    tracking-wider flex items-center gap-2">
+//     <h2 className={`${sectionHeadingClasses} flex items-center gap-2`}>
 //       <Icon className="w-4 h-4 text-neon-{color}[/60]" />
 //       {title}
 //     </h2>
 //     ...content...
 //   </section>
+//
+// The heading's typography used to be spelled out here, and in nine other
+// spellings elsewhere; it is one constant with one reason now (T-0119). The row
+// layout stays at the call site, because where a heading sits is not part of
+// what a heading IS.
 //
 // (ModelsFallbackSection uses CollapsibleSection because it is
 // collapsible, so it stays inline — a different surface.)
@@ -39,7 +43,7 @@
 
 import type { LucideIcon } from "lucide-react";
 import type { AccentColor } from "@/types/console";
-import { iconColorMap } from "@/lib/theme";
+import { iconColorMap, sectionHeadingClasses } from "@/lib/theme";
 
 type ModelsSectionHeaderTone = "full" | "muted";
 
@@ -66,7 +70,7 @@ export default function ModelsSectionHeader({
 }: ModelsSectionHeaderProps) {
   const opacityClass = iconTone === "muted" ? "/60" : "";
   return (
-    <h2 className="text-sm font-bold text-ps-text-secondary uppercase tracking-wider flex items-center gap-2">
+    <h2 className={`${sectionHeadingClasses} flex items-center gap-2`}>
       <Icon className={`w-4 h-4 ${iconColorMap[color]}${opacityClass}`} />
       {title}
     </h2>

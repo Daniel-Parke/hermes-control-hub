@@ -1,5 +1,6 @@
 "use client";
 
+import { sectionHeadingClasses } from "@/lib/theme";
 import { useEffect, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { X } from "lucide-react";
@@ -71,11 +72,11 @@ export default function Sheet({
         {title && (
           <div className="flex items-start justify-between gap-3 px-6 py-4 border-b border-ps-edge-hairline shrink-0">
             <div className="min-w-0">
-              <h2 className="text-sm font-mono text-neon-cyan uppercase tracking-widest">
+              <h2 className={sectionHeadingClasses}>
                 {title}
               </h2>
               {subtitle && (
-                <p className="text-xs text-ps-text-muted font-mono mt-1 leading-relaxed">
+                <p className="text-micro text-ps-text-muted font-mono mt-1 leading-relaxed">
                   {subtitle}
                 </p>
               )}

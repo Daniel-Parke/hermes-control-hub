@@ -178,7 +178,27 @@ export const baseInputStyles =
   // product wears, and a control's boundary is the one WCAG 1.4.11 is about.
   // On the hairline it measured 2.38:1 against the page (T-0118).
   // design-lint-disable-next-line no-bare-outline-none -- inputFieldClasses appends the accent focus border to this base; it is never used bare
-  "w-full bg-ps-surface-panel border border-ps-edge rounded-lg px-3 py-2 text-sm text-white placeholder-white/20 outline-none transition-colors font-mono";
+  "w-full bg-ps-surface-panel border border-ps-edge rounded-lg px-3 py-2 text-body text-ps-text-primary placeholder-ps-text-muted outline-none transition-colors font-mono";
+
+/**
+ * A section heading, which is not a smaller page title.
+ *
+ * Thirty h2 elements wore ten treatments between them, from a 12px micro-caps
+ * label to a 20px bold line, so a section heading was indistinguishable from a
+ * slightly emphatic list item on most screens. This is the one: micro-caps mono
+ * on the secondary tier with a hairline under it, which reads as a HEADING
+ * because of its register and its rule rather than because of its size
+ * (T-0119, decision 10).
+ *
+ * It owns the TYPOGRAPHY and nothing else. Where the heading sits, and what
+ * sits beside it, stays with the call site: several of these have an icon in a
+ * row and a couple are inside a flex header bar.
+ *
+ * A dialog's title and an empty state's heading are not section headings; they
+ * keep `text-title`.
+ */
+export const sectionHeadingClasses =
+  "text-micro font-mono uppercase tracking-widest text-ps-text-secondary border-b border-ps-edge-hairline pb-1.5 mb-3";
 
 /** Canonical text input / select classes with accent focus ring. */
 export function inputFieldClasses(accent: AccentColor = "cyan"): string {

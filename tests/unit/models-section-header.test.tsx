@@ -37,6 +37,7 @@ import { readFileSync } from "fs";
 import { join } from "path";
 
 import ModelsSectionHeader from "@/components/models/ModelsSectionHeader";
+import { sectionHeadingClasses } from "@/lib/theme";
 
 const REPO_ROOT = join(__dirname, "..", "..");
 
@@ -47,11 +48,14 @@ describe("ModelsSectionHeader", () => {
         <ModelsSectionHeader icon={Star} title="Agent Default" color="orange" />,
       );
       const h2 = screen.getByRole("heading", { level: 2, name: /agent default/i });
-      expect(h2).toHaveClass("text-sm");
-      expect(h2).toHaveClass("font-bold");
-      expect(h2).toHaveClass("text-ps-text-secondary");
-      expect(h2).toHaveClass("uppercase");
-      expect(h2).toHaveClass("tracking-wider");
+      // Amended 2026-09-07 (T-0119). Seven of the eight classes below were
+      // this heading's typography, spelled out here because the test was
+      // pinning an extraction. Thirty h2s wore ten such spellings between
+      // them, so the typography is one constant with one reason now, and this
+      // asserts that the component uses it. The eighth, the row layout, is
+      // the call site's and stays here: dropping it stacked the icon above
+      // the words, which is how it was caught.
+      expect(h2.className).toContain(sectionHeadingClasses);
       expect(h2).toHaveClass("flex");
       expect(h2).toHaveClass("items-center");
       expect(h2).toHaveClass("gap-2");

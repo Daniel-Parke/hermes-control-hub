@@ -32,6 +32,7 @@
 // are none.
 // ═══════════════════════════════════════════════════════════════
 
+import { sectionHeadingClasses } from "@/lib/theme";
 import { useState } from "react";
 
 import { KeyRound, Plus, Trash2, Check } from "lucide-react";
@@ -115,14 +116,14 @@ export default function CredentialsPanel({
         <KeyRound className="h-4 w-4 text-ps-text-muted" />
         {/* "Credentials" is this screen's word for the thing the corpus calls
             an API key, and this card is where it is met. */}
-        <h2 className="font-mono text-xs uppercase tracking-widest text-ps-text-muted">
+        <h2 className={sectionHeadingClasses}>
           <ConceptHint id="api-key">Credentials</ConceptHint>
         </h2>
         <button
           type="button"
           disabled={adding || addOpen}
           onClick={() => setAddOpen(true)}
-          className="ml-auto flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 font-mono text-xs text-neon-cyan transition-colors hover:bg-neon-cyan/15 disabled:cursor-not-allowed disabled:opacity-50"
+          className="ml-auto flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 font-mono text-micro text-neon-cyan transition-colors hover:bg-neon-cyan/15 disabled:cursor-not-allowed disabled:opacity-50"
         >
           <Plus className="h-3.5 w-3.5" />
           Add credential
@@ -130,7 +131,7 @@ export default function CredentialsPanel({
       </div>
 
       {credentials.length === 0 && !addOpen && (
-        <p className="px-1 text-sm text-ps-text-muted">
+        <p className="px-1 text-body text-ps-text-muted">
           No credentials yet. Add one if your provider needs an API key. A provider you run
           yourself, such as Ollama or LM Studio, does not need one.
         </p>
@@ -164,13 +165,13 @@ export default function CredentialsPanel({
             className="font-mono"
           />
           {/* design-lint-disable-next-line hermes-outside-adapter -- the same disclosure the model editor makes before a key is pasted: it names the file the key ends up readable in, and hiding that would be the only thing worse than saying it here. */}
-          <p className="text-xs text-ps-text-muted">Stored in the registry and written to ~/.hermes/.env so the agent can read it.</p>
+          <p className="text-body text-ps-text-muted">Stored in the registry and written to ~/.hermes/.env so the agent can read it.</p>
           <div className="flex items-center gap-2">
             <button
               type="button"
               disabled={adding || draft.apiKey.trim().length === 0 || draft.provider === ""}
               onClick={submitAdd}
-              className="rounded-lg bg-neon-cyan/20 px-2.5 py-1.5 font-mono text-xs text-neon-cyan transition-colors hover:bg-neon-cyan/30 disabled:cursor-not-allowed disabled:opacity-50"
+              className="rounded-lg bg-neon-cyan/20 px-2.5 py-1.5 font-mono text-micro text-neon-cyan transition-colors hover:bg-neon-cyan/30 disabled:cursor-not-allowed disabled:opacity-50"
             >
               Save credential
             </button>
@@ -178,7 +179,7 @@ export default function CredentialsPanel({
               type="button"
               aria-label="Cancel adding a credential"
               onClick={closeAdd}
-              className="rounded-lg px-2.5 py-1.5 font-mono text-xs text-ps-text-muted transition-colors hover:bg-ps-surface-raised hover:text-white"
+              className="rounded-lg px-2.5 py-1.5 font-mono text-micro text-ps-text-muted transition-colors hover:bg-ps-surface-raised hover:text-ps-text-primary"
             >
               Cancel
             </button>
@@ -194,18 +195,18 @@ export default function CredentialsPanel({
           return (
             <li key={c.id} className="rounded-lg px-3 py-2 hover:bg-ps-surface-raised">
               <div className="flex items-center gap-3">
-                <span className="min-w-0 flex-1 truncate text-sm text-ps-text-secondary">
+                <span className="min-w-0 flex-1 truncate text-body text-ps-text-secondary">
                   {c.label}
                 </span>
-                <span className="font-mono text-xs text-ps-text-muted">{c.provider}</span>
+                <span className="font-mono text-micro text-ps-text-muted">{c.provider}</span>
                 {/* The hint, never the key. */}
-                <span className="font-mono text-xs text-ps-text-faint">{c.keyHint}</span>
+                <span className="font-mono text-micro text-ps-text-faint">{c.keyHint}</span>
                 <button
                   type="button"
                   disabled={busy}
                   onClick={() => (rotating ? closeRotate() : setRotatingId(c.id))}
                   aria-label={`Rotate key for ${c.label}`}
-                  className="rounded-lg px-2 py-1 font-mono text-xs text-ps-text-muted transition-colors hover:bg-ps-surface-raised hover:text-white disabled:opacity-50"
+                  className="rounded-lg px-2 py-1 font-mono text-micro text-ps-text-muted transition-colors hover:bg-ps-surface-raised hover:text-ps-text-primary disabled:opacity-50"
                 >
                   Rotate key
                 </button>
@@ -250,7 +251,7 @@ export default function CredentialsPanel({
                       closeRotate();
                       void onRotate(c, key);
                     }}
-                    className="shrink-0 rounded-lg bg-neon-cyan/20 px-2.5 py-1.5 font-mono text-xs text-neon-cyan transition-colors hover:bg-neon-cyan/30 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="shrink-0 rounded-lg bg-neon-cyan/20 px-2.5 py-1.5 font-mono text-micro text-neon-cyan transition-colors hover:bg-neon-cyan/30 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     Save new key
                   </button>
@@ -258,7 +259,7 @@ export default function CredentialsPanel({
                     type="button"
                     aria-label={`Cancel rotating ${c.label}`}
                     onClick={closeRotate}
-                    className="shrink-0 rounded-lg px-2.5 py-1.5 font-mono text-xs text-ps-text-muted transition-colors hover:bg-ps-surface-raised hover:text-white"
+                    className="shrink-0 rounded-lg px-2.5 py-1.5 font-mono text-micro text-ps-text-muted transition-colors hover:bg-ps-surface-raised hover:text-ps-text-primary"
                   >
                     Cancel
                   </button>

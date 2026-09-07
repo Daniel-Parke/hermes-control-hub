@@ -45,7 +45,7 @@ export default function ProfileSelector({
       <span ref={ref} className="relative inline-flex">
         <button
           onClick={() => setOpen(!open)}
-          className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-ps-surface-raised border border-ps-edge text-xs font-mono text-ps-text-secondary hover:border-neon-purple/50 hover:text-neon-purple transition-colors"
+          className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-ps-surface-raised border border-ps-edge text-micro font-mono text-ps-text-secondary hover:border-neon-purple/50 hover:text-neon-purple transition-colors"
           title={selected?.name ?? "Select profile"}
         >
           {loading ? (
@@ -60,7 +60,7 @@ export default function ProfileSelector({
             className="absolute top-full left-0 mt-1 z-50 w-56 bg-ps-surface-panel border border-ps-edge-hairline rounded-lg shadow-xl overflow-hidden max-h-80 overflow-y-auto"
           >
             {profiles.length === 0 && !loading ? (
-              <div className="px-3 py-3 text-xs text-ps-text-muted text-center">
+              <div className="px-3 py-3 text-body text-ps-text-muted text-center">
                 No profiles found
               </div>
             ) : (
@@ -72,13 +72,13 @@ export default function ProfileSelector({
                     onChange(p.id);
                     setOpen(false);
                   }}
-                  className={`w-full text-left px-3 py-2 text-xs hover:bg-ps-surface-raised ${
+                  className={`w-full text-left px-3 py-2 text-body hover:bg-ps-surface-raised ${
                     value === p.id ? "text-neon-purple" : "text-ps-text-secondary"
                   }`}
                 >
                   <div className="font-medium">{p.name}</div>
                   {p.description && (
-                    <div className="text-xs text-ps-text-muted mt-0.5">
+                    <div className="text-body text-ps-text-muted mt-0.5">
                       {p.description}
                     </div>
                   )}
@@ -104,7 +104,7 @@ export default function ProfileSelector({
         type="button"
         onClick={() => setOpen(!open)}
         title={triggerTitle}
-        className="w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg bg-ps-surface-raised border border-ps-edge text-sm text-white hover:border-ps-edge-emphasis transition-colors"
+        className="w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg bg-ps-surface-raised border border-ps-edge text-body text-ps-text-primary hover:border-ps-edge-emphasis transition-colors"
       >
         <div className="flex items-center gap-2 min-w-0">
           {loading ? (
@@ -116,7 +116,7 @@ export default function ProfileSelector({
             <div className="text-left min-w-0">
               <div className="font-medium truncate">{selected.name}</div>
               {subtitle === "inline" && selected.description && (
-                <div className="text-xs text-ps-text-muted line-clamp-2">
+                <div className="text-body text-ps-text-muted line-clamp-2">
                   {selected.description}
                 </div>
               )}
@@ -139,7 +139,7 @@ export default function ProfileSelector({
       {open && (
         <div className="absolute top-full left-0 right-0 mt-1 z-50 bg-ps-surface-panel border border-ps-edge-hairline rounded-lg shadow-xl overflow-hidden max-h-80 overflow-y-auto">
           {profiles.length === 0 && !loading ? (
-            <div className="px-3 py-4 text-xs text-ps-text-muted text-center">
+            <div className="px-3 py-4 text-body text-ps-text-muted text-center">
               No profiles found
             </div>
           ) : (
@@ -150,7 +150,7 @@ export default function ProfileSelector({
                   onChange(p.id);
                   setOpen(false);
                 }}
-                className={`w-full text-left px-3 py-2.5 text-sm hover:bg-ps-surface-raised ${
+                className={`w-full text-left px-3 py-2.5 text-body hover:bg-ps-surface-raised ${
                   value === p.id
                     ? "text-neon-purple bg-neon-purple/5"
                     : "text-ps-text-secondary"
@@ -165,7 +165,7 @@ export default function ProfileSelector({
                   <span className="font-medium">{p.name}</span>
                 </div>
                 {p.description && (
-                  <div className="text-xs text-ps-text-muted mt-0.5 ml-4">
+                  <div className="text-body text-ps-text-muted mt-0.5 ml-4">
                     {p.description}
                   </div>
                 )}

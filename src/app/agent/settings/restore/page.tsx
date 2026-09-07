@@ -210,7 +210,7 @@ export default function RestorePage() {
   const outcome = (section: SectionKey) => (
     <>
       {result?.section === section && (
-        <p data-testid="restore-result" role="status" className="mt-3 text-xs font-mono text-neon-green/90">
+        <p data-testid="restore-result" role="status" className="mt-3 text-micro font-mono text-neon-green/90">
           {`Done at ${result.at.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}: ${result.text}`}
         </p>
       )}
@@ -249,11 +249,11 @@ export default function RestorePage() {
               />
             )}
 
-            <p className="text-sm text-ps-text-secondary">
+            <p className="text-body text-ps-text-secondary">
               {`PatterStage ships a starter set: Bob (the default agent), ${pack.profiles} professional agents, ${pack.templates} mission templates, ${pack.categories} mission categories, ${pack.skills} skills, ${pack.tools} tool bundles and ${pack.memories} memory facts. Use this page to put any of it back. Anything you restore is backed up first.`}
             </p>
 
-            <details className="rounded-lg border border-ps-edge-hairline bg-ps-surface-panel p-3 text-xs text-ps-text-muted">
+            <details className="rounded-lg border border-ps-edge-hairline bg-ps-surface-panel p-3 text-body text-ps-text-muted">
               <summary className="cursor-pointer text-ps-text-secondary">How this works</summary>
               <div className="mt-2 space-y-2 font-mono">
                 <p>
@@ -279,14 +279,14 @@ export default function RestorePage() {
             </details>
 
             <section className="border border-neon-cyan/30 rounded-xl p-6 bg-ps-surface-panel">
-              <h2 className="text-lg font-semibold text-white mb-2 flex items-center gap-2">
+              <h2 className="text-title font-semibold text-ps-text-primary mb-2 flex items-center gap-2">
                 <RotateCcw className="w-5 h-5 text-neon-cyan" />
                 Restore everything
               </h2>
-              <p className="text-sm text-ps-text-secondary mb-2">
+              <p className="text-body text-ps-text-secondary mb-2">
                 {`Puts back Bob, ${pack.profiles} professional agents, ${pack.templates} mission templates, ${pack.categories} categories, ${pack.skills} skills, ${pack.tools} tool bundles and ${pack.memories} memory facts, overwriting any changes you made to them.`}
               </p>
-              <p className="text-xs font-mono text-ps-text-muted mb-4">
+              <p className="text-micro font-mono text-ps-text-muted mb-4">
                 {`Installed now: ${profiles.length} of ${pack.profiles} agents · ${templates.length} of ${pack.templates} templates`}
               </p>
               <div className="flex flex-wrap items-center gap-3">
@@ -319,7 +319,7 @@ export default function RestorePage() {
                 </Button>
               </div>
               {state?.lastRun && (
-                <p className="text-xs font-mono text-ps-text-muted mt-3">
+                <p className="text-micro font-mono text-ps-text-muted mt-3">
                   {`Last restored: ${new Date(state.lastRun).toLocaleString()}`}
                 </p>
               )}
@@ -327,14 +327,14 @@ export default function RestorePage() {
             </section>
 
             <section>
-              <h2 className="text-md font-semibold text-white mb-3 flex items-center gap-2">
+              <h2 className="text-lead font-semibold text-ps-text-primary mb-3 flex items-center gap-2">
                 <Bot className="w-4 h-4 text-neon-purple" />
                 Professional agents
               </h2>
               {!loadError && profiles.length === 0 ? (
                 <div className="rounded-lg border border-ps-edge-hairline p-4">
-                  <p className="text-sm text-ps-text-secondary">No professional agents installed</p>
-                  <p className="text-xs text-ps-text-muted mt-1">
+                  <p className="text-body text-ps-text-secondary">No professional agents installed</p>
+                  <p className="text-body text-ps-text-muted mt-1">
                     {`Restore everything to install the ${pack.profiles} the pack ships.`}
                   </p>
                 </div>
@@ -346,8 +346,8 @@ export default function RestorePage() {
                       className="flex flex-wrap items-center justify-between gap-2 border border-ps-edge-hairline rounded-lg p-3 bg-ps-surface-ground/60"
                     >
                       <div>
-                        <div className="font-mono text-white">{p.name}</div>
-                        <div className="text-xs text-ps-text-muted flex items-center gap-2">
+                        <div className="font-mono text-ps-text-primary">{p.name}</div>
+                        <div className="text-body text-ps-text-muted flex items-center gap-2">
                           <span>{syncLabel(p.syncStatus)}</span>
                           {p.syncStatus === "error" && p.syncError && (
                             <span className="text-ps-text-faint">{p.syncError}</span>
@@ -377,14 +377,14 @@ export default function RestorePage() {
             </section>
 
             <section>
-              <h2 className="text-md font-semibold text-white mb-3 flex items-center gap-2">
+              <h2 className="text-lead font-semibold text-ps-text-primary mb-3 flex items-center gap-2">
                 <ListTodo className="w-4 h-4 text-neon-cyan" />
                 Mission templates
               </h2>
               {!loadError && templates.length === 0 ? (
                 <div className="rounded-lg border border-ps-edge-hairline p-4">
-                  <p className="text-sm text-ps-text-secondary">No mission templates installed</p>
-                  <p className="text-xs text-ps-text-muted mt-1">
+                  <p className="text-body text-ps-text-secondary">No mission templates installed</p>
+                  <p className="text-body text-ps-text-muted mt-1">
                     {`Restore everything to install the ${pack.templates} the pack ships.`}
                   </p>
                 </div>
@@ -393,7 +393,7 @@ export default function RestorePage() {
                   {templates.map((t) => (
                     <div
                       key={t.id}
-                      className="flex items-center justify-between gap-2 border border-ps-edge-hairline rounded-lg px-3 py-2 text-sm"
+                      className="flex items-center justify-between gap-2 border border-ps-edge-hairline rounded-lg px-3 py-2 text-body"
                     >
                       <span className="font-mono text-ps-text-primary">{t.name}</span>
                       <ConfirmButton
@@ -419,11 +419,11 @@ export default function RestorePage() {
             </section>
 
             <section className="border border-ps-edge-hairline rounded-lg p-4">
-              <h2 className="text-sm font-semibold text-ps-text-secondary mb-2 flex items-center gap-2">
+              <h2 className="text-body font-semibold text-ps-text-secondary mb-2 flex items-center gap-2">
                 <Database className="w-4 h-4" />
                 Categories
               </h2>
-              <p className="text-xs text-ps-text-muted mb-3">
+              <p className="text-body text-ps-text-muted mb-3">
                 {`The ${pack.categories} categories missions are filed under.`}
               </p>
               <ConfirmButton
@@ -439,17 +439,17 @@ export default function RestorePage() {
             </section>
 
             <section className="border border-neon-orange/20 rounded-xl p-6 bg-neon-orange/5">
-              <h2 className="text-lg font-semibold text-white mb-2 flex items-center gap-2">
+              <h2 className="text-title font-semibold text-ps-text-primary mb-2 flex items-center gap-2">
                 <Trash2 className="w-5 h-5 text-neon-orange" />
                 Clear test clutter
               </h2>
-              <p className="text-sm text-ps-text-secondary mb-4">
+              <p className="text-body text-ps-text-secondary mb-4">
                 Removes throwaway workflows, stories and missions whose names look like tests.
                 Agents, templates and your own work are never touched. Look first, then remove.
               </p>
 
               {cleanPreview && cleanTotal > 0 && (
-                <div className="text-xs font-mono text-ps-text-muted mb-3 rounded-lg border border-ps-edge-hairline bg-ps-surface-panel p-3 space-y-1 max-h-48 overflow-auto">
+                <div className="text-micro font-mono text-ps-text-muted mb-3 rounded-lg border border-ps-edge-hairline bg-ps-surface-panel p-3 space-y-1 max-h-48 overflow-auto">
                   {(
                     [
                       ["Workflows", cleanPreview.workflows],
@@ -467,7 +467,7 @@ export default function RestorePage() {
                 </div>
               )}
               {cleanPreview && cleanTotal === 0 && (
-                <p className="text-xs font-mono text-ps-text-muted mb-3">
+                <p className="text-micro font-mono text-ps-text-muted mb-3">
                   Nothing here looks like test data.
                 </p>
               )}

@@ -62,12 +62,12 @@ export default function MemoryInsights({
         ring={{
           value: s.total > 0 ? s.fresh / s.total : 0,
           color: "green",
-          label: <span className="text-sm">{Math.round((s.fresh / Math.max(1, s.total)) * 100)}%</span>,
+          label: <span className="text-body">{Math.round((s.fresh / Math.max(1, s.total)) * 100)}%</span>,
           sublabel: "fresh",
         }}
       />
       {realTotal ? (
-        <p className="mt-2 text-center text-xs text-ps-text-muted">
+        <p className="mt-2 text-center text-body text-ps-text-muted">
           Showing the {s.total.toLocaleString()} most recent of {realTotal.toLocaleString()} stored facts — the fresh/stale mix and tags reflect this sample.
         </p>
       ) : null}

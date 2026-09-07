@@ -24,11 +24,11 @@ function Section({
 }) {
   return (
     <div className="space-y-2">
-      <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-neon-purple">
+      <div className="flex items-center gap-2 text-micro font-mono uppercase tracking-wider text-neon-purple">
         <Icon className="h-3.5 w-3.5" />
         {title}
       </div>
-      <div className="text-xs leading-relaxed text-ps-text-secondary">{children}</div>
+      <div className="text-body leading-relaxed text-ps-text-secondary">{children}</div>
     </div>
   );
 }
@@ -64,7 +64,7 @@ export default function StoryBiblePanel({
         <div className="flex items-center justify-between border-b border-ps-edge-hairline pb-3">
           <div className="flex items-center gap-2">
             <BookMarked className="h-4 w-4 text-neon-purple" />
-            <h3 id="story-bible-title" className="text-sm font-semibold text-white">Story bible</h3>
+            <h3 id="story-bible-title" className="text-body font-semibold text-ps-text-primary">Story bible</h3>
           </div>
           <button
             onClick={onClose}
@@ -76,7 +76,7 @@ export default function StoryBiblePanel({
         </div>
 
         {!arc ? (
-          <p className="text-xs italic text-ps-text-muted">
+          <p className="text-body italic text-ps-text-muted">
             No story arc is available for this story yet.
           </p>
         ) : (
@@ -105,7 +105,7 @@ export default function StoryBiblePanel({
                     .sort((a, b) => a.chapter - b.chapter)
                     .map((p, i) => (
                       <li key={i} className="flex gap-2">
-                        <span className="shrink-0 font-mono text-xs text-neon-purple">Ch {p.chapter}</span>
+                        <span className="shrink-0 font-mono text-micro text-neon-purple">Ch {p.chapter}</span>
                         <span>
                           {p.event}
                           {p.setup ? <span className="text-ps-text-muted"> — {p.setup}</span> : null}
@@ -123,7 +123,7 @@ export default function StoryBiblePanel({
                     <div key={i}>
                       <div className="font-medium text-ps-text-secondary">{c.name}</div>
                       <div className="text-ps-text-muted">{c.journey}</div>
-                      <div className="mt-0.5 text-xs text-ps-text-muted">
+                      <div className="mt-0.5 text-body text-ps-text-muted">
                         {c.startingState} → {c.endingState}
                       </div>
                     </div>
@@ -142,7 +142,7 @@ export default function StoryBiblePanel({
                       </div>
                       <div className="text-ps-text-muted">{o.purpose}</div>
                       {o.keyBeats?.length > 0 && (
-                        <div className="mt-1 text-xs text-ps-text-muted">{o.keyBeats.join(" · ")}</div>
+                        <div className="mt-1 text-body text-ps-text-muted">{o.keyBeats.join(" · ")}</div>
                       )}
                     </div>
                   ))}

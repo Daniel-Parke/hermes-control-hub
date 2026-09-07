@@ -92,7 +92,7 @@ export default function HelpLink() {
       aria-label={name}
       title={name}
       data-testid="help-link"
-      className="flex items-center text-ps-text-muted hover:text-white transition-colors shrink-0"
+      className="flex items-center text-ps-text-muted hover:text-ps-text-primary transition-colors shrink-0"
     >
       <HelpCircle className="w-4 h-4" aria-hidden="true" />
     </Link>

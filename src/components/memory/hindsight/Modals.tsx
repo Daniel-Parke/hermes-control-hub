@@ -27,7 +27,7 @@ export function AddMemoryModal({
     <Modal open={open} onClose={onClose} title="Store New Memory" size="md">
       <div className="space-y-4">
         <div>
-          <label htmlFor="memory-content" className="block text-sm text-ps-text-muted mb-1">Memory content</label>
+          <label htmlFor="memory-content" className="block text-body text-ps-text-muted mb-1">Memory content</label>
           <textarea
             id="memory-content"
             value={content}
@@ -37,7 +37,7 @@ export function AddMemoryModal({
           />
         </div>
         <div>
-          <label htmlFor="memory-tags" className="block text-sm text-ps-text-muted mb-1">Tags (comma-separated)</label>
+          <label htmlFor="memory-tags" className="block text-body text-ps-text-muted mb-1">Tags (comma-separated)</label>
           <input
             id="memory-tags"
             type="text"
@@ -84,7 +84,7 @@ export function DirectiveModal({
     <Modal open={open} onClose={onClose} title={isEdit ? "Edit Directive" : "Create Directive"} size="md">
       <div className="space-y-4">
         <div>
-          <label htmlFor="directive-name" className="block text-sm text-ps-text-muted mb-1">Directive name</label>
+          <label htmlFor="directive-name" className="block text-body text-ps-text-muted mb-1">Directive name</label>
           <input
             id="directive-name"
             type="text"
@@ -95,7 +95,7 @@ export function DirectiveModal({
           />
         </div>
         <div>
-          <label htmlFor="directive-content" className="block text-sm text-ps-text-muted mb-1">Directive content</label>
+          <label htmlFor="directive-content" className="block text-body text-ps-text-muted mb-1">Directive content</label>
           <textarea
             id="directive-content"
             value={content}
@@ -106,7 +106,7 @@ export function DirectiveModal({
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label htmlFor="directive-priority" className="block text-sm text-ps-text-muted mb-1">Priority</label>
+            <label htmlFor="directive-priority" className="block text-body text-ps-text-muted mb-1">Priority</label>
             <input
               id="directive-priority"
               type="number"
@@ -117,7 +117,7 @@ export function DirectiveModal({
             />
           </div>
           <div>
-            <label htmlFor="directive-tags" className="block text-sm text-ps-text-muted mb-1">Tags (comma-separated)</label>
+            <label htmlFor="directive-tags" className="block text-body text-ps-text-muted mb-1">Tags (comma-separated)</label>
             <input
               id="directive-tags"
               type="text"
@@ -166,7 +166,7 @@ export function MentalModelModal({
     <Modal open={open} onClose={onClose} title={isEdit ? "Edit Mental Model" : "Create Mental Model"} size="md">
       <div className="space-y-4">
         <div>
-          <label htmlFor="mental-model-name" className="block text-sm text-ps-text-muted mb-1">Model name</label>
+          <label htmlFor="mental-model-name" className="block text-body text-ps-text-muted mb-1">Model name</label>
           <input
             id="mental-model-name"
             type="text"
@@ -177,7 +177,7 @@ export function MentalModelModal({
           />
         </div>
         <div>
-          <label htmlFor="mental-model-query" className="block text-sm text-ps-text-muted mb-1">Source query</label>
+          <label htmlFor="mental-model-query" className="block text-body text-ps-text-muted mb-1">Source query</label>
           <textarea
             id="mental-model-query"
             value={query}
@@ -185,14 +185,14 @@ export function MentalModelModal({
             placeholder="e.g. What are Daniel's communication preferences and working style?"
             className={`w-full h-28 ${HINDSIGHT_TEXTAREA_CLASS}`}
           />
-          <p className="text-xs text-ps-text-muted mt-1">
+          <p className="text-body text-ps-text-muted mt-1">
             {isEdit
               ? "Changing the query won't re-generate content. Use Refresh to re-run reflect."
               : "Hindsight will run reflect with this query to generate the model content."}
           </p>
         </div>
         <div>
-          <label htmlFor="mental-model-tags" className="block text-sm text-ps-text-muted mb-1">Tags (comma-separated)</label>
+          <label htmlFor="mental-model-tags" className="block text-body text-ps-text-muted mb-1">Tags (comma-separated)</label>
           <input
             id="mental-model-tags"
             type="text"

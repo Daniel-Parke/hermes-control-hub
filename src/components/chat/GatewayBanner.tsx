@@ -137,7 +137,7 @@ export default function GatewayBanner({
     return (
       <div className="flex items-center gap-2 mb-4 justify-center">
         <Loader2 className="w-3 h-3 text-ps-text-muted animate-spin" />
-        <span className="text-xs text-ps-text-muted">{copy.title}</span>
+        <span className="text-body text-ps-text-muted">{copy.title}</span>
       </div>
     );
   }
@@ -153,16 +153,16 @@ export default function GatewayBanner({
     >
       <div className="flex items-center gap-2 mb-1">
         <AlertTriangle className="w-4 h-4" />
-        <span className="text-sm font-semibold">{copy.title}</span>
+        <span className="text-body font-semibold">{copy.title}</span>
       </div>
-      <p className="text-xs text-ps-text-secondary">{renderBody(copy.body)}</p>
+      <p className="text-body text-ps-text-secondary">{renderBody(copy.body)}</p>
       {/* One action, and one that exists. The remedy for every model state is
           the same screen, so the banner takes the operator there rather than
           describing three routes and leaving them to pick. */}
       {status === "model-missing" && (
         <Link
           href={MODELS_HREF}
-          className="mt-3 inline-flex items-center rounded-md border border-neon-orange/40 px-3 py-1.5 text-xs font-medium text-neon-orange hover:bg-neon-orange/10"
+          className="mt-3 inline-flex items-center rounded-md border border-neon-orange/40 px-3 py-1.5 text-body font-medium text-neon-orange hover:bg-neon-orange/10"
         >
           Open models
         </Link>

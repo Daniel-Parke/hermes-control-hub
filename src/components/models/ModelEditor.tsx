@@ -280,7 +280,7 @@ export default function ModelEditor({
         {error && (
           <div
             role="alert"
-            className="flex items-center gap-2 text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2"
+            className="flex items-center gap-2 text-body text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2"
           >
             <AlertCircle className="w-4 h-4 flex-shrink-0" />
             <span>{error}</span>
@@ -327,7 +327,7 @@ export default function ModelEditor({
             label={
               <>
                 Base URL
-                <span className="ml-2 text-xs text-ps-text-muted font-mono">(optional)</span>
+                <span className="ml-2 text-micro text-ps-text-muted font-mono">(optional)</span>
               </>
             }
           >
@@ -342,7 +342,7 @@ export default function ModelEditor({
             label={
               <>
                 Context Length
-                <span className="ml-2 text-xs text-ps-text-muted font-mono">(optional)</span>
+                <span className="ml-2 text-micro text-ps-text-muted font-mono">(optional)</span>
               </>
             }
           >
@@ -366,11 +366,11 @@ export default function ModelEditor({
 
         {!usingExisting && (
           <div className="space-y-3 rounded-lg border border-neon-purple/15 bg-neon-purple/5 p-3">
-            <p className="text-xs font-mono text-neon-purple uppercase tracking-widest">
+            <p className="text-micro font-mono text-neon-purple uppercase tracking-widest">
               {keyless ? "Credential (optional)" : "New credential"}
             </p>
             {keyless && (
-              <p className="text-xs text-ps-text-muted">
+              <p className="text-body text-ps-text-muted">
                 {`${form.provider} needs no API key. Leave this blank, or paste one if your endpoint requires it.`}
               </p>
             )}

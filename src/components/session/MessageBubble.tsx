@@ -125,28 +125,28 @@ export function MessageBubble({
       >
         <div className="flex items-center gap-2 min-w-0 flex-1">
           <span className={config.color}>{config.icon}</span>
-          <span className={`text-xs font-mono font-bold ${config.color}`}>
+          <span className={`text-micro font-mono font-bold ${config.color}`}>
             {config.label}
           </span>
           {msg.tool_call_id && (
-            <span className="text-xs font-mono text-ps-text-muted bg-ps-surface-raised px-1.5 py-0.5 rounded">
+            <span className="text-micro font-mono text-ps-text-muted bg-ps-surface-raised px-1.5 py-0.5 rounded">
               {msg.tool_call_id.slice(0, 12)}
             </span>
           )}
           {msg.name && (
-            <span className="text-xs font-mono text-neon-green">
+            <span className="text-micro font-mono text-neon-green">
               {String(msg.name)}
             </span>
           )}
           {!expanded && (
-            <span className="text-xs text-ps-text-muted font-mono truncate ml-1">
+            <span className="text-micro text-ps-text-muted font-mono truncate ml-1">
               {summary}
             </span>
           )}
         </div>
         <div className="flex items-center gap-1 flex-shrink-0 ml-2">
           {isLong && (
-            <span className="text-xs font-mono text-ps-text-faint mr-1">
+            <span className="text-micro font-mono text-ps-text-faint mr-1">
               {(content.length / 1024).toFixed(1)}KB
             </span>
           )}
@@ -172,12 +172,12 @@ export function MessageBubble({
               )}
             </button>
           </div>
-          <pre className="text-sm text-ps-text-primary font-mono whitespace-pre-wrap break-words">
+          <pre className="text-body text-ps-text-primary font-mono whitespace-pre-wrap break-words">
             {content || "(no content)"}
           </pre>
           {Array.isArray(msg.tool_calls) && msg.tool_calls.length > 0 && (
             <div className="mt-3 pt-3 border-t border-ps-edge-hairline space-y-2">
-              <div className="text-xs font-mono text-ps-text-muted uppercase tracking-widest">
+              <div className="text-micro font-mono text-ps-text-muted uppercase tracking-widest">
                 Tool Calls ({msg.tool_calls.length})
               </div>
               {msg.tool_calls.map((tc: unknown, i: number) => {
@@ -190,7 +190,7 @@ export function MessageBubble({
                 return (
                   <div
                     key={tcKey}
-                    className="bg-ps-surface-panel rounded-lg p-3 text-xs font-mono"
+                    className="bg-ps-surface-panel rounded-lg p-3 text-micro font-mono"
                   >
                     <span className="text-neon-green">{fnName}</span>
                     <pre className="mt-1 text-ps-text-muted whitespace-pre-wrap">

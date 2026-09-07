@@ -72,7 +72,7 @@ export function RailFooter({ collapsed }: { collapsed: boolean }) {
   return (
     <span className="flex items-center gap-1.5 min-w-0">
       {badge}
-      <span className="text-xs font-mono text-ps-text-faint truncate" title={line ?? undefined}>
+      <span className="text-micro font-mono text-ps-text-faint truncate" title={line ?? undefined}>
         {line ?? ""}
       </span>
     </span>

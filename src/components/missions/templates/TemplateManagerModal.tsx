@@ -57,9 +57,9 @@ function TemplateRow({
       className="flex items-center justify-between p-2.5 rounded-lg border border-ps-edge-hairline bg-ps-surface-raised hover:border-ps-edge-hairline transition-colors group"
     >
       <div className="flex items-center gap-2.5 min-w-0 flex-1">
-        <div className="text-sm text-ps-text-primary truncate">{template.name}</div>
+        <div className="text-body text-ps-text-primary truncate">{template.name}</div>
         {!template.isCustom && (
-          <span className="text-xs font-mono text-ps-text-faint flex-shrink-0">
+          <span className="text-micro font-mono text-ps-text-faint flex-shrink-0">
             built-in
           </span>
         )}
@@ -126,7 +126,7 @@ export function TemplateManagerModal({
       <div className="space-y-2">
         {isEmpty && (
           <div className="py-8 text-center space-y-3">
-            <p className="text-xs font-mono text-ps-text-muted">
+            <p className="text-micro font-mono text-ps-text-muted">
               No templates to show. Built-in templates load from the server —
               if this stays empty, check the browser console and restart Control
               Hub after <code className="text-neon-cyan">npm run db:migrate</code>.

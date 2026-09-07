@@ -72,7 +72,7 @@ export default function PageHeader({
           // every page rather than zero, and the gate measures zero.
           <Link
             href={backHref}
-            className="mb-1 flex w-fit items-center gap-1.5 text-ps-text-muted transition-colors hover:text-white"
+            className="mb-1 flex w-fit items-center gap-1.5 text-ps-text-muted transition-colors hover:text-ps-text-primary"
             // Always named, because the label is hidden below sm and a link
             // whose text disappears at a breakpoint would otherwise be an
             // unnamed arrow on a phone.
@@ -83,7 +83,7 @@ export default function PageHeader({
                 name is worth more than the word for where you came from, and
                 the arrow still says it. */}
             {!backIconOnly && (
-              <span className="hidden font-mono text-xs sm:inline">{backLabel}</span>
+              <span className="hidden font-mono text-micro sm:inline">{backLabel}</span>
             )}
           </Link>
         )}
@@ -91,7 +91,7 @@ export default function PageHeader({
             and one gap to the right of every block below it, so every screen
             with a header disagreed with itself by 32px before anything else
             went wrong. In here, the heading's left edge IS the container's. */}
-        <h1 className="flex items-center gap-3 text-xl font-bold tracking-tight text-white">
+        <h1 className="flex items-center gap-3 text-title font-bold tracking-tight text-ps-text-primary">
           <Icon className={`h-5 w-5 shrink-0 ${iconColorMap[color]}`} />
           <span className="truncate">{resolved}</span>
           {status && <StatusDot status={status} pulse />}
@@ -101,7 +101,7 @@ export default function PageHeader({
           // gap-3 (0.75rem), so 2rem is exactly the title text's own indent.
           // The subtitle reads as belonging to the title rather than to the
           // icon.
-          <p className="ml-8 truncate font-mono text-xs text-ps-text-muted">{subtitle}</p>
+          <p className="ml-8 truncate font-mono text-micro text-ps-text-muted">{subtitle}</p>
         )}
       </div>
       {/*

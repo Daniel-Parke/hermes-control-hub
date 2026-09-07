@@ -44,8 +44,8 @@ export default function CategoryAccordion({
       >
         <div className="flex items-center gap-2">
           <div className={`w-1.5 h-1.5 rounded-full ${dotColor}`} />
-          <span className="text-xs font-medium text-ps-text-muted uppercase tracking-wider">{name}</span>
-          <span className="text-xs font-mono text-ps-text-faint">
+          <span className="text-micro font-medium text-ps-text-muted uppercase tracking-wider">{name}</span>
+          <span className="text-micro font-mono text-ps-text-faint">
             {count}
           </span>
         </div>
@@ -53,9 +53,9 @@ export default function CategoryAccordion({
           {headerRight}
           {expandable && (
             isExpanded ? (
-              <ChevronDown className="w-3 h-3 text-white/20" />
+              <ChevronDown className="w-3 h-3 text-ps-viz-glyph-idle" />
             ) : (
-              <ChevronRight className="w-3 h-3 text-white/20" />
+              <ChevronRight className="w-3 h-3 text-ps-viz-glyph-idle" />
             )
           )}
         </div>

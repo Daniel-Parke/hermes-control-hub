@@ -28,7 +28,7 @@ interface StatusBadgeDef {
 function StatusBadge({ def, label }: { def: StatusBadgeDef; label: string }) {
   return (
     <span
-      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-mono ${def.bg} ${def.text} flex-shrink-0`}
+      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-micro font-mono ${def.bg} ${def.text} flex-shrink-0`}
     >
       {def.icon} {label}
     </span>

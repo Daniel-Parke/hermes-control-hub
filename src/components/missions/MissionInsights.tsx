@@ -24,9 +24,9 @@ function Tile({
     <div className="min-w-0 rounded-xl border border-ps-edge-hairline bg-ps-surface-raised px-3 py-2" style={{ boxShadow: `inset 0 0 16px ${neonAlpha(color, 5)}` }}>
       <div className="flex min-w-0 items-center gap-1.5">
         <Icon className="h-3 w-3 shrink-0" style={{ color: neon(color) }} />
-        <span className="truncate text-xs uppercase tracking-wider text-ps-text-muted">{label}</span>
+        <span className="truncate text-micro uppercase tracking-wider text-ps-text-muted">{label}</span>
       </div>
-      <div className="mt-0.5 font-mono text-xl font-bold leading-none text-white">{value}</div>
+      <div className="mt-0.5 font-mono text-title font-bold leading-none text-ps-text-primary">{value}</div>
     </div>
   );
 }
@@ -78,7 +78,7 @@ export default function MissionInsights({ missions }: { missions: MissionRow[] }
           color="green"
           size={84}
           thickness={8}
-          label={<span className="text-sm">{successPct}%</span>}
+          label={<span className="text-body">{successPct}%</span>}
           sublabel="success"
         />
       </div>

@@ -81,7 +81,7 @@ export default function ModelPicker({
       <select aria-label="Model"
         id={id}
         disabled
-        className="w-full bg-ps-surface-inset border border-ps-edge rounded-lg px-3 py-2 text-xs text-ps-text-muted font-mono"
+        className="w-full bg-ps-surface-inset border border-ps-edge rounded-lg px-3 py-2 text-micro text-ps-text-muted font-mono"
       >
         <option>Loading models…</option>
       </select>
@@ -103,7 +103,7 @@ export default function ModelPicker({
               ? `${optionLabel}\n\n${EMPTY_DEFAULT_HINT}`
               : String(error ?? "Models unavailable")
           }
-          className="w-full bg-ps-surface-inset border border-ps-edge rounded-lg px-3 py-2 text-xs text-ps-text-muted font-mono"
+          className="w-full bg-ps-surface-inset border border-ps-edge rounded-lg px-3 py-2 text-micro text-ps-text-muted font-mono"
         >
           <option>{optionLabel}</option>
         </select>
@@ -114,11 +114,11 @@ export default function ModelPicker({
         <select aria-label="Model"
           id={id}
           disabled
-          className="w-full bg-ps-surface-inset border border-ps-edge rounded-lg px-3 py-2 text-xs text-ps-text-muted font-mono"
+          className="w-full bg-ps-surface-inset border border-ps-edge rounded-lg px-3 py-2 text-micro text-ps-text-muted font-mono"
         >
           <option>{optionLabel}</option>
         </select>
-        <p className="text-xs text-ps-text-faint font-mono">{EMPTY_DEFAULT_HINT}</p>
+        <p className="text-micro text-ps-text-faint font-mono">{EMPTY_DEFAULT_HINT}</p>
       </div>
     );
   }
@@ -128,7 +128,7 @@ export default function ModelPicker({
       id={id}
       value={selectedValue}
       onChange={(e) => handleSelect(e.target.value)}
-      className="w-full bg-ps-surface-inset border border-ps-edge rounded-lg px-3 py-2 text-xs text-white outline-none focus:border-neon-cyan/50 font-mono"
+      className="w-full bg-ps-surface-inset border border-ps-edge rounded-lg px-3 py-2 text-micro text-ps-text-primary outline-none focus:border-neon-cyan/50 font-mono"
     >
       <option value="">Default (registry / Hermes)</option>
       {models.map((m) => (

@@ -27,7 +27,10 @@ describe("LoadErrorBanner", () => {
     const onRetry = jest.fn();
     render(<LoadErrorBanner compact error="Couldn't load conversations" onRetry={onRetry} />);
     const alert = screen.getByRole("alert");
-    expect(alert.className).toMatch(/text-xs/);
+    // `body`, not `xs`. A compact banner is still prose, and prose at 12px is
+    // the defect T-0119 removes; compact now means less padding and a tighter
+    // gap rather than smaller words.
+    expect(alert.className).toMatch(/text-body/);
     screen.getByRole("button", { name: /retry/i }).click();
     expect(onRetry).toHaveBeenCalled();
   });

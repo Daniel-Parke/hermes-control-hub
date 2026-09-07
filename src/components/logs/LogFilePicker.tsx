@@ -43,7 +43,7 @@ export default function LogFilePicker({
     // navigates by.
     <aside className="w-full lg:w-72 shrink-0 flex flex-col min-h-0">
       <Panel className="flex flex-col gap-2 min-h-0 flex-1 p-3">
-        <label className="text-xs font-mono uppercase tracking-wide text-ps-text-muted">
+        <label className="text-micro font-mono uppercase tracking-wide text-ps-text-muted">
           Log file
         </label>
         <div className="relative">
@@ -53,7 +53,7 @@ export default function LogFilePicker({
             value={query}
             onChange={(e) => onQueryChange(e.target.value)}
             placeholder="Filter by name…" aria-label="Log file name filter"
-            className="w-full bg-ps-surface-ground/80 border border-ps-edge rounded-lg pl-8 pr-2 py-2 text-xs text-white placeholder:text-ps-text-faint outline-none focus:border-neon-cyan/40 font-mono"
+            className="w-full bg-ps-surface-ground/80 border border-ps-edge rounded-lg pl-8 pr-2 py-2 text-micro text-ps-text-primary placeholder:text-ps-text-faint outline-none focus:border-neon-cyan/40 font-mono"
           />
         </div>
         <div className="flex-1 min-h-[12rem] max-h-[40vh] lg:max-h-[calc(100vh-280px)] overflow-y-auto space-y-3 pr-1">
@@ -62,7 +62,7 @@ export default function LogFilePicker({
             if (items.length === 0) return null;
             return (
               <div key={group}>
-                <div className="text-xs font-mono uppercase tracking-wider text-ps-text-muted mb-1.5">
+                <div className="text-micro font-mono uppercase tracking-wider text-ps-text-muted mb-1.5">
                   {GROUP_LABELS[group]}
                 </div>
                 <div className="flex flex-col gap-1">
@@ -79,7 +79,7 @@ export default function LogFilePicker({
                         // resolve by stylesheet order, not attribute order.
                         hover={false}
                         onClick={() => onSelect(log.name)}
-                        className={`flex items-start gap-2 text-left rounded-lg px-2.5 py-2 text-xs font-mono border ${
+                        className={`flex items-start gap-2 text-left rounded-lg px-2.5 py-2 text-micro font-mono border ${
                           activeLog === log.name
                             ? "bg-neon-cyan/10 text-neon-cyan border-neon-cyan/35"
                             : "border-transparent text-ps-text-muted hover:bg-ps-surface-raised hover:text-ps-text-primary"
@@ -96,7 +96,7 @@ export default function LogFilePicker({
                               />
                             )}
                           </span>
-                          <span className="block text-xs text-ps-text-muted mt-0.5">
+                          <span className="block text-body text-ps-text-muted mt-0.5">
                             {formatBytes(log.size)}
                             {age ? ` · ${age} ago` : ""}
                           </span>
@@ -109,7 +109,7 @@ export default function LogFilePicker({
             );
           })}
           {files.length === 0 && (
-            <p className="text-xs text-ps-text-muted py-4 text-center">No matching log files</p>
+            <p className="text-body text-ps-text-muted py-4 text-center">No matching log files</p>
           )}
         </div>
       </Panel>

@@ -50,9 +50,9 @@ export default function QuestChapter({
           className="h-4 w-4 shrink-0 text-ps-text-muted transition-transform group-open:rotate-90"
           aria-hidden="true"
         />
-        <h2 className="text-sm font-semibold text-ps-text-primary">{chapter.title}</h2>
-        <span className="min-w-0 flex-1 text-xs text-ps-text-secondary">{chapter.blurb}</span>
-        <span className="shrink-0 font-mono text-xs text-neon-orange">
+        <h2 className="text-body font-semibold text-ps-text-primary">{chapter.title}</h2>
+        <span className="min-w-0 flex-1 text-body text-ps-text-secondary">{chapter.blurb}</span>
+        <span className="shrink-0 font-mono text-micro text-neon-orange">
           {chapter.completed}/{chapter.total}
         </span>
       </summary>
@@ -77,14 +77,14 @@ export default function QuestChapter({
         */}
         {chapter.seeAlso && chapter.seeAlso.length > 0 && (
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-            <span className="font-mono text-xs uppercase tracking-wider text-ps-text-muted">
+            <span className="font-mono text-micro uppercase tracking-wider text-ps-text-muted">
               See also
             </span>
             {chapter.seeAlso.map((pointer) => (
               <Link
                 key={pointer.href}
                 href={pointer.href}
-                className="text-xs text-neon-cyan transition-colors hover:text-white"
+                className="text-body text-neon-cyan transition-colors hover:text-ps-text-primary"
               >
                 {pointer.label}
               </Link>

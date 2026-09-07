@@ -109,10 +109,10 @@ export default function ScheduleScriptModal({
       }
     >
       <div className="space-y-4">
-        <p className="font-mono text-xs text-ps-text-muted">
+        <p className="font-mono text-micro text-ps-text-muted">
           Runs <span className="text-ps-text-secondary">{script.name}</span>.
         </p>
-        <p className="font-mono text-xs text-ps-text-faint">{scheduler.reason}</p>
+        <p className="font-mono text-micro text-ps-text-faint">{scheduler.reason}</p>
         <SchedulePicker
           value={schedule}
           onChange={(v) => { setSchedule(v); setScheduleError(null); }}

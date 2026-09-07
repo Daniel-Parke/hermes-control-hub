@@ -115,7 +115,7 @@ export function ToastView({
       aria-live={type === "error" ? "assertive" : "polite"}
       data-testid="toast"
       style={{ bottom: `calc(1.5rem + ${index * STACK_STRIDE_REM}rem)` }}
-      className={`fixed right-6 z-[80] flex items-center gap-2 ${config.bg} border ${config.border} ${config.text} text-sm font-mono px-4 py-2.5 rounded-xl shadow-lg transition-all duration-200 ${
+      className={`fixed right-6 z-[80] flex items-center gap-2 ${config.bg} border ${config.border} ${config.text} text-body font-mono px-4 py-2.5 rounded-xl shadow-lg transition-all duration-200 ${
         visible ? "translate-y-0 opacity-100" : "translate-y-2 opacity-0"
       }`}
     >
@@ -163,7 +163,7 @@ export function LastResult({ result }: { result: ToastResult | null }) {
   const tone = result.type === "error" ? "text-red-400" : "text-ps-text-muted";
   const time = result.at.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   return (
-    <p data-testid="last-result" className={`text-xs font-mono ${tone}`}>
+    <p data-testid="last-result" className={`text-micro font-mono ${tone}`}>
       {result.type === "error" ? "Failed" : "Saved"} at {time}: {result.message}
     </p>
   );

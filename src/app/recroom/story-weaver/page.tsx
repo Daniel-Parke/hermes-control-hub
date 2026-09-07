@@ -1,5 +1,6 @@
 // Story Weaver — Dashboard
 "use client";
+import { sectionHeadingClasses } from "@/lib/theme";
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { BookOpen, Plus, ChevronRight, Sparkles, Library, Users, FileText } from "lucide-react";
@@ -77,8 +78,8 @@ export default function StoryWeaverDashboard() {
             { label: "Words", value: totalWords.toLocaleString() },
           ].map((stat) => (
             <div key={stat.label} className="rounded-xl border border-ps-edge-hairline bg-ps-surface-panel p-4 text-center">
-              <div className="text-2xl font-bold text-ps-text-primary">{stat.value}</div>
-              <div className="text-xs font-mono text-ps-text-faint uppercase tracking-wider mt-1">{stat.label}</div>
+              <div className="text-display font-bold text-ps-text-primary">{stat.value}</div>
+              <div className="text-micro font-mono text-ps-text-faint uppercase tracking-wider mt-1">{stat.label}</div>
             </div>
           ))}
         </div>
@@ -86,19 +87,19 @@ export default function StoryWeaverDashboard() {
         {/* Actions */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
           <button type="button" onClick={() => router.push("/recroom/story-weaver/create")}
-            className="flex items-center justify-center gap-2 px-6 py-4 rounded-xl border border-neon-purple/30 bg-neon-purple/10 text-sm font-mono text-neon-purple hover:bg-neon-purple/20 transition-all shadow-[0_0_20px_rgb(var(--ps-rgb-neon-purple)_/_0.1)]">
+            className="flex items-center justify-center gap-2 px-6 py-4 rounded-xl border border-neon-purple/30 bg-neon-purple/10 text-body font-mono text-neon-purple hover:bg-neon-purple/20 transition-all shadow-[0_0_20px_rgb(var(--ps-rgb-neon-purple)_/_0.1)]">
             <Plus className="w-4 h-4" /> Create
           </button>
           <button type="button" onClick={() => router.push("/recroom/story-weaver/library")}
-            className="flex items-center justify-center gap-2 px-6 py-4 rounded-xl border border-ps-edge text-sm font-mono text-ps-text-muted hover:text-ps-text-secondary hover:bg-ps-surface-raised transition-all">
+            className="flex items-center justify-center gap-2 px-6 py-4 rounded-xl border border-ps-edge text-body font-mono text-ps-text-muted hover:text-ps-text-secondary hover:bg-ps-surface-raised transition-all">
             <Library className="w-4 h-4" /> Library
           </button>
           <button type="button" onClick={() => router.push("/recroom/story-weaver/characters")}
-            className="flex items-center justify-center gap-2 px-6 py-4 rounded-xl border border-ps-edge text-sm font-mono text-ps-text-muted hover:text-ps-text-secondary hover:bg-ps-surface-raised transition-all">
+            className="flex items-center justify-center gap-2 px-6 py-4 rounded-xl border border-ps-edge text-body font-mono text-ps-text-muted hover:text-ps-text-secondary hover:bg-ps-surface-raised transition-all">
             <Users className="w-4 h-4" /> Characters
           </button>
           <button type="button" onClick={() => router.push("/recroom/story-weaver/themes")}
-            className="flex items-center justify-center gap-2 px-6 py-4 rounded-xl border border-ps-edge text-sm font-mono text-ps-text-muted hover:text-ps-text-secondary hover:bg-ps-surface-raised transition-all">
+            className="flex items-center justify-center gap-2 px-6 py-4 rounded-xl border border-ps-edge text-body font-mono text-ps-text-muted hover:text-ps-text-secondary hover:bg-ps-surface-raised transition-all">
             <FileText className="w-4 h-4" /> Themes
           </button>
         </div>
@@ -107,10 +108,10 @@ export default function StoryWeaverDashboard() {
         {recent.length > 0 && (
           <div>
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-sm font-mono text-ps-text-muted uppercase tracking-widest">Recent stories</h2>
+              <h2 className={sectionHeadingClasses}>Recent stories</h2>
               {stories.length > 3 && (
                 <button type="button" onClick={() => router.push("/recroom/story-weaver/library")}
-                  className="text-xs font-mono text-neon-purple hover:underline flex items-center gap-1">
+                  className="text-micro font-mono text-neon-purple hover:underline flex items-center gap-1">
                   View all <ChevronRight className="w-3 h-3" />
                 </button>
               )}
@@ -128,9 +129,9 @@ export default function StoryWeaverDashboard() {
         {/* Empty state: only after a read that succeeded (the read contract). */}
         {stories.length === 0 && !loading && !error && (
           <div className="text-center py-16">
-            <Sparkles className="w-12 h-12 text-white/10 mx-auto mb-4" />
-            <h3 className="text-lg font-serif text-ps-text-muted mb-2">Your story awaits</h3>
-            <p className="text-sm text-ps-text-faint">Create your first story and let the adventure begin.</p>
+            <Sparkles className="w-12 h-12 text-ps-viz-glyph-idle mx-auto mb-4" />
+            <h3 className="text-title font-serif text-ps-text-muted mb-2">Your story awaits</h3>
+            <p className="text-body text-ps-text-faint">Create your first story and let the adventure begin.</p>
           </div>
         )}
       </div>

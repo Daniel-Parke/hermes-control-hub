@@ -34,7 +34,7 @@ export function ChatModeToggle({
             onClick={() => onChange(m.value)}
             disabled={disabled}
             title={m.title}
-            className={`flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-mono transition-colors disabled:opacity-40 ${
+            className={`flex items-center gap-1.5 rounded-md px-2.5 py-1 text-micro font-mono transition-colors disabled:opacity-40 ${
               active
                 ? "bg-neon-cyan/20 text-neon-cyan"
                 : "text-ps-text-muted hover:text-ps-text-secondary"

@@ -62,7 +62,7 @@ export default function HelpSearch({ entries }: { entries: HelpSearchEntry[] }) 
 
       {/* The count and the empty answer share one live region, so a screen
           reader hears the result of a keystroke rather than nothing at all. */}
-      <p role="status" className="text-xs font-mono text-ps-text-muted">
+      <p role="status" className="text-micro font-mono text-ps-text-muted">
         {term === ""
           ? ""
           : results.length === 0
@@ -78,10 +78,10 @@ export default function HelpSearch({ entries }: { entries: HelpSearchEntry[] }) 
                 href={href(entry)}
                 className="block px-3 py-2 transition-colors hover:bg-ps-surface-raised"
               >
-                <span className="block text-sm text-ps-text-primary">
+                <span className="block text-body text-ps-text-primary">
                   {entry.heading ?? entry.title}
                 </span>
-                <span className="block text-xs font-mono text-ps-text-muted">{entry.title}</span>
+                <span className="block text-micro font-mono text-ps-text-muted">{entry.title}</span>
               </Link>
             </li>
           ))}

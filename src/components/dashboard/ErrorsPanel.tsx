@@ -39,7 +39,7 @@ export default function ErrorsPanel({ errors, severity, onSelectSeverity }: Erro
               <button
                 key={sev}
                 onClick={() => onSelectSeverity(sev)}
-                className={`text-xs font-mono px-1.5 py-0.5 rounded transition-colors ${
+                className={`text-micro font-mono px-1.5 py-0.5 rounded transition-colors ${
                   severity === sev ? "bg-red-500/20 text-red-400" : "text-ps-text-muted hover:text-ps-text-secondary"
                 }`}
               >
@@ -53,7 +53,7 @@ export default function ErrorsPanel({ errors, severity, onSelectSeverity }: Erro
         {errors.length === 0 && (
           <div className="px-4 py-6 text-center">
             <CheckCircle2 className="w-5 h-5 text-neon-green mx-auto mb-1" />
-            <div className="text-xs text-neon-green">No recent errors</div>
+            <div className="text-body text-neon-green">No recent errors</div>
           </div>
         )}
         {errors.map((err) => (
@@ -68,10 +68,10 @@ export default function ErrorsPanel({ errors, severity, onSelectSeverity }: Erro
                 messages are frequently a whole JSON tool result, and the part
                 that names the failure is past the cut. The title attribute is
                 the cheapest way to make the full text reachable. */}
-            <div className="text-xs text-red-400/80 font-mono truncate" title={err.message}>
+            <div className="text-micro text-red-400/80 font-mono truncate" title={err.message}>
               {err.message}
             </div>
-            <div className="text-xs text-ps-text-faint font-mono mt-0.5">
+            <div className="text-micro text-ps-text-faint font-mono mt-0.5">
               {err.source} {err.timestamp && `· ${err.timestamp}`}
             </div>
           </LedgerRow>

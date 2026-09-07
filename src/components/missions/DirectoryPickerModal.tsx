@@ -102,18 +102,18 @@ export default function DirectoryPickerModal({
             <ChevronUp className="w-4 h-4" />
             Up
           </Button>
-          <div className="text-xs font-mono text-ps-text-muted truncate flex-1" title={path}>
+          <div className="text-micro font-mono text-ps-text-muted truncate flex-1" title={path}>
             {path || "…"}
           </div>
         </div>
         {error && (
-          <div className="text-xs text-red-400 font-mono border border-red-500/30 rounded-lg px-2 py-1.5">
+          <div className="text-micro text-red-400 font-mono border border-red-500/30 rounded-lg px-2 py-1.5">
             {error}
           </div>
         )}
         <div className="max-h-72 overflow-y-auto rounded-lg border border-ps-edge-hairline bg-ps-surface-panel">
           {loading ? (
-            <div className="p-6 text-center text-xs text-ps-text-muted font-mono">Loading…</div>
+            <div className="p-6 text-center text-micro text-ps-text-muted font-mono">Loading…</div>
           ) : (
             <ul className="divide-y divide-ps-edge-hairline">
               {entries.map((e) => (
@@ -128,7 +128,7 @@ export default function DirectoryPickerModal({
                         path.replace(/[/\\]+$/, "") + sep + e.name;
                       void loadPath(next);
                     }}
-                    className={`w-full flex items-center gap-2 px-3 py-2 text-left text-xs font-mono transition-colors ${
+                    className={`w-full flex items-center gap-2 px-3 py-2 text-left text-micro font-mono transition-colors ${
                       e.isDir
                         ? "hover:bg-ps-surface-raised text-ps-text-primary"
                         : "text-ps-text-faint cursor-not-allowed"
@@ -137,14 +137,14 @@ export default function DirectoryPickerModal({
                     {e.isDir ? (
                       <Folder className="w-3.5 h-3.5 text-neon-cyan flex-shrink-0" />
                     ) : (
-                      <File className="w-3.5 h-3.5 text-white/20 flex-shrink-0" />
+                      <File className="w-3.5 h-3.5 text-ps-viz-glyph-idle flex-shrink-0" />
                     )}
                     <span className="truncate">{e.name}</span>
                   </button>
                 </li>
               ))}
               {entries.length === 0 && !loading && (
-                <li className="px-3 py-4 text-xs text-ps-text-muted font-mono text-center">
+                <li className="px-3 py-4 text-micro text-ps-text-muted font-mono text-center">
                   Empty folder
                 </li>
               )}

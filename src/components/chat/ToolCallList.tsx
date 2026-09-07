@@ -29,8 +29,8 @@ export default function ToolCallList({ toolCalls }: { toolCalls: ToolCall[] }) {
             className="flex items-center gap-2 rounded-lg border border-ps-edge-hairline bg-ps-surface-raised px-2.5 py-1.5"
           >
             <Wrench className="h-3 w-3 text-ps-text-muted" />
-            <span className="font-mono text-xs text-ps-text-secondary">{tc.name}</span>
-            <span className={`ml-auto flex items-center gap-1 text-xs font-mono ${meta.className}`}>
+            <span className="font-mono text-micro text-ps-text-secondary">{tc.name}</span>
+            <span className={`ml-auto flex items-center gap-1 text-micro font-mono ${meta.className}`}>
               <Icon className={`h-3 w-3 ${tc.status === "invoked" ? "animate-spin" : ""}`} />
               {meta.label}
             </span>

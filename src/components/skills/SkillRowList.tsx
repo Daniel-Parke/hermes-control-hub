@@ -78,7 +78,7 @@ export function SkillRowList({
       {pages > 1 && (
         <div className="flex items-center justify-between gap-3 pt-1">
           <span
-            className="text-xs font-mono text-ps-text-muted"
+            className="text-micro font-mono text-ps-text-muted"
             data-testid="skill-page-status"
           >
             {pageRangeLabel(skills.length, page)}
@@ -89,11 +89,11 @@ export function SkillRowList({
               data-testid="skill-page-prev"
               onClick={() => onPageChange(page - 1)}
               disabled={atFirst}
-              className="flex items-center gap-1 text-xs px-2 py-1 rounded border border-ps-edge text-ps-text-muted hover:border-ps-edge-emphasis hover:text-ps-text-secondary transition-all disabled:opacity-30 disabled:hover:border-ps-edge disabled:hover:text-ps-text-muted"
+              className="flex items-center gap-1 text-body px-2 py-1 rounded border border-ps-edge text-ps-text-muted hover:border-ps-edge-emphasis hover:text-ps-text-secondary transition-all disabled:opacity-30 disabled:hover:border-ps-edge disabled:hover:text-ps-text-muted"
             >
               <ChevronLeft className="w-3 h-3" /> Prev
             </button>
-            <span className="text-xs font-mono text-ps-text-faint">
+            <span className="text-micro font-mono text-ps-text-faint">
               {page + 1}/{pages}
             </span>
             <button
@@ -101,7 +101,7 @@ export function SkillRowList({
               data-testid="skill-page-next"
               onClick={() => onPageChange(page + 1)}
               disabled={atLast}
-              className="flex items-center gap-1 text-xs px-2 py-1 rounded border border-ps-edge text-ps-text-muted hover:border-ps-edge-emphasis hover:text-ps-text-secondary transition-all disabled:opacity-30 disabled:hover:border-ps-edge disabled:hover:text-ps-text-muted"
+              className="flex items-center gap-1 text-body px-2 py-1 rounded border border-ps-edge text-ps-text-muted hover:border-ps-edge-emphasis hover:text-ps-text-secondary transition-all disabled:opacity-30 disabled:hover:border-ps-edge disabled:hover:text-ps-text-muted"
             >
               Next <ChevronRight className="w-3 h-3" />
             </button>

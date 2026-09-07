@@ -45,7 +45,7 @@ export function BranchDropdown({
     >
       {/* Header */}
       <div className="flex items-center justify-between px-3 py-2 border-b border-ps-edge-hairline">
-        <span className="text-xs font-mono text-ps-text-muted">Branch</span>
+        <span className="text-micro font-mono text-ps-text-muted">Branch</span>
         <button
           type="button"
           aria-label="Close branch picker"
@@ -61,7 +61,7 @@ export function BranchDropdown({
         <select aria-label="Branch"
           value={selected}
           onChange={(e) => setSelected(e.target.value)}
-          className="w-full px-2 py-1.5 rounded-md bg-ps-surface-panel border border-ps-edge text-white text-xs focus:outline-none focus:border-neon-cyan/50"
+          className="w-full px-2 py-1.5 rounded-md bg-ps-surface-panel border border-ps-edge text-ps-text-primary text-body focus:outline-none focus:border-neon-cyan/50"
         >
           {branches.map((b) => (
             <option key={b} value={b}>
@@ -69,7 +69,7 @@ export function BranchDropdown({
             </option>
           ))}
         </select>
-        <label className="block mt-2 text-xs font-mono text-ps-text-muted uppercase tracking-wide">
+        <label className="block mt-2 text-micro font-mono text-ps-text-muted uppercase tracking-wide">
           Other branch
         </label>
         <input
@@ -77,7 +77,7 @@ export function BranchDropdown({
           value={customBranch}
           onChange={(e) => setCustomBranch(e.target.value)}
           placeholder="e.g. feature/my-branch" aria-label="Other branch name"
-          className="w-full mt-0.5 px-2 py-1.5 rounded-md bg-ps-surface-panel border border-ps-edge text-white text-xs placeholder:text-ps-text-faint focus:outline-none focus:border-neon-cyan/50"
+          className="w-full mt-0.5 px-2 py-1.5 rounded-md bg-ps-surface-panel border border-ps-edge text-ps-text-primary text-body placeholder:text-ps-text-faint focus:outline-none focus:border-neon-cyan/50"
         />
       </div>
 
@@ -86,7 +86,7 @@ export function BranchDropdown({
         <button
           onClick={onCancel}
           disabled={loading}
-          className="px-3 py-1 rounded text-xs text-ps-text-muted hover:text-ps-text-secondary transition-colors disabled:opacity-50"
+          className="px-3 py-1 rounded text-body text-ps-text-muted hover:text-ps-text-secondary transition-colors disabled:opacity-50"
         >
           Cancel
         </button>
@@ -95,7 +95,7 @@ export function BranchDropdown({
             onConfirm(customBranch.trim() ? sanitizeGitBranch(customBranch) : selected)
           }
           disabled={loading || (!customBranch.trim() && !selected)}
-          className="px-3 py-1 rounded text-xs font-medium bg-neon-cyan text-dark-900 hover:brightness-110 transition disabled:opacity-50"
+          className="px-3 py-1 rounded text-body font-medium bg-neon-cyan text-dark-900 hover:brightness-110 transition disabled:opacity-50"
         >
           {loading ? "..." : "Confirm"}
         </button>

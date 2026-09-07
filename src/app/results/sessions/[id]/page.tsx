@@ -148,13 +148,13 @@ export default function SessionDetailPage() {
             {/* Every failure used to read "Session Not Found": a malformed id,
                 a transcript over the ceiling and a rate limit all told the
                 operator the same untrue thing (T-0105, D33). */}
-            <h2 className="text-xl font-bold text-white mb-2">
+            <h2 className="text-title font-bold text-ps-text-primary mb-2">
               {sessionLoadErrorHeading(errorStatus)}
             </h2>
             <LoadErrorBanner error={error ?? "Unknown error"} onRetry={() => void refetch()} />
             <Link
               href="/results/sessions"
-              className="text-neon-orange text-sm font-mono hover:underline"
+              className="text-neon-orange text-body font-mono hover:underline"
             >
               ← Back to Sessions
             </Link>
@@ -202,7 +202,7 @@ export default function SessionDetailPage() {
               {data.missionId && (
                 <a
                   href={`${MISSIONS_PATH}?mission=${data.missionId}`}
-                  className="text-xs font-mono px-2 py-1 rounded bg-neon-green/10 text-neon-green hover:bg-neon-green/20 transition-colors"
+                  className="text-micro font-mono px-2 py-1 rounded bg-neon-green/10 text-neon-green hover:bg-neon-green/20 transition-colors"
                   title="Open the parent mission"
                 >
                   ↗ Mission
@@ -211,14 +211,14 @@ export default function SessionDetailPage() {
               <button
                 type="button"
                 onClick={() => setExpandAll((v) => (v === true ? false : true))}
-                className="text-xs font-mono px-2 py-1 rounded bg-ps-surface-raised text-ps-text-muted hover:text-white transition-colors"
+                className="text-micro font-mono px-2 py-1 rounded bg-ps-surface-raised text-ps-text-muted hover:text-ps-text-primary transition-colors"
               >
                 {expandAll === true ? "Collapse all" : "Expand all"}
               </button>
               <button
                 type="button"
                 onClick={() => void copy(transcriptText)}
-                className="text-xs font-mono px-2 py-1 rounded bg-ps-surface-raised text-ps-text-muted hover:text-white transition-colors"
+                className="text-micro font-mono px-2 py-1 rounded bg-ps-surface-raised text-ps-text-muted hover:text-ps-text-primary transition-colors"
                 title="Copy the messages currently shown"
               >
                 {copied ? "Copied" : "Copy transcript"}
@@ -227,7 +227,7 @@ export default function SessionDetailPage() {
                 <button
                   type="button"
                   onClick={() => void refetch()}
-                  className="text-xs font-mono px-2 py-1 rounded bg-neon-cyan/10 text-neon-cyan hover:bg-neon-cyan/20 transition-colors"
+                  className="text-micro font-mono px-2 py-1 rounded bg-neon-cyan/10 text-neon-cyan hover:bg-neon-cyan/20 transition-colors"
                   title="Reload to check for new messages"
                 >
                   ⟳ Refresh
@@ -243,7 +243,7 @@ export default function SessionDetailPage() {
                     onClick={() => handleRoleBadgeClick(role)}
                     onDoubleClick={() => scrollToNextRole(role)}
                     title={`Click to filter · Double-click to jump to next ${role}`}
-                    className={`text-xs font-mono px-2 py-1 rounded transition-colors cursor-pointer ${
+                    className={`text-micro font-mono px-2 py-1 rounded transition-colors cursor-pointer ${
                       isActive
                         ? `${m.bgSolid} ${m.text} ring-1 ring-ps-edge-emphasis`
                         : `${m.bgSolid} ${m.text} opacity-60 hover:opacity-100`
@@ -257,7 +257,7 @@ export default function SessionDetailPage() {
                 <button
                   type="button"
                   onClick={clearRoleFilter}
-                  className="text-xs font-mono text-ps-text-muted hover:text-ps-text-secondary px-1.5 py-1 rounded bg-ps-surface-raised"
+                  className="text-micro font-mono text-ps-text-muted hover:text-ps-text-secondary px-1.5 py-1 rounded bg-ps-surface-raised"
                 >
                   clear
                 </button>
@@ -274,19 +274,19 @@ export default function SessionDetailPage() {
             role="alert"
             className="mb-4 rounded-lg border border-semantic-danger/40 bg-semantic-danger/10 p-3"
           >
-            <p className="text-sm font-semibold text-semantic-danger">
+            <p className="text-body font-semibold text-semantic-danger">
               {SESSION_STATUS_LABELS.failed}
               {typeof data.exitCode === "number" ? ` · exit ${data.exitCode}` : ""}
             </p>
             {data.error && (
-              <p className="mt-1 text-xs font-mono text-semantic-danger/90 whitespace-pre-wrap break-words">
+              <p className="mt-1 text-micro font-mono text-semantic-danger/90 whitespace-pre-wrap break-words">
                 {data.error}
               </p>
             )}
           </div>
         )}
         {data.truncated && (
-          <p className="mb-3 text-xs font-mono text-ps-text-muted">
+          <p className="mb-3 text-micro font-mono text-ps-text-muted">
             Showing the most recent {data.messages.length} messages. Older messages were not loaded.
           </p>
         )}
@@ -300,7 +300,7 @@ export default function SessionDetailPage() {
           />
         </div>
         {isNarrowed && (
-          <div className="text-xs text-ps-text-muted font-mono mb-3">
+          <div className="text-micro text-ps-text-muted font-mono mb-3">
             Showing {shownCount} of {data.messages.length} messages
           </div>
         )}
@@ -318,14 +318,14 @@ export default function SessionDetailPage() {
 
         {data.messages.length === 0 && (
           <div className="text-center py-12 max-w-md mx-auto">
-            <MessageSquare className="w-8 h-8 text-white/20 mx-auto mb-3" />
+            <MessageSquare className="w-8 h-8 text-ps-viz-glyph-idle mx-auto mb-3" />
             {data.note ? (
               <>
                 <p className="text-ps-text-secondary font-mono mb-3">{data.note}</p>
                 {data.missionId && (
                   <a
                     href={`${MISSIONS_PATH}?mission=${data.missionId}`}
-                    className="text-neon-orange text-sm font-mono hover:underline"
+                    className="text-neon-orange text-body font-mono hover:underline"
                   >
                     Open the parent mission →
                   </a>

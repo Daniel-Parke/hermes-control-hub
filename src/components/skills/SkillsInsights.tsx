@@ -54,7 +54,7 @@ export default function SkillsInsights({ skills, activeCount }: { skills: Array<
       ring={{
         value: s.total > 0 ? s.active / s.total : 0,
         color: "green",
-        label: <span className="text-sm">{Math.round((s.active / Math.max(1, s.total)) * 100)}%</span>,
+        label: <span className="text-body">{Math.round((s.active / Math.max(1, s.total)) * 100)}%</span>,
         sublabel: "active",
       }}
     />

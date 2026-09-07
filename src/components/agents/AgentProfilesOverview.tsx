@@ -58,16 +58,16 @@ export default function AgentProfilesOverview({
         {/* Both of this screen's words are in this one sentence, which is
             where an operator meets them: "voice" is what the product calls a
             personality everywhere else on the page. */}
-        <p className="text-sm text-ps-text-muted">
+        <p className="text-body text-ps-text-muted">
           A <ConceptHint id="profile">profile</ConceptHint> is one agent: its{" "}
           <ConceptHint id="personality">voice</ConceptHint>, the skills it may use and the tools it
           may reach. Pick one on the left to read it or change it.
         </p>
         <details className="mt-1">
-          <summary className="cursor-pointer text-xs text-neon-cyan hover:underline">
+          <summary className="cursor-pointer text-body text-neon-cyan hover:underline">
             Where a profile is stored
           </summary>
-          <p className="mt-2 text-xs text-ps-text-muted font-mono">
+          <p className="mt-2 text-micro text-ps-text-muted font-mono">
             Agent identity lives in <strong className="text-ps-text-secondary">SOUL.md</strong>. Runtime policy
             (skills.disabled, platform_toolsets, model blocks) is in each profile&apos;s{" "}
             <strong className="text-ps-text-secondary">config.yaml</strong>. Pull imports from Hermes disk into

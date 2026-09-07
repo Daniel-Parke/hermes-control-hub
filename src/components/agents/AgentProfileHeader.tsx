@@ -31,13 +31,13 @@ export default function AgentProfileHeader({
       <div className="p-4 border-b border-ps-edge-hairline flex flex-wrap items-center justify-between gap-3">
         <div>
           <div className="flex items-center gap-2">
-            <h2 className="font-semibold text-white">{profile.name}</h2>
+            <h2 className="font-semibold text-ps-text-primary">{profile.name}</h2>
             {profile.isDefault && <Badge color="cyan" size="sm">Default</Badge>}
           </div>
           {!profile.isDefault && (
-            <p className="text-xs font-mono text-ps-text-muted mt-0.5">slug: {profile.id}</p>
+            <p className="text-micro font-mono text-ps-text-muted mt-0.5">slug: {profile.id}</p>
           )}
-          <p className="text-sm text-ps-text-muted mt-1">{profile.description}</p>
+          <p className="text-body text-ps-text-muted mt-1">{profile.description}</p>
         </div>
         <div className="flex items-center gap-2">
           <Button
@@ -69,15 +69,15 @@ export default function AgentProfileHeader({
       </div>
 
       <div className="p-4 border-b border-ps-edge-hairline">
-        <p className="text-sm text-ps-text-muted">
+        <p className="text-body text-ps-text-muted">
           This agent&apos;s voice, habits and equipment are files it reads on every run. Open
           one below to change it.
         </p>
         <details className="mt-2 group">
-          <summary className="cursor-pointer text-xs text-neon-cyan hover:underline">
+          <summary className="cursor-pointer text-body text-neon-cyan hover:underline">
             Which file holds what
           </summary>
-          <p className="mt-2 text-xs text-ps-text-muted font-mono">
+          <p className="mt-2 text-micro text-ps-text-muted font-mono">
             Edit <strong className="text-ps-text-secondary">SOUL.md</strong> for voice and identity.
             Use <strong className="text-ps-text-secondary">config.yaml</strong> for skills.disabled and
             platform_toolsets. Session display presets:{" "}

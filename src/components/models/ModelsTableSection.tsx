@@ -75,19 +75,19 @@ function ModelRow({
       data-row-id={model.id}
       className="border-b border-ps-edge-hairline last:border-0 hover:bg-ps-surface-raised transition-colors"
     >
-      <td className="px-4 py-3 font-mono text-white">{model.name}</td>
+      <td className="px-4 py-3 font-mono text-ps-text-primary">{model.name}</td>
       <td className="px-4 py-3 font-mono text-ps-text-secondary">{model.provider}</td>
       <td className="px-4 py-3 font-mono text-ps-text-secondary">{model.modelId}</td>
       <td className="px-4 py-3">
         {model.apiStyle ? (
           <span
-            className="rounded bg-neon-cyan/10 px-1.5 py-0.5 text-xs font-mono uppercase tracking-widest text-neon-cyan/80"
+            className="rounded bg-neon-cyan/10 px-1.5 py-0.5 text-micro font-mono uppercase tracking-widest text-neon-cyan/80"
             title={`Direct-provider wire protocol: ${model.apiStyle === "anthropic" ? "Anthropic /v1/messages" : "OpenAI /chat/completions"}`}
           >
             {model.apiStyle}
           </span>
         ) : (
-          <span className="font-mono text-xs text-ps-text-muted" title="Auto-detected from provider/base URL at call time">
+          <span className="font-mono text-micro text-ps-text-muted" title="Auto-detected from provider/base URL at call time">
             auto
           </span>
         )}
@@ -99,13 +99,13 @@ function ModelRow({
       </td>
       <td className="px-4 py-3">
         {badges.length === 0 ? (
-          <span className="text-ps-text-muted font-mono text-xs">—</span>
+          <span className="text-ps-text-muted font-mono text-micro">—</span>
         ) : (
           <div className="flex flex-wrap gap-1">
             {badges.map((b) => (
               <span
                 key={b}
-                className="text-xs font-mono bg-neon-purple/15 text-neon-purple px-1.5 py-0.5 rounded uppercase tracking-widest"
+                className="text-micro font-mono bg-neon-purple/15 text-neon-purple px-1.5 py-0.5 rounded uppercase tracking-widest"
               >
                 {b}
               </span>
@@ -127,7 +127,7 @@ function ModelRow({
           <button
             type="button"
             onClick={() => onEdit(toModelEditorRecord(model))}
-            className="p-1.5 rounded-lg text-ps-text-muted hover:text-white hover:bg-ps-surface-raised transition-colors"
+            className="p-1.5 rounded-lg text-ps-text-muted hover:text-ps-text-primary hover:bg-ps-surface-raised transition-colors"
             aria-label={`Edit ${model.name}`}
             title="Edit"
           >
@@ -221,9 +221,9 @@ export default function ModelsTableSection({
       ) : (
         <GlowSurface accent="purple">
           <div className="overflow-x-auto rounded-xl border border-ps-edge-hairline bg-ps-surface-panel">
-            <table className="w-full text-sm">
+            <table className="w-full text-body">
               <thead>
-                <tr className="text-left text-xs font-mono uppercase tracking-widest text-ps-text-muted border-b border-ps-edge-hairline">
+                <tr className="text-left text-micro font-mono uppercase tracking-widest text-ps-text-muted border-b border-ps-edge-hairline">
                   <th className="px-4 py-2">Name</th>
                   {/* The column an operator asks about first: who serves this
                       model, and what that costs them. */}

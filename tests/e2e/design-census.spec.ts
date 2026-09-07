@@ -49,6 +49,12 @@ import { seedDemo } from "./seed-demo.mjs";
 const BASELINE = join(process.cwd(), "scripts", "tooling", "design-census.baseline.json");
 const REPORT_DIR = join(process.cwd(), "tmp");
 const UPDATE = process.env.UPDATE_CENSUS === "1";
+/** A written reason, when a rewrite is allowed to record a number that rose. */
+const ALLOW_GROWTH = process.env.CENSUS_ALLOW_GROWTH ?? "";
+const DEFAULT_NOTE =
+  "Measured by tests/e2e/design-census.spec.ts against the running product. " +
+  "Sprawl counts may fall and never rise; contrast readings may rise and never fall. " +
+  "Rewrite with UPDATE_CENSUS=1 npm run census, and say why in the commit.";
 const RUN = UPDATE || process.env.RUN_CENSUS === "1";
 
 /** Fixed, because a census taken at two widths is two censuses. */
@@ -128,13 +134,54 @@ test.describe("design census", () => {
     );
 
     if (UPDATE) {
+      const previous: BaselineFile | null = existsSync(BASELINE)
+        ? (JSON.parse(readFileSync(BASELINE, "utf-8")) as BaselineFile)
+        : null;
+      const rose = previous ? regressions(previous.counts, counts) : [];
+
+      // The same pawl the check path has, on the way out. design-lint settled
+      // this: a baseline you can wind backwards with a flag is decorative. A
+      // number that rose needs a reason, and the reason is recorded here beside
+      // the numbers rather than in a commit message nobody reads next to them.
+      if (rose.length > 0 && !ALLOW_GROWTH) {
+        throw new Error(
+          [
+            "refusing to write a census baseline that GROWS.",
+            "",
+            ...rose.map(describeRegression).map((r) => `  ${r}`),
+            "",
+            "Fix them, or say in writing why the growth is warranted:",
+            '  CENSUS_ALLOW_GROWTH="<reason>" npm run census:update',
+          ].join("\n"),
+        );
+      }
+      if (rose.length > 0 && ALLOW_GROWTH.trim().length < 12) {
+        throw new Error("CENSUS_ALLOW_GROWTH must be a reason, not a word.");
+      }
+
       const file: BaselineFile = {
-        note:
-          "Measured by tests/e2e/design-census.spec.ts against the running product. " +
-          "Sprawl counts may fall and never rise; contrast readings may rise and never fall. " +
-          "Rewrite with UPDATE_CENSUS=1 npm run census, and say why in the commit.",
+        // The note survives a rewrite. It is where a reader learns why a number
+        // moved a long way in one batch, and a template overwrote it twice
+        // before anyone noticed.
+        note: previous?.note ?? DEFAULT_NOTE,
         viewport: VIEWPORT,
         counts,
+        ...(previous?.allowed || rose.length > 0
+          ? {
+              allowed: [
+                ...(previous?.allowed ?? []),
+                ...(rose.length > 0
+                  ? [
+                      {
+                        when: new Date().toISOString().slice(0, 10),
+                        reason: ALLOW_GROWTH.trim(),
+                        rose: rose.map(describeRegression),
+                      },
+                    ]
+                  : []),
+              ],
+            }
+          : {}),
       };
       writeFileSync(BASELINE, `${JSON.stringify(file, null, 2)}\n`, "utf-8");
       test.info().annotations.push({ type: "census", description: JSON.stringify(counts) });

@@ -9,6 +9,7 @@
 
 "use client";
 
+import { sectionHeadingClasses } from "@/lib/theme";
 import Button from "@/components/ui/Button";
 import AgentProfileHeader from "@/components/agents/AgentProfileHeader";
 import AgentProfileFiles from "@/components/agents/AgentProfileFiles";
@@ -71,7 +72,7 @@ export default function AgentProfileDetail({
   return (
     <div className="flex-1 min-w-0 rounded-xl border border-ps-edge-hairline bg-ps-surface-panel flex flex-col">
       {!profile ? (
-        <div className="flex-1 flex items-center justify-center text-sm text-ps-text-muted p-8">
+        <div className="flex-1 flex items-center justify-center text-body text-ps-text-muted p-8">
           Select a profile
         </div>
       ) : (
@@ -81,7 +82,7 @@ export default function AgentProfileDetail({
           {/* The work is still in the editor below; this asks before it goes. */}
           {pendingDiscard && (
             <div className="m-4 rounded-lg border border-semantic-warning/40 bg-semantic-warning/10 p-3">
-              <p className="text-sm text-ps-text-primary">
+              <p className="text-body text-ps-text-primary">
                 You have unsaved changes to {pendingDiscard.fileName}.
               </p>
               <div className="mt-2 flex flex-wrap gap-2">
@@ -107,9 +108,9 @@ export default function AgentProfileDetail({
                 aria-selected={tab === id}
                 aria-controls={`profile-panel-${id}`}
                 onClick={() => onTabChange(id)}
-                className={`px-3 py-2 text-sm rounded-t-lg border-b-2 transition-colors ${
+                className={`px-3 py-2 text-body rounded-t-lg border-b-2 transition-colors ${
                   tab === id
-                    ? "border-neon-purple text-white"
+                    ? "border-neon-purple text-ps-text-primary"
                     : "border-transparent text-ps-text-muted hover:text-ps-text-secondary"
                 }`}
               >
@@ -125,15 +126,15 @@ export default function AgentProfileDetail({
               aria-labelledby="profile-tab-identity"
               className="p-4 border-b border-ps-edge-hairline"
             >
-              <h3 className="text-xs font-semibold text-ps-text-muted uppercase tracking-wider mb-2">
+              <h3 className={sectionHeadingClasses}>
                 Voice
               </h3>
-              <p className="text-sm text-ps-text-secondary">
+              <p className="text-body text-ps-text-secondary">
                 {profile.personality?.trim()
                   ? profile.personality
                   : "No voice recorded yet. It is read from SOUL.md the next time this profile is pulled or saved."}
               </p>
-              <p className="mt-3 text-xs text-ps-text-muted">
+              <p className="mt-3 text-body text-ps-text-muted">
                 SOUL.md below is what the agent reads. Editing it here is the same save the
                 Files tab makes.
               </p>

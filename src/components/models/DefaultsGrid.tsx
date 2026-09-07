@@ -116,14 +116,14 @@ export default function DefaultsGrid({
               <div className="min-w-0 flex-1">
                 {/* Per-slot "set all aux" shortcut removed — the section-level
                     Bulk auxiliary updater is the single control for that. */}
-                <div className="text-sm font-semibold text-white flex items-center gap-2">
+                <div className="text-body font-semibold text-ps-text-primary flex items-center gap-2">
                   {meta.label}
                 </div>
-                <p className="text-xs text-ps-text-muted font-mono mt-0.5 truncate">
+                <p className="text-micro text-ps-text-muted font-mono mt-0.5 truncate">
                   {meta.description}
                 </p>
               </div>
-              <span className="text-xs font-mono text-ps-text-muted bg-ps-surface-raised px-1.5 py-0.5 rounded uppercase tracking-widest flex-shrink-0">
+              <span className="text-micro font-mono text-ps-text-muted bg-ps-surface-raised px-1.5 py-0.5 rounded uppercase tracking-widest flex-shrink-0">
                 {slot}
               </span>
             </div>

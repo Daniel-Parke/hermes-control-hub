@@ -13,6 +13,7 @@
 
 "use client";
 
+import { sectionHeadingClasses } from "@/lib/theme";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ReactFlow,
@@ -91,10 +92,10 @@ function WorkflowNode({ data, selected }: NodeProps<WfNode>) {
     >
       <Handle type="target" position={Position.Top} className="!h-2 !w-2 !border-0 !bg-white/40" />
       <div className="flex items-center gap-1.5">
-        <span className="truncate text-sm text-ps-text-primary">{data.label || "(unnamed)"}</span>
-        {data.gate === "hil" ? <span className="rounded bg-neon-yellow/15 px-1 text-xs font-mono text-neon-yellow">HIL</span> : null}
+        <span className="truncate text-body text-ps-text-primary">{data.label || "(unnamed)"}</span>
+        {data.gate === "hil" ? <span className="rounded bg-neon-yellow/15 px-1 text-micro font-mono text-neon-yellow">HIL</span> : null}
       </div>
-      <div className="mt-0.5 flex items-center gap-1.5 font-mono text-xs uppercase tracking-wider text-ps-text-muted">
+      <div className="mt-0.5 flex items-center gap-1.5 font-mono text-micro uppercase tracking-wider text-ps-text-muted">
         <span>{data.kind}</span>
         {data.isStart ? <span className="text-neon-cyan">start</span> : null}
         {data.isTerminal ? <span className="text-ps-text-muted">end</span> : null}
@@ -456,7 +457,7 @@ function CanvasInner({ workflows, onSaved }: { workflows: ComposerWorkflow[]; on
           <span
             data-tone={message.tone}
             role={message.tone === "error" ? "alert" : undefined}
-            className={`text-xs ${message.tone === "error" ? "text-neon-pink" : "text-neon-green"}`}
+            className={`text-body ${message.tone === "error" ? "text-neon-pink" : "text-neon-green"}`}
           >
             {message.text}
           </span>
@@ -466,7 +467,7 @@ function CanvasInner({ workflows, onSaved }: { workflows: ComposerWorkflow[]; on
       {pendingSwitch !== null ? (
         <div
           role="alert"
-          className="flex flex-wrap items-center gap-3 rounded-xl border border-neon-orange/40 bg-neon-orange/10 px-4 py-3 text-xs text-ps-text-primary"
+          className="flex flex-wrap items-center gap-3 rounded-xl border border-neon-orange/40 bg-neon-orange/10 px-4 py-3 text-body text-ps-text-primary"
         >
           <span>
             You have unsaved changes to &quot;{name}&quot;. Switching workflows will discard them.
@@ -494,7 +495,7 @@ function CanvasInner({ workflows, onSaved }: { workflows: ComposerWorkflow[]; on
       {pendingDiscard?.kind === "save" ? (
         <div
           role="alert"
-          className="flex flex-wrap items-center gap-3 rounded-xl border border-neon-orange/40 bg-neon-orange/10 px-4 py-3 text-xs text-ps-text-primary"
+          className="flex flex-wrap items-center gap-3 rounded-xl border border-neon-orange/40 bg-neon-orange/10 px-4 py-3 text-body text-ps-text-primary"
         >
           <span>
             Saving this workflow will permanently delete {pendingDiscard.runCount} completed run
@@ -521,7 +522,7 @@ function CanvasInner({ workflows, onSaved }: { workflows: ComposerWorkflow[]; on
       {pendingDiscard?.kind === "delete" ? (
         <div
           role="alert"
-          className="flex flex-wrap items-center gap-3 rounded-xl border border-neon-orange/40 bg-neon-orange/10 px-4 py-3 text-xs text-ps-text-primary"
+          className="flex flex-wrap items-center gap-3 rounded-xl border border-neon-orange/40 bg-neon-orange/10 px-4 py-3 text-body text-ps-text-primary"
         >
           <span>
             Deleting &quot;{pendingDiscard.workflowName}&quot; will permanently delete{" "}
@@ -592,24 +593,24 @@ function CanvasInner({ workflows, onSaved }: { workflows: ComposerWorkflow[]; on
 
         {/* Palette (top-left overlay) */}
         <div className="absolute left-3 top-3 z-10 w-36 space-y-1.5 rounded-lg border border-ps-edge-hairline bg-ps-surface-panel p-2 backdrop-blur">
-          <h3 className="text-xs font-mono uppercase tracking-widest text-ps-text-muted">Drag to add</h3>
+          <h3 className={sectionHeadingClasses}>Drag to add</h3>
           {PALETTE.map((p) => (
             <div
               key={p.kind}
               draggable
               onDragStart={(e) => { e.dataTransfer.setData(NODE_KIND_DRAG, p.kind); e.dataTransfer.effectAllowed = "move"; }}
-              className={`cursor-grab rounded-lg border bg-ps-surface-panel px-2.5 py-1.5 text-xs ${p.color} active:cursor-grabbing`}
+              className={`cursor-grab rounded-lg border bg-ps-surface-panel px-2.5 py-1.5 text-body ${p.color} active:cursor-grabbing`}
             >
               {p.label}
             </div>
           ))}
-          <p className="pt-0.5 text-xs leading-relaxed text-ps-text-faint">Drag onto the board, then handle → handle to connect.</p>
+          <p className="pt-0.5 text-body leading-relaxed text-ps-text-faint">Drag onto the board, then handle → handle to connect.</p>
         </div>
 
         {/* Inspector (right overlay; only when something is selected) */}
         {node ? (
           <div className="absolute right-3 top-3 z-10 w-72 space-y-3 rounded-lg border border-ps-edge-hairline bg-ps-surface-panel p-3 backdrop-blur">
-            <h3 className="text-xs font-mono uppercase tracking-widest text-ps-text-muted">Stage</h3>
+            <h3 className={sectionHeadingClasses}>Stage</h3>
             <Field label="Label"><Input value={node.data.label} onChange={(e) => patchNode(node.id, { label: e.target.value })} /></Field>
             <Field label="Kind"><Select value={node.data.kind} onChange={(v) => patchNode(node.id, { kind: v })} options={KIND_OPTIONS} /></Field>
             <Field label="Instruction (optional override)">
@@ -629,7 +630,7 @@ function CanvasInner({ workflows, onSaved }: { workflows: ComposerWorkflow[]; on
                 const setSpec = (patch: Partial<typeof spec>) => patchNodeConfig(node.id, "inputSpec", { ...spec, ...patch });
                 return (
                   <div className="space-y-2 rounded-lg border border-neon-cyan/20 bg-ps-surface-ground/40 p-2">
-                    <h4 className="text-xs font-mono uppercase tracking-widest text-neon-cyan/80">Workflow input (Run form)</h4>
+                    <h4 className="text-micro font-mono uppercase tracking-widest text-neon-cyan/80">Workflow input (Run form)</h4>
                     <Field label="Objective label"><Input value={spec.objectiveLabel ?? ""} onChange={(e) => setSpec({ objectiveLabel: e.target.value })} placeholder="e.g. Research question" /></Field>
                     <Field label="Hint / placeholder"><Input value={spec.objectiveHint ?? ""} onChange={(e) => setSpec({ objectiveHint: e.target.value })} placeholder="shown inside the input box" /></Field>
                     <Field label="Examples (one per line)">
@@ -649,9 +650,9 @@ function CanvasInner({ workflows, onSaved }: { workflows: ComposerWorkflow[]; on
           </div>
         ) : edge ? (
           <div className="absolute right-3 top-3 z-10 w-72 space-y-3 rounded-lg border border-ps-edge-hairline bg-ps-surface-panel p-3 backdrop-blur">
-            <h3 className="text-xs font-mono uppercase tracking-widest text-ps-text-muted">Route</h3>
+            <h3 className={sectionHeadingClasses}>Route</h3>
             <Field label="Condition"><Input value={edge.data?.condition ?? "always"} onChange={(e) => patchEdge(edge.id, { condition: e.target.value })} placeholder="always / on_pass…" /></Field>
-            <p className="text-xs text-ps-text-muted">{CONDITION_HINT}</p>
+            <p className="text-body text-ps-text-muted">{CONDITION_HINT}</p>
             <Field label="Label (optional)"><Input value={edge.data?.label ?? ""} onChange={(e) => patchEdge(edge.id, { label: e.target.value })} /></Field>
             <Button variant="secondary" color="pink" size="sm" onClick={deleteSelected}><Trash2 className="h-3.5 w-3.5" /> Delete route</Button>
           </div>

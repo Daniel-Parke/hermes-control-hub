@@ -11,6 +11,7 @@
 
 "use client";
 
+import { sectionHeadingClasses } from "@/lib/theme";
 import { useMemo, useState, type ReactNode } from "react";
 import Link from "next/link";
 import {
@@ -55,7 +56,7 @@ function CardTitle({ icon: Icon, hint, children }: { icon: React.ComponentType<{
   return (
     <div className="mb-3 flex items-center gap-2">
       <Icon className="h-4 w-4 text-neon-cyan" />
-      <h2 className="text-xs font-mono uppercase tracking-widest text-ps-text-muted">{children}</h2>
+      <h2 className={sectionHeadingClasses}>{children}</h2>
       {hint ? (
         <span title={hint} aria-label={hint} className="ml-0.5 cursor-help text-ps-text-faint transition-colors hover:text-ps-text-secondary">
           <Info className="h-3 w-3" />
@@ -72,8 +73,8 @@ function CardTitle({ icon: Icon, hint, children }: { icon: React.ComponentType<{
 function MetricTile({ label, value, color = "cyan", hint }: { label: string; value: string; color?: NeonColor; hint?: string }) {
   return (
     <div className="rounded-xl border border-ps-edge-hairline bg-ps-surface-panel p-3" title={hint} style={{ boxShadow: `inset 0 0 18px ${neonAlpha(color, 5)}` }}>
-      <div className="font-mono text-2xl font-bold text-white">{value}</div>
-      <div className="mt-0.5 text-xs uppercase tracking-wider text-ps-text-muted">{label}</div>
+      <div className="font-mono text-display font-bold text-ps-text-primary">{value}</div>
+      <div className="mt-0.5 text-micro uppercase tracking-wider text-ps-text-muted">{label}</div>
     </div>
   );
 }
@@ -160,7 +161,7 @@ export default function InsightsPage() {
                   key={r}
                   type="button"
                   onClick={() => setDays(r)}
-                  className={`rounded-md px-2.5 py-1 text-xs font-mono transition-colors ${
+                  className={`rounded-md px-2.5 py-1 text-micro font-mono transition-colors ${
                     days === r ? "bg-neon-cyan/20 text-neon-cyan" : "text-ps-text-muted hover:text-ps-text-secondary"
                   }`}
                 >
@@ -190,14 +191,14 @@ export default function InsightsPage() {
             {!error && stats && totalEvents === 0 && (
               <div className="rounded-2xl border border-neon-cyan/20 bg-ps-surface-panel p-6 text-center" style={{ boxShadow: `0 0 24px ${neonAlpha("cyan", 6)}` }}>
                 <Sparkles className="mx-auto h-6 w-6 text-neon-cyan" />
-                <h2 className="mt-2 text-sm font-semibold text-ps-text-primary">No activity yet</h2>
-                <p className="mx-auto mt-1 max-w-md text-xs leading-relaxed text-ps-text-muted">
+                <h2 className="mt-2 text-body font-semibold text-ps-text-primary">No activity yet</h2>
+                <p className="mx-auto mt-1 max-w-md text-body leading-relaxed text-ps-text-muted">
                   Dispatch a mission, write a Story Weaver chapter, or fire a schedule — your
                   interaction analytics and achievements will start filling in here.
                 </p>
                 <Link
                   href="/work/missions"
-                  className="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-neon-cyan/40 px-3 py-1.5 text-xs font-mono text-neon-cyan transition-colors hover:bg-neon-cyan/10"
+                  className="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-neon-cyan/40 px-3 py-1.5 text-micro font-mono text-neon-cyan transition-colors hover:bg-neon-cyan/10"
                 >
                   <Rocket className="h-3.5 w-3.5" /> Go to Missions
                 </Link>
@@ -258,7 +259,7 @@ export default function InsightsPage() {
                         <StackedAreaTrend data={insights.categoryDaily} series={insights.categorySeries} height={150} />
                         <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1">
                           {insights.categorySeries.map((s) => (
-                            <span key={s.key} className="flex items-center gap-1.5 text-xs text-ps-text-muted">
+                            <span key={s.key} className="flex items-center gap-1.5 text-body text-ps-text-muted">
                               <span className="h-2 w-2 rounded-sm" style={{ background: neonAlpha(s.color, 90) }} />
                               {s.label}
                             </span>
@@ -276,10 +277,10 @@ export default function InsightsPage() {
                       <Donut segments={segments} size={120} center={totalEvents.toLocaleString()} centerSub="events" />
                       <ul className="flex-1 space-y-1.5">
                         {segments.length === 0 && (
-                          <li className="text-xs text-ps-text-muted">No activity recorded yet.</li>
+                          <li className="text-body text-ps-text-muted">No activity recorded yet.</li>
                         )}
                         {segments.map((s) => (
-                          <li key={s.label} className="flex items-center justify-between gap-2 text-xs">
+                          <li key={s.label} className="flex items-center justify-between gap-2 text-body">
                             <span className="flex items-center gap-2 text-ps-text-secondary">
                               <span className="h-2 w-2 rounded-full" style={{ background: neonAlpha(s.color, 90) }} />
                               {s.label}
@@ -309,7 +310,7 @@ export default function InsightsPage() {
                   <Card>
                     <CardTitle icon={TrendingUp} hint="Completed vs failed missions per day over the selected range.">Mission success trend</CardTitle>
                     <AreaTrend data={insights?.successTrend ?? []} color="green" failColor="pink" height={150} />
-                    <div className="mt-2 flex gap-3 text-xs text-ps-text-muted">
+                    <div className="mt-2 flex gap-3 text-body text-ps-text-muted">
                       <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-sm bg-neon-green" />completed</span>
                       <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-sm bg-neon-pink" />failed</span>
                     </div>
@@ -355,7 +356,7 @@ export default function InsightsPage() {
                         center={stats?.missions.total ?? 0}
                         centerSub="missions"
                       />
-                      <ul className="flex-1 space-y-1.5 text-xs">
+                      <ul className="flex-1 space-y-1.5 text-body">
                         {missionMix.map((s) => (
                           <li key={s.label} className="flex items-center gap-2">
                             <span className="h-2.5 w-2.5 rounded-full" style={{ background: neon(s.color), boxShadow: `0 0 6px ${neonAlpha(s.color, 60)}` }} />
@@ -374,13 +375,13 @@ export default function InsightsPage() {
                 <Card>
                   <div className="mb-3 flex items-center gap-2">
                     <CalendarRange className="h-4 w-4 text-neon-cyan" />
-                    <h2 className="text-xs font-mono uppercase tracking-widest text-ps-text-muted">Run activity — last 91 days</h2>
+                    <h2 className={sectionHeadingClasses}>Run activity — last 91 days</h2>
                     {(() => {
                       const pts = stats?.runActivity ?? [];
                       const activeDays = pts.filter((p) => p.value > 0).length;
                       const totalRuns = pts.reduce((sum, p) => sum + p.value, 0);
                       return (
-                        <span className="ml-auto text-xs font-mono text-ps-text-muted" title="Days with at least one run · total runs in the window">
+                        <span className="ml-auto text-micro font-mono text-ps-text-muted" title="Days with at least one run · total runs in the window">
                           {activeDays} active {activeDays === 1 ? "day" : "days"} · {totalRuns} run{totalRuns === 1 ? "" : "s"}
                         </span>
                       );

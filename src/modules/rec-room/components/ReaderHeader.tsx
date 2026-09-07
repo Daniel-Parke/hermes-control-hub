@@ -74,8 +74,8 @@ export default function ReaderHeader({
           <ChevronLeft className="w-5 h-5" />
         </button>
         <div className="flex-1 min-w-0 mx-2 text-center">
-          <div className="text-xs font-mono text-ps-text-faint uppercase tracking-wider">Story Weaver</div>
-          <h1 className="text-sm font-semibold text-white truncate">{title}</h1>
+          <div className="text-micro font-mono text-ps-text-faint uppercase tracking-wider">Story Weaver</div>
+          <h1 className="text-body font-semibold text-ps-text-primary truncate">{title}</h1>
         </div>
         <div className="flex items-center gap-1.5 flex-shrink-0">
           {/* Nothing is written unless it is asked for. This header used to
@@ -86,7 +86,7 @@ export default function ReaderHeader({
               onClick={onStop}
               title="Stop"
               aria-label="Stop"
-              className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-red-500/30 text-xs font-bold text-red-300 hover:bg-red-500/10 transition-colors min-h-[44px]"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-red-500/30 text-body font-bold text-red-300 hover:bg-red-500/10 transition-colors min-h-[44px]"
             >
               <span className="hidden md:inline">Stop</span>
               <span className="md:hidden">Stop</span>
@@ -96,7 +96,7 @@ export default function ReaderHeader({
               onClick={onWriteNext}
               title={`Write chapter ${nextPending}`}
               aria-label={`Write chapter ${nextPending}`}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-cyan-500/20 text-xs font-bold text-cyan-300 hover:bg-cyan-500/10 transition-colors min-h-[44px]"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-cyan-500/20 text-body font-bold text-cyan-300 hover:bg-cyan-500/10 transition-colors min-h-[44px]"
             >
               <span className="hidden md:inline">Write chapter {nextPending}</span>
               <span className="md:hidden">Write</span>
@@ -107,7 +107,7 @@ export default function ReaderHeader({
                 onClick={onWriteNext}
                 title={`Write chapter ${nextPending}`}
                 aria-label={`Write chapter ${nextPending}`}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-cyan-500/20 text-xs font-bold text-cyan-300 hover:bg-cyan-500/10 transition-colors min-h-[44px]"
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-cyan-500/20 text-body font-bold text-cyan-300 hover:bg-cyan-500/10 transition-colors min-h-[44px]"
               >
                 <span className="hidden md:inline">Write chapter {nextPending}</span>
                 <span className="md:hidden">Write</span>
@@ -116,7 +116,7 @@ export default function ReaderHeader({
                 onClick={onKeepWriting}
                 title={`Keep writing (${pendingCount} chapters left)`}
                 aria-label={`Keep writing (${pendingCount} chapters left)`}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-cyan-500/20 text-xs font-bold text-cyan-300 hover:bg-cyan-500/10 transition-colors min-h-[44px]"
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-cyan-500/20 text-body font-bold text-cyan-300 hover:bg-cyan-500/10 transition-colors min-h-[44px]"
               >
                 <span className="hidden md:inline">Keep writing ({pendingCount} chapters left)</span>
                 <span className="md:hidden">Keep writing</span>
@@ -126,7 +126,7 @@ export default function ReaderHeader({
           {/* Continue button for complete stories */}
           {allComplete && (
             <button onClick={onContinue}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-green-500/20 text-xs font-bold text-green-400 hover:bg-green-500/10 transition-colors min-h-[44px]"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-green-500/20 text-body font-bold text-green-400 hover:bg-green-500/10 transition-colors min-h-[44px]"
               title="Continue this story">
               <PlayCircle className="w-4 h-4" />
               <span className="hidden md:inline">Continue</span>
@@ -135,20 +135,20 @@ export default function ReaderHeader({
           {/* Retry all failed chapters */}
           {anyFailed && (
             <button onClick={onRetryFailed}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-orange-500/20 text-xs font-bold text-orange-400 hover:bg-orange-500/10 transition-colors min-h-[44px]"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-orange-500/20 text-body font-bold text-orange-400 hover:bg-orange-500/10 transition-colors min-h-[44px]"
               title="Retry failed chapters">
               <RefreshCw className="w-4 h-4" />
               <span className="hidden md:inline">Retry</span>
             </button>
           )}
           <button onClick={onOpenBible}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-neon-purple/20 text-xs font-bold text-neon-purple hover:text-neon-purple hover:bg-neon-purple/10 transition-colors min-w-[44px] min-h-[44px] justify-center"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-neon-purple/20 text-body font-bold text-neon-purple hover:text-neon-purple hover:bg-neon-purple/10 transition-colors min-w-[44px] min-h-[44px] justify-center"
             title="Story Bible — arc, plot points & character journeys">
             <BookMarked className="w-4 h-4" />
             <span className="hidden md:inline">Bible</span>
           </button>
           <button onClick={onToggleSidebar}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-ps-edge text-xs font-bold text-ps-text-secondary hover:text-white hover:bg-ps-surface-raised transition-colors min-w-[44px] min-h-[44px] justify-center"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-ps-edge text-body font-bold text-ps-text-secondary hover:text-ps-text-primary hover:bg-ps-surface-raised transition-colors min-w-[44px] min-h-[44px] justify-center"
             title={sidebarOpen ? "Hide Chapters" : "Show Chapters"}>
             <BookOpen className="w-4 h-4" />
             <span className="hidden md:inline">Chapters</span>

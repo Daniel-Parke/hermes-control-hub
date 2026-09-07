@@ -9,6 +9,7 @@
 
 "use client";
 
+import { sectionHeadingClasses } from "@/lib/theme";
 import { useState } from "react";
 import { Save, Check } from "lucide-react";
 import Sheet from "@/components/ui/Sheet";
@@ -29,7 +30,7 @@ const STATUS_TEXT: Record<string, string> = {
 
 function Label({ children }: { children: React.ReactNode }) {
   return (
-    <h3 className="text-xs font-mono uppercase tracking-widest text-ps-text-muted">{children}</h3>
+    <h3 className={sectionHeadingClasses}>{children}</h3>
   );
 }
 
@@ -74,22 +75,22 @@ export default function ComposerNodeRunDetail({
 
   return (
     <Sheet open={open} onClose={onClose} title={node?.label ?? "Stage"} subtitle={subtitle}>
-      <div className="space-y-5 px-6 py-5 text-sm">
+      <div className="space-y-5 px-6 py-5 text-body">
         {!nodeRun ? (
           <p className="text-ps-text-muted">This stage hasn&apos;t run yet.</p>
         ) : (
           <>
             <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
-              <span className={`font-mono text-xs uppercase ${STATUS_TEXT[nodeRun.status] ?? "text-ps-text-muted"}`}>
+              <span className={`font-mono text-micro uppercase ${STATUS_TEXT[nodeRun.status] ?? "text-ps-text-muted"}`}>
                 {nodeRun.status}
               </span>
               {nodeRun.attempt > 1 ? (
-                <span className="text-xs text-ps-text-muted">attempt {nodeRun.attempt}</span>
+                <span className="text-body text-ps-text-muted">attempt {nodeRun.attempt}</span>
               ) : null}
               {nodeRun.completedAt ? (
-                <span className="text-xs text-ps-text-muted">{timeAgo(nodeRun.completedAt)}</span>
+                <span className="text-body text-ps-text-muted">{timeAgo(nodeRun.completedAt)}</span>
               ) : nodeRun.startedAt ? (
-                <span className="text-xs text-ps-text-muted">
+                <span className="text-body text-ps-text-muted">
                   running for <ElapsedSince since={nodeRun.startedAt} />
                 </span>
               ) : null}
@@ -98,12 +99,12 @@ export default function ComposerNodeRunDetail({
             {verdict ? (
               <div className="space-y-2">
                 <Label>Verdict</Label>
-                <span className={`font-mono text-xs ${verdict.pass ? "text-neon-green" : "text-neon-pink"}`}>
+                <span className={`font-mono text-micro ${verdict.pass ? "text-neon-green" : "text-neon-pink"}`}>
                   {verdict.pass ? "PASS" : "FAIL"}
                   {verdict.outcome ? ` · ${verdict.outcome}` : ""}
                 </span>
                 {verdict.reasons.length > 0 ? (
-                  <ul className="space-y-1 text-xs text-ps-text-secondary">
+                  <ul className="space-y-1 text-body text-ps-text-secondary">
                     {verdict.reasons.map((r, i) => (
                       <li key={i} className="flex gap-1.5">
                         <span className="text-ps-text-faint">•</span>
@@ -115,7 +116,7 @@ export default function ComposerNodeRunDetail({
                 {verdict.suggestions.length > 0 ? (
                   <div className="space-y-1">
                     <Label>Suggestions</Label>
-                    <ul className="space-y-1 text-xs text-ps-text-muted">
+                    <ul className="space-y-1 text-body text-ps-text-muted">
                       {verdict.suggestions.map((s, i) => (
                         <li key={i} className="flex gap-1.5">
                           <span className="text-ps-text-faint">→</span>
@@ -136,11 +137,11 @@ export default function ComposerNodeRunDetail({
                   {approvals.map((a) => (
                     <li key={a.id} className="rounded-lg border border-ps-edge-hairline bg-ps-surface-panel px-3 py-2">
                       <span
-                        className={`font-mono text-xs ${a.action === "accept" ? "text-neon-green" : "text-neon-pink"}`}
+                        className={`font-mono text-micro ${a.action === "accept" ? "text-neon-green" : "text-neon-pink"}`}
                       >
                         {a.action === "accept" ? "Accepted" : "Rejected"}
                       </span>
-                      <p className="mt-1 text-xs text-ps-text-secondary whitespace-pre-wrap break-words">
+                      <p className="mt-1 text-body text-ps-text-secondary whitespace-pre-wrap break-words">
                         {a.note && a.note.trim() ? a.note : "No note"}
                       </p>
                     </li>
@@ -152,7 +153,7 @@ export default function ComposerNodeRunDetail({
             {nodeRun.error ? (
               <div className="space-y-2">
                 <Label>Error</Label>
-                <p className="rounded-lg border border-neon-pink/30 bg-neon-pink/10 px-3 py-2 text-xs text-neon-pink">
+                <p className="rounded-lg border border-neon-pink/30 bg-neon-pink/10 px-3 py-2 text-body text-neon-pink">
                   {nodeRun.error}
                 </p>
               </div>
@@ -166,17 +167,17 @@ export default function ComposerNodeRunDetail({
                     type="button"
                     onClick={() => void saveAsArtifact()}
                     disabled={saveState !== "idle"}
-                    className="inline-flex items-center gap-1 rounded border border-ps-edge px-2 py-0.5 text-xs font-mono text-ps-text-muted transition hover:border-neon-orange/40 hover:text-neon-orange disabled:opacity-60"
+                    className="inline-flex items-center gap-1 rounded border border-ps-edge px-2 py-0.5 text-micro font-mono text-ps-text-muted transition hover:border-neon-orange/40 hover:text-neon-orange disabled:opacity-60"
                   >
                     {saveState === "saved" ? <><Check className="h-3 w-3" /> Saved</> : <><Save className="h-3 w-3" /> {saveState === "saving" ? "Saving…" : "Save as artifact"}</>}
                   </button>
                 </div>
-                <pre className="max-h-[50vh] overflow-auto whitespace-pre-wrap rounded-lg border border-ps-edge-hairline bg-ps-surface-panel px-3 py-2 text-xs leading-relaxed text-ps-text-secondary">
+                <pre className="max-h-[50vh] overflow-auto whitespace-pre-wrap rounded-lg border border-ps-edge-hairline bg-ps-surface-panel px-3 py-2 text-body leading-relaxed text-ps-text-secondary">
                   {nodeRun.output}
                 </pre>
               </div>
             ) : !verdict && !nodeRun.error ? (
-              <p className="text-xs text-ps-text-muted">No output recorded for this stage.</p>
+              <p className="text-body text-ps-text-muted">No output recorded for this stage.</p>
             ) : null}
           </>
         )}

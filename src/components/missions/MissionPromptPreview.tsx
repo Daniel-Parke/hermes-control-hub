@@ -81,9 +81,9 @@ export default function MissionPromptPreview(props: MissionPromptPreviewProps) {
           <button
             type="button"
             onClick={() => setMode("human")}
-            className={`px-3 py-1.5 text-xs font-mono rounded-md transition-colors ${
+            className={`px-3 py-1.5 text-micro font-mono rounded-md transition-colors ${
               mode === "human"
-                ? "bg-ps-surface-raised text-white"
+                ? "bg-ps-surface-raised text-ps-text-primary"
                 : "text-ps-text-muted hover:text-ps-text-secondary"
             }`}
           >
@@ -92,9 +92,9 @@ export default function MissionPromptPreview(props: MissionPromptPreviewProps) {
           <button
             type="button"
             onClick={() => setMode("ai")}
-            className={`px-3 py-1.5 text-xs font-mono rounded-md transition-colors ${
+            className={`px-3 py-1.5 text-micro font-mono rounded-md transition-colors ${
               mode === "ai"
-                ? "bg-ps-surface-raised text-white"
+                ? "bg-ps-surface-raised text-ps-text-primary"
                 : "text-ps-text-muted hover:text-ps-text-secondary"
             }`}
           >
@@ -104,7 +104,7 @@ export default function MissionPromptPreview(props: MissionPromptPreviewProps) {
         <button
           type="button"
           onClick={() => void handleCopy()}
-          className="flex items-center gap-1 text-xs font-mono text-neon-cyan hover:text-neon-cyan/80"
+          className="flex items-center gap-1 text-micro font-mono text-neon-cyan hover:text-neon-cyan/80"
         >
           <Copy className="w-3 h-3" />
           {copied
@@ -114,13 +114,13 @@ export default function MissionPromptPreview(props: MissionPromptPreviewProps) {
               : "Copy agent prompt"}
         </button>
       </div>
-      <p className="text-xs font-mono text-ps-text-faint leading-relaxed">
+      <p className="text-micro font-mono text-ps-text-faint leading-relaxed">
         Profile personality (SOUL/AGENTS) comes from Hermes at ~/.hermes.{" "}
         {mode === "human"
           ? "Human view mirrors your form fields."
           : "AI view is the XML prompt stored and sent to the agent."}
       </p>
-      <pre className="rounded-lg border border-ps-edge-hairline bg-ps-surface-ground/50 px-3 py-3 text-xs font-mono text-ps-text-secondary whitespace-pre-wrap max-h-72 overflow-y-auto">
+      <pre className="rounded-lg border border-ps-edge-hairline bg-ps-surface-ground/50 px-3 py-3 text-micro font-mono text-ps-text-secondary whitespace-pre-wrap max-h-72 overflow-y-auto">
         {activePreview || "(empty)"}
       </pre>
     </div>

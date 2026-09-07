@@ -203,7 +203,7 @@ export function TemplateEditorModal({
         )}
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="text-xs text-ps-text-muted font-mono block mb-1">
+            <label className="text-micro text-ps-text-muted font-mono block mb-1">
               Template Name
             </label>
             <input
@@ -214,7 +214,7 @@ export function TemplateEditorModal({
             />
           </div>
           <div>
-            <label className="text-xs text-ps-text-muted font-mono block mb-1">
+            <label className="text-micro text-ps-text-muted font-mono block mb-1">
               Description
             </label>
             <input
@@ -226,7 +226,7 @@ export function TemplateEditorModal({
           </div>
         </div>
         <div>
-          <label className="text-xs text-ps-text-muted font-mono block mb-1">
+          <label className="text-micro text-ps-text-muted font-mono block mb-1">
             Instruction Prompt
           </label>
           <AutoTextarea
@@ -238,7 +238,7 @@ export function TemplateEditorModal({
           />
         </div>
         <div>
-          <label className="text-xs text-ps-text-muted font-mono block mb-1">
+          <label className="text-micro text-ps-text-muted font-mono block mb-1">
             Context Prompt <span className="text-ps-text-faint">(optional)</span>
           </label>
           <AutoTextarea
@@ -250,7 +250,7 @@ export function TemplateEditorModal({
           />
         </div>
         <div>
-          <label className="text-xs text-ps-text-muted font-mono block mb-1">
+          <label className="text-micro text-ps-text-muted font-mono block mb-1">
             Goals (one per line)
           </label>
           <AutoTextarea
@@ -277,7 +277,7 @@ export function TemplateEditorModal({
           onSkillsChange={onNewSkillsChange}
         />
         <div>
-          <label className="text-xs text-ps-text-muted font-mono block mb-1">
+          <label className="text-micro text-ps-text-muted font-mono block mb-1">
             Local Directories{" "}
             <span className="text-ps-text-faint">(optional)</span>
           </label>
@@ -315,7 +315,7 @@ export function TemplateEditorModal({
           </div>
         </div>
         <div>
-          <label className="text-xs text-ps-text-muted font-mono block mb-1">
+          <label className="text-micro text-ps-text-muted font-mono block mb-1">
             Key References{" "}
             <span className="text-ps-text-faint">(optional)</span>
           </label>
@@ -325,7 +325,7 @@ export function TemplateEditorModal({
                 key={i}
                 className="flex items-center gap-2 bg-ps-surface-raised border border-neon-pink/20 rounded-lg px-3 py-1.5"
               >
-                <span className="text-xs font-mono text-neon-pink truncate flex-1">
+                <span className="text-micro font-mono text-neon-pink truncate flex-1">
                   {ref}
                 </span>
                 <button
@@ -357,7 +357,7 @@ export function TemplateEditorModal({
                   }
                 }}
                 placeholder="URL or file path…" aria-label="Reference to add"
-                className={`flex-1 ${inputFieldClasses("pink")} py-1.5 text-xs`}
+                className={`flex-1 ${inputFieldClasses("pink")} py-1.5 text-body`}
               />
               <button
                 type="button"
@@ -370,7 +370,7 @@ export function TemplateEditorModal({
                     onReferenceInputChange("");
                   }
                 }}
-                className="px-3 py-1.5 rounded-lg bg-neon-pink/10 border border-neon-pink/30 text-xs text-neon-pink hover:bg-neon-pink/20 font-mono transition-colors"
+                className="px-3 py-1.5 rounded-lg bg-neon-pink/10 border border-neon-pink/30 text-micro text-neon-pink hover:bg-neon-pink/20 font-mono transition-colors"
               >
                 + Add
               </button>
@@ -379,7 +379,7 @@ export function TemplateEditorModal({
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="text-xs text-ps-text-muted font-mono block mb-1">
+            <label className="text-micro text-ps-text-muted font-mono block mb-1">
               Icon
             </label>
             <div className="flex flex-wrap gap-1.5">
@@ -405,7 +405,7 @@ export function TemplateEditorModal({
             </div>
           </div>
           <div>
-            <label className="text-xs text-ps-text-muted font-mono block mb-1">
+            <label className="text-micro text-ps-text-muted font-mono block mb-1">
               Color
             </label>
             <div className="flex gap-1.5">

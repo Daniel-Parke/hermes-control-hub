@@ -151,7 +151,7 @@ export default function HindsightBrowser({ onHealthChange, reloadToken = 0 }: Hi
               if (search.trim() && !loading) void runRecall();
             }}
           />
-          <p className="text-xs text-ps-text-muted pl-1">Press Enter to search</p>
+          <p className="text-body text-ps-text-muted pl-1">Press Enter to search</p>
         </div>
         <Button variant="secondary" color="pink" size="sm" icon={Search} onClick={() => void runRecall()} disabled={!search.trim() || loading}>
           Recall
@@ -172,9 +172,9 @@ export default function HindsightBrowser({ onHealthChange, reloadToken = 0 }: Hi
         <div className="mb-6 p-4 rounded-xl border border-purple-500/20 bg-purple-500/5">
           <div className="flex items-center gap-2 mb-2">
             <Sparkles className="w-4 h-4 text-purple-400" />
-            <span className="text-sm font-semibold text-purple-300">Reflection</span>
+            <span className="text-body font-semibold text-purple-300">Reflection</span>
           </div>
-          <p className="text-sm text-ps-text-secondary leading-relaxed">{reflectResult}</p>
+          <p className="text-body text-ps-text-secondary leading-relaxed">{reflectResult}</p>
         </div>
       )}
 
@@ -184,7 +184,7 @@ export default function HindsightBrowser({ onHealthChange, reloadToken = 0 }: Hi
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition-colors ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-body transition-colors ${
               activeTab === tab.id ? "bg-pink-500/20 text-pink-300" : "text-ps-text-muted hover:text-ps-text-secondary"
             }`}
           >

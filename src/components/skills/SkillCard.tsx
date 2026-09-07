@@ -47,7 +47,7 @@ export function SkillCard({
         <div className="flex items-start justify-between gap-2 mb-1.5">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-sm font-mono font-semibold text-ps-text-primary truncate">
+              <span className="text-body font-mono font-semibold text-ps-text-primary truncate">
                 {skill.name}
               </span>
               {isPending && (
@@ -56,7 +56,7 @@ export function SkillCard({
                 </Badge>
               )}
             </div>
-            <p className="text-xs text-ps-text-muted font-mono mt-0.5">
+            <p className="text-micro text-ps-text-muted font-mono mt-0.5">
               {skill.category}
             </p>
           </div>
@@ -73,14 +73,14 @@ export function SkillCard({
             {enabled ? (
               <ToggleRight className="w-7 h-7 text-neon-green" />
             ) : (
-              <ToggleLeft className="w-7 h-7 text-white/20" />
+              <ToggleLeft className="w-7 h-7 text-ps-viz-glyph-idle" />
             )}
           </button>
         </div>
 
         {/* Description */}
         <p
-          className="text-xs text-ps-text-muted leading-relaxed line-clamp-2 mb-3"
+          className="text-body text-ps-text-muted leading-relaxed line-clamp-2 mb-3"
           title={skill.description}
         >
           {skill.description}
@@ -90,12 +90,12 @@ export function SkillCard({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             {enabled ? (
-              <span className="inline-flex items-center gap-1 text-xs text-neon-green/70">
+              <span className="inline-flex items-center gap-1 text-body text-neon-green/70">
                 <span className="w-1.5 h-1.5 rounded-full bg-neon-green animate-pulse" />
                 Active
               </span>
             ) : (
-              <span className="inline-flex items-center gap-1 text-xs text-ps-text-muted">
+              <span className="inline-flex items-center gap-1 text-body text-ps-text-muted">
                 <span className="w-1.5 h-1.5 rounded-full bg-white/20" />
                 Inactive
               </span>
@@ -106,7 +106,7 @@ export function SkillCard({
             type="button"
             data-testid="skill-edit"
             onClick={onEdit}
-            className="flex items-center gap-1 text-xs px-2 py-1 rounded border border-ps-edge text-ps-text-muted hover:border-neon-green/30 hover:text-neon-green transition-all"
+            className="flex items-center gap-1 text-body px-2 py-1 rounded border border-ps-edge text-ps-text-muted hover:border-neon-green/30 hover:text-neon-green transition-all"
           >
             <Edit3 className="w-3 h-3" /> Edit
           </button>
@@ -114,7 +114,7 @@ export function SkillCard({
             type="button"
             data-testid="skill-view"
             onClick={onView}
-            className={`flex items-center gap-1 text-xs px-2 py-1 rounded border transition-all ${
+            className={`flex items-center gap-1 text-body px-2 py-1 rounded border transition-all ${
               isExpanded
                 ? "border-ps-edge-emphasis text-ps-text-muted bg-ps-surface-raised"
                 : "border-ps-edge text-ps-text-muted hover:border-ps-edge-emphasis hover:text-ps-text-secondary"
@@ -135,7 +135,7 @@ export function SkillCard({
         {/* Expanded content */}
         {isExpanded && (
           <div className="mt-3 pt-3 border-t border-ps-edge-hairline">
-            <pre className="text-xs text-ps-text-muted font-mono whitespace-pre-wrap max-h-48 overflow-auto leading-relaxed">
+            <pre className="text-micro text-ps-text-muted font-mono whitespace-pre-wrap max-h-48 overflow-auto leading-relaxed">
               {expandedContent ?? "// Loading..."}
             </pre>
           </div>

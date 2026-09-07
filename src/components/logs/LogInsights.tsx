@@ -63,7 +63,7 @@ export default function LogInsights({ lines }: { lines: string[] }) {
       ring={{
         value: clean,
         color: s.error > 0 ? "orange" : "green",
-        label: <span className="text-xs">{Math.round(clean * 100)}%</span>,
+        label: <span className="text-body">{Math.round(clean * 100)}%</span>,
         sublabel: "clean",
         hint: "Share of lines in this view that are not counted as errors. A view with no errors reads 100%.",
       }}

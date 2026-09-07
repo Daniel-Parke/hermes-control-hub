@@ -53,7 +53,7 @@ function UnknownConfigSection({ slug }: { slug: string }) {
       }
     >
       <div>
-        <p className="text-sm text-ps-text-muted font-mono mb-6">
+        <p className="text-body text-ps-text-muted font-mono mb-6">
           No config section is called{" "}
           <code className="text-ps-text-primary">{slug}</code>. These are the
           ones there are.
@@ -71,7 +71,7 @@ function UnknownConfigSection({ slug }: { slug: string }) {
                 <SectionIcon
                   className={`w-4 h-4 shrink-0 ${iconColorMap[section.color]}`}
                 />
-                <span className="text-sm text-ps-text-primary truncate">
+                <span className="text-body text-ps-text-primary truncate">
                   {section.label}
                 </span>
               </Link>
@@ -345,7 +345,7 @@ export default function ConfigSectionPage() {
             showActions ? (
               <>
                 {hasChanges && (
-                  <span className="text-xs text-neon-orange font-mono flex items-center gap-1">
+                  <span className="text-micro text-neon-orange font-mono flex items-center gap-1">
                     <AlertCircle className="w-3 h-3" />
                     UNSAVED
                   </span>
@@ -395,7 +395,7 @@ export default function ConfigSectionPage() {
           </div>
         )}
         {sectionId === "platform_toolsets" ? (
-          <p className="text-xs text-ps-text-muted font-mono border border-neon-orange/20 rounded-lg p-3 mb-6 bg-neon-orange/5">
+          <p className="text-micro text-ps-text-muted font-mono border border-neon-orange/20 rounded-lg p-3 mb-6 bg-neon-orange/5">
             This section edits the <strong className="text-ps-text-secondary">root</strong> Hermes{" "}
             <code className="text-ps-text-muted">config.yaml</code> only. Per-profile toolsets are managed
             on{" "}
@@ -424,7 +424,7 @@ export default function ConfigSectionPage() {
         {/* File editor for file-type sections */}
         {isFileSection && (
           <div className="rounded-xl border border-ps-edge-hairline bg-ps-surface-panel p-6 mb-6">
-            <p className="text-xs text-ps-text-muted font-mono uppercase tracking-widest mb-4">
+            <p className="text-micro text-ps-text-muted font-mono uppercase tracking-widest mb-4">
               {sectionDef.sensitive ? "Sensitive File — .env" : "File Content"}
             </p>
             {sectionDef.sensitive ? (
@@ -441,7 +441,7 @@ export default function ConfigSectionPage() {
                     />
                   );
                 })}
-                <p className="text-xs text-ps-text-faint mt-4">
+                <p className="text-body text-ps-text-faint mt-4">
                   Edit .env directly on the server for security. This view is read-only for sensitive values.
                 </p>
               </div>
@@ -450,7 +450,7 @@ export default function ConfigSectionPage() {
               <textarea aria-label="File content"
                 value={fileContent}
                 onChange={(e) => setFileContent(e.target.value)}
-                className="w-full h-96 bg-ps-surface-inset border border-ps-edge rounded-lg p-4 text-sm text-ps-text-primary font-mono resize-none focus:border-cyan-500/50 focus:outline-none"
+                className="w-full h-96 bg-ps-surface-inset border border-ps-edge rounded-lg p-4 text-body text-ps-text-primary font-mono resize-none focus:border-cyan-500/50 focus:outline-none"
                 spellCheck={false}
               />
             )}
@@ -476,7 +476,7 @@ export default function ConfigSectionPage() {
         {sectionDef.complexKeys && sectionDef.complexKeys.length > 0 && (
           <div className="rounded-xl border border-ps-edge-hairline bg-ps-surface-panel p-6">
             {showActions && (
-              <p className="text-xs text-ps-text-muted font-mono uppercase tracking-widest mb-4">
+              <p className="text-micro text-ps-text-muted font-mono uppercase tracking-widest mb-4">
                 Complex Fields
               </p>
             )}
@@ -494,14 +494,14 @@ export default function ConfigSectionPage() {
                 return (
                   <div key={key}>
                     <div className="flex items-center gap-2 mb-1.5">
-                      <span className="text-sm text-ps-text-secondary font-mono">{key}</span>
+                      <span className="text-body text-ps-text-secondary font-mono">{key}</span>
                       {isEmpty && (
-                        <span className="text-xs font-mono text-ps-text-faint bg-ps-surface-raised px-1.5 py-0.5 rounded">
+                        <span className="text-micro font-mono text-ps-text-faint bg-ps-surface-raised px-1.5 py-0.5 rounded">
                           empty
                         </span>
                       )}
                     </div>
-                    <div className="text-xs text-ps-text-muted bg-ps-surface-inset rounded-lg p-3 font-mono max-h-60 overflow-y-auto whitespace-pre-wrap">
+                    <div className="text-micro text-ps-text-muted bg-ps-surface-inset rounded-lg p-3 font-mono max-h-60 overflow-y-auto whitespace-pre-wrap">
                       {isEmpty
                         ? "(not configured)"
                         : isObj
@@ -512,7 +512,7 @@ export default function ConfigSectionPage() {
                 );
               })}
             </div>
-            <p className="text-xs text-ps-text-faint mt-4 pt-4 border-t border-ps-edge-hairline">
+            <p className="text-body text-ps-text-faint mt-4 pt-4 border-t border-ps-edge-hairline">
               {isPlatformToolsetsPreview ? (
                 <>
                   Edit Bob (root) toolsets on{" "}

@@ -15,6 +15,7 @@
 
 "use client";
 
+import { sectionHeadingClasses } from "@/lib/theme";
 import { useState } from "react";
 import { CalendarClock, Plus, Play, Trash2, ChevronDown } from "lucide-react";
 import LoadErrorBanner from "@/components/ui/LoadErrorBanner";
@@ -82,7 +83,7 @@ export default function ScheduledMissions() {
   };
 
   const inputCls =
-    "w-full rounded-lg border border-ps-edge-hairline bg-ps-surface-panel px-3 py-2 text-sm text-ps-text-primary focus:border-neon-orange/50 focus:outline-none";
+    "w-full rounded-lg border border-ps-edge-hairline bg-ps-surface-panel px-3 py-2 text-body text-ps-text-primary focus:border-neon-orange/50 focus:outline-none";
 
   return (
     /* The panel's "Edit schedule" link targets this anchor. */
@@ -94,11 +95,11 @@ export default function ScheduledMissions() {
           {/* "Schedules", not "Scheduled missions": the list holds script rows
               as well as mission ones, and a heading that names one kind is
               wrong about half of them. Each row says which kind it is. */}
-          <h2 className="font-mono text-sm uppercase tracking-wider text-ps-text-secondary">
+          <h2 className={sectionHeadingClasses}>
             <ConceptHint id="schedule">Schedules</ConceptHint>
           </h2>
           {schedules.length > 0 && (
-            <span className="font-mono text-xs text-ps-text-muted">
+            <span className="font-mono text-micro text-ps-text-muted">
               {enabledCount} active{pausedCount > 0 ? ` · ${pausedCount} paused` : ""}
             </span>
           )}
@@ -106,7 +107,7 @@ export default function ScheduledMissions() {
         <button
           type="button"
           onClick={() => setShowForm((v) => !v)}
-          className="flex items-center gap-1.5 rounded-lg border border-neon-orange/30 bg-neon-orange/10 px-3 py-1.5 font-mono text-xs text-neon-orange transition-colors hover:bg-neon-orange/20"
+          className="flex items-center gap-1.5 rounded-lg border border-neon-orange/30 bg-neon-orange/10 px-3 py-1.5 font-mono text-micro text-neon-orange transition-colors hover:bg-neon-orange/20"
         >
           {showForm ? <ChevronDown className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />} Schedule a mission
         </button>
@@ -118,13 +119,13 @@ export default function ScheduledMissions() {
       {/* ── Create form (collapsible) ── */}
       {showForm && (
         <form onSubmit={submit} className="mb-3 space-y-3 rounded-xl border border-ps-edge-hairline bg-ps-surface-panel p-4">
-          <p className="font-mono text-xs text-ps-text-muted">
+          <p className="font-mono text-micro text-ps-text-muted">
             Put an existing saved mission on a timer. (New missions can be scheduled directly from the composer&apos;s
             &quot;Schedule&quot; dispatch mode.)
           </p>
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
             <div>
-              <label className="text-xs font-mono uppercase tracking-wider text-ps-text-muted">Mission</label>
+              <label className="text-micro font-mono uppercase tracking-wider text-ps-text-muted">Mission</label>
               {missions.data && missions.data.length > 0 ? (
                 <select aria-label="Mission" className={inputCls} value={missionId} onChange={(e) => setMissionId(e.target.value)}>
                   <option value="">Select a mission…</option>
@@ -139,12 +140,12 @@ export default function ScheduledMissions() {
               )}
             </div>
             <div>
-              <label className="text-xs font-mono uppercase tracking-wider text-ps-text-muted">Name (optional)</label>
+              <label className="text-micro font-mono uppercase tracking-wider text-ps-text-muted">Name (optional)</label>
               <input className={inputCls} placeholder="daily digest" aria-label="Schedule name" value={name} onChange={(e) => setName(e.target.value)} />
             </div>
           </div>
           <div>
-            <label className="text-xs font-mono uppercase tracking-wider text-ps-text-muted">
+            <label className="text-micro font-mono uppercase tracking-wider text-ps-text-muted">
               Schedule (cron or &quot;every Nm/Nh/Nd&quot;)
             </label>
             <input aria-label="Schedule (cron, or every Nm/Nh/Nd)" className={inputCls} value={schedule} onChange={(e) => setSchedule(e.target.value)} />
@@ -154,7 +155,7 @@ export default function ScheduledMissions() {
                   key={p}
                   type="button"
                   onClick={() => setSchedule(p)}
-                  className="rounded-md border border-ps-edge px-2 py-1 font-mono text-xs text-ps-text-muted hover:bg-ps-surface-raised hover:text-ps-text-secondary"
+                  className="rounded-md border border-ps-edge px-2 py-1 font-mono text-micro text-ps-text-muted hover:bg-ps-surface-raised hover:text-ps-text-secondary"
                 >
                   {p}
                 </button>
@@ -173,27 +174,27 @@ export default function ScheduledMissions() {
             <button
               type="submit"
               disabled={create.isPending}
-              className="rounded-lg border border-neon-orange/30 bg-neon-orange/10 px-4 py-2 font-mono text-sm text-neon-orange transition-colors hover:bg-neon-orange/20 disabled:opacity-50"
+              className="rounded-lg border border-neon-orange/30 bg-neon-orange/10 px-4 py-2 font-mono text-body text-neon-orange transition-colors hover:bg-neon-orange/20 disabled:opacity-50"
             >
               {create.isPending ? "Creating…" : "Create schedule"}
             </button>
           </div>
-          {formError && <div className="font-mono text-xs text-red-300">{formError}</div>}
+          {formError && <div className="font-mono text-micro text-red-300">{formError}</div>}
         </form>
       )}
 
       {activeRunId && (
         <div className="mb-3 space-y-2">
-          <div className="font-mono text-xs text-ps-text-muted">Triggered run</div>
+          <div className="font-mono text-micro text-ps-text-muted">Triggered run</div>
           <RunProgress runId={activeRunId} />
         </div>
       )}
 
       {/* ── List ── */}
       {isLoading ? (
-        <div className="py-6 text-center font-mono text-sm text-ps-text-muted">Loading schedules…</div>
+        <div className="py-6 text-center font-mono text-body text-ps-text-muted">Loading schedules…</div>
       ) : schedules.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-ps-edge-hairline bg-ps-surface-panel px-4 py-6 text-center text-sm text-ps-text-muted">
+        <div className="rounded-xl border border-dashed border-ps-edge-hairline bg-ps-surface-panel px-4 py-6 text-center text-body text-ps-text-muted">
           No schedules yet. Use a mission&apos;s <span className="text-ps-text-muted">Schedule</span> dispatch mode, or put a saved mission on one above.
         </div>
       ) : (
@@ -207,14 +208,14 @@ export default function ScheduledMissions() {
               <div key={s.id} className="flex items-center gap-4 rounded-xl border border-ps-edge-hairline bg-ps-surface-panel px-4 py-3">
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <span className="shrink-0 rounded border border-ps-edge-hairline px-1.5 py-0.5 font-mono text-xs uppercase tracking-wider text-ps-text-muted">
+                    <span className="shrink-0 rounded border border-ps-edge-hairline px-1.5 py-0.5 font-mono text-micro uppercase tracking-wider text-ps-text-muted">
                       {target.kindLabel}
                     </span>
-                    <span className="truncate text-sm text-ps-text-primary">
+                    <span className="truncate text-body text-ps-text-primary">
                       {s.name || s.scheduleDisplay || s.schedule}
                     </span>
                   </div>
-                  <div className="truncate font-mono text-xs text-ps-text-muted">
+                  <div className="truncate font-mono text-micro text-ps-text-muted">
                     <span className={target.missing ? "text-neon-orange" : "text-ps-text-secondary"}>
                       {target.name}
                     </span>
@@ -234,14 +235,14 @@ export default function ScheduledMissions() {
                       { onError: failWith("Failed to update the schedule") },
                     );
                   }}
-                  className="rounded-lg border border-ps-edge px-2.5 py-1 font-mono text-xs text-ps-text-muted hover:bg-ps-surface-raised"
+                  className="rounded-lg border border-ps-edge px-2.5 py-1 font-mono text-micro text-ps-text-muted hover:bg-ps-surface-raised"
                 >
                   {s.enabled ? "Pause" : "Resume"}
                 </button>
                 <button
                   type="button"
                   onClick={() => triggerRun(s.id)}
-                  className="flex items-center gap-1 rounded-lg border border-neon-cyan/30 px-2.5 py-1 font-mono text-xs text-neon-cyan hover:bg-neon-cyan/10"
+                  className="flex items-center gap-1 rounded-lg border border-neon-cyan/30 px-2.5 py-1 font-mono text-micro text-neon-cyan hover:bg-neon-cyan/10"
                 >
                   <Play className="h-3 w-3" /> Run
                 </button>

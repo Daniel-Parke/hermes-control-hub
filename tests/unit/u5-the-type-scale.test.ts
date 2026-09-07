@@ -26,6 +26,8 @@
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 
+import { blockCommentLines } from "../../scripts/tooling/design-lint.mjs";
+
 const ROOT = join(__dirname, "..", "..");
 const SRC = join(ROOT, "src");
 
@@ -48,12 +50,23 @@ function sources(): Array<[string, string]> {
   return out;
 }
 
-/** Sites of a pattern, as `path:line  text`, so a failure names them. */
+/**
+ * Sites of a pattern, as `path:line  text`, so a failure names them.
+ *
+ * Comments do not count: a comment naming a defect is not a use of it, and
+ * every one of these files is commented. The leading-marker test is not enough
+ * on its own, because globals.css documents both the ladder and the tiers
+ * inside block comments whose interior lines carry no marker at all — which is
+ * the same hole design-lint had until T-0118.
+ */
 function sites(pattern: RegExp, skip: (path: string) => boolean = () => false): string[] {
   const found: string[] = [];
   for (const [path, source] of sources()) {
     if (skip(path)) continue;
-    source.split("\n").forEach((line, i) => {
+    const lines = source.split("\n");
+    const commented = blockCommentLines(lines);
+    lines.forEach((line, i) => {
+      if (commented[i]) return;
       const t = line.trimStart();
       if (t.startsWith("//") || t.startsWith("*") || t.startsWith("/*")) return;
       if (pattern.test(line)) found.push(`${path}:${i + 1}  ${line.trim().slice(0, 90)}`);

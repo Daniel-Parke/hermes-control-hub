@@ -83,14 +83,14 @@ export default function GenerateOverlay({ title, visible, done, onComplete }: Ge
         {phase === "generating" ? (
           <>
             <Sparkles className="w-12 h-12 text-neon-purple animate-pulse mx-auto mb-6" />
-            <h2 className="text-xl font-serif text-white mb-1">{title || "Your Story"}</h2>
-            <p className="text-sm text-ps-text-muted mb-6 h-5 transition-opacity">{msg}</p>
+            <h2 className="text-title font-serif text-ps-text-primary mb-1">{title || "Your Story"}</h2>
+            <p className="text-body text-ps-text-muted mb-6 h-5 transition-opacity">{msg}</p>
           </>
         ) : (
           <>
             <CheckCircle2 className="w-12 h-12 text-neon-green mx-auto mb-6" />
-            <h2 className="text-xl font-serif text-white mb-1">{title || "Your Story"}</h2>
-            <p className="text-sm text-neon-green mb-6">Your story is ready!</p>
+            <h2 className="text-title font-serif text-ps-text-primary mb-1">{title || "Your Story"}</h2>
+            <p className="text-body text-neon-green mb-6">Your story is ready!</p>
           </>
         )}
 
@@ -101,7 +101,7 @@ export default function GenerateOverlay({ title, visible, done, onComplete }: Ge
           }`} style={{ width: `${progress}%` }} />
         </div>
 
-        <p className="text-xs font-mono text-ps-text-faint">{Math.round(progress)}%</p>
+        <p className="text-micro font-mono text-ps-text-faint">{Math.round(progress)}%</p>
       </div>
     </div>
   );

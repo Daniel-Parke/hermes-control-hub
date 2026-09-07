@@ -63,10 +63,10 @@ export default function BulkAuxiliaryUpdater({
         className="w-full flex items-center justify-between px-4 py-2.5 text-left hover:bg-ps-surface-raised transition-colors disabled:opacity-50"
       >
         <div className="flex items-center gap-2">
-          <span className="text-xs font-mono text-ps-text-secondary uppercase tracking-widest">
+          <span className="text-micro font-mono text-ps-text-secondary uppercase tracking-widest">
             Bulk Set Auxiliaries
           </span>
-          <span className="text-xs font-mono text-ps-text-muted">
+          <span className="text-micro font-mono text-ps-text-muted">
             ({AUXILIARY_TASK_TYPES.length} slots)
           </span>
         </div>
@@ -82,7 +82,7 @@ export default function BulkAuxiliaryUpdater({
         <div className="px-4 pb-4 pt-1 border-t border-ps-edge-hairline space-y-3">
           {/* Model selector — shared chrome with DefaultsGrid via ModelSelectDropdown */}
           <div>
-            <label className="block text-xs font-mono text-ps-text-muted uppercase tracking-widest mb-1">
+            <label className="block text-micro font-mono text-ps-text-muted uppercase tracking-widest mb-1">
               Target Model
             </label>
             <ModelSelectDropdown
@@ -108,7 +108,7 @@ export default function BulkAuxiliaryUpdater({
                 disabled={disabled}
                 className="accent-neon-purple"
               />
-              <span className="text-xs font-mono text-ps-text-secondary">ALL</span>
+              <span className="text-micro font-mono text-ps-text-secondary">ALL</span>
             </label>
             <label className="flex items-center gap-2 cursor-pointer">
               <input
@@ -119,7 +119,7 @@ export default function BulkAuxiliaryUpdater({
                 disabled={disabled}
                 className="accent-neon-purple"
               />
-              <span className="text-xs font-mono text-ps-text-secondary">CUSTOM</span>
+              <span className="text-micro font-mono text-ps-text-secondary">CUSTOM</span>
             </label>
           </div>
 
@@ -138,7 +138,7 @@ export default function BulkAuxiliaryUpdater({
                     disabled={disabled}
                     className="accent-neon-purple w-3 h-3"
                   />
-                  <span className="text-xs font-mono text-ps-text-secondary truncate">
+                  <span className="text-micro font-mono text-ps-text-secondary truncate">
                     {taskType}
                   </span>
                 </label>
@@ -151,7 +151,7 @@ export default function BulkAuxiliaryUpdater({
             type="button"
             onClick={() => void handleApply()}
             disabled={disabled || applying || !targetModelId}
-            className="w-full h-9 bg-neon-purple/10 border border-neon-purple/30 text-neon-purple text-xs font-mono rounded-lg hover:bg-neon-purple/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full h-9 bg-neon-purple/10 border border-neon-purple/30 text-neon-purple text-micro font-mono rounded-lg hover:bg-neon-purple/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {applying ? "Applying…" : `Apply to ${selected.size} slot${pluralise(selected.size)}`}
           </button>

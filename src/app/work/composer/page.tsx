@@ -9,6 +9,7 @@
 
 "use client";
 
+import { sectionHeadingClasses } from "@/lib/theme";
 import { useEffect, useMemo, useState } from "react";
 import { GitBranch, Plus } from "lucide-react";
 
@@ -244,7 +245,7 @@ export default function ComposerPage() {
             key={m}
             type="button"
             onClick={() => setMode(m)}
-            className={`-mb-px border-b-2 px-3 py-2 text-xs font-mono uppercase tracking-widest transition ${
+            className={`-mb-px border-b-2 px-3 py-2 text-micro font-mono uppercase tracking-widest transition ${
               mode === m ? "border-neon-cyan text-neon-cyan" : "border-transparent text-ps-text-muted hover:text-ps-text-secondary"
             }`}
           >
@@ -281,11 +282,11 @@ export default function ComposerPage() {
           <button
             type="button"
             onClick={() => setForceForm(true)}
-            className="flex w-full items-center gap-2 px-1 py-1 text-left text-sm text-ps-text-secondary transition hover:text-neon-cyan"
+            className="flex w-full items-center gap-2 px-1 py-1 text-left text-body text-ps-text-secondary transition hover:text-neon-cyan"
           >
             <Plus className="h-4 w-4" />
             New run
-            <span className="ml-auto truncate text-xs text-ps-text-muted">
+            <span className="ml-auto truncate text-body text-ps-text-muted">
               {workflows?.find((w) => w.id === activeWorkflowId)?.name ?? ""}
             </span>
           </button>
@@ -296,7 +297,7 @@ export default function ComposerPage() {
         {/* Runs list */}
         <Card padding="sm">
           <div className="mb-2 flex items-center gap-2 px-1">
-            <h2 className="text-xs font-mono uppercase tracking-widest text-ps-text-muted">Runs</h2>
+            <h2 className={sectionHeadingClasses}>Runs</h2>
             <div className="ml-auto w-36">
               <Select value={statusFilter} onChange={setStatusFilter} options={STATUS_FILTERS} />
             </div>
@@ -307,7 +308,7 @@ export default function ComposerPage() {
           {runsError ? (
             <LoadErrorBanner compact error={runsError} onRetry={() => void refetch()} className="mx-1" />
           ) : visibleRuns.length === 0 ? (
-            <p className="px-1 py-4 text-xs text-ps-text-muted">
+            <p className="px-1 py-4 text-body text-ps-text-muted">
               {(runs ?? []).length === 0 ? "No workflow runs yet." : "No runs match this filter."}
             </p>
           ) : (
@@ -317,18 +318,18 @@ export default function ComposerPage() {
                   <button
                     type="button"
                     onClick={() => selectRun(r.id)}
-                    className={`w-full rounded-lg px-2 py-2 text-left text-xs transition hover:bg-ps-surface-raised ${selectedId === r.id ? "bg-ps-surface-raised" : ""}`}
+                    className={`w-full rounded-lg px-2 py-2 text-left text-body transition hover:bg-ps-surface-raised ${selectedId === r.id ? "bg-ps-surface-raised" : ""}`}
                   >
                     <div className="truncate text-ps-text-primary">{runTitle(r.input)}</div>
                     {/* Which workflow this is a run OF. The rows were a list of
                         objectives with no way to tell one workflow's from
                         another's (T-0106). */}
                     {workflows?.find((w) => w.id === r.workflowId)?.name ? (
-                      <div className="truncate text-xs text-ps-text-muted">
+                      <div className="truncate text-body text-ps-text-muted">
                         {workflows.find((w) => w.id === r.workflowId)?.name}
                       </div>
                     ) : null}
-                    <div className="mt-0.5 flex items-center justify-between gap-2 font-mono text-xs">
+                    <div className="mt-0.5 flex items-center justify-between gap-2 font-mono text-micro">
                       <span className={STATUS_COLOR[r.status] ?? "text-ps-text-muted"}>
                         {COMPOSER_RUN_STATUS_LABELS[r.status] ?? r.status}
                         {composerWaitingReason(r) === "question"
@@ -351,9 +352,9 @@ export default function ComposerPage() {
           {!selectedId ? (
             // Nothing selected yet — the genuine empty state.
             <div className="flex h-[60vh] min-h-[420px] flex-col items-center justify-center gap-2 text-center">
-              <GitBranch className="h-6 w-6 text-white/15" />
-              <p className="text-sm text-ps-text-muted">Select a run to watch it live</p>
-              <p className="text-xs text-ps-text-muted">Stages light up as they run — click any stage for its details.</p>
+              <GitBranch className="h-6 w-6 text-ps-viz-glyph-idle" />
+              <p className="text-body text-ps-text-muted">Select a run to watch it live</p>
+              <p className="text-body text-ps-text-muted">Stages light up as they run — click any stage for its details.</p>
             </div>
           ) : detailError && !graph ? (
             // A failed detail read used to render the skeleton below for ever
@@ -365,34 +366,34 @@ export default function ComposerPage() {
             <div className="flex h-[60vh] min-h-[420px] items-center justify-center rounded-xl border border-ps-edge-hairline bg-ps-surface-panel">
               <div className="flex flex-col items-center gap-2 text-center">
                 <div className="h-5 w-5 animate-spin rounded-full border-2 border-ps-edge-emphasis border-t-neon-cyan" />
-                <p className="text-xs text-ps-text-muted">Loading run…</p>
+                <p className="text-body text-ps-text-muted">Loading run…</p>
               </div>
             </div>
           ) : (
             <div className="space-y-4">
               <div className="flex items-start justify-between gap-3 rounded-lg border border-ps-edge-hairline bg-ps-surface-panel px-3 py-2.5">
                 <div className="min-w-0">
-                  <div className="truncate text-sm text-ps-text-primary">{runTitle(run.input)}</div>
+                  <div className="truncate text-body text-ps-text-primary">{runTitle(run.input)}</div>
                   {run.error ? (
                     // Orange, not pink, when the run was cancelled. "Cancelled by
                     // user" rendered in the failure colour under an orange status
                     // pill is the contradiction T-0069 and T-0070 both removed.
                     <p
-                      className={`mt-1 text-xs ${
+                      className={`mt-1 text-body ${
                         run.status === "cancelled" ? "text-neon-orange" : "text-neon-pink"
                       }`}
                     >
                       {run.error}
                     </p>
                   ) : (
-                    <p className="mt-1 text-xs text-ps-text-muted">Click a stage for its verdict & output</p>
+                    <p className="mt-1 text-body text-ps-text-muted">Click a stage for its verdict & output</p>
                   )}
                 </div>
                 <div className="shrink-0 text-right">
-                  <div className={`font-mono text-xs uppercase ${STATUS_COLOR[run.status] ?? "text-ps-text-muted"}`}>
+                  <div className={`font-mono text-micro uppercase ${STATUS_COLOR[run.status] ?? "text-ps-text-muted"}`}>
                     {run.status}
                   </div>
-                  <div className="mt-0.5 text-xs text-ps-text-muted">
+                  <div className="mt-0.5 text-body text-ps-text-muted">
                     {isTerminalComposerRunStatus(run.status) ? (
                       timeAgo(run.createdAt)
                     ) : (
@@ -409,7 +410,7 @@ export default function ComposerPage() {
                         else void cancelConfirm.confirm(cancelRun);
                       }}
                       disabled={gateBusy}
-                      className={`mt-1.5 rounded-lg border px-2 py-1 text-xs font-mono transition-colors disabled:opacity-40 ${
+                      className={`mt-1.5 rounded-lg border px-2 py-1 text-micro font-mono transition-colors disabled:opacity-40 ${
                         cancelConfirm.isArmedFor(run.id)
                           ? "border-neon-orange/60 bg-neon-orange/20 text-neon-orange"
                           : "border-ps-edge-emphasis text-ps-text-muted hover:border-neon-orange/50 hover:text-neon-orange"

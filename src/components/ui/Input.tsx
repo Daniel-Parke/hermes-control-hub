@@ -60,7 +60,7 @@ export function SearchInput({
         aria-label={ariaLabel ?? placeholder ?? "Search"}
         placeholder={placeholder}
         // design-lint-disable-next-line no-bare-outline-none -- the accent focus border comes from focusBorder on this same line; every entry is a focus:border-* class
-        className={`w-full bg-ps-surface-panel border border-ps-edge rounded-lg pl-10 pr-4 py-2.5 text-sm text-white placeholder-white/30 outline-none transition-colors font-mono ${focusBorder[accentColor] || focusBorder.cyan}`}
+        className={`w-full bg-ps-surface-panel border border-ps-edge rounded-lg pl-10 pr-4 py-2.5 text-body text-ps-text-primary placeholder-ps-text-muted outline-none transition-colors font-mono ${focusBorder[accentColor] || focusBorder.cyan}`}
       />
     </div>
   );
@@ -88,9 +88,9 @@ export function TextInput({
   // labeled text field shares one border/hover/focus-ring treatment.
   return (
     <div className="space-y-1.5">
-      <label className="text-sm font-medium text-ps-text-secondary">{label}</label>
+      <label className="text-body font-medium text-ps-text-secondary">{label}</label>
       {description && (
-        <p className="text-xs text-ps-text-muted">{description}</p>
+        <p className="text-body text-ps-text-muted">{description}</p>
       )}
       <FieldInput
         type={type}
@@ -183,9 +183,9 @@ export function NumberInput({
 
   return (
     <div className="space-y-1.5">
-      <label className="text-sm font-medium text-ps-text-secondary">{label}</label>
+      <label className="text-body font-medium text-ps-text-secondary">{label}</label>
       {description && (
-        <p className="text-xs text-ps-text-muted">{description}</p>
+        <p className="text-body text-ps-text-muted">{description}</p>
       )}
       <FieldInput
         type="number"
@@ -199,12 +199,12 @@ export function NumberInput({
         className="font-mono"
       />
       {outOfRange ? (
-        <p id={problemId} className="text-xs text-neon-orange">
+        <p id={problemId} className="text-body text-neon-orange">
           {`${label} must be between ${min} and ${max} (got ${numeric})`}
         </p>
       ) : (
         hasRange && (
-          <p className="text-xs text-ps-text-faint">{`Range: ${min}–${max}`}</p>
+          <p className="text-body text-ps-text-faint">{`Range: ${min}–${max}`}</p>
         )
       )}
     </div>
@@ -242,11 +242,11 @@ export function Toggle({
   return (
     <div className="flex items-center justify-between py-2">
       <div>
-        <div id={labelId} className="text-sm font-medium text-ps-text-secondary">
+        <div id={labelId} className="text-body font-medium text-ps-text-secondary">
           {label}
         </div>
         {description && (
-          <p id={descId} className="text-xs text-ps-text-muted mt-0.5">
+          <p id={descId} className="text-body text-ps-text-muted mt-0.5">
             {description}
           </p>
         )}
@@ -341,8 +341,8 @@ export function Select({
   // instead of falling back to the OS-native control.
   return (
     <div className="space-y-1.5">
-      <label className="text-sm font-medium text-ps-text-secondary">{label}</label>
-      {description && <p className="text-xs text-ps-text-muted">{description}</p>}
+      <label className="text-body font-medium text-ps-text-secondary">{label}</label>
+      {description && <p className="text-body text-ps-text-muted">{description}</p>}
       <FieldSelect
         ariaLabel={label}
         value={value}

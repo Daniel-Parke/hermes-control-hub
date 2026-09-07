@@ -4,6 +4,7 @@
 
 "use client";
 
+import { sectionHeadingClasses } from "@/lib/theme";
 import { useState, useEffect, useCallback } from "react";
 import {
   Wrench,
@@ -293,7 +294,7 @@ export default function ToolsPage() {
                   switch and was rendered nowhere, so the only way to learn that
                   the grid was ahead of the profile was to try to leave. */}
               {toolsetsDirty && !loadingToolsets && (
-                <span className="text-xs font-mono text-semantic-warning flex items-center gap-1">
+                <span className="text-micro font-mono text-semantic-warning flex items-center gap-1">
                   <Info className="w-3 h-3" />
                   Unsaved changes
                 </span>
@@ -339,7 +340,7 @@ export default function ToolsPage() {
         {profileSyncStatus === "drift" && (
           <div className="mb-4 p-3 rounded-lg bg-semantic-warning/10 border border-semantic-warning/30 flex items-start gap-2">
             <Info className="w-4 h-4 text-semantic-warning flex-shrink-0 mt-0.5" />
-            <p className="text-xs text-semantic-warning/90">
+            <p className="text-body text-semantic-warning/90">
               Toolset policy on disk differs from PatterStage (format or values).{" "}
               <strong>Pull from Hermes</strong> imports disk into SQLite;{" "}
               <strong>Save &amp; push toolsets</strong> or <strong>Push</strong> writes canonical{" "}
@@ -350,7 +351,7 @@ export default function ToolsPage() {
         )}
         {profileSyncStatus === "error" && (
           <div className="mb-4 p-3 rounded-lg bg-semantic-danger/10 border border-semantic-danger/30">
-            <p className="text-xs text-semantic-danger">
+            <p className="text-body text-semantic-danger">
               Last sync failed. Check gateway logs, then retry Pull or Push.
             </p>
           </div>
@@ -358,7 +359,7 @@ export default function ToolsPage() {
         {platformsDiverged && (
           <div className="mb-4 p-3 rounded-lg bg-semantic-warning/10 border border-semantic-warning/30 flex items-start gap-2">
             <Info className="w-4 h-4 text-semantic-warning flex-shrink-0 mt-0.5" />
-            <p className="text-xs text-semantic-warning/90">
+            <p className="text-body text-semantic-warning/90">
               Platforms have different toolsets on disk. The grid below shows the union.
               <strong>Save &amp; push</strong> applies one list to all gateways (like
               <code className="text-ps-text-muted">hermes tools</code> configure all).
@@ -367,7 +368,7 @@ export default function ToolsPage() {
         )}
         <div className="mb-4 p-3 rounded-lg bg-ps-surface-panel border border-ps-edge-hairline flex items-start gap-2">
           <Info className="w-4 h-4 text-ps-text-muted flex-shrink-0 mt-0.5" />
-          <p className="text-xs text-ps-text-muted">
+          <p className="text-body text-ps-text-muted">
             Hermes stores <code className="text-ps-text-muted">platform_toolsets</code> per gateway key;
             PatterStage uses one enabled list per profile and fans it out on save (Nous-aligned with
             configure all platforms). Use <strong className="text-ps-text-muted">Pull</strong> after{" "}
@@ -385,7 +386,7 @@ export default function ToolsPage() {
         <Panel accent="orange" tint="orange" className="p-4 space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-start gap-4">
             <div className="sm:w-72 flex-shrink-0">
-              <h2 className="text-sm font-mono text-neon-orange mb-2">Profile</h2>
+              <h2 className="text-body font-mono text-neon-orange mb-2">Profile</h2>
               <ProfileSelector
                 value={selectedProfile}
                 onChange={requestProfile}
@@ -393,7 +394,7 @@ export default function ToolsPage() {
               />
               {pendingProfile && (
                 <div className="mt-3 rounded-lg border border-semantic-warning/40 bg-semantic-warning/10 p-3">
-                  <p className="text-sm text-ps-text-primary">
+                  <p className="text-body text-ps-text-primary">
                     You have unsaved toolset changes on this profile.
                   </p>
                   <div className="mt-2 flex flex-wrap gap-2">
@@ -414,7 +415,7 @@ export default function ToolsPage() {
             </div>
             <div className="flex-1 min-w-0">
               {toolsetsSource && toolsetsSource !== "database" && (
-                <p className="text-xs font-mono text-neon-orange/90 mb-2">
+                <p className="text-micro font-mono text-neon-orange/90 mb-2">
                   Hydrated from{" "}
                   {toolsetsSource === "config_yaml" ? "config.yaml" : "seed pack"} into SQLite.
                 </p>
@@ -424,14 +425,14 @@ export default function ToolsPage() {
               ) : (
                 <>
                   <div>
-                    <h3 className="text-xs font-mono text-ps-text-muted uppercase tracking-widest mb-2">
+                    <h3 className={sectionHeadingClasses}>
                       Enabled toolsets
                     </h3>
                     {/* The grid below is bundles, not capabilities, and the
                         difference is the whole of D80: switching a bundle on
                         switches on everything inside it. Say which word is
                         which where the chips are. */}
-                    <p className="mb-2 text-xs text-ps-text-muted">
+                    <p className="mb-2 text-body text-ps-text-muted">
                       A <ConceptHint id="toolset">toolset</ConceptHint> is a named bundle of{" "}
                       <ConceptHint id="tool">tools</ConceptHint>; turning one on turns on everything
                       in it.
@@ -472,13 +473,13 @@ export default function ToolsPage() {
                       })}
                     </div>
                     {coveredLabels.length > 0 && (
-                      <p className="mt-2 text-xs text-ps-text-muted">
+                      <p className="mt-2 text-body text-ps-text-muted">
                         {coveredLabels.join(", ")} {coveredLabels.length === 1 ? "is" : "are"} included
                         in Hermes CLI. Turn that bundle off to choose them on their own.
                       </p>
                     )}
                     {jsonDirty && (
-                      <p className="mt-2 text-xs text-semantic-warning">
+                      <p className="mt-2 text-body text-semantic-warning">
                         Advanced JSON is the source of truth until you save or discard it.
                       </p>
                     )}
@@ -505,7 +506,7 @@ export default function ToolsPage() {
                           setToolsetsJson(event.target.value);
                           setJsonDirty(true);
                         }}
-                        className="mt-2 w-full min-h-32 rounded-lg bg-ps-surface-ground/80 border border-ps-edge p-3 text-xs font-mono text-ps-text-primary outline-none focus:border-neon-orange/50"
+                        className="mt-2 w-full min-h-32 rounded-lg bg-ps-surface-ground/80 border border-ps-edge p-3 text-micro font-mono text-ps-text-primary outline-none focus:border-neon-orange/50"
                         spellCheck={false}
                       />
                     )}
@@ -517,10 +518,10 @@ export default function ToolsPage() {
         </Panel>
 
         <Panel className="mt-6 p-4">
-          <h3 className="text-xs font-mono text-ps-text-muted uppercase tracking-widest mb-2">
+          <h3 className={sectionHeadingClasses}>
             Reference — Hermes toolset IDs
           </h3>
-          <p className="text-xs text-ps-text-muted mb-3">
+          <p className="text-body text-ps-text-muted mb-3">
             Catalog for labels only. Enabling toolsets above updates the selected profile config.
           </p>
           {/* The catalogue is read here, in src/app/, because ADR-0005 forbids

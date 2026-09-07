@@ -58,25 +58,25 @@ export default function EnvLineRow({ lineKey, parsed, raw }: EnvLineRowProps) {
   switch (parsed.kind) {
     case "blank":
       return (
-        <div key={lineKey} className="text-xs text-ps-text-muted font-mono">
+        <div key={lineKey} className="text-micro text-ps-text-muted font-mono">
           {raw || "\u00A0"}
         </div>
       );
     case "comment":
       return (
-        <div key={lineKey} className="text-xs text-ps-text-muted font-mono">
+        <div key={lineKey} className="text-micro text-ps-text-muted font-mono">
           {raw}
         </div>
       );
     case "invalid":
       return (
-        <div key={lineKey} className="text-xs font-mono text-ps-text-muted">
+        <div key={lineKey} className="text-micro font-mono text-ps-text-muted">
           {parsed.raw}
         </div>
       );
     case "keyval":
       return (
-        <div key={lineKey} className="flex items-center gap-2 text-xs font-mono">
+        <div key={lineKey} className="flex items-center gap-2 text-micro font-mono">
           <span className="text-neon-cyan w-48 flex-shrink-0 truncate">
             {parsed.key}
           </span>

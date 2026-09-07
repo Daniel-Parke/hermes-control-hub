@@ -16,6 +16,7 @@
 
 "use client";
 
+import { sectionHeadingClasses } from "@/lib/theme";
 import { useState } from "react";
 import { ShieldQuestion } from "lucide-react";
 
@@ -25,7 +26,7 @@ import type { NodeVerdict } from "@/lib/composer/schema";
 export type GateDecision = "accept" | "reject";
 
 function Label({ children }: { children: React.ReactNode }) {
-  return <h3 className="text-xs font-mono uppercase tracking-widest text-ps-text-muted">{children}</h3>;
+  return <h3 className={sectionHeadingClasses}>{children}</h3>;
 }
 
 export default function ComposerGatePrompt({
@@ -53,7 +54,7 @@ export default function ComposerGatePrompt({
         <ShieldQuestion className="h-4 w-4 shrink-0 text-neon-yellow" />
         {/* The one moment the word costs something: the chain is stopped here
             until the operator answers, so this is where it is explained. */}
-        <span className="text-xs text-ps-text-secondary">
+        <span className="text-body text-ps-text-secondary">
           <ConceptHint id="gate">Gate</ConceptHint> at{" "}
           <span className="font-mono text-neon-yellow">{nodeLabel}</span> — your call:
         </span>
@@ -65,11 +66,11 @@ export default function ComposerGatePrompt({
       {verdict ? (
         <div className="space-y-1">
           <Label>Verdict</Label>
-          <span className={`font-mono text-xs ${verdict.pass ? "text-neon-green" : "text-neon-pink"}`}>
+          <span className={`font-mono text-micro ${verdict.pass ? "text-neon-green" : "text-neon-pink"}`}>
             {verdict.pass ? "PASS" : "FAIL"}
           </span>
           {verdict.reasons.length > 0 ? (
-            <ul className="space-y-1 text-xs text-ps-text-secondary">
+            <ul className="space-y-1 text-body text-ps-text-secondary">
               {verdict.reasons.map((r, i) => (
                 <li key={i} className="flex gap-1.5">
                   <span className="text-ps-text-faint">•</span>
@@ -84,11 +85,11 @@ export default function ComposerGatePrompt({
       <div className="space-y-1">
         <Label>What this stage produced</Label>
         {body ? (
-          <pre className="max-h-44 overflow-auto whitespace-pre-wrap break-words rounded border border-ps-edge-hairline bg-ps-surface-ground/60 px-2 py-1.5 text-xs leading-relaxed text-ps-text-secondary">
+          <pre className="max-h-44 overflow-auto whitespace-pre-wrap break-words rounded border border-ps-edge-hairline bg-ps-surface-ground/60 px-2 py-1.5 text-body leading-relaxed text-ps-text-secondary">
             {body}
           </pre>
         ) : (
-          <p className="text-xs text-ps-text-muted">This stage recorded no output.</p>
+          <p className="text-body text-ps-text-muted">This stage recorded no output.</p>
         )}
       </div>
 
@@ -97,14 +98,14 @@ export default function ComposerGatePrompt({
         onChange={(e) => setNote(e.target.value)}
         rows={2}
         placeholder="Optional note (e.g. what to change on reject)…" aria-label="Gate note"
-        className="w-full rounded border border-ps-edge bg-ps-surface-ground/60 px-2 py-1 text-xs text-ps-text-primary placeholder:text-ps-text-faint focus:border-neon-yellow/40 focus:outline-none"
+        className="w-full rounded border border-ps-edge bg-ps-surface-ground/60 px-2 py-1 text-body text-ps-text-primary placeholder:text-ps-text-faint focus:border-neon-yellow/40 focus:outline-none"
       />
       <div className="flex items-center gap-2">
         <button
           type="button"
           disabled={busy}
           onClick={() => decide("accept")}
-          className="flex-1 rounded-md border border-neon-green/30 bg-neon-green/15 px-3 py-1 text-xs font-mono text-neon-green transition hover:bg-neon-green/25 disabled:opacity-40"
+          className="flex-1 rounded-md border border-neon-green/30 bg-neon-green/15 px-3 py-1 text-micro font-mono text-neon-green transition hover:bg-neon-green/25 disabled:opacity-40"
         >
           Accept
         </button>
@@ -112,7 +113,7 @@ export default function ComposerGatePrompt({
           type="button"
           disabled={busy}
           onClick={() => decide("reject")}
-          className="flex-1 rounded-md border border-neon-pink/30 bg-neon-pink/10 px-3 py-1 text-xs font-mono text-neon-pink transition hover:bg-neon-pink/20 disabled:opacity-40"
+          className="flex-1 rounded-md border border-neon-pink/30 bg-neon-pink/10 px-3 py-1 text-micro font-mono text-neon-pink transition hover:bg-neon-pink/20 disabled:opacity-40"
         >
           Reject
         </button>

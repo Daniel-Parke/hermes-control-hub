@@ -113,7 +113,7 @@ function renderInlineNonLink(text: string, keyBase: number): React.ReactNode {
       return (
         <code
           key={`code-${keyBase}-${i}`}
-          className="bg-ps-surface-inset text-neon-green px-1.5 py-0.5 rounded text-xs font-mono"
+          className="bg-ps-surface-inset text-neon-green px-1.5 py-0.5 rounded text-micro font-mono"
         >
           {part.slice(1, -1)}
         </code>
@@ -123,7 +123,7 @@ function renderInlineNonLink(text: string, keyBase: number): React.ReactNode {
     return boldParts.map((bp, j) => {
       if (bp.startsWith("**") && bp.endsWith("**")) {
         return (
-          <strong key={`bold-${keyBase}-${i}-${j}`} className="font-semibold text-white">
+          <strong key={`bold-${keyBase}-${i}-${j}`} className="font-semibold text-ps-text-primary">
             {bp.slice(2, -2)}
           </strong>
         );
@@ -160,7 +160,7 @@ export function SimpleMarkdown({ content }: { content: string }) {
         key={`table-${keyBase}`}
         className="my-3 overflow-x-auto rounded-lg border border-ps-edge-hairline"
       >
-        <table className="min-w-full text-sm">
+        <table className="min-w-full text-body">
           <thead className="bg-ps-surface-raised">
             <tr>
               {header.map((cell, idx) => (
@@ -216,11 +216,11 @@ export function SimpleMarkdown({ content }: { content: string }) {
             className="my-3 rounded-lg border border-ps-edge-hairline bg-ps-surface-inset overflow-hidden"
           >
             {codeBlockLang && (
-              <div className="px-3 py-1.5 border-b border-ps-edge-hairline text-xs font-mono text-ps-text-muted uppercase">
+              <div className="px-3 py-1.5 border-b border-ps-edge-hairline text-micro font-mono text-ps-text-muted uppercase">
                 {codeBlockLang}
               </div>
             )}
-            <pre className="p-3 text-sm font-mono text-ps-text-secondary overflow-x-auto">
+            <pre className="p-3 text-body font-mono text-ps-text-secondary overflow-x-auto">
               {codeBlockLines.join("\n")}
             </pre>
           </div>,
@@ -278,7 +278,7 @@ export function SimpleMarkdown({ content }: { content: string }) {
       elements.push(
         <h1
           key={i}
-          className="text-xl font-bold text-white mt-6 mb-3 pb-2 border-b border-ps-edge-hairline"
+          className="text-title font-bold text-ps-text-primary mt-6 mb-3 pb-2 border-b border-ps-edge-hairline"
         >
           {renderInline(trimmed.slice(2))}
         </h1>,
@@ -289,7 +289,7 @@ export function SimpleMarkdown({ content }: { content: string }) {
       elements.push(
         <h2
           key={i}
-          className="text-lg font-bold text-white mt-5 mb-2 pb-1 border-b border-ps-edge-hairline"
+          className="text-title font-bold text-ps-text-primary mt-5 mb-2 pb-1 border-b border-ps-edge-hairline"
         >
           {renderInline(trimmed.slice(3))}
         </h2>,
@@ -298,7 +298,7 @@ export function SimpleMarkdown({ content }: { content: string }) {
     }
     if (trimmed.startsWith("### ")) {
       elements.push(
-        <h3 key={i} className="text-base font-bold text-white mt-4 mb-2">
+        <h3 key={i} className="text-lead font-bold text-ps-text-primary mt-4 mb-2">
           {renderInline(trimmed.slice(4))}
         </h3>,
       );
@@ -316,7 +316,7 @@ export function SimpleMarkdown({ content }: { content: string }) {
       elements.push(
         <div key={i} className="flex items-start gap-2 my-1 ml-4">
           <span className="text-neon-cyan mt-1.5 flex-shrink-0">•</span>
-          <span className="text-sm text-ps-text-secondary">
+          <span className="text-body text-ps-text-secondary">
             {renderInline(trimmed.slice(2))}
           </span>
         </div>,
@@ -329,10 +329,10 @@ export function SimpleMarkdown({ content }: { content: string }) {
     if (numMatch) {
       elements.push(
         <div key={i} className="flex items-start gap-2 my-1 ml-4">
-          <span className="text-neon-cyan font-mono text-sm mt-0.5 flex-shrink-0">
+          <span className="text-neon-cyan font-mono text-body mt-0.5 flex-shrink-0">
             {numMatch[1]}.
           </span>
-          <span className="text-sm text-ps-text-secondary">
+          <span className="text-body text-ps-text-secondary">
             {renderInline(trimmed.slice(numMatch[0].length))}
           </span>
         </div>,
@@ -348,7 +348,7 @@ export function SimpleMarkdown({ content }: { content: string }) {
 
     // Regular paragraph
     elements.push(
-      <p key={i} className="text-sm text-ps-text-secondary my-1 leading-relaxed">
+      <p key={i} className="text-body text-ps-text-secondary my-1 leading-relaxed">
         {renderInline(trimmed)}
       </p>,
     );

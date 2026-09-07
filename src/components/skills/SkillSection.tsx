@@ -41,16 +41,16 @@ export function SkillSection({
       >
         <div className="flex items-center gap-2.5">
           <Icon className={`w-4 h-4 ${iconColor}`} />
-          <span className="text-sm font-semibold text-ps-text-primary">{title}</span>
+          <span className="text-body font-semibold text-ps-text-primary">{title}</span>
           <Badge color={count > 0 ? "green" : "gray"} size="sm">
             {count}
           </Badge>
-          <span className="text-xs font-mono text-ps-text-faint">
+          <span className="text-micro font-mono text-ps-text-faint">
             {categoryCount} categor{categoryCount === 1 ? "y" : "ies"}
           </span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-xs text-ps-text-faint group-hover:text-ps-text-muted transition-colors">
+          <span className="text-body text-ps-text-faint group-hover:text-ps-text-muted transition-colors">
             {collapsed ? "expand" : "collapse"}
           </span>
           <ChevronRight

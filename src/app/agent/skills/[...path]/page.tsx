@@ -4,6 +4,7 @@
 
 "use client";
 
+import { sectionHeadingClasses } from "@/lib/theme";
 import { useState, useEffect, useCallback } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
@@ -94,11 +95,11 @@ export default function SkillDetailPage() {
     return (
       <div className="min-h-screen bg-ps-surface-ground grid-bg flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-xl font-bold text-white mb-2">Skill Not Found</h2>
+          <h2 className="text-title font-bold text-ps-text-primary mb-2">Skill Not Found</h2>
           <p className="text-ps-text-muted font-mono mb-4">{error}</p>
           <Link
             href="/agent/skills"
-            className="text-neon-green text-sm font-mono hover:underline"
+            className="text-neon-green text-body font-mono hover:underline"
           >
             ← Back to Skills
           </Link>
@@ -132,7 +133,7 @@ export default function SkillDetailPage() {
             <button
               type="button"
               onClick={() => setShowRaw(!showRaw)}
-              className="text-xs font-mono text-ps-text-muted hover:text-ps-text-secondary px-3 py-1.5 rounded-lg border border-ps-edge hover:border-ps-edge-emphasis transition-colors"
+              className="text-micro font-mono text-ps-text-muted hover:text-ps-text-secondary px-3 py-1.5 rounded-lg border border-ps-edge hover:border-ps-edge-emphasis transition-colors"
             >
               {showRaw ? "Rendered" : "Raw"}
             </button>
@@ -146,7 +147,7 @@ export default function SkillDetailPage() {
           <div className="flex-1 min-w-0">
             <div className="rounded-xl border border-ps-edge-hairline bg-ps-surface-panel p-6">
               {showRaw ? (
-                <pre className="text-sm font-mono text-ps-text-secondary whitespace-pre-wrap break-words">
+                <pre className="text-body font-mono text-ps-text-secondary whitespace-pre-wrap break-words">
                   {data.rawContent ?? data.content}
                 </pre>
               ) : (
@@ -160,16 +161,16 @@ export default function SkillDetailPage() {
             {/* Frontmatter */}
             {Object.keys(frontmatter).length > 0 && (
               <div className="rounded-xl border border-ps-edge-hairline bg-ps-surface-panel p-4">
-                <h3 className="text-xs font-mono text-ps-text-muted uppercase tracking-widest mb-3">
+                <h3 className={sectionHeadingClasses}>
                   Metadata
                 </h3>
                 <div className="space-y-2">
                   {Object.entries(frontmatter).map(([key, value]) => (
                     <div key={key}>
-                      <div className="text-xs font-mono text-ps-text-muted uppercase">
+                      <div className="text-micro font-mono text-ps-text-muted uppercase">
                         {key}
                       </div>
-                      <div className="text-sm text-ps-text-secondary font-mono truncate">
+                      <div className="text-body text-ps-text-secondary font-mono truncate">
                         {String(value)}
                       </div>
                     </div>
@@ -181,14 +182,14 @@ export default function SkillDetailPage() {
             {/* Linked files */}
             {linkedFiles.length > 0 && (
               <div className="rounded-xl border border-ps-edge-hairline bg-ps-surface-panel p-4">
-                <h3 className="text-xs font-mono text-ps-text-muted uppercase tracking-widest mb-3">
+                <h3 className={sectionHeadingClasses}>
                   Linked Files
                 </h3>
                 <div className="space-y-1.5">
                   {linkedFiles.map((file) => (
                     <div
                       key={file.path}
-                      className="flex items-center justify-between text-xs"
+                      className="flex items-center justify-between text-body"
                     >
                       <span className="flex items-center gap-1.5 text-ps-text-secondary font-mono">
                         <Folder className="w-3 h-3 text-neon-green/70" />

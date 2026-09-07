@@ -52,7 +52,7 @@ export default function SessionCard({ session }: { session: SessionRecord }) {
             <div className="flex items-center gap-2 mb-1">
               {isActive && <LiveDot />}
               <MessageSquare className="w-4 h-4 text-neon-orange flex-shrink-0" />
-              <h3 className="font-semibold text-white truncate">
+              <h3 className="font-semibold text-ps-text-primary truncate">
                 <Link
                   href={`/results/sessions/${session.id}`}
                   className="after:absolute after:inset-0 after:content-['']"
@@ -70,7 +70,7 @@ export default function SessionCard({ session }: { session: SessionRecord }) {
                 </span>
               )}
             </div>
-            <div className="flex items-center gap-3 text-xs text-ps-text-muted font-mono flex-wrap">
+            <div className="flex items-center gap-3 text-micro text-ps-text-muted font-mono flex-wrap">
               <span
                 className={`flex items-center gap-1 ${isActive ? "text-neon-green" : ""}`}
               >
@@ -79,7 +79,7 @@ export default function SessionCard({ session }: { session: SessionRecord }) {
               </span>
               <span className="flex items-center gap-1">
                 <span
-                  className={`flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-mono ${meta.colorClass}`}
+                  className={`flex items-center gap-1 px-1.5 py-0.5 rounded text-micro font-mono ${meta.colorClass}`}
                 >
                   {meta.icon}
                   {meta.label}
@@ -115,7 +115,7 @@ export default function SessionCard({ session }: { session: SessionRecord }) {
               )}
             </div>
           </div>
-          <ChevronRight className="w-4 h-4 text-white/20 group-hover:text-neon-orange group-hover:translate-x-0.5 transition-all flex-shrink-0 ml-4" />
+          <ChevronRight className="w-4 h-4 text-ps-viz-glyph-idle group-hover:text-neon-orange group-hover:translate-x-0.5 transition-all flex-shrink-0 ml-4" />
         </div>
       </LedgerRow>
   );

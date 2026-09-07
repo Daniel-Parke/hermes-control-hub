@@ -188,14 +188,14 @@ export default function ScriptsPage() {
               <button
                 type="button"
                 onClick={() => openNew()}
-                className="flex items-center gap-1.5 rounded-lg border border-neon-cyan/30 px-3 py-1.5 font-mono text-xs text-neon-cyan transition-colors hover:bg-neon-cyan/10"
+                className="flex items-center gap-1.5 rounded-lg border border-neon-cyan/30 px-3 py-1.5 font-mono text-micro text-neon-cyan transition-colors hover:bg-neon-cyan/10"
               >
                 <Plus className="h-3 w-3" /> New script
               </button>
               <button
                 type="button"
                 onClick={() => refetch()}
-                className="flex items-center gap-1.5 rounded-lg border border-ps-edge px-3 py-1.5 font-mono text-xs text-ps-text-muted transition-colors hover:bg-ps-surface-raised hover:text-ps-text-primary"
+                className="flex items-center gap-1.5 rounded-lg border border-ps-edge px-3 py-1.5 font-mono text-micro text-ps-text-muted transition-colors hover:bg-ps-surface-raised hover:text-ps-text-primary"
               >
                 <RefreshCw className="h-3 w-3" /> Refresh
               </button>
@@ -205,7 +205,7 @@ export default function ScriptsPage() {
       }
     >
       <div>
-        <p className="mb-5 max-w-3xl font-mono text-xs text-ps-text-muted">
+        <p className="mb-5 max-w-3xl font-mono text-micro text-ps-text-muted">
           Drop a <span className="text-ps-text-secondary">{SCRIPT_EXT_LIST}</span> file under{" "}
           <span className="text-ps-text-secondary">PS_DATA_DIR/scripts</span> and it appears here — backups, cleanups, health
           checks. Scheduling agent work is on the{" "}

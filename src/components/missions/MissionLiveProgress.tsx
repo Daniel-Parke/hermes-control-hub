@@ -46,7 +46,7 @@ export default function MissionLiveProgress({ missionId }: { missionId: string }
 
   if (data?.error) {
     return (
-      <div className="rounded-xl border border-red-500/20 bg-red-500/5 p-3 text-xs font-mono text-red-300">
+      <div className="rounded-xl border border-red-500/20 bg-red-500/5 p-3 text-micro font-mono text-red-300">
         Live run unavailable: {data.error}
       </div>
     );
@@ -58,7 +58,7 @@ export default function MissionLiveProgress({ missionId }: { missionId: string }
     <div>
       {/* Where the word "run" is actually met on this screen: one dispatch of
           this mission, streaming underneath. */}
-      <div className="text-xs font-mono text-ps-text-muted uppercase mb-1">
+      <div className="text-micro font-mono text-ps-text-muted uppercase mb-1">
         Live <ConceptHint id="run">run</ConceptHint>
       </div>
       <RunProgress runId={data.runId} />

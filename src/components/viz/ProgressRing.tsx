@@ -54,8 +54,8 @@ export default function ProgressRing({
       </svg>
       {(label != null || sublabel != null) && (
         <div className="absolute inset-0 flex flex-col items-center justify-center text-center leading-none">
-          {label != null && <span className="font-mono font-semibold text-white">{label}</span>}
-          {sublabel != null && <span className="mt-0.5 text-xs uppercase tracking-wider text-ps-text-muted">{sublabel}</span>}
+          {label != null && <span className="font-mono font-semibold text-ps-text-primary">{label}</span>}
+          {sublabel != null && <span className="mt-0.5 text-micro uppercase tracking-wider text-ps-text-muted">{sublabel}</span>}
         </div>
       )}
     </div>

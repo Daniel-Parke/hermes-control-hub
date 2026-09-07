@@ -31,7 +31,7 @@ export default function HelpFragment({ html, slug }: HelpFragmentProps) {
         className="flex items-start gap-3 rounded-lg border border-semantic-warning/40 bg-ps-surface-panel px-4 py-3"
       >
         <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-semantic-warning" aria-hidden="true" />
-        <p className="text-sm text-ps-text-secondary">
+        <p className="text-body text-ps-text-secondary">
           The guide <span className="font-mono">{slug}</span> is listed in the manifest but its page
           was not generated. Run <span className="font-mono">npm run docs:build</span> to rebuild the
           corpus.

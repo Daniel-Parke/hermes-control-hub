@@ -42,10 +42,10 @@ function CategoryRow({ category, count, accentColor, expanded, onToggle }: Categ
           expanded ? "rotate-90" : ""
         }`}
       />
-      <span className={`text-xs font-mono font-semibold uppercase tracking-widest ${accentColor}`}>
+      <span className={`text-micro font-mono font-semibold uppercase tracking-widest ${accentColor}`}>
         {category}
       </span>
-      <span className={`text-xs font-mono ${accentColor}`}>({count})</span>
+      <span className={`text-micro font-mono ${accentColor}`}>({count})</span>
       <div className="h-px flex-1 bg-gradient-to-r from-white/10 to-transparent" />
     </button>
   );

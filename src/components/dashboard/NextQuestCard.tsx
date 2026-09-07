@@ -55,32 +55,32 @@ export default function NextQuestCard({ quests, host, hidden = false, onHide }: 
     >
       <div className="flex items-center gap-2 border-b border-ps-edge-hairline bg-ps-surface-raised px-4 py-2">
         <Compass className="h-3.5 w-3.5 text-neon-cyan" />
-        <span className="text-xs font-mono uppercase tracking-wider text-ps-text-secondary">
+        <span className="text-micro font-mono uppercase tracking-wider text-ps-text-secondary">
           Start here
         </span>
-        <span className="ml-auto font-mono text-xs text-ps-text-muted">
+        <span className="ml-auto font-mono text-micro text-ps-text-muted">
           {quests.completed}/{quests.total}
         </span>
       </div>
       <div className="px-4 py-3">
         {chapter && (
-          <div className="text-xs font-mono uppercase tracking-wider text-ps-text-muted">
+          <div className="text-micro font-mono uppercase tracking-wider text-ps-text-muted">
             Chapter {chapter.number} · {chapter.title}
           </div>
         )}
-        <div className="mt-1 text-sm font-semibold text-ps-text-primary">{next.title}</div>
-        <p className="mt-1 text-sm text-ps-text-secondary">{next.action}</p>
+        <div className="mt-1 text-body font-semibold text-ps-text-primary">{next.title}</div>
+        <p className="mt-1 text-body text-ps-text-secondary">{next.action}</p>
         <div className="mt-3 flex flex-wrap items-center gap-4">
           <Link
             href={next.screen}
-            className="inline-flex items-center gap-1.5 rounded-md border border-neon-cyan/30 bg-neon-cyan/10 px-3 py-1 text-xs font-mono text-neon-cyan transition-colors hover:bg-neon-cyan/20"
+            className="inline-flex items-center gap-1.5 rounded-md border border-neon-cyan/30 bg-neon-cyan/10 px-3 py-1 text-micro font-mono text-neon-cyan transition-colors hover:bg-neon-cyan/20"
           >
             Go
             <ArrowRight className="h-3 w-3" />
           </Link>
           <Link
             href="/quests"
-            className="inline-flex items-center gap-1 text-xs font-mono text-neon-purple hover:underline"
+            className="inline-flex items-center gap-1 text-micro font-mono text-neon-purple hover:underline"
           >
             All quests
             <ChevronRight className="h-3 w-3" />
@@ -89,7 +89,7 @@ export default function NextQuestCard({ quests, host, hidden = false, onHide }: 
             <button
               type="button"
               onClick={onHide}
-              className="ml-auto text-xs font-mono text-ps-text-muted transition-colors hover:text-ps-text-secondary"
+              className="ml-auto text-micro font-mono text-ps-text-muted transition-colors hover:text-ps-text-secondary"
             >
               Hide this guide
             </button>

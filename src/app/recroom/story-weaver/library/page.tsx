@@ -104,8 +104,8 @@ export default function LibraryPage() {
           ].map((stat) => (
             <div key={stat.label} className="rounded-xl border border-ps-edge-hairline bg-ps-surface-panel p-4 text-center">
               <stat.icon className="w-4 h-4 text-neon-purple mx-auto mb-2" />
-              <div className="text-2xl font-bold text-ps-text-primary">{stat.value}</div>
-              <div className="text-xs font-mono text-ps-text-faint uppercase tracking-wider mt-1">{stat.label}</div>
+              <div className="text-display font-bold text-ps-text-primary">{stat.value}</div>
+              <div className="text-micro font-mono text-ps-text-faint uppercase tracking-wider mt-1">{stat.label}</div>
             </div>
           ))}
         </div>
@@ -114,7 +114,7 @@ export default function LibraryPage() {
         <div className="flex gap-2" role="group" aria-label="Filter stories">
           {FILTERS.map((f) => (
             <button key={f.id} type="button" onClick={() => setFilter(f.id)} aria-pressed={filter === f.id}
-              className={`px-3 py-1.5 rounded-lg text-xs font-mono border transition-all ${
+              className={`px-3 py-1.5 rounded-lg text-micro font-mono border transition-all ${
                 filter === f.id
                   ? "border-neon-purple/40 bg-neon-purple/15 text-neon-purple"
                   : "border-ps-edge text-ps-text-muted hover:text-ps-text-muted"
@@ -131,18 +131,18 @@ export default function LibraryPage() {
           </div>
         ) : error ? null : filtered.length === 0 ? (
           <div className="text-center py-16">
-            <BookOpen className="w-12 h-12 text-white/10 mx-auto mb-4" />
-            <h3 className="text-lg font-serif text-ps-text-muted mb-2">
+            <BookOpen className="w-12 h-12 text-ps-viz-glyph-idle mx-auto mb-4" />
+            <h3 className="text-title font-serif text-ps-text-muted mb-2">
               {filter === "all" ? "Your bookshelf is empty" : `No stories are ${filterWord.toLowerCase()}`}
             </h3>
-            <p className="text-sm text-ps-text-faint mb-6">
+            <p className="text-body text-ps-text-faint mb-6">
               {filter === "all"
                 ? "Create your first story to start reading."
                 : "Stories will appear here once they match this filter."}
             </p>
             {filter === "all" && (
               <button type="button" onClick={() => router.push("/recroom/story-weaver/create")}
-                className="px-6 py-3 rounded-xl border border-neon-purple/30 text-sm font-mono text-neon-purple hover:bg-neon-purple/10">
+                className="px-6 py-3 rounded-xl border border-neon-purple/30 text-body font-mono text-neon-purple hover:bg-neon-purple/10">
                 Create a story
               </button>
             )}
@@ -173,10 +173,10 @@ export default function LibraryPage() {
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
                           <Link href={"/recroom/story-weaver/" + story.id}
-                            className="block text-base font-semibold text-ps-text-primary truncate group-hover:text-white transition-colors">
+                            className="block text-lead font-semibold text-ps-text-primary truncate group-hover:text-ps-text-primary transition-colors">
                             {story.title}
                           </Link>
-                          <div className="flex items-center gap-3 mt-1 text-xs font-mono text-ps-text-faint">
+                          <div className="flex items-center gap-3 mt-1 text-micro font-mono text-ps-text-faint">
                             <span>{story.config?.genre || "General"}</span>
                             <span>·</span>
                             <span>{completeChapters}/{chapters.length} chapters</span>
@@ -204,7 +204,7 @@ export default function LibraryPage() {
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </ConfirmButton>
-                          <div className={`text-xs font-mono px-2.5 py-1 rounded-full ${
+                          <div className={`text-micro font-mono px-2.5 py-1 rounded-full ${
                             complete
                               ? "bg-green-500/10 text-neon-green"
                               : "bg-neon-purple/10 text-neon-purple"
@@ -215,7 +215,7 @@ export default function LibraryPage() {
                       </div>
 
                       {story.premise && (
-                        <p className="text-xs text-ps-text-muted leading-relaxed mt-2 line-clamp-2">
+                        <p className="text-body text-ps-text-muted leading-relaxed mt-2 line-clamp-2">
                           {story.premise}
                         </p>
                       )}
@@ -233,7 +233,7 @@ export default function LibraryPage() {
                       )}
 
                       {/* Last updated */}
-                      <div className="mt-2 text-xs font-mono text-ps-text-faint">
+                      <div className="mt-2 text-micro font-mono text-ps-text-faint">
                         {complete ? "Completed" : "Last updated"} {timeAgo(story.updatedAt || story.createdAt || "")}
                       </div>
                     </div>

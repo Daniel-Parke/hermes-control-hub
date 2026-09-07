@@ -81,17 +81,17 @@ export default function ComposerRunForm({
         <div className="mb-3 rounded-lg border border-ps-edge-hairline bg-ps-surface-panel px-3 py-2.5">
           {/* Named the way the review below names it, so the word an operator
               is about to launch one of is defined where they first read it. */}
-          <p className="text-xs font-mono uppercase tracking-widest text-ps-text-muted">
+          <p className="text-micro font-mono uppercase tracking-widest text-ps-text-muted">
             <ConceptHint id="workflow">Workflow</ConceptHint>
           </p>
           <div className="flex items-baseline justify-between gap-2">
-            <span className="text-sm font-semibold text-ps-text-primary">{workflow.name}</span>
+            <span className="text-body font-semibold text-ps-text-primary">{workflow.name}</span>
             {stages.length > 0 ? (
-              <span className="text-xs font-mono text-ps-text-muted">{stages.length} stages</span>
+              <span className="text-micro font-mono text-ps-text-muted">{stages.length} stages</span>
             ) : null}
           </div>
           {workflow.description ? (
-            <p className="mt-0.5 text-xs text-ps-text-muted">{workflow.description}</p>
+            <p className="mt-0.5 text-body text-ps-text-muted">{workflow.description}</p>
           ) : null}
           {stages.length > 0 ? (
             <div className="mt-2 flex flex-wrap items-center gap-1">
@@ -99,7 +99,7 @@ export default function ComposerRunForm({
                 <span key={n.id} className="flex items-center gap-1">
                   {i > 0 ? <span className="text-ps-text-faint">→</span> : null}
                   <span
-                    className={`rounded px-1.5 py-0.5 text-xs font-mono ${n.gate === "hil" ? "bg-neon-yellow/10 text-neon-yellow/90" : "bg-ps-surface-raised text-ps-text-muted"}`}
+                    className={`rounded px-1.5 py-0.5 text-micro font-mono ${n.gate === "hil" ? "bg-neon-yellow/10 text-neon-yellow/90" : "bg-ps-surface-raised text-ps-text-muted"}`}
                     title={n.gate === "hil" ? "human-in-the-loop gate" : n.kind}
                   >
                     {n.label}
@@ -123,13 +123,13 @@ export default function ComposerRunForm({
 
       {examples.length > 0 ? (
         <div className="mt-2 flex flex-wrap items-center gap-1.5">
-          <span className="text-xs uppercase tracking-wider text-ps-text-muted">Examples — click to fill</span>
+          <span className="text-micro uppercase tracking-wider text-ps-text-muted">Examples — click to fill</span>
           {examples.map((ex) => (
             <button
               key={ex}
               type="button"
               onClick={() => onInputChange(ex)}
-              className="max-w-full truncate rounded-full border border-ps-edge px-2 py-0.5 text-xs text-ps-text-muted transition hover:border-neon-cyan/40 hover:text-neon-cyan"
+              className="max-w-full truncate rounded-full border border-ps-edge px-2 py-0.5 text-body text-ps-text-muted transition hover:border-neon-cyan/40 hover:text-neon-cyan"
               title={ex}
             >
               {ex}
@@ -160,7 +160,7 @@ export default function ComposerRunForm({
         </Button>
       </div>
       {tooShort ? (
-        <p className="mt-1.5 text-right text-xs text-ps-text-muted">Describe your objective (≥ 3 characters) to enable the run.</p>
+        <p className="mt-1.5 text-right text-body text-ps-text-muted">Describe your objective (≥ 3 characters) to enable the run.</p>
       ) : null}
     </Card>
 
@@ -190,25 +190,25 @@ export default function ComposerRunForm({
     >
       <div className="space-y-4">
         <div>
-          <p className="text-xs font-mono uppercase tracking-widest text-ps-text-muted">Workflow</p>
-          <p className="text-sm text-ps-text-primary">{workflow?.name ?? "—"}</p>
-          {workflow?.description ? <p className="mt-0.5 text-xs text-ps-text-muted">{workflow.description}</p> : null}
+          <p className="text-micro font-mono uppercase tracking-widest text-ps-text-muted">Workflow</p>
+          <p className="text-body text-ps-text-primary">{workflow?.name ?? "—"}</p>
+          {workflow?.description ? <p className="mt-0.5 text-body text-ps-text-muted">{workflow.description}</p> : null}
         </div>
 
         <div>
-          <p className="text-xs font-mono uppercase tracking-widest text-ps-text-muted">{objectiveLabel}</p>
-          <p className="mt-0.5 whitespace-pre-wrap rounded-lg border border-ps-edge-hairline bg-ps-surface-panel px-3 py-2 text-xs text-ps-text-secondary">{input.trim()}</p>
+          <p className="text-micro font-mono uppercase tracking-widest text-ps-text-muted">{objectiveLabel}</p>
+          <p className="mt-0.5 whitespace-pre-wrap rounded-lg border border-ps-edge-hairline bg-ps-surface-panel px-3 py-2 text-body text-ps-text-secondary">{input.trim()}</p>
         </div>
 
         <div>
-          <p className="text-xs font-mono uppercase tracking-widest text-ps-text-muted">{stages.length} stage{stages.length === 1 ? "" : "s"} · profile {profileName || "default"}</p>
+          <p className="text-micro font-mono uppercase tracking-widest text-ps-text-muted">{stages.length} stage{stages.length === 1 ? "" : "s"} · profile {profileName || "default"}</p>
           <div className="mt-1.5 flex flex-wrap gap-1.5">
             {stages.map((n) => {
               const writes = WRITE_KINDS.has(n.kind);
               return (
                 <span
                   key={n.id}
-                  className={`rounded-full border px-2 py-0.5 text-xs ${writes ? "border-neon-orange/40 bg-neon-orange/10 text-neon-orange" : "border-ps-edge-hairline text-ps-text-muted"}`}
+                  className={`rounded-full border px-2 py-0.5 text-body ${writes ? "border-neon-orange/40 bg-neon-orange/10 text-neon-orange" : "border-ps-edge-hairline text-ps-text-muted"}`}
                   title={writes ? "This stage can modify your repository" : n.kind}
                 >
                   {n.label}
@@ -221,7 +221,7 @@ export default function ComposerRunForm({
         {writeStages.length > 0 ? (
           <div className="flex items-start gap-2 rounded-lg border border-neon-orange/40 bg-neon-orange/10 px-3 py-2.5">
             <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-neon-orange" />
-            <div className="text-xs text-neon-orange/90">
+            <div className="text-body text-neon-orange/90">
               <p className="font-semibold">This workflow can modify your repository.</p>
               <p className="mt-0.5 text-neon-orange/90">
                 {writeStages.map((n) => n.label).join(", ")} may write code, tests, or open a pull request. Make sure your objective and scope are what you intend before confirming.

@@ -66,7 +66,7 @@ export default function Modal({
         <div className="flex items-center justify-between px-5 py-4 border-b border-ps-edge-hairline flex-shrink-0">
           <h2
             id={titleId}
-            className="text-lg font-bold text-white flex items-center gap-2"
+            className="text-title font-bold text-ps-text-primary flex items-center gap-2"
           >
             {Icon && <Icon className={`w-5 h-5 ${iconColor}`} />}
             {title}

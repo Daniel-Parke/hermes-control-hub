@@ -53,7 +53,7 @@ export default function CredentialPicker({
 
   return (
     <div className="space-y-1.5">
-      <span className="block text-sm font-medium text-ps-text-secondary">Credential</span>
+      <span className="block text-body font-medium text-ps-text-secondary">Credential</span>
       <Select
         ariaLabel="Credential"
         value={value}
@@ -69,7 +69,7 @@ export default function CredentialPicker({
           ...filtered.map((c) => ({ value: c.id, label: c.label, hint: c.keyHint || "no hint" })),
         ]}
       />
-      <p className="text-xs text-ps-text-muted font-mono">
+      <p className="text-micro text-ps-text-muted font-mono">
         {selected
           ? "Reusing an existing credential row from the registry."
           : keyless

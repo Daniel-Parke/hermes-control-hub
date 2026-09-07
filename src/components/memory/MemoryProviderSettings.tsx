@@ -207,16 +207,16 @@ export default function MemoryProviderSettings({
     <Card padding="md" glow="pink">
       <div className="mb-3 flex items-center gap-2">
         <Plug className="h-4 w-4 text-neon-pink" />
-        <h2 className="text-sm font-semibold text-white">
+        <h2 className="text-body font-semibold text-ps-text-primary">
           {/* The card is the first thing on the screen and the heading is the
               first place the word appears, in either of its two states. */}
           <ConceptHint id="memory">{storeUnreachable ? "Set up memory" : "Memory provider"}</ConceptHint>
         </h2>
-        <span className="rounded bg-ps-surface-raised px-1.5 py-0.5 text-xs font-mono uppercase tracking-wider text-ps-text-muted">
+        <span className="rounded bg-ps-surface-raised px-1.5 py-0.5 text-micro font-mono uppercase tracking-wider text-ps-text-muted">
           {row?.label ?? "Memory"}
         </span>
       </div>
-      <p className="mb-4 text-xs text-ps-text-muted">
+      <p className="mb-4 text-body text-ps-text-muted">
         PatterStage owns this connection — edit it here, no Hermes file edits. Stored in the database.
       </p>
 
@@ -236,7 +236,7 @@ export default function MemoryProviderSettings({
       {unconfirmedGuess && (
         <div
           role="status"
-          className="mb-4 rounded-lg border border-neon-orange/30 bg-neon-orange/10 px-3 py-2 text-xs text-neon-orange"
+          className="mb-4 rounded-lg border border-neon-orange/30 bg-neon-orange/10 px-3 py-2 text-body text-neon-orange"
         >
           Using the built-in default — not yet confirmed. PatterStage guessed{" "}
           <span className="font-mono">
@@ -260,7 +260,7 @@ export default function MemoryProviderSettings({
           onChange={(v) => setChosenType(v as MemoryProviderType)}
           options={SELECTABLE_PROVIDERS.map((p) => p.type)}
         />
-        <p className="mt-1 text-xs text-ps-text-faint">
+        <p className="mt-1 text-body text-ps-text-faint">
           Which memory backend the agent uses. Saving a different one switches
           the agent over and writes it into its configuration.
         </p>
@@ -303,17 +303,17 @@ export default function MemoryProviderSettings({
         </Button>
         {health ? (
           <span
-            className={`inline-flex items-center gap-1.5 text-xs ${health.available ? "text-neon-green" : "text-neon-pink"}`}
+            className={`inline-flex items-center gap-1.5 text-body ${health.available ? "text-neon-green" : "text-neon-pink"}`}
           >
             {health.available ? <CheckCircle2 className="h-4 w-4" /> : <XCircle className="h-4 w-4" />}
             {health.available ? `Connected (${health.status ?? "healthy"})` : health.error ?? "Unreachable"}
           </span>
         ) : testing ? (
-          <span className="inline-flex items-center gap-1.5 text-xs text-ps-text-muted">
+          <span className="inline-flex items-center gap-1.5 text-body text-ps-text-muted">
             <Loader2 className="h-4 w-4 animate-spin" /> Probing…
           </span>
         ) : null}
-        {savedMsg ? <span className="text-xs text-ps-text-muted">{savedMsg}</span> : null}
+        {savedMsg ? <span className="text-body text-ps-text-muted">{savedMsg}</span> : null}
       </div>
     </Card>
   );

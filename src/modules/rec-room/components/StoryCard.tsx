@@ -33,24 +33,24 @@ export default function StoryCard({ story, onRead, onDelete }: StoryCardProps) {
       className="rounded-xl border border-neon-purple/15 bg-ps-surface-panel p-5 hover:border-neon-purple/30 hover:shadow-[0_0_15px_rgb(var(--ps-rgb-neon-purple)_/_0.06)] transition-all cursor-pointer group flex flex-col">
       <div className="flex items-start justify-between mb-3">
         <div className="min-w-0 flex-1">
-          <h3 className="text-sm font-semibold text-ps-text-primary truncate">{story.title}</h3>
-          <div className="text-xs font-mono text-ps-text-faint mt-0.5">
+          <h3 className="text-body font-semibold text-ps-text-primary truncate">{story.title}</h3>
+          <div className="text-micro font-mono text-ps-text-faint mt-0.5">
             {story.config?.genre || "General"} · {timeAgo(story.updatedAt || story.createdAt || "")}
             {totalChapters > 0 ? ` · ${completeChapters}/${totalChapters} chapters` : ""}
           </div>
         </div>
         {/* The word from the one vocabulary (decision 13), not a bespoke one per card. */}
-        <div className={`text-xs font-mono px-2 py-0.5 rounded-full ${BADGE_TONE[story.status ?? ""] ?? "bg-neon-purple/10 text-neon-purple"}`}>
+        <div className={`text-micro font-mono px-2 py-0.5 rounded-full ${BADGE_TONE[story.status ?? ""] ?? "bg-neon-purple/10 text-neon-purple"}`}>
           {storyStatusLabel(story.status)}
         </div>
       </div>
       {story.premise && (
-        <p className="text-xs text-ps-text-muted leading-relaxed line-clamp-2 mb-3 flex-1">{story.premise}</p>
+        <p className="text-body text-ps-text-muted leading-relaxed line-clamp-2 mb-3 flex-1">{story.premise}</p>
       )}
       <div className="flex items-center justify-between mt-auto pt-3 border-t border-ps-edge-hairline">
         <div className="flex items-center gap-3">
-          <span className="text-xs font-mono text-ps-text-faint">{totalWords.toLocaleString()} words</span>
-          <div className="flex items-center gap-1 text-xs font-mono text-ps-text-muted">
+          <span className="text-micro font-mono text-ps-text-faint">{totalWords.toLocaleString()} words</span>
+          <div className="flex items-center gap-1 text-micro font-mono text-ps-text-muted">
             <BookOpen className="w-3 h-3" /> Read
           </div>
         </div>

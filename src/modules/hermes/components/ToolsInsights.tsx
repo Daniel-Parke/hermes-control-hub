@@ -39,7 +39,7 @@ export default function ToolsInsights({ total, enabled }: { total: number; enabl
       ring={{
         value: s.total > 0 ? s.enabled / s.total : 0,
         color: "green",
-        label: <span className="text-sm">{Math.round((s.enabled / Math.max(1, s.total)) * 100)}%</span>,
+        label: <span className="text-body">{Math.round((s.enabled / Math.max(1, s.total)) * 100)}%</span>,
         sublabel: "enabled",
       }}
     />

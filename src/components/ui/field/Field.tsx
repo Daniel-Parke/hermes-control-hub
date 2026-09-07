@@ -65,18 +65,18 @@ export function Field({
       {label ? (
         <label
           htmlFor={controlId}
-          className="block text-xs font-medium uppercase tracking-wider text-ps-text-muted"
+          className="block text-micro font-medium uppercase tracking-wider text-ps-text-muted"
         >
           {label}
         </label>
       ) : null}
       {describedControl}
       {error ? (
-        <p id={described} className="text-xs text-neon-pink/80">
+        <p id={described} className="text-body text-neon-pink/80">
           {error}
         </p>
       ) : hint ? (
-        <p id={described} className="text-xs text-ps-text-muted">
+        <p id={described} className="text-body text-ps-text-muted">
           {hint}
         </p>
       ) : null}

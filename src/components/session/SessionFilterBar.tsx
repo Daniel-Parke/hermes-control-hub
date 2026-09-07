@@ -61,7 +61,7 @@ export default function SessionFilterBar({
             <button
               onClick={onClearSourceFilter}
               aria-pressed={!sourceFilter}
-              className={`text-xs font-mono px-2 py-1 rounded transition-colors ${
+              className={`text-micro font-mono px-2 py-1 rounded transition-colors ${
                 !sourceFilter
                   ? "bg-neon-orange/20 text-neon-orange"
                   : "text-ps-text-muted hover:text-ps-text-secondary"
@@ -74,7 +74,7 @@ export default function SessionFilterBar({
                 key={src}
                 onClick={() => onSelectSourceFilter(src)}
                 aria-pressed={sourceFilter === src}
-                className={`text-xs font-mono px-2 py-1 rounded transition-colors flex items-center gap-1 ${
+                className={`text-micro font-mono px-2 py-1 rounded transition-colors flex items-center gap-1 ${
                   sourceFilter === src
                     ? "bg-neon-orange/20 text-neon-orange"
                     : "text-ps-text-muted hover:text-ps-text-secondary"
@@ -89,7 +89,7 @@ export default function SessionFilterBar({
               type="button"
               onClick={onToggleFailedOnly}
               aria-pressed={failedOnly}
-              className={`text-xs font-mono px-2 py-1 rounded transition-colors flex items-center gap-1 ${
+              className={`text-micro font-mono px-2 py-1 rounded transition-colors flex items-center gap-1 ${
                 failedOnly
                   ? "bg-semantic-danger/20 text-semantic-danger"
                   : "text-ps-text-muted hover:text-ps-text-secondary"
@@ -103,7 +103,7 @@ export default function SessionFilterBar({
       </div>
 
       {/* View options row: group-by-mission, hide-api-noise, live indicator hint */}
-      <div className="flex items-center gap-2 flex-wrap text-xs font-mono">
+      <div className="flex items-center gap-2 flex-wrap text-micro font-mono">
         <button
           type="button"
           onClick={onToggleGroupByMission}

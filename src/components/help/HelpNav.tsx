@@ -12,6 +12,7 @@
 // order helpNavOrder gave them — the same order prev/next walks.
 // ═══════════════════════════════════════════════════════════════
 
+import { sectionHeadingClasses } from "@/lib/theme";
 import Link from "next/link";
 
 import type { HelpNavSection, HelpPageMeta } from "@/lib/help/help-manifest";
@@ -32,10 +33,10 @@ function NavLink({ page, current }: { page: HelpPageMeta; current: string }) {
       <Link
         href={`/help/${page.slug}`}
         aria-current={active ? "page" : undefined}
-        className={`block rounded px-2 py-1 text-sm transition-colors ${
+        className={`block rounded px-2 py-1 text-body transition-colors ${
           active
             ? "bg-ps-surface-raised text-neon-cyan"
-            : "text-ps-text-secondary hover:bg-ps-surface-raised hover:text-white"
+            : "text-ps-text-secondary hover:bg-ps-surface-raised hover:text-ps-text-primary"
         }`}
       >
         {page.title}
@@ -53,7 +54,7 @@ export default function HelpNav({ sections, current }: HelpNavProps) {
           const rest = section.pages.filter((p) => !p.slug.startsWith(TOUR_PREFIX));
           return (
             <li key={section.section}>
-              <h2 className="px-2 text-xs font-mono uppercase tracking-wider text-ps-text-muted">
+              <h2 className={`${sectionHeadingClasses} px-2`}>
                 {section.label}
               </h2>
               <ul className="mt-2 space-y-0.5">
@@ -62,7 +63,7 @@ export default function HelpNav({ sections, current }: HelpNavProps) {
                 ))}
                 {tour.length > 0 && (
                   <li className="pt-2">
-                    <h3 className="px-2 text-xs font-mono uppercase tracking-wider text-ps-text-faint">
+                    <h3 className={`${sectionHeadingClasses} px-2`}>
                       Tour
                     </h3>
                     <ul className="mt-1 space-y-0.5 border-l border-ps-edge-hairline pl-2">

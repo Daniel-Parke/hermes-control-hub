@@ -84,7 +84,7 @@ export default function FallbackConfigPanel({
       <div className="rounded-xl border border-ps-edge-hairline bg-ps-surface-panel p-4 space-y-4">
         {/* Retry threshold */}
         <div>
-          <label className="block text-xs font-mono text-ps-text-muted uppercase tracking-widest mb-2">
+          <label className="block text-micro font-mono text-ps-text-muted uppercase tracking-widest mb-2">
             Retry Threshold
           </label>
           <input aria-label="Retry threshold"
@@ -93,16 +93,16 @@ export default function FallbackConfigPanel({
             max="10"
             value={config.apiMaxRetries}
             onChange={(e) => handleRetriesChange(e.target.value)}
-            className="w-24 h-9 min-h-9 bg-ps-surface-inset border border-ps-edge rounded-lg px-3 text-sm text-white font-mono outline-none focus:border-neon-purple/50 transition-colors"
+            className="w-24 h-9 min-h-9 bg-ps-surface-inset border border-ps-edge rounded-lg px-3 text-body text-ps-text-primary font-mono outline-none focus:border-neon-purple/50 transition-colors"
           />
-          <span className="ml-2 text-xs text-ps-text-muted font-mono">
+          <span className="ml-2 text-micro text-ps-text-muted font-mono">
             attempts before falling back
           </span>
         </div>
 
         {/* Restoration policy */}
         <div>
-          <label className="block text-xs font-mono text-ps-text-muted uppercase tracking-widest mb-2">
+          <label className="block text-micro font-mono text-ps-text-muted uppercase tracking-widest mb-2">
             Restoration Policy
           </label>
             <div className="space-y-2">
@@ -114,7 +114,7 @@ export default function FallbackConfigPanel({
                 onChange={() => handleRestorationChange(true)}
                 className="accent-neon-purple"
               />
-              <span className="text-sm font-mono text-ps-text-secondary">
+              <span className="text-body font-mono text-ps-text-secondary">
                 Restore primary after fallback
               </span>
             </label>
@@ -126,7 +126,7 @@ export default function FallbackConfigPanel({
                 onChange={() => handleRestorationChange(false)}
                 className="accent-neon-purple"
               />
-              <span className="text-sm font-mono text-ps-text-secondary">
+              <span className="text-body font-mono text-ps-text-secondary">
                 Stay on fallback model
               </span>
             </label>
@@ -142,11 +142,11 @@ export default function FallbackConfigPanel({
               onChange={(e) => handleNotificationChange(e.target.checked)}
               className="accent-neon-purple w-4 h-4"
             />
-            <span className="text-sm font-mono text-ps-text-secondary">
+            <span className="text-body font-mono text-ps-text-secondary">
               Notify on fallback activation
             </span>
           </label>
-          <p className="ml-6 mt-0.5 text-xs text-ps-text-muted font-mono">
+          <p className="ml-6 mt-0.5 text-micro text-ps-text-muted font-mono">
             Sends a notification when the agent switches to a fallback model
           </p>
         </div>
@@ -155,14 +155,14 @@ export default function FallbackConfigPanel({
       {/* Info banner */}
       <div className="flex items-start gap-2 px-3 py-2.5 rounded-lg bg-neon-purple/5 border border-neon-purple/10">
         <Info className="w-4 h-4 text-neon-purple flex-shrink-0 mt-0.5" />
-        <p className="text-xs text-ps-text-muted font-mono">
+        <p className="text-micro text-ps-text-muted font-mono">
           Fallback settings apply globally. Sync to save these settings
           to your Hermes agent configuration.
         </p>
       </div>
 
       {(saving || dirty || saveError) && (
-        <p className="text-xs font-mono text-ps-text-muted">
+        <p className="text-micro font-mono text-ps-text-muted">
           {saveError
             ? saveError
             : saving || dirty
@@ -177,7 +177,7 @@ export default function FallbackConfigPanel({
           type="button"
           onClick={() => void onSyncToHermes()}
           disabled={syncBlocked}
-          className="flex items-center gap-2 px-4 h-9 bg-neon-purple/10 border border-neon-purple/30 text-neon-purple text-xs font-mono rounded-lg hover:bg-neon-purple/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex items-center gap-2 px-4 h-9 bg-neon-purple/10 border border-neon-purple/30 text-neon-purple text-micro font-mono rounded-lg hover:bg-neon-purple/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <RefreshCw className={`w-3.5 h-3.5 ${syncing ? "animate-spin" : ""}`} />
           {syncing ? "Syncing…" : saving || dirty ? "Save pending…" : "Sync to Hermes"}
@@ -186,7 +186,7 @@ export default function FallbackConfigPanel({
           type="button"
           onClick={() => void onImportFromConfig()}
           disabled={importing}
-          className="flex items-center gap-2 px-4 h-9 bg-ps-surface-raised border border-ps-edge text-ps-text-secondary text-xs font-mono rounded-lg hover:bg-ps-surface-raised transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex items-center gap-2 px-4 h-9 bg-ps-surface-raised border border-ps-edge text-ps-text-secondary text-micro font-mono rounded-lg hover:bg-ps-surface-raised transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <Upload className={`w-3.5 h-3.5 ${importing ? "animate-bounce" : ""}`} />
           {importing ? "Importing…" : "Import from config"}

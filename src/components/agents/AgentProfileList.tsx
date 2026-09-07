@@ -43,7 +43,7 @@ export default function AgentProfileList({
               <Users
                 className={`w-4 h-4 ${profile.isDefault ? "text-cyan-400" : "text-purple-400"}`}
               />
-              <span className="font-semibold text-white text-sm truncate">
+              <span className="font-semibold text-ps-text-primary text-body truncate">
                 {profile.isDefault ? profile.name.replace(/\s*\(local default\)\s*$/i, "") : profile.name}
               </span>
               {profile.isDefault && <Badge color="cyan" size="sm">Local default</Badge>}
@@ -55,21 +55,21 @@ export default function AgentProfileList({
               )}
             </div>
             {!profile.isDefault && (
-              <p className="text-xs font-mono text-ps-text-faint mb-1">{profile.id}</p>
+              <p className="text-micro font-mono text-ps-text-faint mb-1">{profile.id}</p>
             )}
-            <p className="text-xs text-ps-text-muted line-clamp-2 mb-2">{profile.description}</p>
+            <p className="text-body text-ps-text-muted line-clamp-2 mb-2">{profile.description}</p>
             {/* The reason, not just the word. syncError was computed, stored
                 and returned on every row, and the operator saw an orange
                 badge with nothing behind it (T-0102, D27). */}
             {profile.syncError && (
-              <p className="text-xs text-semantic-warning mb-2 break-words">{profile.syncError}</p>
+              <p className="text-body text-semantic-warning mb-2 break-words">{profile.syncError}</p>
             )}
-            <div className="flex items-center gap-2 text-xs text-ps-text-muted font-mono">
+            <div className="flex items-center gap-2 text-micro text-ps-text-muted font-mono">
               <span>{profile.skillsCount} skills</span>
               <span>·</span>
               <span>{profile.files.length} files</span>
             </div>
-            <p className="text-xs text-ps-text-faint mt-1">
+            <p className="text-body text-ps-text-faint mt-1">
               {profile.syncedAt ? `Last pushed ${timeAgo(profile.syncedAt)}` : "Never pushed"}
             </p>
           </button>

@@ -82,7 +82,7 @@ export default function MissionEditorPanel({
         </div>
       ) : detail ? (
         <div className="space-y-3">
-          <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs font-mono">
+          <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-micro font-mono">
             <div className="flex justify-between">
               <span className="text-ps-text-muted">Agent</span>
               <span className="text-ps-text-secondary truncate ml-2 text-right">
@@ -154,11 +154,11 @@ export default function MissionEditorPanel({
               }
               className="w-full flex items-center justify-between mb-1 hover:opacity-80 transition-opacity"
             >
-              <div className="text-xs font-mono text-ps-text-muted uppercase flex items-center gap-1.5">
+              <div className="text-micro font-mono text-ps-text-muted uppercase flex items-center gap-1.5">
                 <Edit3 className="w-3 h-3" />
                 Full Template Details
               </div>
-              <div className="flex items-center gap-1 text-xs font-mono text-ps-text-muted">
+              <div className="flex items-center gap-1 text-micro font-mono text-ps-text-muted">
                 <span>
                   {promptCollapsed
                     ? "show"
@@ -172,7 +172,7 @@ export default function MissionEditorPanel({
             <div
               className={`overflow-hidden transition-all duration-200 ${promptCollapsed ? "max-h-20" : "max-h-none"}`}
             >
-              <div className="text-xs text-ps-text-muted font-mono whitespace-pre-wrap bg-ps-surface-panel rounded-lg p-2 border border-ps-edge-hairline">
+              <div className="text-micro text-ps-text-muted font-mono whitespace-pre-wrap bg-ps-surface-panel rounded-lg p-2 border border-ps-edge-hairline">
                 {detail.mission.prompt}
               </div>
             </div>
@@ -180,7 +180,7 @@ export default function MissionEditorPanel({
 
           {(detail.mission.goals?.length ?? 0) > 0 && (
             <div>
-              <div className="text-xs font-mono text-ps-text-muted uppercase mb-1">
+              <div className="text-micro font-mono text-ps-text-muted uppercase mb-1">
                 Goals
               </div>
               <div className="flex flex-wrap gap-1">
@@ -189,13 +189,13 @@ export default function MissionEditorPanel({
                   .map((goal, i) => (
                     <span
                       key={i}
-                      className="text-xs font-mono px-1.5 py-0.5 rounded bg-ps-surface-raised text-ps-text-muted border border-ps-edge-hairline"
+                      className="text-micro font-mono px-1.5 py-0.5 rounded bg-ps-surface-raised text-ps-text-muted border border-ps-edge-hairline"
                     >
                       {goal}
                     </span>
                   ))}
                 {(detail.mission.goals?.length ?? 0) > 3 && (
-                  <span className="text-xs font-mono text-ps-text-faint">
+                  <span className="text-micro font-mono text-ps-text-faint">
                     +
                     {(detail.mission.goals?.length ?? 0) - 3}
                     {" "}
@@ -211,21 +211,21 @@ export default function MissionEditorPanel({
               <div className="flex items-center justify-between mb-1">
                 <div className="flex items-center gap-1">
                   <Zap className="w-3 h-3 text-neon-orange" />
-                  <span className="text-xs font-mono text-ps-text-secondary">Schedule</span>
+                  <span className="text-micro font-mono text-ps-text-secondary">Schedule</span>
                 </div>
                 {/* The old "view" link pointed at the Hermes cron surface, which
                     is not where this schedule lives. It lives on this page. */}
                 <Link
                   href="#scheduled-missions"
                   onClick={(e) => e.stopPropagation()}
-                  className="text-xs font-mono text-neon-orange hover:underline flex items-center gap-0.5"
+                  className="text-micro font-mono text-neon-orange hover:underline flex items-center gap-0.5"
                 >
                   Edit schedule
                   {" "}
                   <ExternalLink className="w-2.5 h-2.5" />
                 </Link>
               </div>
-              <div className="grid grid-cols-2 gap-x-3 gap-y-0.5 text-xs font-mono">
+              <div className="grid grid-cols-2 gap-x-3 gap-y-0.5 text-micro font-mono">
                 <div className="flex justify-between">
                   <span className="text-ps-text-faint">Next</span>
                   <span className="text-ps-text-muted">
@@ -240,13 +240,13 @@ export default function MissionEditorPanel({
                 </div>
               </div>
               {detail.schedule.lastStatus && (
-                <p className="mt-1 text-xs font-mono text-ps-text-muted">
+                <p className="mt-1 text-micro font-mono text-ps-text-muted">
                   Last result: {detail.schedule.lastStatus}
                 </p>
               )}
               {/* Scheduled and going to happen are not the same thing. */}
               {describeScheduleFiring(detail.schedule) && (
-                <p className="mt-1 rounded border border-neon-orange/30 bg-neon-orange/5 px-1.5 py-1 text-xs text-neon-orange">
+                <p className="mt-1 rounded border border-neon-orange/30 bg-neon-orange/5 px-1.5 py-1 text-body text-neon-orange">
                   {describeScheduleFiring(detail.schedule)}
                 </p>
               )}
@@ -258,7 +258,7 @@ export default function MissionEditorPanel({
               that point. Rendered only while there is something to say. */}
           {runState.note && (
             <div
-              className={`rounded-lg border px-2 py-1.5 text-xs font-mono ${
+              className={`rounded-lg border px-2 py-1.5 text-micro font-mono ${
                 runState.tone === "overdue"
                   ? "border-neon-orange/30 bg-neon-orange/5 text-neon-orange"
                   : "border-ps-edge-hairline bg-ps-surface-panel text-ps-text-muted"
@@ -274,10 +274,10 @@ export default function MissionEditorPanel({
 
           {detail.mission.result && (
             <div>
-              <div className="text-xs font-mono text-ps-text-muted uppercase mb-1">
+              <div className="text-micro font-mono text-ps-text-muted uppercase mb-1">
                 Result
               </div>
-              <div className="text-xs text-ps-text-secondary font-mono whitespace-pre-wrap bg-ps-surface-panel rounded-lg p-2 border border-ps-edge-hairline max-h-40 overflow-y-auto">
+              <div className="text-micro text-ps-text-secondary font-mono whitespace-pre-wrap bg-ps-surface-panel rounded-lg p-2 border border-ps-edge-hairline max-h-40 overflow-y-auto">
                 {detail.mission.result}
               </div>
             </div>
@@ -288,10 +288,10 @@ export default function MissionEditorPanel({
               no route sets, so a failed mission explained nothing. */}
           {run?.error && (
             <div className="rounded-lg bg-red-500/5 border border-red-500/10 p-2">
-              <div className="text-xs font-mono text-red-400 uppercase mb-0.5">
+              <div className="text-micro font-mono text-red-400 uppercase mb-0.5">
                 Run error
               </div>
-              <div className="text-xs font-mono text-red-300 whitespace-pre-wrap break-words">
+              <div className="text-micro font-mono text-red-300 whitespace-pre-wrap break-words">
                 {run.error}
               </div>
             </div>
@@ -317,7 +317,7 @@ export default function MissionEditorPanel({
               <Link
                 href={`/results/sessions?missionId=${encodeURIComponent(mission.id)}`}
                 onClick={(e) => e.stopPropagation()}
-                className="inline-flex items-center gap-1 rounded-lg border border-ps-edge-hairline px-2.5 py-1.5 text-xs font-mono text-ps-text-secondary hover:border-ps-edge-emphasis hover:text-white transition-colors"
+                className="inline-flex items-center gap-1 rounded-lg border border-ps-edge-hairline px-2.5 py-1.5 text-micro font-mono text-ps-text-secondary hover:border-ps-edge-emphasis hover:text-ps-text-primary transition-colors"
               >
                 View sessions
               </Link>
@@ -375,7 +375,7 @@ export default function MissionEditorPanel({
           </div>
         </div>
       ) : (
-        <div className="text-xs text-ps-text-muted text-center py-3">
+        <div className="text-body text-ps-text-muted text-center py-3">
           Failed to load details
         </div>
       )}

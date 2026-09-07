@@ -4,6 +4,7 @@
 
 "use client";
 
+import { sectionHeadingClasses } from "@/lib/theme";
 import { useState } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import type { ReactNode } from "react";
@@ -58,12 +59,12 @@ export default function CollapsibleSection({
         aria-expanded={expanded}
       >
         <div className="flex items-center gap-3">
-          <h2 className="text-sm font-bold text-ps-text-secondary uppercase tracking-wider">
+          <h2 className={sectionHeadingClasses}>
             {title}
           </h2>
           {badge !== undefined && (
             <span
-              className={`text-xs font-mono px-1.5 py-0.5 rounded uppercase tracking-widest ${badgeColorMap[badgeColor]}`}
+              className={`text-micro font-mono px-1.5 py-0.5 rounded uppercase tracking-widest ${badgeColorMap[badgeColor]}`}
             >
               {badge}
             </span>
@@ -83,7 +84,7 @@ export default function CollapsibleSection({
       {expanded && (
         <div className="px-5 pb-5 pt-1 border-t border-ps-edge-hairline space-y-4">
           {description && (
-            <p className="text-xs text-ps-text-muted mt-0.5">{description}</p>
+            <p className="text-body text-ps-text-muted mt-0.5">{description}</p>
           )}
           {children}
         </div>

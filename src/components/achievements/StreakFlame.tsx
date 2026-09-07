@@ -19,11 +19,11 @@ export default function StreakFlame({ current, longest }: { current: number; lon
         />
       </div>
       <div>
-        <div className="font-mono text-lg font-bold leading-none text-white">
+        <div className="font-mono text-title font-bold leading-none text-ps-text-primary">
           {current}
-          <span className="ml-1 text-xs font-normal text-ps-text-muted">day{current === 1 ? "" : "s"}</span>
+          <span className="ml-1 text-body font-normal text-ps-text-muted">day{current === 1 ? "" : "s"}</span>
         </div>
-        <div className="text-xs text-ps-text-muted">best {longest}</div>
+        <div className="text-body text-ps-text-muted">best {longest}</div>
       </div>
     </div>
   );

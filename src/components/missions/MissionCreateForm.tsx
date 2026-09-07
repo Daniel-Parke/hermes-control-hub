@@ -1,5 +1,6 @@
 "use client";
 
+import { sectionHeadingClasses } from "@/lib/theme";
 import { useEffect, useId, useRef } from "react";
 import { Send, Save } from "lucide-react";
 
@@ -253,7 +254,7 @@ export function MissionComposerActions({
   return (
     <div className="space-y-2">
       {blockerToShow && (
-        <p id={dispatchHintId} className="text-xs font-mono text-neon-orange/90">
+        <p id={dispatchHintId} className="text-micro font-mono text-neon-orange/90">
           {blockerToShow.message}
         </p>
       )}
@@ -370,32 +371,32 @@ export default function MissionCreateForm({
   const inner = (
     <div className="space-y-4">
       {editingId && isReDispatch && (
-        <div className="rounded-lg bg-neon-cyan/5 border border-neon-cyan/20 p-3 text-xs text-neon-cyan/80 font-mono">
+        <div className="rounded-lg bg-neon-cyan/5 border border-neon-cyan/20 p-3 text-micro text-neon-cyan/80 font-mono">
           A new mission will be created and dispatched immediately with your
           changes. The previous mission record will be kept for history.
         </div>
       )}
       {editingId && isRunningEdit && (
-        <div className="rounded-lg bg-neon-orange/5 border border-neon-orange/20 p-3 text-xs text-neon-orange/90 font-mono">
+        <div className="rounded-lg bg-neon-orange/5 border border-neon-orange/20 p-3 text-micro text-neon-orange/90 font-mono">
           Updates apply to this running mission. Linked cron jobs sync when
           schedule, profile, model, or prompt fields change.
         </div>
       )}
       {editingId && isDraftEdit && (
-        <div className="rounded-lg bg-ps-surface-raised border border-ps-edge-hairline p-3 text-xs text-ps-text-muted font-mono">
+        <div className="rounded-lg bg-ps-surface-raised border border-ps-edge-hairline p-3 text-micro text-ps-text-muted font-mono">
           This mission is a draft. Choose how to run it in Dispatch — save,
           queue for when the agent is idle, run now, or schedule.
         </div>
       )}
       {editingId && isQueuedEdit && (
-        <div className="rounded-lg bg-neon-orange/5 border border-neon-orange/20 p-3 text-xs text-neon-orange/90 font-mono">
+        <div className="rounded-lg bg-neon-orange/5 border border-neon-orange/20 p-3 text-micro text-neon-orange/90 font-mono">
           This mission is waiting in the queue. You can update fields, dispatch
           immediately, or move it back to drafts.
         </div>
       )}
 
       {(categoriesLoadError || categories.length === 0) && (
-        <p className="text-xs font-mono text-neon-orange/90 bg-neon-orange/5 border border-neon-orange/20 rounded-lg px-3 py-2">
+        <p className="text-micro font-mono text-neon-orange/90 bg-neon-orange/5 border border-neon-orange/20 rounded-lg px-3 py-2">
           {categoriesLoadError ??
             "No categories loaded — run npm run db:migrate or restart PatterStage, then"}{" "}
           {onRetryCategories && (
@@ -435,7 +436,7 @@ export default function MissionCreateForm({
           value={formState.newName}
           onChange={(e) => setFormField("newName", e.target.value)}
           placeholder="e.g., Research quantum computing trends" aria-label="Mission name"
-          className="w-full h-9 bg-ps-surface-inset border border-ps-edge rounded-lg px-3 text-sm text-white placeholder-white/20 outline-none focus:border-neon-cyan/50 font-mono"
+          className="w-full h-9 bg-ps-surface-inset border border-ps-edge rounded-lg px-3 text-body text-ps-text-primary placeholder-ps-text-muted outline-none focus:border-neon-cyan/50 font-mono"
         />
       </div>
 
@@ -459,7 +460,7 @@ export default function MissionCreateForm({
           maxRows={8}
           placeholder="e.g. Gather data"
         />
-        <p className="text-xs text-ps-text-faint font-mono mt-1.5">
+        <p className="text-micro text-ps-text-faint font-mono mt-1.5">
           One goal per line — checklist the agent completes alongside the task.
         </p>
       </div>
@@ -480,7 +481,7 @@ export default function MissionCreateForm({
               key={mode.id}
               type="button"
               onClick={() => setFormField("newDispatch", mode.id)}
-              className={`h-9 px-3 rounded-lg text-xs font-mono border transition-colors ${
+              className={`h-9 px-3 rounded-lg text-micro font-mono border transition-colors ${
                 formState.newDispatch === mode.id
                   ? "border-neon-cyan/50 bg-cyan-500/10 text-neon-cyan"
                   : "border-ps-edge text-ps-text-muted hover:text-ps-text-secondary"
@@ -490,7 +491,7 @@ export default function MissionCreateForm({
             </button>
           ))}
         </div>
-        <p className="text-xs text-ps-text-muted font-mono">
+        <p className="text-micro text-ps-text-muted font-mono">
           The button below runs the selected dispatch mode.
         </p>
         {formState.newDispatch === "cron" && (
@@ -559,7 +560,7 @@ export default function MissionCreateForm({
                 key={i}
                 className="flex items-center gap-2 bg-ps-surface-raised border border-neon-pink/20 rounded-lg px-3 py-1.5 h-9"
               >
-                <span className="text-xs font-mono text-neon-pink truncate flex-1">
+                <span className="text-micro font-mono text-neon-pink truncate flex-1">
                   {ref}
                 </span>
                 <button
@@ -570,7 +571,7 @@ export default function MissionCreateForm({
                       formState.newReferences.filter((_, j) => j !== i),
                     )
                   }
-                  className="text-ps-text-muted hover:text-red-400 text-xs"
+                  className="text-ps-text-muted hover:text-red-400 text-body"
                 >
                   ×
                 </button>
@@ -589,12 +590,12 @@ export default function MissionCreateForm({
                   }
                 }}
                 placeholder="URL, doc path..." aria-label="Reference to add"
-                className="flex-1 h-9 bg-ps-surface-inset border border-ps-edge rounded-lg px-3 text-xs text-white placeholder-white/20 outline-none focus:border-neon-pink/50 font-mono"
+                className="flex-1 h-9 bg-ps-surface-inset border border-ps-edge rounded-lg px-3 text-micro text-ps-text-primary placeholder-ps-text-muted outline-none focus:border-neon-pink/50 font-mono"
               />
               <button
                 type="button"
                 onClick={addReferenceFromInput}
-                className="h-9 px-3 rounded-lg bg-neon-pink/10 border border-neon-pink/30 text-xs text-neon-pink font-mono shrink-0"
+                className="h-9 px-3 rounded-lg bg-neon-pink/10 border border-neon-pink/30 text-micro text-neon-pink font-mono shrink-0"
               >
                 + Add
               </button>
@@ -726,7 +727,7 @@ export default function MissionCreateForm({
 
   return (
     <div className="rounded-xl border border-neon-cyan/20 bg-ps-surface-panel p-4 mb-6">
-      <h3 className="text-sm font-mono text-neon-cyan uppercase tracking-widest mb-4">
+      <h3 className={sectionHeadingClasses}>
         {editingId ? "Edit Mission" : "New Mission"}
       </h3>
       {inner}

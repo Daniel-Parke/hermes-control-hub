@@ -28,8 +28,8 @@ const EMPTY_CHAR: Omit<CharacterSheet, "id" | "createdAt" | "updatedAt"> = {
   speechPatterns: "", relationships: "", tags: [],
 };
 
-const FIELD = "w-full bg-ps-surface-inset border border-ps-edge rounded-lg px-3 py-2 text-sm text-white placeholder-white/20 outline-none focus:border-neon-purple/40 font-mono";
-const LABEL = "text-xs font-mono text-ps-text-muted uppercase tracking-wider block mb-1";
+const FIELD = "w-full bg-ps-surface-inset border border-ps-edge rounded-lg px-3 py-2 text-body text-ps-text-primary placeholder-ps-text-muted outline-none focus:border-neon-purple/40 font-mono";
+const LABEL = "text-micro font-mono text-ps-text-muted uppercase tracking-wider block mb-1";
 
 export default function CharactersPage() {
   const [characters, setCharacters] = useState<CharacterSheet[]>([]);
@@ -166,7 +166,7 @@ export default function CharactersPage() {
             <button
               type="button"
               onClick={startNew}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-neon-purple/30 bg-neon-purple/10 text-xs font-mono text-neon-purple hover:bg-neon-purple/20"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-neon-purple/30 bg-neon-purple/10 text-micro font-mono text-neon-purple hover:bg-neon-purple/20"
             >
               <Plus className="w-3 h-3" /> New character
             </button>
@@ -187,7 +187,7 @@ export default function CharactersPage() {
             className="bg-ps-surface-panel border border-neon-purple/20 rounded-xl w-full max-w-2xl p-6 space-y-4 mb-12"
           >
             <div className="flex items-center justify-between">
-              <h3 id="character-editor-title" className="text-sm font-semibold text-white">{isNew ? "New character" : "Edit character"}</h3>
+              <h3 id="character-editor-title" className="text-body font-semibold text-ps-text-primary">{isNew ? "New character" : "Edit character"}</h3>
               <button type="button" onClick={closeEditor} aria-label="Close the character editor" className="text-ps-text-muted hover:text-ps-text-secondary"><X className="w-4 h-4" /></button>
             </div>
 
@@ -248,7 +248,7 @@ export default function CharactersPage() {
               <label htmlFor="char-trait-input" className={LABEL}>Personality traits</label>
               <div className="flex flex-wrap gap-1.5 mb-2">
                 {editing.personality.map(t => (
-                  <span key={t} className="flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-mono border border-neon-purple/30 bg-neon-purple/10 text-neon-purple">
+                  <span key={t} className="flex items-center gap-1 px-2 py-0.5 rounded-md text-micro font-mono border border-neon-purple/30 bg-neon-purple/10 text-neon-purple">
                     {t}
                     <button type="button" onClick={() => setEditing({ ...editing, personality: editing.personality.filter(p => p !== t) })} aria-label={`Remove personality trait ${t}`} className="text-neon-purple hover:text-red-400"><X className="w-2.5 h-2.5" /></button>
                   </span>
@@ -257,8 +257,8 @@ export default function CharactersPage() {
               <div className="flex gap-1">
                 <input id="char-trait-input" value={personalityInput} onChange={(e) => setPersonalityInput(e.target.value)}
                   onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addPersonality(); } }}
-                  placeholder="e.g. stubborn" className="flex-1 bg-ps-surface-inset border border-ps-edge rounded px-2 py-1 text-xs text-white placeholder-white/20 outline-none focus:border-neon-purple/40 font-mono" />
-                <button type="button" aria-label="Add personality trait" onClick={addPersonality} className="px-2 py-1 text-xs text-neon-purple"><Plus className="w-3 h-3" aria-hidden="true" /></button>
+                  placeholder="e.g. stubborn" className="flex-1 bg-ps-surface-inset border border-ps-edge rounded px-2 py-1 text-micro text-ps-text-primary placeholder-ps-text-muted outline-none focus:border-neon-purple/40 font-mono" />
+                <button type="button" aria-label="Add personality trait" onClick={addPersonality} className="px-2 py-1 text-body text-neon-purple"><Plus className="w-3 h-3" aria-hidden="true" /></button>
               </div>
             </div>
 
@@ -267,7 +267,7 @@ export default function CharactersPage() {
               <label htmlFor="char-tag-input" className={LABEL}>Tags (genre associations)</label>
               <div className="flex flex-wrap gap-1.5 mb-2">
                 {editing.tags.map(t => (
-                  <span key={t} className="flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-mono border border-ps-edge-hairline bg-ps-surface-raised text-ps-text-muted">
+                  <span key={t} className="flex items-center gap-1 px-2 py-0.5 rounded-md text-micro font-mono border border-ps-edge-hairline bg-ps-surface-raised text-ps-text-muted">
                     {t}
                     <button type="button" onClick={() => setEditing({ ...editing, tags: editing.tags.filter(p => p !== t) })} aria-label={`Remove tag ${t}`} className="text-ps-text-muted hover:text-red-400"><X className="w-2.5 h-2.5" /></button>
                   </span>
@@ -276,18 +276,18 @@ export default function CharactersPage() {
               <div className="flex gap-1">
                 <input id="char-tag-input" value={tagInput} onChange={(e) => setTagInput(e.target.value)}
                   onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addTag(); } }}
-                  placeholder="e.g. noir" className="flex-1 bg-ps-surface-inset border border-ps-edge rounded px-2 py-1 text-xs text-white placeholder-white/20 outline-none focus:border-neon-purple/40 font-mono" />
-                <button type="button" aria-label="Add tag" onClick={addTag} className="px-2 py-1 text-xs text-neon-purple"><Plus className="w-3 h-3" aria-hidden="true" /></button>
+                  placeholder="e.g. noir" className="flex-1 bg-ps-surface-inset border border-ps-edge rounded px-2 py-1 text-micro text-ps-text-primary placeholder-ps-text-muted outline-none focus:border-neon-purple/40 font-mono" />
+                <button type="button" aria-label="Add tag" onClick={addTag} className="px-2 py-1 text-body text-neon-purple"><Plus className="w-3 h-3" aria-hidden="true" /></button>
               </div>
             </div>
 
             <div className="flex gap-2 justify-end pt-2">
               <button type="button" onClick={closeEditor}
-                className="px-4 py-2 text-xs text-ps-text-muted hover:text-ps-text-secondary rounded-lg border border-ps-edge hover:bg-ps-surface-raised">
+                className="px-4 py-2 text-body text-ps-text-muted hover:text-ps-text-secondary rounded-lg border border-ps-edge hover:bg-ps-surface-raised">
                 Cancel
               </button>
               <button type="button" onClick={save} disabled={!editing.name.trim() || saving}
-                className="px-4 py-2 text-xs text-neon-purple rounded-lg border border-neon-purple/30 bg-neon-purple/10 hover:bg-neon-purple/20 disabled:opacity-30 flex items-center gap-2">
+                className="px-4 py-2 text-body text-neon-purple rounded-lg border border-neon-purple/30 bg-neon-purple/10 hover:bg-neon-purple/20 disabled:opacity-30 flex items-center gap-2">
                 {saving ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
                 {saving ? "Saving..." : "Save character"}
               </button>
@@ -300,11 +300,11 @@ export default function CharactersPage() {
         {loadError && <LoadErrorBanner error={loadError} onRetry={load} />}
         {loadError ? null : characters.length === 0 ? (
           <div className="text-center py-16">
-            <Users className="w-12 h-12 text-white/10 mx-auto mb-4" />
-            <p className="text-sm text-ps-text-muted mb-2">No characters yet</p>
-            <p className="text-xs text-ps-text-faint mb-6">Create character sheets to reuse across stories</p>
+            <Users className="w-12 h-12 text-ps-viz-glyph-idle mx-auto mb-4" />
+            <p className="text-body text-ps-text-muted mb-2">No characters yet</p>
+            <p className="text-body text-ps-text-faint mb-6">Create character sheets to reuse across stories</p>
             <button type="button" onClick={startNew}
-              className="px-4 py-2 rounded-lg border border-neon-purple/30 bg-neon-purple/10 text-sm font-mono text-neon-purple hover:bg-neon-purple/20">
+              className="px-4 py-2 rounded-lg border border-neon-purple/30 bg-neon-purple/10 text-body font-mono text-neon-purple hover:bg-neon-purple/20">
               Create your first character
             </button>
           </div>
@@ -327,16 +327,16 @@ export default function CharactersPage() {
                       className="flex-1 min-w-0 text-left"
                     >
                       <div className="flex items-center gap-2 mb-1">
-                        <span className="text-sm font-semibold text-ps-text-primary">{c.name}</span>
-                        <span className={`px-2 py-0.5 rounded-md text-xs font-mono border ${ROLE_COLORS[c.role] || ROLE_COLORS.supporting}`}>
+                        <span className="text-body font-semibold text-ps-text-primary">{c.name}</span>
+                        <span className={`px-2 py-0.5 rounded-md text-micro font-mono border ${ROLE_COLORS[c.role] || ROLE_COLORS.supporting}`}>
                           {c.role}
                         </span>
                       </div>
-                      <p className="text-xs text-ps-text-muted line-clamp-2">{c.description || c.backstory?.slice(0, 120) || "No description"}</p>
+                      <p className="text-body text-ps-text-muted line-clamp-2">{c.description || c.backstory?.slice(0, 120) || "No description"}</p>
                       {c.tags.length > 0 && (
                         <div className="flex flex-wrap gap-1 mt-2">
                           {c.tags.map(t => (
-                            <span key={t} className="px-1.5 py-0.5 rounded text-xs font-mono border border-ps-edge-hairline bg-ps-surface-raised text-ps-text-muted">{t}</span>
+                            <span key={t} className="px-1.5 py-0.5 rounded text-micro font-mono border border-ps-edge-hairline bg-ps-surface-raised text-ps-text-muted">{t}</span>
                           ))}
                         </div>
                       )}
@@ -362,34 +362,34 @@ export default function CharactersPage() {
                     <div className="px-4 pb-4 pt-0 border-t border-ps-edge-hairline space-y-3">
                       {c.appearance && (
                         <div>
-                          <span className="text-xs font-mono text-ps-text-faint uppercase">Appearance</span>
-                          <p className="text-xs text-ps-text-muted mt-0.5">{c.appearance}</p>
+                          <span className="text-micro font-mono text-ps-text-faint uppercase">Appearance</span>
+                          <p className="text-body text-ps-text-muted mt-0.5">{c.appearance}</p>
                         </div>
                       )}
                       {c.backstory && (
                         <div>
-                          <span className="text-xs font-mono text-ps-text-faint uppercase">Backstory</span>
-                          <p className="text-xs text-ps-text-muted mt-0.5 whitespace-pre-wrap">{c.backstory}</p>
+                          <span className="text-micro font-mono text-ps-text-faint uppercase">Backstory</span>
+                          <p className="text-body text-ps-text-muted mt-0.5 whitespace-pre-wrap">{c.backstory}</p>
                         </div>
                       )}
                       {c.speechPatterns && (
                         <div>
-                          <span className="text-xs font-mono text-ps-text-faint uppercase">Speech patterns</span>
-                          <p className="text-xs text-ps-text-muted mt-0.5">{c.speechPatterns}</p>
+                          <span className="text-micro font-mono text-ps-text-faint uppercase">Speech patterns</span>
+                          <p className="text-body text-ps-text-muted mt-0.5">{c.speechPatterns}</p>
                         </div>
                       )}
                       {c.relationships && (
                         <div>
-                          <span className="text-xs font-mono text-ps-text-faint uppercase">Relationships</span>
-                          <p className="text-xs text-ps-text-muted mt-0.5">{c.relationships}</p>
+                          <span className="text-micro font-mono text-ps-text-faint uppercase">Relationships</span>
+                          <p className="text-body text-ps-text-muted mt-0.5">{c.relationships}</p>
                         </div>
                       )}
                       {c.personality.length > 0 && (
                         <div>
-                          <span className="text-xs font-mono text-ps-text-faint uppercase">Personality</span>
+                          <span className="text-micro font-mono text-ps-text-faint uppercase">Personality</span>
                           <div className="flex flex-wrap gap-1 mt-1">
                             {c.personality.map(p => (
-                              <span key={p} className="px-2 py-0.5 rounded-md text-xs font-mono border border-neon-purple/20 bg-neon-purple/5 text-neon-purple">{p}</span>
+                              <span key={p} className="px-2 py-0.5 rounded-md text-micro font-mono border border-neon-purple/20 bg-neon-purple/5 text-neon-purple">{p}</span>
                             ))}
                           </div>
                         </div>

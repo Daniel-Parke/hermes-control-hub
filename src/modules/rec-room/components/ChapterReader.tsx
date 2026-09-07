@@ -54,7 +54,7 @@ export default function ChapterReader({
             {/* Edit button on completed chapters */}
             {currentMeta?.status === "complete" && (
               <button onClick={() => onEditChapter(currentChapter)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-ps-edge text-xs font-mono text-ps-text-muted hover:text-neon-purple hover:border-neon-purple/30 transition-colors flex-shrink-0"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-ps-edge text-micro font-mono text-ps-text-muted hover:text-neon-purple hover:border-neon-purple/30 transition-colors flex-shrink-0"
                 title="Edit this chapter">
                 <PenLine className="w-3 h-3" />
                 Edit
@@ -71,34 +71,34 @@ export default function ChapterReader({
       ) : currentMeta?.status === "writing" || currentMeta?.status === "pending" ? (
         <div className="flex flex-col items-center justify-center h-full min-h-[400px]">
           <Sparkles className="w-8 h-8 animate-pulse mb-4" style={{ color: theme.accent }} />
-          <p className="text-sm" style={{ color: theme.text, opacity: 0.5, fontFamily }}>
+          <p className="text-body" style={{ color: theme.text, opacity: 0.5, fontFamily }}>
             {currentMeta.status === "writing" ? "The muse is visiting..." : "Waiting for its moment..."}
           </p>
-          <p className="text-xs mt-2" style={{ color: theme.text, opacity: 0.3 }}>
+          <p className="text-body mt-2" style={{ color: theme.text, opacity: 0.3 }}>
             Chapter {currentChapter} is being written
           </p>
         </div>
       ) : currentMeta?.status === "failed" ? (
         <div className="flex flex-col items-center justify-center h-full min-h-[400px] px-6">
           <AlertTriangle className="w-8 h-8 mb-4 text-red-400" />
-          <p className="text-sm text-red-300 mb-2">Chapter {currentChapter} failed to generate</p>
+          <p className="text-body text-red-300 mb-2">Chapter {currentChapter} failed to generate</p>
           {currentMeta.error && (
-            <p className="text-xs text-red-300/50 mb-4 max-w-md text-center">{currentMeta.error}</p>
+            <p className="text-body text-red-300/50 mb-4 max-w-md text-center">{currentMeta.error}</p>
           )}
           <div className="flex gap-2">
             <button onClick={() => onRetryChapter(currentChapter)}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg border border-orange-500/30 text-xs text-orange-400 bg-orange-500/10 hover:bg-orange-500/20">
+              className="flex items-center gap-2 px-4 py-2 rounded-lg border border-orange-500/30 text-body text-orange-400 bg-orange-500/10 hover:bg-orange-500/20">
               <RefreshCw className="w-3 h-3" /> Retry Chapter
             </button>
             <button onClick={() => onEditChapter(currentChapter)}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg border border-neon-purple/30 text-xs text-neon-purple bg-neon-purple/10 hover:bg-neon-purple/20">
+              className="flex items-center gap-2 px-4 py-2 rounded-lg border border-neon-purple/30 text-body text-neon-purple bg-neon-purple/10 hover:bg-neon-purple/20">
               <PenLine className="w-3 h-3" /> Rewrite with Prompt
             </button>
           </div>
         </div>
       ) : (
         <div className="flex items-center justify-center h-full min-h-[400px]">
-          <p className="text-sm" style={{ color: theme.text, opacity: 0.3 }}>Select a chapter to read</p>
+          <p className="text-body" style={{ color: theme.text, opacity: 0.3 }}>Select a chapter to read</p>
         </div>
       )}
     </div>

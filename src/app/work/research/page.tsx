@@ -9,6 +9,7 @@
 
 "use client";
 
+import { sectionHeadingClasses } from "@/lib/theme";
 import { useState } from "react";
 import { Telescope, Send, Save, Square } from "lucide-react";
 
@@ -246,7 +247,7 @@ export default function DeepResearchPage() {
               {!submitting ? <Send className="h-4 w-4" /> : null} Start research
             </Button>
             {query.trim().length < 3 ? (
-              <p className="text-xs text-ps-text-muted">Enter a research question (≥ 3 characters) to start.</p>
+              <p className="text-body text-ps-text-muted">Enter a research question (≥ 3 characters) to start.</p>
             ) : null}
           </div>
         </div>
@@ -255,10 +256,10 @@ export default function DeepResearchPage() {
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[300px_1fr]">
         {/* Runs list */}
         <Card padding="sm">
-          <h2 className="mb-2 px-1 text-xs font-mono uppercase tracking-widest text-ps-text-muted">Runs</h2>
+          <h2 className={`${sectionHeadingClasses} px-1`}>Runs</h2>
           {/* The empty state only after a read that succeeded (T-0096). */}
           {runsError ? null : (runs ?? []).length === 0 ? (
-            <p className="px-1 py-4 text-xs text-ps-text-muted">No research runs yet.</p>
+            <p className="px-1 py-4 text-body text-ps-text-muted">No research runs yet.</p>
           ) : (
             <ul className="space-y-1">
               {(runs ?? []).map((r) => (
@@ -266,7 +267,7 @@ export default function DeepResearchPage() {
                   <button
                     type="button"
                     onClick={() => setSelectedId(r.id)}
-                    className={`w-full rounded-lg px-2 py-2 text-left text-xs transition hover:bg-ps-surface-raised ${selectedId === r.id ? "bg-ps-surface-raised" : ""}`}
+                    className={`w-full rounded-lg px-2 py-2 text-left text-body transition hover:bg-ps-surface-raised ${selectedId === r.id ? "bg-ps-surface-raised" : ""}`}
                   >
                     <div className="truncate text-ps-text-primary">
                       {(r.query.split("\n").find((l) => l.trim()) ?? r.query).trim()}
@@ -286,16 +287,16 @@ export default function DeepResearchPage() {
           {!detail ? (
             /* The report IS this screen's artifact: the thing a run produced,
                kept to read and to download. */
-            <p className="text-xs text-ps-text-muted">
+            <p className="text-body text-ps-text-muted">
               Select a run to read its <ConceptHint id="artifact">report</ConceptHint>, sources, and
               timeline.
             </p>
           ) : (
             <div className="space-y-4">
               <div className="flex items-start justify-between gap-3">
-                <div className="text-sm font-medium text-ps-text-primary">{detail.run.query}</div>
+                <div className="text-body font-medium text-ps-text-primary">{detail.run.query}</div>
                 <div className="flex shrink-0 items-center gap-2">
-                  <div className={`font-mono text-xs uppercase ${STATUS_COLOR[detail.run.status] ?? "text-ps-text-muted"}`}>
+                  <div className={`font-mono text-micro uppercase ${STATUS_COLOR[detail.run.status] ?? "text-ps-text-muted"}`}>
                     {detail.run.status}
                   </div>
                   {STOPPABLE.has(detail.run.status) ? (
@@ -311,7 +312,7 @@ export default function DeepResearchPage() {
                   ) : null}
                 </div>
               </div>
-              <div className="flex flex-wrap gap-x-2 gap-y-1 font-mono text-xs text-ps-text-muted">
+              <div className="flex flex-wrap gap-x-2 gap-y-1 font-mono text-micro text-ps-text-muted">
                 {runMeta(detail.run).map((f, i) => (
                   <span key={f}>
                     {i > 0 ? <span className="mr-2 text-ps-text-faint">·</span> : null}
@@ -319,7 +320,7 @@ export default function DeepResearchPage() {
                   </span>
                 ))}
               </div>
-              {detail.run.error ? <p className="text-xs text-neon-pink">{detail.run.error}</p> : null}
+              {detail.run.error ? <p className="text-body text-neon-pink">{detail.run.error}</p> : null}
               <ResearchReport run={detail.run} steps={detail.steps} />
             </div>
           )}

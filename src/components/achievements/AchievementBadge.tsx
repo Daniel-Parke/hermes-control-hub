@@ -129,7 +129,7 @@ export default function AchievementBadge({ achievement }: { achievement: Achieve
         )}
       </div>
       <span
-        className={`text-center text-xs font-medium leading-tight ${unlocked ? "text-ps-text-primary" : "text-ps-text-muted"}`}
+        className={`text-center text-body font-medium leading-tight ${unlocked ? "text-ps-text-primary" : "text-ps-text-muted"}`}
       >
         {name}
       </span>

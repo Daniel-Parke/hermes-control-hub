@@ -102,7 +102,7 @@ export default function ArtifactsPage() {
 
       <Card padding="sm">
         <div className="flex items-center gap-2 px-1">
-          <span className="text-xs font-mono uppercase tracking-widest text-ps-text-muted">{list.length} artifact{list.length === 1 ? "" : "s"}</span>
+          <span className="text-micro font-mono uppercase tracking-widest text-ps-text-muted">{list.length} artifact{list.length === 1 ? "" : "s"}</span>
           <div className="ml-auto w-44">
             <Select value={kind} onChange={setKind} options={KIND_FILTERS} />
           </div>
@@ -113,9 +113,9 @@ export default function ArtifactsPage() {
       {error ? null : list.length === 0 ? (
         <Card padding="md">
           <div className="flex flex-col items-center justify-center gap-2 py-10 text-center">
-            <FileStack className="h-6 w-6 text-white/15" />
-            <p className="text-sm text-ps-text-muted">No artifacts yet</p>
-            <p className="text-xs text-ps-text-muted">Run Deep Research or a Composer workflow — its output is captured here automatically.</p>
+            <FileStack className="h-6 w-6 text-ps-viz-glyph-idle" />
+            <p className="text-body text-ps-text-muted">No artifacts yet</p>
+            <p className="text-body text-ps-text-muted">Run Deep Research or a Composer workflow — its output is captured here automatically.</p>
           </div>
         </Card>
       ) : (
@@ -131,15 +131,15 @@ export default function ArtifactsPage() {
               >
                 <div className="flex items-center gap-2">
                   <Icon className={`h-4 w-4 shrink-0 ${KIND_TONE[a.sourceKind] ?? "text-ps-text-muted"}`} />
-                  <span className="truncate text-sm text-ps-text-primary">{a.name}</span>
+                  <span className="truncate text-body text-ps-text-primary">{a.name}</span>
                 </div>
-                <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-ps-text-muted">
+                <div className="flex items-center gap-2 text-micro font-mono uppercase tracking-wider text-ps-text-muted">
                   <span>{a.sourceKind}</span>
                   <span>·</span>
                   <span>{extForMime(a.mimeType)}</span>
                   <span className="ml-auto normal-case">{formatBytes(a.sizeBytes)}</span>
                 </div>
-                <div className="text-xs text-ps-text-muted">{timeAgo(a.createdAt)}</div>
+                <div className="text-body text-ps-text-muted">{timeAgo(a.createdAt)}</div>
               </button>
             );
           })}
@@ -174,18 +174,18 @@ export default function ArtifactsPage() {
       >
         <div className="px-6 py-5">
           {!detail ? (
-            <p className="text-xs text-ps-text-muted">Loading…</p>
+            <p className="text-body text-ps-text-muted">Loading…</p>
           ) : isMarkup ? (
             /* WG-WEB-014: the reading column, same measure as the Story Weaver
                reader and the research report. max-w-none was the unbounded case
                the ruling is against, on a surface that renders whole documents. */
             <div
-              className="prose prose-invert max-w-3xl text-sm text-ps-text-primary"
+              className="prose prose-invert max-w-3xl text-body text-ps-text-primary"
               // design-lint-disable-next-line no-unsanitised-html -- renderReportHtml escapes every byte first and emits only its own tag set, so a text/html artifact renders as visible source rather than live markup; that is the safe side of the trade and it is deliberate.
               dangerouslySetInnerHTML={{ __html: renderReportHtml(detail.content ?? "") }}
             />
           ) : (
-            <pre className="max-h-[70vh] overflow-auto whitespace-pre-wrap rounded-lg border border-ps-edge-hairline bg-ps-surface-panel px-3 py-2 text-xs leading-relaxed text-ps-text-secondary">
+            <pre className="max-h-[70vh] overflow-auto whitespace-pre-wrap rounded-lg border border-ps-edge-hairline bg-ps-surface-panel px-3 py-2 text-body leading-relaxed text-ps-text-secondary">
               {detail.content ?? "(empty)"}
             </pre>
           )}

@@ -23,8 +23,8 @@ const colorMap: Record<string, { bg: string; text: string; border: string }> = {
 };
 
 const sizeMap = {
-  sm: "text-xs px-1.5 py-0.5",
-  md: "text-xs px-2 py-0.5",
+  sm: "text-body px-1.5 py-0.5",
+  md: "text-body px-2 py-0.5",
 };
 
 export default function Badge({

@@ -71,7 +71,7 @@ export default function ModelsAgentDefaultSection({
             />
 
             <div className="flex flex-col justify-center gap-3">
-              <label className="block text-xs font-mono text-ps-text-muted uppercase tracking-wider">
+              <label className="block text-micro font-mono text-ps-text-muted uppercase tracking-wider">
                 Default Model
               </label>
               <div className="flex items-center gap-3 flex-wrap">
@@ -88,7 +88,7 @@ export default function ModelsAgentDefaultSection({
 
                 {activeModel && (
                   <div className="min-w-0 flex-1">
-                    <span className="text-xs text-ps-text-muted font-mono">
+                    <span className="text-micro text-ps-text-muted font-mono">
                       {" "}
                       {activeModel.provider}/
                       <span className="text-ps-text-secondary">{activeModel.modelId}</span>
@@ -103,7 +103,7 @@ export default function ModelsAgentDefaultSection({
                         so a drifted install stamped Active on gpt-4o while the
                         agent answered on MiniMax-M3. */}
                     {slotIsRunning && (
-                      <span className="inline-flex items-center gap-1 text-green-400 text-xs font-mono">
+                      <span className="inline-flex items-center gap-1 text-green-400 text-micro font-mono">
                         <CheckCircle2 className="w-3.5 h-3.5" /> Active
                       </span>
                     )}
@@ -115,7 +115,7 @@ export default function ModelsAgentDefaultSection({
                     named that model on the same install. Both now read the one
                     readiness answer, so the two screens cannot disagree. */}
                 {readiness && !readiness.ready && (
-                  <p className="basis-full text-xs text-neon-orange">{readiness.detail}</p>
+                  <p className="basis-full text-body text-neon-orange">{readiness.detail}</p>
                 )}
                 {/* The model actually answering, on the one screen whose job
                     is to say which that is. Withholding the badge is only half
@@ -127,14 +127,14 @@ export default function ModelsAgentDefaultSection({
                     resolve it, and naming a control twice is how the last
                     banner came to name one that did not exist. */}
                 {readiness?.ready && activeModel && !slotIsRunning && (
-                  <p className="basis-full text-xs text-neon-orange">
+                  <p className="basis-full text-body text-neon-orange">
                     The agent is running {readiness.modelName}, from its own{" "}
                     <code className="text-ps-text-secondary">config.yaml</code>, not the model
                     chosen here.
                   </p>
                 )}
                 {readiness?.ready && !defaults.agent && (
-                  <p className="basis-full text-xs text-ps-text-muted">
+                  <p className="basis-full text-body text-ps-text-muted">
                     No slot is chosen here. The agent is already running on{" "}
                     {readiness.modelName}, from its own{" "}
                     <code className="text-ps-text-secondary">config.yaml</code>.

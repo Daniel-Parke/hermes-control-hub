@@ -52,7 +52,7 @@ export default function QuestBadge({ collapsed = false }: { collapsed?: boolean 
       data-testid="quest-badge"
       aria-hidden="true"
       title={label}
-      className="flex-shrink-0 font-mono text-xs text-neon-orange"
+      className="flex-shrink-0 font-mono text-micro text-neon-orange"
     >
       {quests.completed}/{quests.total}
     </span>
